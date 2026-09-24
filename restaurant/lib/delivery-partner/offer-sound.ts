@@ -7,7 +7,7 @@ import { Platform } from 'react-native';
  */
 export async function playOfferAlertSound() {
   if (Platform.OS === 'web') return;
-  // Intentionally silent — see mixkit-happy-bells-notification-937.wav + expo run:android
+  // Intentionally silent — see assets/sounds/offer-notification.wav + expo run:android
 }
 
 export async function stopOfferAlertSound() {

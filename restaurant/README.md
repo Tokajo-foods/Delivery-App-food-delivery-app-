@@ -27,19 +27,25 @@ Part of the monorepo at `delivery/restaurant`.
 ```
 delivery/restaurant/
 ├── app/
-│   ├── _layout.tsx       # Root providers & navigation
-│   └── index.tsx         # Dashboard screen
-├── components/           # Reusable UI
+│   ├── (app)/                 # Kitchen screens (dashboard, orders, menu, …)
+│   │   └── delivery/          # Rider screens (same Expo app)
+│   ├── (auth)/                # Login / register / OTP
+│   └── _layout.tsx
+├── components/
+│   ├── dashboard|orders|menu|…   # Kitchen UI (Manager pattern)
+│   └── delivery/                 # Rider UI by domain
 ├── lib/
-│   ├── api.ts            # Axios client
-│   └── query-client.ts   # TanStack Query config
-├── store/
-│   └── orders-store.ts   # Live orders state
-├── global.css
-├── tailwind.config.js
-├── babel.config.js
-└── metro.config.js
+│   ├── api.ts                    # Axios (_sid + CSRF)
+│   ├── restaurant/               # Kitchen API + hooks
+│   └── delivery-partner/         # Rider API + hooks (import deep paths)
+├── store/                        # auth-store only
+├── assets/                       # icons, splash, sounds/
+├── constants/
+└── scripts/                      # local APK build helpers
 ```
+
+Import Managers + `*-api.ts` directly — do not add unused barrel `index.ts` files.
+Expo Router owns `app/`; do not move route files.
 
 ---
 
