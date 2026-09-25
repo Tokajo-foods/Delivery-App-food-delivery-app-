@@ -152,9 +152,9 @@ export const AUTH_ERROR_COPY: Record<string, string> = {
   EMAIL_ALREADY_EXISTS:
     'An account already exists with this email. Please sign in.',
   PHONE_ALREADY_EXISTS:
-    'An account already exists with this phone number. Please sign in.',
+    'This phone number is already registered to another account. Use a different phone number.',
   ACCOUNT_EXISTS:
-    'An account already exists with this email or phone. Use that account’s password to add restaurant or rider access (you can keep a different email or phone on this signup).',
+    'This email already has a Tokajo account. Use that account’s password to add restaurant access, or sign in / reset password.',
   CONTACT_CONFLICT:
     'This email and phone belong to two different accounts. Use one account’s email or phone.',
   ROLE_NOT_ON_ACCOUNT:
