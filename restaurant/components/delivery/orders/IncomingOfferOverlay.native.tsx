@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Modal, Platform, StyleSheet, View } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
+import { GOOGLE_MAP_PROVIDER } from '@/lib/maps/google-map-provider';
 
 import {
   IncomingOfferCard,
@@ -312,7 +313,7 @@ export function IncomingOfferOverlay() {
         {showMap && mapCenter ? (
           <MapView
             style={StyleSheet.absoluteFill}
-            provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+            provider={GOOGLE_MAP_PROVIDER}
             initialRegion={{
               ...mapCenter,
               latitudeDelta: 0.06,

@@ -1,6 +1,11 @@
 /** Merges env into Expo config (API URL + Google Maps SDK keys + OAuth). */
 module.exports = ({ config }) => {
   const mapsKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() || '';
+  if (!mapsKey) {
+    console.warn(
+      '[app.config] EXPO_PUBLIC_GOOGLE_MAPS_API_KEY is empty — Maps SDK / Places will fail until set.'
+    );
+  }
   const apiUrl =
     process.env.EXPO_PUBLIC_API_URL?.trim() || 'http://10.12.129.12:4000';
   const googleWebClientId =

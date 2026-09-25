@@ -6,7 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 
 import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
@@ -14,6 +14,7 @@ import { getApiErrorMessage } from '@/lib/errors';
 import { decodeGooglePolyline } from '@/lib/delivery-partner/decode-polyline';
 import type { OrderTracking } from '@/lib/delivery-partner/tracking-types';
 import { formatEtaSeconds, formatDistanceMeters } from '@/lib/delivery-partner/tracking-types';
+import { GOOGLE_MAP_PROVIDER } from '@/lib/maps/google-map-provider';
 
 type LatLng = { latitude: number; longitude: number };
 
@@ -140,7 +141,7 @@ export function KitchenRiderTrackMap({ tracking, loading, error }: Props) {
         <MapView
           ref={mapRef}
           style={styles.map}
-          provider={PROVIDER_GOOGLE}
+          provider={GOOGLE_MAP_PROVIDER}
           showsUserLocation={false}
           showsMyLocationButton={false}
           toolbarEnabled={false}

@@ -13,7 +13,8 @@ import {
   Text,
   View,
 } from 'react-native';
-import MapView, { Circle, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Circle, Marker } from 'react-native-maps';
+import { GOOGLE_MAP_PROVIDER } from '@/lib/maps/google-map-provider';
 
 import { useDeliveryHeaderScrollProps } from '@/components/delivery/shared/header-scroll';
 import {
@@ -190,7 +191,7 @@ export function DemandHeatmapScreen() {
                 <MapView
                   ref={mapRef}
                   style={styles.map}
-                  provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+                  provider={GOOGLE_MAP_PROVIDER}
                   initialRegion={initialRegion}
                   showsUserLocation
                   showsMyLocationButton={false}

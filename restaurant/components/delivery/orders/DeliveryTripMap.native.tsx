@@ -8,11 +8,12 @@ import {
   Text,
   View,
 } from 'react-native';
-import MapView, { Circle, Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
+import { GOOGLE_MAP_PROVIDER } from '@/lib/maps/google-map-provider';
 import {
   formatDeliveryAddress,
   normalizeDeliveryStatus,
@@ -352,7 +353,7 @@ export function DeliveryTripMap({
       <MapView
         ref={mapRef}
         style={fill ? styles.fillMap : styles.map}
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+        provider={GOOGLE_MAP_PROVIDER}
         initialRegion={
           initial
             ? { ...initial, latitudeDelta: 0.04, longitudeDelta: 0.04 }
