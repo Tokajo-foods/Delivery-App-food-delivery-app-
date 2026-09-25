@@ -1,7 +1,7 @@
+import { requireOptionalNativeModule } from 'expo-modules-core';
+import type { AuthRequest, AuthRequestPromptOptions, AuthSessionResult } from 'expo-auth-session';
 import Constants from 'expo-constants';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import * as Google from 'expo-auth-session/providers/google';
-import type { AuthSessionResult } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Platform } from 'react-native';
@@ -18,6 +18,50 @@ type Extra = {
   googleAndroidClientId?: string;
 };
 
+type GoogleAuthModule = {
+  useIdTokenAuthRequest: (config: {
+    clientId: string;
+    iosClientId?: string;
+    androidClientId?: string;
+    webClientId?: string;
+  }) => [
+    AuthRequest | null,
+    AuthSessionResult | null,
+    (options?: AuthRequestPromptOptions) => Promise<AuthSessionResult>,
+  ];
+};
+
+/**
+ * expo-auth-session Google provider imports expo-application at module load.
+ * If the running binary has no ExpoApplication (Expo Go mismatch / stale APK),
+ * requiring Google crashes the whole auth route — so probe first, then require.
+ */
+function loadGoogleAuth(): GoogleAuthModule | null {
+  try {
+    if (!requireOptionalNativeModule('ExpoApplication')) {
+      return null;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require('expo-auth-session/providers/google') as GoogleAuthModule;
+  } catch {
+    return null;
+  }
+}
+
+const Google = loadGoogleAuth();
+
+function useGoogleIdTokenAuthRequestStub(): [
+  AuthRequest | null,
+  AuthSessionResult | null,
+  (options?: AuthRequestPromptOptions) => Promise<AuthSessionResult>,
+] {
+  const prompt = useCallback(async () => ({ type: 'dismiss' as const }), []);
+  return [null, null, prompt];
+}
+
+const useGoogleIdTokenAuthRequest =
+  Google?.useIdTokenAuthRequest ?? useGoogleIdTokenAuthRequestStub;
+
 function googleClientIds() {
   const extra = (Constants.expoConfig?.extra ?? {}) as Extra;
   return {
@@ -31,6 +75,10 @@ export function isGoogleAuthConfigured() {
   return Boolean(googleClientIds().webClientId);
 }
 
+export function isGoogleNativeAvailable() {
+  return Google != null;
+}
+
 type Options = {
   role: PartnerRole;
   onSuccess: () => Promise<void> | void;
@@ -39,6 +87,7 @@ type Options = {
 
 /**
  * Google (idToken) + Apple identity token → user-service social login.
+ * Safe when ExpoApplication is missing — email/OTP login still works.
  */
 export function useSocialSignIn({ role, onSuccess, onError }: Options) {
   const loginGoogle = useAuthStore((s) => s.loginGoogle);
@@ -47,10 +96,10 @@ export function useSocialSignIn({ role, onSuccess, onError }: Options) {
   const [appleAvailable, setAppleAvailable] = useState(false);
   const handledResponse = useRef<string | null>(null);
   const ids = googleClientIds();
+  const googleNative = Google != null;
 
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId:
-      ids.webClientId || 'unconfigured.apps.googleusercontent.com',
+  const [request, response, promptAsync] = useGoogleIdTokenAuthRequest({
+    clientId: ids.webClientId || 'unconfigured.apps.googleusercontent.com',
     iosClientId: ids.iosClientId,
     androidClientId: ids.androidClientId,
     webClientId: ids.webClientId,
@@ -112,6 +161,13 @@ export function useSocialSignIn({ role, onSuccess, onError }: Options) {
   }, [loginGoogle, onError, onSuccess, response, role]);
 
   const signInWithGoogle = useCallback(async () => {
+    if (!googleNative) {
+      Alert.alert(
+        'Google sign-in',
+        'This install is missing the Google native module. Use email / OTP, or run a fresh native build:\nnpx expo run:android\n(or EAS development build), then npx expo start --dev-client'
+      );
+      return;
+    }
     if (!ids.webClientId) {
       Alert.alert(
         'Google sign-in',
@@ -137,7 +193,7 @@ export function useSocialSignIn({ role, onSuccess, onError }: Options) {
           : formatAuthError(err, 'Could not open Google sign-in.')
       );
     }
-  }, [ids.webClientId, onError, promptAsync, request]);
+  }, [googleNative, ids.webClientId, onError, promptAsync, request]);
 
   const signInWithApple = useCallback(async () => {
     if (Platform.OS !== 'ios' || !appleAvailable) {
@@ -190,6 +246,7 @@ export function useSocialSignIn({ role, onSuccess, onError }: Options) {
     signInWithApple,
     busy,
     appleAvailable,
-    googleReady: Boolean(request),
+    googleReady: googleNative && Boolean(request),
+    googleNative,
   };
 }
