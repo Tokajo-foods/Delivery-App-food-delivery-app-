@@ -46,7 +46,7 @@ export function AuthShell({
           showsVerticalScrollIndicator={false}
         >
           <SafeAreaView edges={['top', 'bottom']}>
-            <View className="items-center mt-6 mb-2">
+            <View className="items-center mt-6 mb-8">
               <Brand portal={false} />
             </View>
             <View
