@@ -5,6 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { AuthBanner } from '@/components/auth/AuthBanner';
 import { AuthField } from '@/components/auth/AuthField';
+import { AuthLoadingScreen } from '@/components/auth/AuthLoadingScreen';
 import { DeliveryRegisterWizard } from '@/components/delivery/auth/RegisterWizard';
 import { PrimaryButton } from '@/components/auth/PrimaryButton';
 import { RoleSelector } from '@/components/auth/RoleSelector';
@@ -45,6 +46,7 @@ export function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [handoffToLogin, setHandoffToLogin] = useState(false);
 
   const validate = () => {
     const next: Record<string, string> = {};
@@ -69,29 +71,45 @@ export function RegisterScreen() {
     if (!validate()) return;
 
     const normalizedEmail = email.trim().toLowerCase();
+    const portalRole = role === 'delivery' ? 'delivery' : 'restaurant';
 
     try {
-      await register({
-        firstName: firstName.trim(),
-        lastName: lastName.trim() || undefined,
-        email: normalizedEmail,
-        phone: phone.trim(),
-        password,
-        confirmPassword,
-        role,
-      });
-      await useAuthStore.getState().clearSession();
+      setHandoffToLogin(true);
+      await register(
+        {
+          firstName: firstName.trim(),
+          lastName: lastName.trim() || undefined,
+          email: normalizedEmail,
+          phone: phone.trim(),
+          password,
+          confirmPassword,
+          role,
+        },
+        { persistSession: false }
+      );
+      // Let the success loader paint once before swapping screens.
+      await new Promise((resolve) => setTimeout(resolve, 420));
       router.replace({
         pathname: '/login',
-        params: { registered: '1', email: normalizedEmail, role: 'restaurant' },
+        params: {
+          registered: '1',
+          email: normalizedEmail,
+          role: portalRole,
+        },
       });
     } catch (err) {
+      setHandoffToLogin(false);
       setError(formatAuthError(err, 'Registration failed'));
     }
   };
 
   const isDelivery = role === 'delivery' || Boolean(inviteToken);
-  const canCreate = emailVerified && phoneVerified && !isLoading;
+  const canCreate =
+    emailVerified && phoneVerified && !isLoading && !handoffToLogin;
+
+  if (handoffToLogin) {
+    return <AuthLoadingScreen message="Account created. Opening sign in…" />;
+  }
 
   return (
     <AuthShell

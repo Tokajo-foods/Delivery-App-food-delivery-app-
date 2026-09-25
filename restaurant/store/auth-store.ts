@@ -45,7 +45,7 @@ type AuthState = {
   setRole: (role: PartnerRole) => void;
   hydrate: () => Promise<void>;
   setSession: (token: string, user: AuthUser) => Promise<void>;
-  register: (payload: RegisterPayload) => Promise<void>;
+  register: (payload: RegisterPayload, options?: { persistSession?: boolean }) => Promise<void>;
   login: (payload: LoginPayload) => Promise<void>;
   sendOtp: (payload: OtpSendPayload) => Promise<OtpSendResult>;
   resendOtp: (payload: OtpSendPayload) => Promise<OtpSendResult>;
@@ -165,14 +165,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ token: savedToken, user: savedUser, role: savedUser.role });
   },
 
-  register: async (payload) => {
+  register: async (payload, options) => {
     set({ isLoading: true });
     try {
       const response = await authApi.register(payload);
-      await get().setSession(
-        response.token,
-        withPortalRole(response.user, payload.role)
-      );
+      const persistSession = options?.persistSession !== false;
+      if (persistSession) {
+        await get().setSession(
+          response.token,
+          withPortalRole(response.user, payload.role)
+        );
+      } else {
+        // Backend may set `_sid` on register — revoke then clear so auth
+        // layout does not bounce into the app before login.
+        try {
+          await authApi.logout();
+        } catch {
+          // Session cookie may be missing; ignore.
+        }
+        await clearApiSession();
+      }
     } catch (error) {
       throwAuth(error, 'Registration failed');
     } finally {
