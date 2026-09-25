@@ -30,16 +30,16 @@ export function CheckboxRow({ checked, onToggle, label }: CheckboxRowProps) {
 
 export function LegalFooter() {
   return (
-    <View className="mt-6 items-center gap-1">
-      <View className="flex-row items-center gap-4">
+    <View className="mt-8 items-center gap-2.5">
+      <View className="flex-row items-center gap-5">
         {['Privacy', 'Terms', 'Support'].map((item) => (
           <Text key={item} className="text-xs font-medium text-secondary-light">
             {item}
           </Text>
         ))}
       </View>
-      <Text className="text-xs text-gray-400">
-        © 2024 {BRAND_NAME}
+      <Text className="text-xs tracking-wide text-gray-400">
+        © 2026 {BRAND_NAME}
       </Text>
     </View>
   );

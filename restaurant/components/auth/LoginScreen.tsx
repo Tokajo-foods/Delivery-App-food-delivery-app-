@@ -240,63 +240,71 @@ export function LoginScreen() {
                 </Pressable>
               </View>
 
-              <View
-                onLayout={(e) => {
-                  sliderWidthRef.current = e.nativeEvent.layout.width;
-                }}
-                className="bg-[#EA4B14] h-[56px] rounded-full justify-center px-[6px] mb-4 overflow-hidden relative"
-              >
-                <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
-                  <Text className="text-white text-[16px] font-bold text-center">
-                    {formBusy ? 'Signing in...' : 'Swipe to Login'}
-                  </Text>
+              <View className="mt-2 gap-5">
+                <View
+                  onLayout={(e) => {
+                    sliderWidthRef.current = e.nativeEvent.layout.width;
+                  }}
+                  className="bg-[#EA4B14] h-[56px] rounded-full justify-center px-[6px] overflow-hidden relative"
+                >
+                  <View
+                    className="absolute inset-0 items-center justify-center"
+                    pointerEvents="none"
+                  >
+                    <Text className="text-white text-[16px] font-bold text-center tracking-wide">
+                      {formBusy ? 'Signing in…' : 'Swipe to Login'}
+                    </Text>
+                  </View>
+
+                  <Animated.View
+                    {...panResponder.panHandlers}
+                    style={[
+                      { transform: [{ translateX: pan.x }] },
+                      {
+                        width: 44,
+                        height: 44,
+                        backgroundColor: 'white',
+                        borderRadius: 22,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10,
+                      },
+                    ]}
+                  >
+                    {formBusy ? (
+                      <ActivityIndicator color="#EA4B14" />
+                    ) : (
+                      <ChevronsRight color="#EA4B14" size={24} />
+                    )}
+                  </Animated.View>
                 </View>
 
-                <Animated.View
-                  {...panResponder.panHandlers}
-                  style={[
-                    { transform: [{ translateX: pan.x }] },
-                    {
-                      width: 44,
-                      height: 44,
-                      backgroundColor: 'white',
-                      borderRadius: 22,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      zIndex: 10,
-                    }
-                  ]}
-                >
-                  {formBusy ? (
-                    <ActivityIndicator color="#EA4B14" />
-                  ) : (
-                    <ChevronsRight color="#EA4B14" size={24} />
-                  )}
-                </Animated.View>
-              </View>
+                <View className="flex-row items-center justify-center py-1">
+                  <Text className="text-[15px] text-secondary">
+                    Don't have an account?{' '}
+                  </Text>
+                  <Pressable
+                    onPress={() => router.push('/register')}
+                    hitSlop={10}
+                  >
+                    <Text className="text-[15px] font-bold text-[#EA4B14]">
+                      Create an account
+                    </Text>
+                  </Pressable>
+                </View>
 
-              <View className="flex-row items-center justify-center mb-3">
-                <Text className="text-[15px] text-secondary">
-                  Don't have an account?{' '}
-                </Text>
-                <Pressable onPress={() => router.push('/register')} hitSlop={8}>
-                  <Text className="text-[15px] font-bold text-[#EA4B14]">
-                    Create an account
+                <Pressable
+                  onPress={() => router.push('/verify-otp')}
+                  hitSlop={8}
+                  className="h-12 items-center justify-center rounded-full border border-[#FDBA74] bg-[#FFF7ED]"
+                >
+                  <Text className="text-center text-[15px] font-semibold text-[#EA4B14]">
+                    {role === 'delivery'
+                      ? 'Continue with phone OTP'
+                      : 'Sign in with OTP instead'}
                   </Text>
                 </Pressable>
               </View>
-
-              <Pressable
-                onPress={() => router.push('/verify-otp')}
-                hitSlop={8}
-                className="mb-2 mt-2 h-12 items-center justify-center rounded-full border border-[#FED7AA] bg-[#FFF7ED]"
-              >
-                <Text className="text-center text-[15px] font-bold text-[#EA4B14]">
-                  {role === 'delivery'
-                    ? 'Continue with phone OTP'
-                    : 'Sign in with OTP instead'}
-                </Text>
-              </Pressable>
 
               <LegalFooter />
             </View>
