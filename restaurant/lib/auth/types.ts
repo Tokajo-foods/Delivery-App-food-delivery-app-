@@ -151,8 +151,19 @@ export type ForgotPasswordPayload = {
   email: string;
 };
 
+export type ConfirmForgotPasswordOtpPayload = {
+  emailOrPhone: string;
+  otp: string;
+};
+
 export type ResetPasswordPayload = {
   token: string;
+  password: string;
+  confirmPassword?: string;
+};
+
+export type ResetPasswordWithOtpPayload = {
+  identifier: string;
   password: string;
   confirmPassword?: string;
 };

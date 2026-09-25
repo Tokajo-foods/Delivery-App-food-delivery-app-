@@ -11,6 +11,7 @@ import type {
   ConfirmRegisterOtpPayload,
   ConfirmRegisterOtpResult,
   ForgotPasswordPayload,
+  ConfirmForgotPasswordOtpPayload,
   GoogleLoginPayload,
   LoginPayload,
   MessageResponse,
@@ -21,6 +22,7 @@ import type {
   RegisterOtpPolicy,
   RegisterPayload,
   ResetPasswordPayload,
+  ResetPasswordWithOtpPayload,
 } from '@/lib/auth/types';
 import { fromApiRole, toApiRole } from '@/lib/auth/types';
 import {
@@ -155,6 +157,10 @@ export const AUTH_ERROR_COPY: Record<string, string> = {
     'This phone number is already registered to another account. Use a different phone number.',
   ACCOUNT_EXISTS:
     'This email already has a Tokajo account. Use that account’s password to add restaurant access, or sign in / reset password.',
+  RESET_OTP_REQUIRED:
+    'Verify the password-reset OTP before setting a new password.',
+  FORGOT_OTP_USE_CONFIRM:
+    'Confirm the reset OTP first, then set your new password.',
   CONTACT_CONFLICT:
     'This email and phone belong to two different accounts. Use one account’s email or phone.',
   ROLE_NOT_ON_ACCOUNT:
@@ -448,13 +454,51 @@ export const authApi = {
     return normalizeMessageResponse(data);
   },
 
+  confirmForgotPasswordOtp: async (
+    payload: ConfirmForgotPasswordOtpPayload
+  ): Promise<ConfirmRegisterOtpResult> => {
+    const data = await apiRequest<unknown>(
+      `${AUTH_BASE}/otp/confirm-forgot-password`,
+      {
+        method: 'POST',
+        body: {
+          identifier: payload.emailOrPhone,
+          otp: payload.otp,
+        },
+      }
+    );
+    const payloadObj =
+      data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+    const nested =
+      payloadObj.data && typeof payloadObj.data === 'object'
+        ? (payloadObj.data as Record<string, unknown>)
+        : payloadObj;
+    const channel = nested.channel === 'phone' ? 'phone' : 'email';
+    return {
+      channel,
+      identifier: String(nested.identifier ?? payload.emailOrPhone),
+      verified: true,
+      message: normalizeMessageResponse(data).message,
+    };
+  },
+
   resetPassword: async (payload: ResetPasswordPayload) => {
     const data = await apiRequest<unknown>(`${AUTH_BASE}/reset-password`, {
       method: 'POST',
       body: {
         token: payload.token,
-        password: payload.password,
-        confirmPassword: payload.confirmPassword ?? payload.password,
+        newPassword: payload.password,
+      },
+    });
+    return normalizeMessageResponse(data);
+  },
+
+  resetPasswordWithOtp: async (payload: ResetPasswordWithOtpPayload) => {
+    const data = await apiRequest<unknown>(`${AUTH_BASE}/reset-password`, {
+      method: 'POST',
+      body: {
+        identifier: payload.identifier,
+        newPassword: payload.password,
       },
     });
     return normalizeMessageResponse(data);
