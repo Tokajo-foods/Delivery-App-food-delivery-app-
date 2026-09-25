@@ -12,6 +12,7 @@ import {
 } from '@/components/auth/signup-validators';
 import { useOtpCountdown } from '@/components/auth/useOtpCountdown';
 import { authApi, formatAuthError } from '@/lib/auth/api';
+import { isFirebasePhoneConfigured } from '@/lib/auth/firebase-phone';
 import type { PartnerRole, RegisterOtpPolicy } from '@/lib/auth/types';
 import { theme } from '@/constants/theme';
 
@@ -70,7 +71,10 @@ export function SignupContactVerify({
       const next = await authApi.getRegisterPolicy();
       setPolicy(next);
       onEmailVerifiedChange(!next.requireEmailOtp);
-      onPhoneVerifiedChange(!next.requirePhoneOtp);
+      // Phone OTP only when server requires it AND Firebase Web keys exist (for firebase provider).
+      const phoneReady =
+        next.phoneProvider !== 'firebase' || isFirebasePhoneConfigured();
+      onPhoneVerifiedChange(!(next.requirePhoneOtp && phoneReady));
     } catch (err) {
       setPolicy(null);
       setPolicyError(
@@ -100,7 +104,14 @@ export function SignupContactVerify({
   }, [email]);
 
   const requireEmail = policy?.requireEmailOtp ?? false;
-  const requirePhone = policy?.requirePhoneOtp ?? false;
+  const firebasePhoneReady = isFirebasePhoneConfigured();
+  const requirePhone =
+    Boolean(policy?.requirePhoneOtp) &&
+    (policy?.phoneProvider !== 'firebase' || firebasePhoneReady);
+  const phoneOtpDeferred =
+    Boolean(policy?.requirePhoneOtp) &&
+    policy?.phoneProvider === 'firebase' &&
+    !firebasePhoneReady;
 
   const sendEmail = async () => {
     setLocalError(null);
@@ -181,7 +192,15 @@ export function SignupContactVerify({
       ) : null}
       {policy && !requireEmail && !requirePhone ? (
         <Text className="mb-2 text-xs text-secondary-light">
-          Email/phone OTP is off on the server. Enter contacts and continue.
+          {phoneOtpDeferred
+            ? 'Phone OTP is skipped until Firebase Web keys are added. Email OTP still applies if required.'
+            : 'Email/phone OTP is off on the server. Enter contacts and continue.'}
+        </Text>
+      ) : null}
+      {phoneOtpDeferred ? (
+        <Text className="mb-2 text-xs text-secondary-light">
+          Phone marked verified for now. Add EXPO_PUBLIC_FIREBASE_API_KEY + APP_ID
+          and set REQUIRE_REGISTER_PHONE_OTP=true to enable SMS verification.
         </Text>
       ) : null}
 
