@@ -1,66 +1,7 @@
-import { Apple, Check } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
-import { BRAND_NAME, theme } from '@/constants/theme';
-
-export function AuthDivider({ label }: { label: string }) {
-  return (
-    <View className="my-5 flex-row items-center gap-3">
-      <View className="h-px flex-1 bg-gray-200" />
-      <Text className="text-xs font-semibold uppercase tracking-widest text-secondary-light">
-        {label}
-      </Text>
-      <View className="h-px flex-1 bg-gray-200" />
-    </View>
-  );
-}
-
-type SocialButtonsProps = {
-  onGoogle: () => void;
-  onApple: () => void;
-  googleBusy?: boolean;
-  appleBusy?: boolean;
-  showApple?: boolean;
-  disabled?: boolean;
-};
-
-export function SocialButtons({
-  onGoogle,
-  onApple,
-  googleBusy,
-  appleBusy,
-  showApple = true,
-  disabled,
-}: SocialButtonsProps) {
-  return (
-    <View className="flex-row gap-3">
-      <Pressable
-        onPress={onGoogle}
-        disabled={disabled || googleBusy}
-        className="h-12 flex-1 flex-row items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white active:bg-surface"
-        style={{ opacity: disabled || googleBusy ? 0.6 : 1 }}
-      >
-        <Text className="text-base font-extrabold text-[#4285F4]">G</Text>
-        <Text className="text-sm font-semibold text-secondary">
-          {googleBusy ? 'Signing in…' : 'Google'}
-        </Text>
-      </Pressable>
-      {showApple ? (
-        <Pressable
-          onPress={onApple}
-          disabled={disabled || appleBusy}
-          className="h-12 flex-1 flex-row items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white active:bg-surface"
-          style={{ opacity: disabled || appleBusy ? 0.6 : 1 }}
-        >
-          <Apple color={theme.secondary} size={18} fill={theme.secondary} />
-          <Text className="text-sm font-semibold text-secondary">
-            {appleBusy ? 'Signing in…' : 'Apple'}
-          </Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
+import { BRAND_NAME } from '@/constants/theme';
 
 type CheckboxRowProps = {
   checked: boolean;

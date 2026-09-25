@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronsRight, Lock, Mail } from 'lucide-react-native';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -17,15 +17,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AuthBanner } from '@/components/auth/AuthBanner';
 import { AuthLoadingScreen } from '@/components/auth/AuthLoadingScreen';
-import {
-  AuthDivider,
-  CheckboxRow,
-  LegalFooter,
-  SocialButtons,
-} from '@/components/auth/AuthExtras';
+import { CheckboxRow, LegalFooter } from '@/components/auth/AuthExtras';
 import { AuthField } from '@/components/auth/AuthField';
 import { RoleSelector } from '@/components/auth/RoleSelector';
-import { useSocialSignIn } from '@/lib/auth/use-social-sign-in';
 import { resolvePostAuthRoute } from '@/lib/navigation/post-auth';
 import { useGatewayProbe } from '@/lib/gateway/hooks';
 import { useAuthStore } from '@/store/auth-store';
@@ -151,29 +145,7 @@ export function LoginScreen() {
 
   handleLoginRef.current = handleLogin;
 
-  const finishSocial = useCallback(async () => {
-    setIsRedirecting(true);
-    try {
-      const userRole = useAuthStore.getState().user?.role ?? role;
-      const target = await resolvePostAuthRoute(userRole);
-      router.replace(target);
-    } catch {
-      setIsRedirecting(false);
-      setError('Signed in, but could not open your dashboard. Try again.');
-    }
-  }, [role, router]);
-
-  const onSocialError = useCallback((message: string) => {
-    setIsRedirecting(false);
-    setError(message);
-  }, []);
-
-  const social = useSocialSignIn({
-    role,
-    onSuccess: finishSocial,
-    onError: onSocialError,
-  });
-  const formBusy = busy || Boolean(social.busy);
+  const formBusy = busy;
   busyRef.current = formBusy;
 
   if (isRedirecting) {
@@ -301,19 +273,6 @@ export function LoginScreen() {
                     <ChevronsRight color="#EA4B14" size={24} />
                   )}
                 </Animated.View>
-              </View>
-
-              <AuthDivider label="Or continue with" />
-
-              <View className="mt-4 mb-4">
-                <SocialButtons
-                  onGoogle={() => void social.signInWithGoogle()}
-                  onApple={() => void social.signInWithApple()}
-                  googleBusy={social.busy === 'google'}
-                  appleBusy={social.busy === 'apple'}
-                  showApple={social.appleAvailable}
-                  disabled={formBusy}
-                />
               </View>
 
               <View className="flex-row items-center justify-center mb-3">
