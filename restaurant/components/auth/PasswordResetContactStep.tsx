@@ -101,11 +101,6 @@ export function PasswordResetContactStep({
         />
       )}
 
-      <Text className="mb-1 text-xs leading-5 text-secondary-light">
-        For security we only send a code when this contact matches an existing
-        account. The confirmation message is the same either way.
-      </Text>
-
       <PrimaryButton
         label={
           cooldownActive

@@ -7,6 +7,7 @@ import { AuthBanner } from '@/components/auth/AuthBanner';
 import { AuthField } from '@/components/auth/AuthField';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { PasswordResetContactStep } from '@/components/auth/PasswordResetContactStep';
+import { PasswordResetOtpSentModal } from '@/components/auth/PasswordResetOtpSentModal';
 import { PasswordResetSuccessModal } from '@/components/auth/PasswordResetSuccessModal';
 import { PasswordResetStepHeader } from '@/components/auth/PasswordResetStepHeader';
 import { PrimaryButton } from '@/components/auth/PrimaryButton';
@@ -27,11 +28,11 @@ const STEP_COPY: Record<Step, { title: string; subtitle: string }> = {
   contact: {
     title: 'Reset password',
     subtitle:
-      'Enter the email or phone on your Tokajo Foods account. We’ll send a one-time code if it exists.',
+      'Enter the email or phone on your Tokajo Foods account to receive a verification code.',
   },
   otp: {
     title: 'Enter verification code',
-    subtitle: 'We sent a 6-digit code. Enter it below to continue.',
+    subtitle: 'Enter the 6-digit code we just sent you.',
   },
   password: {
     title: 'Set new password',
@@ -54,6 +55,7 @@ export function PasswordResetWizard() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [showOtpSent, setShowOtpSent] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
   const identifier = useMemo(() => {
@@ -100,14 +102,9 @@ export function PasswordResetWizard() {
         emailOrPhone: identifier,
         purpose: 'forgot_password',
       });
-      setInfo(
-        channel === 'email'
-          ? `If an account exists for ${maskedDestination}, a code was sent to that inbox.`
-          : `If an account exists for ${maskedDestination}, a code was sent by SMS.`,
-      );
       cooldown.start(result.cooldownSeconds || 30);
-      setStep('otp');
       setOtp('');
+      setShowOtpSent(true);
     } catch (err) {
       setError(formatAuthError(err, 'Could not send reset code'));
     } finally {
@@ -276,6 +273,15 @@ export function PasswordResetWizard() {
         ) : null}
       </AuthShell>
 
+      <PasswordResetOtpSentModal
+        visible={showOtpSent}
+        channel={channel}
+        destination={maskedDestination}
+        onContinue={() => {
+          setShowOtpSent(false);
+          setStep('otp');
+        }}
+      />
       <PasswordResetSuccessModal
         visible={showSuccess}
         onSignIn={() => {

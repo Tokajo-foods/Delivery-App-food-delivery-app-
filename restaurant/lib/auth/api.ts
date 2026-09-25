@@ -151,6 +151,8 @@ export const AUTH_ERROR_COPY: Record<string, string> = {
   INVALID_OTP: 'That code is wrong or expired. Request a new one.',
   EMAIL_NOT_FOUND: 'No account found for that email.',
   USER_NOT_FOUND: 'No account found. Create one first.',
+  ACCOUNT_NOT_FOUND:
+    'This account does not exist in our system. Check the email or phone and try again.',
   EMAIL_ALREADY_EXISTS:
     'An account already exists with this email. Please sign in.',
   PHONE_ALREADY_EXISTS:
