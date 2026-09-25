@@ -1,4 +1,4 @@
-import { Mail } from 'lucide-react-native';
+import { Mail, Smartphone } from 'lucide-react-native';
 import { Modal, Pressable, Text, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/auth/PrimaryButton';
@@ -18,6 +18,7 @@ export function PasswordResetOtpSentModal({
   onContinue,
 }: PasswordResetOtpSentModalProps) {
   const via = channel === 'email' ? 'email' : 'SMS';
+  const Icon = channel === 'email' ? Mail : Smartphone;
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onContinue}>
       <Pressable
@@ -52,7 +53,7 @@ export function PasswordResetOtpSentModal({
               marginBottom: 16,
             }}
           >
-            <Mail size={30} color={theme.primary} />
+            <Icon size={30} color={theme.primary} />
           </View>
           <Text
             style={{
