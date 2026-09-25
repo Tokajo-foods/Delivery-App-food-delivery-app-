@@ -108,7 +108,7 @@ export function RegisterScreen() {
     emailVerified && phoneVerified && !isLoading && !handoffToLogin;
 
   if (handoffToLogin) {
-    return <AuthLoadingScreen message="Account created. Opening sign in…" />;
+    return <AuthLoadingScreen message="Account created — taking you to sign in…" />;
   }
 
   return (
