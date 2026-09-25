@@ -39,7 +39,8 @@ export function SignupPhoneVerify({
   onError,
 }: Props) {
   const recaptchaRef = useRef<FirebaseRecaptchaVerifierModal>(null);
-  const cooldown = useOtpCooldown();
+  const cooldown = useOtpCountdown();
+  const validity = useOtpCountdown();
   const [otp, setOtp] = useState('');
   const [sent, setSent] = useState(false);
   const [verificationId, setVerificationId] = useState<string | null>(null);
@@ -52,6 +53,7 @@ export function SignupPhoneVerify({
     setOtp('');
     setVerificationId(null);
     cooldown.clear();
+    validity.clear();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reset only when phone changes
   }, [phone]);
 
@@ -82,6 +84,7 @@ export function SignupPhoneVerify({
         setVerificationId(id);
         setSent(true);
         cooldown.start(resendCooldownSeconds);
+        validity.start(300);
       } else {
         const result = await authApi.sendOtp({
           emailOrPhone: identifier,
@@ -90,6 +93,7 @@ export function SignupPhoneVerify({
         });
         setSent(true);
         cooldown.start(result.cooldownSeconds || resendCooldownSeconds);
+        validity.start(result.expiresInSeconds || 600);
       }
     } catch (err) {
       onError(formatAuthError(err, 'Could not send phone OTP'));
