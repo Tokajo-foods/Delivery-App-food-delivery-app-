@@ -9,9 +9,9 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/tokajo-logo.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F5C518"
+      "image": "./assets/splash-brand.jpg",
+      "resizeMode": "cover",
+      "backgroundColor": "#F7EFE4"
     },
     "plugins": [
       "expo-router",

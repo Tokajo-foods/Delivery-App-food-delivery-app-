@@ -14,15 +14,18 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { authTheme } from '@/constants/auth-theme';
+import { AppSplashScreen } from '@/components/splash/AppSplashScreen';
 import { setUnauthorizedHandler } from '@/lib/auth/unauthorized';
 import { setupLiveQueryFocus } from '@/lib/live-query';
 import { asyncStoragePersister, queryClient } from '@/lib/query-client';
+import {
+  markColdStartSplashConsumed,
+  shouldShowColdStartSplash,
+} from '@/lib/splash/cold-start';
 import { useAuthStore } from '@/store/auth-store';
 
 void SplashScreen.preventAutoHideAsync();
@@ -41,6 +44,8 @@ export default function RootLayout() {
     PlusJakartaSans_800ExtraBold,
   });
   const [fontWaitDone, setFontWaitDone] = useState(false);
+  const [isColdStart] = useState(() => shouldShowColdStartSplash());
+  const [progressDone, setProgressDone] = useState(() => !shouldShowColdStartSplash());
 
   useEffect(() => {
     hydrate();
@@ -52,12 +57,26 @@ export default function RootLayout() {
   }, []);
 
   const uiReady = fontsLoaded || fontWaitDone;
+  const brandSplashVisible = isColdStart && !(progressDone && uiReady);
 
   useEffect(() => {
-    if (uiReady) {
+    if (isColdStart) {
+      // Hand off to branded art immediately — no spinner flash.
       void SplashScreen.hideAsync();
+      return;
     }
-  }, [uiReady]);
+    if (uiReady) void SplashScreen.hideAsync();
+  }, [isColdStart, uiReady]);
+
+  useEffect(() => {
+    if (isColdStart && progressDone && uiReady) {
+      markColdStartSplashConsumed();
+    }
+  }, [isColdStart, progressDone, uiReady]);
+
+  const onBrandSplashFinished = useCallback(() => {
+    setProgressDone(true);
+  }, []);
 
   useEffect(() => {
     setUnauthorizedHandler(async () => {
@@ -74,30 +93,16 @@ export default function RootLayout() {
           client={queryClient}
           persistOptions={{ persister: asyncStoragePersister }}
         >
-          <StatusBar style="light" />
+          <StatusBar style="dark" />
           <Stack
             screenOptions={{
               headerShown: false,
               animation: 'fade',
-              contentStyle: { backgroundColor: '#FFF7F2' },
+              contentStyle: { backgroundColor: '#F7EFE4' },
             }}
           />
-          {!uiReady ? (
-            <View
-              pointerEvents="auto"
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#FFF7F2',
-              }}
-            >
-              <ActivityIndicator color={authTheme.brand} size="large" />
-            </View>
+          {brandSplashVisible ? (
+            <AppSplashScreen onFinished={onBrandSplashFinished} />
           ) : null}
         </PersistQueryClientProvider>
       </SafeAreaProvider>
