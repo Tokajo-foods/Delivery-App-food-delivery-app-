@@ -98,6 +98,8 @@ export type OtpSendPayload = {
 export type OtpSendResult = {
   message: string;
   cooldownSeconds: number;
+  /** OTP lifetime from send/resend (server `OTP_EXPIRY_SECONDS`). */
+  expiresInSeconds: number;
 };
 
 export type OtpVerifyPayload = {

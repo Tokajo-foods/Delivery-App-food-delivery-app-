@@ -11,6 +11,7 @@ import { PasswordResetOtpSentModal } from '@/components/auth/PasswordResetOtpSen
 import { PasswordResetSuccessModal } from '@/components/auth/PasswordResetSuccessModal';
 import { PasswordResetStepHeader } from '@/components/auth/PasswordResetStepHeader';
 import { PrimaryButton } from '@/components/auth/PrimaryButton';
+import { OtpValidityTimer } from '@/components/auth/OtpValidityTimer';
 import { useOtpCountdown } from '@/components/auth/useOtpCountdown';
 import {
   isSixDigitOtp,
@@ -43,6 +44,7 @@ const STEP_COPY: Record<Step, { title: string; subtitle: string }> = {
 export function PasswordResetWizard() {
   const router = useRouter();
   const cooldown = useOtpCountdown();
+  const validity = useOtpCountdown();
 
   const [step, setStep] = useState<Step>('contact');
   const [channel, setChannel] = useState<Channel>('email');
@@ -78,8 +80,10 @@ export function PasswordResetWizard() {
   const goBack = () => {
     setError(null);
     setInfo(null);
-    if (step === 'otp') setStep('contact');
-    else if (step === 'password') setStep('otp');
+    if (step === 'otp') {
+      setStep('contact');
+      validity.clear();
+    } else if (step === 'password') setStep('otp');
     else router.back();
   };
 
@@ -103,6 +107,7 @@ export function PasswordResetWizard() {
         purpose: 'forgot_password',
       });
       cooldown.start(result.cooldownSeconds || 30);
+      validity.start(result.expiresInSeconds || 600);
       setOtp('');
       setShowOtpSent(true);
     } catch (err) {
@@ -210,6 +215,7 @@ export function PasswordResetWizard() {
 
         {step === 'otp' ? (
           <View className="gap-3">
+            <OtpValidityTimer secondsLeft={validity.seconds} />
             <AuthField
               label="Verification code"
               placeholder="6-digit code"
@@ -225,7 +231,7 @@ export function PasswordResetWizard() {
               icon={ShieldCheck}
               onPress={() => void confirmOtp()}
               loading={busy}
-              disabled={busy}
+              disabled={busy || validity.seconds <= 0}
             />
             <PrimaryButton
               label={

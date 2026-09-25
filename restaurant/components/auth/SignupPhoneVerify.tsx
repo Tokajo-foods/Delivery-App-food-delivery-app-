@@ -4,6 +4,7 @@ import { Text, View } from 'react-native';
 
 import { AuthField } from '@/components/auth/AuthField';
 import { PrimaryButton } from '@/components/auth/PrimaryButton';
+import { OtpValidityTimer } from '@/components/auth/OtpValidityTimer';
 import { isSixDigitOtp, isValidSignupPhone } from '@/components/auth/signup-validators';
 import { useOtpCountdown } from '@/components/auth/useOtpCountdown';
 import { authApi, formatAuthError } from '@/lib/auth/api';
@@ -155,6 +156,7 @@ export function SignupPhoneVerify({
       />
       {sent ? (
         <>
+          <OtpValidityTimer secondsLeft={validity.seconds} />
           <AuthField
             label={useFirebase ? 'Firebase SMS code' : 'SMS OTP'}
             placeholder="6-digit code"
@@ -167,7 +169,7 @@ export function SignupPhoneVerify({
           <PrimaryButton
             label="Verify phone"
             loading={busy === 'ok'}
-            disabled={disabled || Boolean(busy)}
+            disabled={disabled || Boolean(busy) || validity.seconds <= 0}
             onPress={() => void confirm()}
           />
         </>

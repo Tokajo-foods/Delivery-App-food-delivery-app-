@@ -112,10 +112,23 @@ function pickCooldownSeconds(data: unknown, fallback = 30): number {
   return fallback;
 }
 
+function pickExpiresInSeconds(data: unknown, fallback = 600): number {
+  const payload =
+    data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+  const nested =
+    payload.data && typeof payload.data === 'object'
+      ? (payload.data as Record<string, unknown>)
+      : {};
+  const raw = Number(nested.expiresInSeconds ?? payload.expiresInSeconds);
+  if (Number.isFinite(raw) && raw > 0) return Math.round(raw);
+  return fallback;
+}
+
 function normalizeOtpSendResponse(data: unknown): OtpSendResult {
   return {
     message: normalizeMessageResponse(data).message || 'OTP sent',
     cooldownSeconds: pickCooldownSeconds(data, 30),
+    expiresInSeconds: pickExpiresInSeconds(data, 600),
   };
 }
 

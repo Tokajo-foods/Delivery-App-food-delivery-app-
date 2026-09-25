@@ -11,6 +11,7 @@ import {
   isValidSignupEmail,
 } from '@/components/auth/signup-validators';
 import { useOtpCountdown } from '@/components/auth/useOtpCountdown';
+import { OtpValidityTimer } from '@/components/auth/OtpValidityTimer';
 import { authApi, formatAuthError } from '@/lib/auth/api';
 import { isFirebasePhoneConfigured } from '@/lib/auth/firebase-phone';
 import type { PartnerRole, RegisterOtpPolicy } from '@/lib/auth/types';
@@ -63,6 +64,7 @@ export function SignupContactVerify({
   const [busy, setBusy] = useState<'email-send' | 'email-ok' | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const emailCooldown = useOtpCountdown();
+  const emailValidity = useOtpCountdown();
 
   const loadPolicy = async () => {
     setPolicyLoading(true);
@@ -100,6 +102,7 @@ export function SignupContactVerify({
     setEmailSent(false);
     setEmailOtp('');
     emailCooldown.clear();
+    emailValidity.clear();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email]);
 
@@ -131,6 +134,7 @@ export function SignupContactVerify({
       emailCooldown.start(
         result.cooldownSeconds || policy?.resendCooldownSeconds || 30
       );
+      emailValidity.start(result.expiresInSeconds || 600);
     } catch (err) {
       setLocalError(formatAuthError(err, 'Could not send email OTP'));
     } finally {
@@ -231,6 +235,7 @@ export function SignupContactVerify({
           />
           {emailSent ? (
             <>
+              <OtpValidityTimer secondsLeft={emailValidity.seconds} />
               <AuthField
                 label="Email OTP"
                 placeholder="6-digit code"
@@ -243,7 +248,9 @@ export function SignupContactVerify({
               <PrimaryButton
                 label="Verify email"
                 loading={busy === 'email-ok'}
-                disabled={disabled || Boolean(busy)}
+                disabled={
+                  disabled || Boolean(busy) || emailValidity.seconds <= 0
+                }
                 onPress={() => void confirmEmail()}
               />
             </>

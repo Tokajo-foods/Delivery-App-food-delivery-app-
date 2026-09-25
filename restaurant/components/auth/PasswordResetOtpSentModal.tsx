@@ -76,7 +76,8 @@ export function PasswordResetOtpSentModal({
             }}
           >
             A verification code has been sent by {via} to {destination}. Enter
-            it on the next screen to continue.
+            it on the next screen to continue. The code expires on a live
+            countdown timer.
           </Text>
           <PrimaryButton label="Continue" onPress={onContinue} />
         </Pressable>
