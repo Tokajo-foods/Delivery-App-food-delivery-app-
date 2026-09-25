@@ -474,6 +474,7 @@ export function DeliveryRegisterWizard({ profileOnly = false }: Props) {
               <SignupContactVerify
                 email={form.email}
                 phone={form.phone}
+                role="delivery"
                 onEmailChange={(email) => patch({ email })}
                 onPhoneChange={(phone) => patch({ phone })}
                 emailVerified={emailVerified}

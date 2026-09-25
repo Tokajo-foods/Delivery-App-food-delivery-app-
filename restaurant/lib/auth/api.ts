@@ -7,6 +7,9 @@ import type {
   AuthResponse,
   AuthUser,
   ChangePasswordPayload,
+  ConfirmFirebasePhonePayload,
+  ConfirmRegisterOtpPayload,
+  ConfirmRegisterOtpResult,
   ForgotPasswordPayload,
   GoogleLoginPayload,
   LoginPayload,
@@ -14,8 +17,6 @@ import type {
   OtpSendPayload,
   OtpSendResult,
   OtpVerifyPayload,
-  ConfirmRegisterOtpPayload,
-  ConfirmRegisterOtpResult,
   PartnerRole,
   RegisterOtpPolicy,
   RegisterPayload,
@@ -126,6 +127,15 @@ export const AUTH_ERROR_COPY: Record<string, string> = {
   PHONE_NOT_VERIFIED: 'Verify your phone OTP before creating an account.',
   OTP_CHANNEL_DISABLED:
     'This signup OTP channel is disabled on the server right now.',
+  USE_FIREBASE_PHONE:
+    'Phone verification uses Firebase. Enter the SMS code from Firebase, then verify.',
+  EMAIL_UNAVAILABLE:
+    'Email OTP could not be sent. Ask ops to configure SENDER_EMAIL / SENDER_PASSWORD.',
+  FIREBASE_UNAVAILABLE:
+    'Phone verification is temporarily unavailable. Try again later.',
+  INVALID_FIREBASE_TOKEN: 'Firebase phone verification failed. Request a new SMS code.',
+  PHONE_NOT_IN_TOKEN:
+    'Firebase did not return a verified phone number. Try the SMS flow again.',
   CONTACT_REQUIRED: 'Email and phone are required for partner signup.',
   REGISTER_OTP_USE_CONFIRM:
     'Confirm the signup OTP first, then create your account.',
@@ -139,8 +149,10 @@ export const AUTH_ERROR_COPY: Record<string, string> = {
   INVALID_OTP: 'That code is wrong or expired. Request a new one.',
   EMAIL_NOT_FOUND: 'No account found for that email.',
   USER_NOT_FOUND: 'No account found. Create one first.',
-  EMAIL_ALREADY_EXISTS: 'An account with this email already has this role. Sign in.',
-  PHONE_ALREADY_EXISTS: 'An account with this phone already has this role. Sign in.',
+  EMAIL_ALREADY_EXISTS:
+    'An account already exists with this email. Please sign in.',
+  PHONE_ALREADY_EXISTS:
+    'An account already exists with this phone number. Please sign in.',
   ACCOUNT_EXISTS:
     'An account already exists with this email or phone. Use that account’s password to add restaurant or rider access (you can keep a different email or phone on this signup).',
   CONTACT_CONFLICT:
@@ -294,6 +306,7 @@ export const authApi = {
       body: {
         identifier: payload.emailOrPhone,
         purpose: payload.purpose ?? 'login',
+        ...(payload.role ? { role: toApiRole(payload.role) } : {}),
       },
     });
     return normalizeOtpSendResponse(data);
@@ -305,6 +318,7 @@ export const authApi = {
       body: {
         identifier: payload.emailOrPhone,
         purpose: payload.purpose ?? 'login',
+        ...(payload.role ? { role: toApiRole(payload.role) } : {}),
       },
     });
     return normalizeOtpSendResponse(data);
@@ -336,10 +350,13 @@ export const authApi = {
     return {
       requireEmailOtp: Boolean(nested.requireEmailOtp),
       requirePhoneOtp: Boolean(nested.requirePhoneOtp),
+      phoneProvider: nested.phoneProvider === 'sms' ? 'sms' : 'firebase',
+      resendCooldownSeconds: Number(nested.resendCooldownSeconds) || 30,
+      resendMax: Number(nested.resendMax) || 5,
     };
   },
 
-  /** Confirm signup OTP without creating a session (email or phone). */
+  /** Confirm signup OTP without creating a session (email or SMS channel). */
   confirmRegisterOtp: async (
     payload: ConfirmRegisterOtpPayload
   ): Promise<ConfirmRegisterOtpResult> => {
@@ -360,6 +377,34 @@ export const authApi = {
     return {
       channel,
       identifier: String(nested.identifier ?? payload.emailOrPhone),
+      verified: true,
+      message: normalizeMessageResponse(data).message,
+    };
+  },
+
+  /** Confirm Firebase Phone Auth ID token for partner signup. */
+  confirmFirebasePhone: async (
+    payload: ConfirmFirebasePhonePayload
+  ): Promise<ConfirmRegisterOtpResult> => {
+    const data = await apiRequest<unknown>(
+      `${AUTH_BASE}/otp/confirm-firebase-phone`,
+      {
+        method: 'POST',
+        body: {
+          idToken: payload.idToken,
+          role: toApiRole(payload.role),
+        },
+      }
+    );
+    const payloadObj =
+      data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+    const nested =
+      payloadObj.data && typeof payloadObj.data === 'object'
+        ? (payloadObj.data as Record<string, unknown>)
+        : payloadObj;
+    return {
+      channel: 'phone',
+      identifier: String(nested.identifier ?? ''),
       verified: true,
       message: normalizeMessageResponse(data).message,
     };

@@ -149,6 +149,7 @@ export function RegisterScreen() {
           <SignupContactVerify
             email={email}
             phone={phone}
+            role={role}
             onEmailChange={setEmail}
             onPhoneChange={setPhone}
             emailVerified={emailVerified}

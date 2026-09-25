@@ -91,6 +91,8 @@ export type OtpPurpose =
 export type OtpSendPayload = {
   emailOrPhone: string;
   purpose?: OtpPurpose;
+  /** Partner role for register existence checks. */
+  role?: PartnerRole;
 };
 
 export type OtpSendResult = {
@@ -117,10 +119,18 @@ export type ConfirmRegisterOtpResult = {
   message?: string;
 };
 
+export type ConfirmFirebasePhonePayload = {
+  idToken: string;
+  role: PartnerRole;
+};
+
 /** From GET /auth/register-policy — which signup OTPs the backend requires. */
 export type RegisterOtpPolicy = {
   requireEmailOtp: boolean;
   requirePhoneOtp: boolean;
+  phoneProvider: 'firebase' | 'sms';
+  resendCooldownSeconds: number;
+  resendMax: number;
 };
 
 export type GoogleLoginPayload = {

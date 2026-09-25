@@ -5,34 +5,26 @@ import { Text, View } from 'react-native';
 import { AuthBanner } from '@/components/auth/AuthBanner';
 import { AuthField } from '@/components/auth/AuthField';
 import { PrimaryButton } from '@/components/auth/PrimaryButton';
+import { SignupPhoneVerify } from '@/components/auth/SignupPhoneVerify';
+import {
+  isSixDigitOtp,
+  isValidSignupEmail,
+} from '@/components/auth/signup-validators';
+import { useOtpCountdown } from '@/components/auth/useOtpCountdown';
 import { authApi, formatAuthError } from '@/lib/auth/api';
-import type { RegisterOtpPolicy } from '@/lib/auth/types';
+import type { PartnerRole, RegisterOtpPolicy } from '@/lib/auth/types';
 import { theme } from '@/constants/theme';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const E164_RE = /^\+[1-9]\d{1,14}$/;
-
-export function isValidSignupEmail(value: string): boolean {
-  return EMAIL_RE.test(value.trim());
-}
-
-export function isValidSignupPhone(value: string): boolean {
-  return E164_RE.test(value.trim());
-}
-
-export function isStrongSignupPassword(value: string): boolean {
-  return (
-    value.length >= 8 &&
-    /[A-Z]/.test(value) &&
-    /[a-z]/.test(value) &&
-    /[0-9]/.test(value) &&
-    /[^A-Za-z0-9]/.test(value)
-  );
-}
+export {
+  isStrongSignupPassword,
+  isValidSignupEmail,
+  isValidSignupPhone,
+} from '@/components/auth/signup-validators';
 
 type SignupContactVerifyProps = {
   email: string;
   phone: string;
+  role: PartnerRole;
   onEmailChange: (value: string) => void;
   onPhoneChange: (value: string) => void;
   emailVerified: boolean;
@@ -45,12 +37,13 @@ type SignupContactVerifyProps = {
 };
 
 /**
- * Email + phone fields with optional send/confirm OTP for partner signup.
- * OTP UI follows GET /auth/register-policy (REQUIRE_REGISTER_*_OTP env).
+ * Email + phone fields with OTP for partner signup.
+ * Fail-closed: Create account stays blocked until policy loads and required OTPs pass.
  */
 export function SignupContactVerify({
   email,
   phone,
+  role,
   onEmailChange,
   onPhoneChange,
   emailVerified,
@@ -62,97 +55,93 @@ export function SignupContactVerify({
   phoneError,
 }: SignupContactVerifyProps) {
   const [policy, setPolicy] = useState<RegisterOtpPolicy | null>(null);
+  const [policyError, setPolicyError] = useState<string | null>(null);
+  const [policyLoading, setPolicyLoading] = useState(true);
   const [emailOtp, setEmailOtp] = useState('');
-  const [phoneOtp, setPhoneOtp] = useState('');
   const [emailSent, setEmailSent] = useState(false);
-  const [phoneSent, setPhoneSent] = useState(false);
-  const [busy, setBusy] = useState<'email-send' | 'email-ok' | 'phone-send' | 'phone-ok' | null>(
-    null
-  );
+  const [busy, setBusy] = useState<'email-send' | 'email-ok' | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
+  const emailCooldown = useOtpCountdown();
+
+  const loadPolicy = async () => {
+    setPolicyLoading(true);
+    setPolicyError(null);
+    try {
+      const next = await authApi.getRegisterPolicy();
+      setPolicy(next);
+      onEmailVerifiedChange(!next.requireEmailOtp);
+      onPhoneVerifiedChange(!next.requirePhoneOtp);
+    } catch (err) {
+      setPolicy(null);
+      setPolicyError(
+        formatAuthError(
+          err,
+          'Could not load signup verification rules. Check connection and retry.'
+        )
+      );
+      onEmailVerifiedChange(false);
+      onPhoneVerifiedChange(false);
+    } finally {
+      setPolicyLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const next = await authApi.getRegisterPolicy();
-        if (cancelled) return;
-        setPolicy(next);
-        if (!next.requireEmailOtp) onEmailVerifiedChange(true);
-        if (!next.requirePhoneOtp) onPhoneVerifiedChange(true);
-      } catch {
-        if (cancelled) return;
-        // Fail open for local: allow create without OTP if policy unreachable.
-        setPolicy({ requireEmailOtp: false, requirePhoneOtp: false });
-        onEmailVerifiedChange(true);
-        onPhoneVerifiedChange(true);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // Intentionally once on mount — parent setters are stable enough for signup.
+    void loadPolicy();
+    // Intentionally once on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     setEmailSent(false);
     setEmailOtp('');
+    emailCooldown.clear();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email]);
-
-  useEffect(() => {
-    setPhoneSent(false);
-    setPhoneOtp('');
-  }, [phone]);
 
   const requireEmail = policy?.requireEmailOtp ?? false;
   const requirePhone = policy?.requirePhoneOtp ?? false;
 
-  const send = async (channel: 'email' | 'phone') => {
+  const sendEmail = async () => {
     setLocalError(null);
-    const identifier =
-      channel === 'email' ? email.trim().toLowerCase() : phone.trim();
-    if (channel === 'email' && !isValidSignupEmail(identifier)) {
+    const identifier = email.trim().toLowerCase();
+    if (!isValidSignupEmail(identifier)) {
       setLocalError('Enter a valid email before sending OTP.');
       return;
     }
-    if (channel === 'phone' && !isValidSignupPhone(identifier)) {
-      setLocalError('Use E.164 phone format, e.g. +919876543210');
-      return;
-    }
-    setBusy(channel === 'email' ? 'email-send' : 'phone-send');
+    setBusy('email-send');
     try {
-      await authApi.sendOtp({ emailOrPhone: identifier, purpose: 'register' });
-      if (channel === 'email') setEmailSent(true);
-      else setPhoneSent(true);
+      const result = await authApi.sendOtp({
+        emailOrPhone: identifier,
+        purpose: 'register',
+        role,
+      });
+      setEmailSent(true);
+      emailCooldown.start(
+        result.cooldownSeconds || policy?.resendCooldownSeconds || 30
+      );
     } catch (err) {
-      setLocalError(formatAuthError(err, 'Could not send OTP'));
+      setLocalError(formatAuthError(err, 'Could not send email OTP'));
     } finally {
       setBusy(null);
     }
   };
 
-  const confirm = async (channel: 'email' | 'phone') => {
+  const confirmEmail = async () => {
     setLocalError(null);
-    const identifier =
-      channel === 'email' ? email.trim().toLowerCase() : phone.trim();
-    const otp = channel === 'email' ? emailOtp.trim() : phoneOtp.trim();
-    if (!/^\d{6}$/.test(otp)) {
+    const identifier = email.trim().toLowerCase();
+    const otp = emailOtp.trim();
+    if (!isSixDigitOtp(otp)) {
       setLocalError('Enter the 6-digit OTP.');
       return;
     }
-    setBusy(channel === 'email' ? 'email-ok' : 'phone-ok');
+    setBusy('email-ok');
     try {
       await authApi.confirmRegisterOtp({ emailOrPhone: identifier, otp });
-      if (channel === 'email') {
-        onEmailVerifiedChange(true);
-        setEmailOtp('');
-      } else {
-        onPhoneVerifiedChange(true);
-        setPhoneOtp('');
-      }
+      onEmailVerifiedChange(true);
+      setEmailOtp('');
     } catch (err) {
-      setLocalError(formatAuthError(err, 'OTP verification failed'));
+      setLocalError(formatAuthError(err, 'Email OTP verification failed'));
     } finally {
       setBusy(null);
     }
@@ -167,13 +156,32 @@ export function SignupContactVerify({
     </View>
   );
 
+  const emailSendLabel = emailCooldown.active
+    ? `Resend in ${emailCooldown.seconds}s`
+    : emailSent
+      ? 'Resend email OTP'
+      : 'Send email OTP';
+
   return (
     <View style={{ gap: 4 }}>
-      <AuthBanner type="error" message={localError} />
+      <AuthBanner type="error" message={localError || policyError} />
+      {policyLoading ? (
+        <Text className="mb-2 text-xs text-secondary-light">
+          Loading signup verification rules…
+        </Text>
+      ) : null}
+      {policyError ? (
+        <PrimaryButton
+          label="Retry verification rules"
+          variant="outline"
+          loading={policyLoading}
+          disabled={disabled || policyLoading}
+          onPress={() => void loadPolicy()}
+        />
+      ) : null}
       {policy && !requireEmail && !requirePhone ? (
         <Text className="mb-2 text-xs text-secondary-light">
-          Email/SMS OTP verification is off on the server. Enter contacts and
-          continue.
+          Email/phone OTP is off on the server. Enter contacts and continue.
         </Text>
       ) : null}
 
@@ -190,17 +198,17 @@ export function SignupContactVerify({
         }}
         errorText={emailError}
         labelAccessory={
-          emailVerified || !requireEmail ? verifiedBadge : undefined
+          emailVerified || (!requireEmail && policy) ? verifiedBadge : undefined
         }
       />
       {requireEmail && !emailVerified ? (
         <View style={{ gap: 8, marginBottom: 8 }}>
           <PrimaryButton
-            label={emailSent ? 'Resend email OTP' : 'Send email OTP'}
+            label={emailSendLabel}
             variant="outline"
             loading={busy === 'email-send'}
-            disabled={disabled || Boolean(busy)}
-            onPress={() => void send('email')}
+            disabled={disabled || Boolean(busy) || emailCooldown.active}
+            onPress={() => void sendEmail()}
           />
           {emailSent ? (
             <>
@@ -217,7 +225,7 @@ export function SignupContactVerify({
                 label="Verify email"
                 loading={busy === 'email-ok'}
                 disabled={disabled || Boolean(busy)}
-                onPress={() => void confirm('email')}
+                onPress={() => void confirmEmail()}
               />
             </>
           ) : null}
@@ -237,7 +245,7 @@ export function SignupContactVerify({
         }}
         errorText={phoneError}
         labelAccessory={
-          phoneVerified || !requirePhone ? verifiedBadge : undefined
+          phoneVerified || (!requirePhone && policy) ? verifiedBadge : undefined
         }
       />
       <Text className="mb-2 -mt-1 text-xs text-secondary-light">
@@ -246,35 +254,16 @@ export function SignupContactVerify({
           ? '. Required contacts must be OTP-verified before create.'
           : '.'}
       </Text>
-      {requirePhone && !phoneVerified ? (
-        <View style={{ gap: 8, marginBottom: 8 }}>
-          <PrimaryButton
-            label={phoneSent ? 'Resend SMS OTP' : 'Send SMS OTP'}
-            variant="outline"
-            loading={busy === 'phone-send'}
-            disabled={disabled || Boolean(busy)}
-            onPress={() => void send('phone')}
-          />
-          {phoneSent ? (
-            <>
-              <AuthField
-                label="SMS OTP"
-                placeholder="6-digit code"
-                autofill="oneTimeCode"
-                keyboardType="number-pad"
-                maxLength={6}
-                value={phoneOtp}
-                onChangeText={setPhoneOtp}
-              />
-              <PrimaryButton
-                label="Verify phone"
-                loading={busy === 'phone-ok'}
-                disabled={disabled || Boolean(busy)}
-                onPress={() => void confirm('phone')}
-              />
-            </>
-          ) : null}
-        </View>
+      {requirePhone && !phoneVerified && policy ? (
+        <SignupPhoneVerify
+          phone={phone}
+          role={role}
+          phoneProvider={policy.phoneProvider}
+          resendCooldownSeconds={policy.resendCooldownSeconds}
+          disabled={disabled}
+          onVerified={() => onPhoneVerifiedChange(true)}
+          onError={setLocalError}
+        />
       ) : null}
     </View>
   );

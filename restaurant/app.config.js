@@ -9,6 +9,18 @@ module.exports = ({ config }) => {
     process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim() || '';
   const googleAndroidClientId =
     process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID?.trim() || '';
+  const firebaseApiKey =
+    process.env.EXPO_PUBLIC_FIREBASE_API_KEY?.trim() || '';
+  const firebaseAuthDomain =
+    process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN?.trim() || '';
+  const firebaseProjectId =
+    process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID?.trim() || '';
+  const firebaseAppId =
+    process.env.EXPO_PUBLIC_FIREBASE_APP_ID?.trim() || '';
+  const firebaseMessagingSenderId =
+    process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID?.trim() || '';
+  const firebaseStorageBucket =
+    process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET?.trim() || '';
 
   return {
     ...config,
@@ -42,6 +54,12 @@ module.exports = ({ config }) => {
       googleWebClientId,
       googleIosClientId,
       googleAndroidClientId,
+      firebaseApiKey,
+      firebaseAuthDomain,
+      firebaseProjectId,
+      firebaseAppId,
+      firebaseMessagingSenderId,
+      firebaseStorageBucket,
     },
   };
 };
