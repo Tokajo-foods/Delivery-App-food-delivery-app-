@@ -1,3 +1,5 @@
+export { ContactChangeModal } from '@/components/account/ContactChangeModal';
+
 import {
   Bell,
   Globe,
@@ -6,7 +8,7 @@ import {
   ShieldCheck,
   Trash2,
 } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -34,218 +36,6 @@ import {
   type NotificationPrefs,
 } from '@/lib/user/account-types';
 import { useAuthStore } from '@/store/auth-store';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function normalizePhone(raw: string) {
-  const value = raw.trim();
-  const digits = value.replace(/\D/g, '');
-  if (digits.length === 10) return `+91${digits}`;
-  if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
-  if (value.startsWith('+')) return value;
-  return value;
-}
-
-type ContactKind = 'phone' | 'email';
-
-export function ContactChangeModal({
-  kind,
-  current,
-  onClose,
-}: {
-  kind: ContactKind | null;
-  current?: string;
-  onClose: () => void;
-}) {
-  const sendOtp = useAuthStore((s) => s.sendOtp);
-  const resendOtp = useAuthStore((s) => s.resendOtp);
-  const { updatePhone, updateEmail } = usePlatformAccountMutations();
-  const [value, setValue] = useState('');
-  const [otp, setOtp] = useState('');
-  const [step, setStep] = useState<'enter' | 'otp'>('enter');
-  const [error, setError] = useState<string | null>(null);
-  const [cooldown, setCooldown] = useState(0);
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    setValue(current ?? '');
-    setOtp('');
-    setStep('enter');
-    setError(null);
-    setCooldown(0);
-  }, [kind, current]);
-
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const timer = setTimeout(() => setCooldown((n) => Math.max(0, n - 1)), 1000);
-    return () => clearTimeout(timer);
-  }, [cooldown]);
-
-  if (!kind) return null;
-
-  const isPhone = kind === 'phone';
-  const title = isPhone ? 'Change phone' : 'Change email';
-
-  const applyCooldown = (seconds: number, err?: unknown) => {
-    if (seconds > 0) setCooldown(seconds);
-    else if (getApiErrorCode(err) === 'OTP_COOLDOWN') setCooldown(30);
-  };
-
-  const requestOtp = async (resend: boolean) => {
-    const identifier = isPhone
-      ? normalizePhone(value)
-      : value.trim().toLowerCase();
-    const result = resend
-      ? await resendOtp({
-          emailOrPhone: identifier,
-          purpose: isPhone ? 'update_phone' : 'update_email',
-        })
-      : await sendOtp({
-          emailOrPhone: identifier,
-          purpose: isPhone ? 'update_phone' : 'update_email',
-        });
-    applyCooldown(result.cooldownSeconds);
-    setStep('otp');
-  };
-
-  const onContinue = async () => {
-    setError(null);
-    if (isPhone) {
-      const phone = normalizePhone(value);
-      if (phone.replace(/\D/g, '').length < 10) {
-        setError('Enter a valid mobile number.');
-        return;
-      }
-    } else if (!EMAIL_RE.test(value.trim())) {
-      setError('Enter a valid email address.');
-      return;
-    }
-
-    setBusy(true);
-    try {
-      if (isPhone) {
-        await requestOtp(false);
-        return;
-      }
-      try {
-        await updateEmail.mutateAsync({ email: value.trim().toLowerCase() });
-        Alert.alert('Email updated', 'Sign-in will use this email from now on.');
-        onClose();
-      } catch (err) {
-        if (getApiErrorCode(err) === 'OTP_REQUIRED') {
-          await requestOtp(false);
-          return;
-        }
-        throw err;
-      }
-    } catch (err) {
-      applyCooldown(0, err);
-      setError(formatAccountError(err, 'Could not continue.'));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const onVerify = async () => {
-    setError(null);
-    if (otp.trim().length < 4) {
-      setError('Enter the 6-digit OTP.');
-      return;
-    }
-    setBusy(true);
-    try {
-      if (isPhone) {
-        await updatePhone.mutateAsync({
-          phone: normalizePhone(value),
-          otp: otp.trim(),
-        });
-        Alert.alert('Phone updated', 'OTP verified. Your number is saved.');
-      } else {
-        await updateEmail.mutateAsync({
-          email: value.trim().toLowerCase(),
-          otp: otp.trim(),
-        });
-        Alert.alert('Email updated', 'OTP verified. Your email is saved.');
-      }
-      onClose();
-    } catch (err) {
-      setError(formatAccountError(err, 'Could not verify OTP.'));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Modal visible animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.modalRoot}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={styles.sheet}>
-          <Text style={styles.sheetTitle}>{title}</Text>
-          <Text style={styles.sheetHint}>
-            {isPhone
-              ? 'We’ll send an OTP to the new number before saving — same as Swiggy / Zomato.'
-              : 'We’ll update your login email. An OTP may be required.'}
-          </Text>
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-
-          {step === 'enter' ? (
-            <TextInput
-              value={value}
-              onChangeText={setValue}
-              placeholder={isPhone ? '9876543210' : 'you@example.com'}
-              placeholderTextColor="#9CA3AF"
-              keyboardType={isPhone ? 'phone-pad' : 'email-address'}
-              autoCapitalize="none"
-              style={styles.input}
-            />
-          ) : (
-            <TextInput
-              value={otp}
-              onChangeText={(text) => setOtp(text.replace(/\D/g, '').slice(0, 6))}
-              placeholder="6-digit OTP"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="number-pad"
-              style={styles.input}
-            />
-          )}
-
-          <Pressable
-            onPress={() => void (step === 'enter' ? onContinue() : onVerify())}
-            disabled={busy}
-            style={styles.primaryBtn}
-          >
-            {busy ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.primaryBtnText}>
-                {step === 'enter' ? (isPhone ? 'Send OTP' : 'Continue') : 'Verify & save'}
-              </Text>
-            )}
-          </Pressable>
-
-          {step === 'otp' ? (
-            <Pressable
-              onPress={() => void requestOtp(true).catch((err) => {
-                applyCooldown(0, err);
-                setError(formatAccountError(err, 'Could not resend OTP.'));
-              })}
-              disabled={busy || cooldown > 0}
-              style={styles.linkBtn}
-            >
-              <Text style={styles.linkText}>
-                {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend OTP'}
-              </Text>
-            </Pressable>
-          ) : null}
-
-          <Pressable onPress={onClose} style={styles.linkBtn}>
-            <Text style={styles.cancelText}>Cancel</Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
-  );
-}
 
 export function PlatformAccountSection() {
   const router = useRouter();
@@ -283,7 +73,7 @@ export function PlatformAccountSection() {
   const onDelete = () => {
     Alert.alert(
       'Delete account?',
-      'We’ll check what you’ll lose, then ask you to confirm. This cannot be undone.',
+      'We'll check what you'll lose, then ask you to confirm. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -475,7 +265,7 @@ export function PlatformAccountSection() {
             <View style={{ flex: 1 }}>
               <Text style={styles.deleteLabel}>Delete account</Text>
               <Text style={styles.deleteHint}>
-                Preview what you’ll lose, then confirm
+                Preview what you'll lose, then confirm
               </Text>
             </View>
             <ShieldCheck color="#FECACA" size={16} />

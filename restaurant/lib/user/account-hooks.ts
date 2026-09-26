@@ -161,6 +161,23 @@ export function usePlatformAccountMutations() {
     onSuccess: syncUser,
   });
 
+  const sendCurrentContactOtp = useMutation({
+    mutationFn: userAccountApi.sendCurrentContactOtp,
+  });
+
+  const verifyCurrentContactOtp = useMutation({
+    mutationFn: userAccountApi.verifyCurrentContactOtp,
+  });
+
+  const sendNewContactOtp = useMutation({
+    mutationFn: userAccountApi.sendNewContactOtp,
+  });
+
+  const confirmNewContact = useMutation({
+    mutationFn: userAccountApi.confirmNewContact,
+    onSuccess: syncUser,
+  });
+
   const updateNotifications = useMutation({
     mutationFn: (payload: NotificationPrefs) =>
       userAccountApi.updateNotifications(payload),
@@ -226,6 +243,10 @@ export function usePlatformAccountMutations() {
     deletePhoto,
     updatePhone,
     updateEmail,
+    sendCurrentContactOtp,
+    verifyCurrentContactOtp,
+    sendNewContactOtp,
+    confirmNewContact,
     updateNotifications,
     updateLanguage,
     deleteAccount,

@@ -30,13 +30,29 @@ export const ACCOUNT_ERROR_COPY: Record<string, string> = {
     'Could not check open orders. Try again in a moment.',
   EMAIL_IN_USE: 'That email is already used by another account.',
   PHONE_IN_USE: 'That phone number is already used by another account.',
+  SAME_CONTACT: 'That is already your current contact.',
+  CONTACT_MISSING: 'Add a phone or email on your account before changing it.',
+  CURRENT_CONTACT_UNVERIFIED:
+    'Verify your current phone or email with OTP first.',
+  CONTACT_CHANGE_EXPIRED:
+    'This change session expired. Start again from the beginning.',
   OTP_REQUIRED: 'Enter the OTP sent to continue.',
   INVALID_OTP: 'That code is wrong or expired. Request a new one.',
+  OTP_EXPIRED: 'That code expired. Request a new one.',
   OTP_COOLDOWN: 'Wait a few seconds before requesting another code.',
   ACTIVE_DELIVERY: 'Complete your active delivery before deleting your account.',
   SESSION_NOT_FOUND: 'That session is already signed out.',
   DEVICE_NOT_FOUND: 'This device is not registered for alerts.',
   PUSH_UNAVAILABLE: 'Push alerts are unavailable on this install. Use the Android or iOS app.',
+};
+
+export type ContactChannel = 'phone' | 'email';
+
+export type ContactChangeOtpResult = {
+  channel: ContactChannel;
+  maskedTarget: string;
+  expiresInSeconds: number;
+  cooldownSeconds: number;
 };
 
 export function formatAccountError(error: unknown, fallback: string): string {
@@ -256,6 +272,26 @@ export function mapPlatformUser(raw: unknown): PlatformUser {
   };
 }
 
+function mapContactOtpResult(
+  raw: unknown,
+  fallbackChannel: ContactChannel
+): ContactChangeOtpResult {
+  const record = asRecord(unwrap(raw));
+  const channelRaw = pickString(record, ['channel'])?.toLowerCase();
+  const channel: ContactChannel =
+    channelRaw === 'email' || channelRaw === 'phone'
+      ? channelRaw
+      : fallbackChannel;
+  return {
+    channel,
+    maskedTarget: pickString(record, ['maskedTarget', 'masked']) ?? '',
+    expiresInSeconds:
+      pickNumber(record, ['expiresInSeconds', 'expiresIn']) ?? 300,
+    cooldownSeconds:
+      pickNumber(record, ['cooldownSeconds', 'resendAfterSeconds']) ?? 30,
+  };
+}
+
 function mapNotifications(raw: unknown): NotificationPrefs {
   const record = asRecord(unwrap(raw));
   const nested = asRecord(record.notifications ?? record);
@@ -429,7 +465,7 @@ export const userAccountApi = {
     };
   },
 
-  /** PUT /users/me/phone — OTP required */
+  /** PUT /users/me/phone — legacy confirm (prefer dual-OTP contact/*) */
   updatePhone: async (payload: {
     phone: string;
     otp: string;
@@ -445,7 +481,7 @@ export const userAccountApi = {
     return mapPlatformUser(data);
   },
 
-  /** PUT /users/me/email */
+  /** PUT /users/me/email — legacy confirm (prefer dual-OTP contact/*) */
   updateEmail: async (payload: {
     email: string;
     otp?: string;
@@ -458,6 +494,83 @@ export const userAccountApi = {
       method: 'PUT',
       body,
     });
+    return mapPlatformUser(data);
+  },
+
+  /** Dual-OTP: send code to current email/phone */
+  sendCurrentContactOtp: async (
+    channel: ContactChannel
+  ): Promise<ContactChangeOtpResult> => {
+    const data = await request<unknown>(
+      `${USERS_ME}/contact/${channel}/send-current-otp`,
+      { method: 'POST', body: {} }
+    );
+    return mapContactOtpResult(data, channel);
+  },
+
+  /** Dual-OTP: verify current email/phone */
+  verifyCurrentContactOtp: async (payload: {
+    channel: ContactChannel;
+    otp: string;
+  }): Promise<{ verified: true; maskedTarget: string }> => {
+    const otp = payload.otp.trim();
+    if (!otp) throw new PartnerApiError('Enter the OTP.', 'OTP_REQUIRED');
+    const data = await request<unknown>(
+      `${USERS_ME}/contact/${payload.channel}/verify-current`,
+      { method: 'POST', body: { otp } }
+    );
+    const record = asRecord(unwrap(data));
+    return {
+      verified: true,
+      maskedTarget: pickString(record, ['maskedTarget']) ?? '',
+    };
+  },
+
+  /** Dual-OTP: send code to new email/phone (uniqueness checked server-side) */
+  sendNewContactOtp: async (payload: {
+    channel: ContactChannel;
+    value: string;
+  }): Promise<ContactChangeOtpResult> => {
+    const value = payload.value.trim();
+    if (!value) {
+      throw new PartnerApiError(
+        payload.channel === 'phone'
+          ? 'Enter a phone number.'
+          : 'Enter an email.',
+        'VALIDATION_ERROR'
+      );
+    }
+    const body =
+      payload.channel === 'phone'
+        ? { phone: value }
+        : { email: value.toLowerCase() };
+    const data = await request<unknown>(
+      `${USERS_ME}/contact/${payload.channel}/send-new-otp`,
+      { method: 'POST', body }
+    );
+    return mapContactOtpResult(data, payload.channel);
+  },
+
+  /** Dual-OTP: confirm new email/phone */
+  confirmNewContact: async (payload: {
+    channel: ContactChannel;
+    value: string;
+    otp: string;
+  }): Promise<PlatformUser> => {
+    const value = payload.value.trim();
+    const otp = payload.otp.trim();
+    if (!value) {
+      throw new PartnerApiError('Missing new contact.', 'VALIDATION_ERROR');
+    }
+    if (!otp) throw new PartnerApiError('Enter the OTP.', 'OTP_REQUIRED');
+    const body =
+      payload.channel === 'phone'
+        ? { phone: value, otp }
+        : { email: value.toLowerCase(), otp };
+    const data = await request<unknown>(
+      `${USERS_ME}/contact/${payload.channel}/confirm`,
+      { method: 'POST', body }
+    );
     return mapPlatformUser(data);
   },
 
