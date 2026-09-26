@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RequiredLabel } from '@/components/restaurant/SetupProgress';
+import { searchableSelectStyles as styles } from '@/components/ui/searchable-select-styles';
 import { theme } from '@/constants/theme';
 
 type Props = {
@@ -26,7 +27,7 @@ type Props = {
 };
 
 /**
- * Production searchable single-select (state / city pickers).
+ * Production searchable picker — clean list rows (no pill borders).
  */
 export function SearchableSelect({
   label,
@@ -37,7 +38,7 @@ export function SearchableSelect({
   required,
   disabled,
   searchPlaceholder = 'Search…',
-  emptyText = 'No matches',
+  emptyText = 'Try a different spelling',
 }: Props) {
   const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
@@ -62,34 +63,31 @@ export function SearchableSelect({
   };
 
   return (
-    <View>
+    <View style={styles.fieldWrap}>
       {required ? (
         <RequiredLabel>{label}</RequiredLabel>
       ) : (
-        <Text className="mb-1.5 text-sm font-semibold text-secondary">{label}</Text>
+        <Text style={styles.label}>{label}</Text>
       )}
+
       <Pressable
         onPress={openPicker}
         disabled={disabled}
-        className={`h-[52px] flex-row items-center justify-between rounded-2xl border px-4 ${
-          disabled
-            ? 'border-gray-100 bg-gray-50 opacity-60'
-            : value
-              ? 'border-primary/25 bg-white'
-              : 'border-gray-200 bg-[#F8FAFC]'
-        }`}
+        style={[
+          styles.trigger,
+          value ? styles.triggerFilled : null,
+          disabled ? styles.triggerDisabled : null,
+        ]}
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${value || placeholder}`}
       >
         <Text
-          className={`flex-1 pr-2 text-[15px] ${
-            value ? 'font-semibold text-secondary' : 'text-secondary-light'
-          }`}
+          style={[styles.triggerText, !value && styles.triggerPlaceholder]}
           numberOfLines={1}
         >
           {value || placeholder}
         </Text>
-        <View className="h-8 w-8 items-center justify-center rounded-full bg-gray-100">
+        <View style={styles.chevron}>
           <ChevronDown color={theme.secondaryLight} size={16} />
         </View>
       </Pressable>
@@ -100,23 +98,22 @@ export function SearchableSelect({
         presentationStyle="pageSheet"
         onRequestClose={() => setOpen(false)}
       >
-        <View
-          className="flex-1 bg-[#F8FAFC]"
-          style={{ paddingTop: Math.max(insets.top, 12) }}
-        >
-          <View className="border-b border-gray-100 bg-white px-4 pb-3">
-            <View className="mb-3 flex-row items-center justify-between">
-              <View>
-                <Text className="text-lg font-extrabold text-secondary">
-                  {label}
-                </Text>
-                <Text className="mt-0.5 text-xs text-secondary-light">
-                  {options.length} options · tap to select
+        <View style={[styles.sheet, { paddingTop: Math.max(insets.top, 6) }]}>
+          <View style={styles.handle} />
+
+          <View style={styles.header}>
+            <View style={styles.headerRow}>
+              <View style={{ flex: 1, paddingRight: 12 }}>
+                <Text style={styles.headerTitle}>{label}</Text>
+                <Text style={styles.headerMeta}>
+                  {filtered.length === options.length
+                    ? `${options.length} available`
+                    : `${filtered.length} of ${options.length} matches`}
                 </Text>
               </View>
               <Pressable
                 onPress={() => setOpen(false)}
-                className="h-10 w-10 items-center justify-center rounded-full bg-gray-100"
+                style={styles.closeBtn}
                 accessibilityRole="button"
                 accessibilityLabel="Close"
               >
@@ -124,7 +121,7 @@ export function SearchableSelect({
               </Pressable>
             </View>
 
-            <View className="h-[48px] flex-row items-center gap-2 rounded-2xl border border-gray-200 bg-[#F8FAFC] px-3.5">
+            <View style={styles.searchBox}>
               <Search color={theme.muted} size={18} />
               <TextInput
                 value={query}
@@ -133,10 +130,10 @@ export function SearchableSelect({
                 placeholderTextColor={theme.muted}
                 autoFocus
                 autoCorrect={false}
-                className="flex-1 text-[15px] text-secondary"
+                style={styles.searchInput}
               />
               {query ? (
-                <Pressable onPress={() => setQuery('')} hitSlop={8}>
+                <Pressable onPress={() => setQuery('')} hitSlop={10}>
                   <X color={theme.muted} size={16} />
                 </Pressable>
               ) : null}
@@ -144,22 +141,19 @@ export function SearchableSelect({
           </View>
 
           <FlatList
+            style={styles.list}
             data={filtered}
             keyExtractor={(item) => item}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
             contentContainerStyle={{
-              paddingHorizontal: 16,
-              paddingBottom: Math.max(insets.bottom, 24) + 16,
-              paddingTop: 12,
+              paddingBottom: Math.max(insets.bottom, 20) + 12,
             }}
             ListEmptyComponent={
-              <View className="mt-16 items-center px-8">
-                <Text className="text-center text-base font-bold text-secondary">
-                  No matches
-                </Text>
-                <Text className="mt-1 text-center text-sm text-secondary-light">
-                  {emptyText}
-                </Text>
+              <View style={styles.emptyWrap}>
+                <Text style={styles.emptyTitle}>No results</Text>
+                <Text style={styles.emptySub}>{emptyText}</Text>
               </View>
             }
             renderItem={({ item }) => {
@@ -167,35 +161,21 @@ export function SearchableSelect({
               return (
                 <Pressable
                   onPress={() => pick(item)}
-                  className={`mb-2 flex-row items-center justify-between rounded-2xl border px-4 py-3.5 ${
-                    active
-                      ? 'border-primary bg-primary/10'
-                      : 'border-transparent bg-white'
-                  }`}
-                  style={
-                    active
-                      ? undefined
-                      : {
-                          shadowColor: '#0F172A',
-                          shadowOpacity: 0.04,
-                          shadowRadius: 6,
-                          shadowOffset: { width: 0, height: 2 },
-                          elevation: 1,
-                        }
-                  }
+                  style={({ pressed }) => [
+                    styles.row,
+                    active && styles.rowActive,
+                    pressed && !active && styles.rowPressed,
+                  ]}
                 >
                   <Text
-                    className={`flex-1 text-[15px] ${
-                      active
-                        ? 'font-bold text-primary'
-                        : 'font-semibold text-secondary'
-                    }`}
+                    style={[styles.rowText, active && styles.rowTextActive]}
+                    numberOfLines={2}
                   >
                     {item}
                   </Text>
                   {active ? (
-                    <View className="h-7 w-7 items-center justify-center rounded-full bg-primary">
-                      <Check color="#FFFFFF" size={14} strokeWidth={3} />
+                    <View style={styles.check}>
+                      <Check color="#FFFFFF" size={13} strokeWidth={3} />
                     </View>
                   ) : null}
                 </Pressable>

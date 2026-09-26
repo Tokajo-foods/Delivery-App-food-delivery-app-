@@ -1,7 +1,7 @@
-import { Check, ChevronRight, MapPinned } from 'lucide-react-native';
-import { Pressable, Text, View } from 'react-native';
+import { Check, ChevronRight, MapPin } from 'lucide-react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { cardShadow, theme } from '@/constants/theme';
+import { theme } from '@/constants/theme';
 import { formatFullDeliveryAddress } from '@/lib/location/format';
 
 type Props = {
@@ -11,7 +11,7 @@ type Props = {
 };
 
 /**
- * Map pin CTA for restaurant setup — confirmed vs empty states.
+ * Compact map-pin CTA for restaurant setup.
  */
 export function SetupMapPinCard({ coords, locationLabel, onPress }: Props) {
   const confirmed = Boolean(coords);
@@ -24,72 +24,99 @@ export function SetupMapPinCard({ coords, locationLabel, onPress }: Props) {
   return (
     <Pressable
       onPress={onPress}
-      className={`overflow-hidden rounded-2xl border p-4 ${
-        confirmed
-          ? 'border-success/30 bg-[#F0FDF4]'
-          : 'border-primary/25 bg-[#FFF7ED]'
-      }`}
-      style={cardShadow}
+      style={[styles.card, confirmed ? styles.cardOk : styles.cardTodo]}
       accessibilityRole="button"
       accessibilityLabel={
         confirmed ? 'Change map pin location' : 'Set outlet location on map'
       }
     >
-      <View className="flex-row items-start gap-3">
-        <View
-          className={`mt-0.5 h-12 w-12 items-center justify-center rounded-2xl ${
-            confirmed ? 'bg-success' : 'bg-primary'
-          }`}
-        >
-          {confirmed ? (
-            <Check color="#FFFFFF" size={22} strokeWidth={2.5} />
-          ) : (
-            <MapPinned color="#FFFFFF" size={22} />
-          )}
-        </View>
-
-        <View className="min-w-0 flex-1">
-          <View className="flex-row items-center gap-2">
-            <Text className="text-[15px] font-extrabold text-secondary">
-              {confirmed ? 'Pin confirmed' : 'Pin on map'}
-            </Text>
-            {confirmed ? (
-              <View className="rounded-full bg-success/15 px-2 py-0.5">
-                <Text className="text-[10px] font-bold uppercase tracking-wide text-success">
-                  Ready
-                </Text>
-              </View>
-            ) : (
-              <View className="rounded-full bg-primary/15 px-2 py-0.5">
-                <Text className="text-[10px] font-bold uppercase tracking-wide text-primary">
-                  Required
-                </Text>
-              </View>
-            )}
-          </View>
-          <Text
-            className="mt-1 text-[13px] leading-5 text-secondary-light"
-            numberOfLines={confirmed ? 3 : 2}
-          >
-            {confirmed
-              ? display
-              : 'Open Google Maps, search or use GPS, then place the pin at your entrance.'}
-          </Text>
-          <Text
-            className={`mt-2 text-xs font-bold ${
-              confirmed ? 'text-success' : 'text-primary'
-            }`}
-          >
-            {confirmed ? 'Tap to adjust pin' : 'Tap to open map'}
-          </Text>
-        </View>
-
-        <ChevronRight
-          color={confirmed ? theme.success : theme.primary}
-          size={20}
-          style={{ marginTop: 4 }}
-        />
+      <View
+        style={[styles.icon, confirmed ? styles.iconOk : styles.iconTodo]}
+      >
+        {confirmed ? (
+          <Check color="#FFFFFF" size={20} strokeWidth={2.5} />
+        ) : (
+          <MapPin color="#FFFFFF" size={20} />
+        )}
       </View>
+
+      <View style={styles.body}>
+        <Text style={styles.title}>
+          {confirmed ? 'Location pinned' : 'Set map pin'}
+        </Text>
+        <Text style={styles.subtitle} numberOfLines={confirmed ? 2 : 2}>
+          {confirmed
+            ? display
+            : 'Search or use GPS, then place the pin at your entrance'}
+        </Text>
+        <Text style={[styles.cta, confirmed ? styles.ctaOk : styles.ctaTodo]}>
+          {confirmed ? 'Change on map' : 'Open map'}
+        </Text>
+      </View>
+
+      <ChevronRight
+        color={confirmed ? theme.success : theme.primary}
+        size={18}
+      />
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  cardOk: {
+    borderColor: '#BBF7D0',
+    backgroundColor: '#F0FDF4',
+  },
+  cardTodo: {
+    borderColor: '#FED7AA',
+    backgroundColor: '#FFF7ED',
+  },
+  icon: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconOk: {
+    backgroundColor: theme.success,
+  },
+  iconTodo: {
+    backgroundColor: theme.primary,
+  },
+  body: {
+    flex: 1,
+    minWidth: 0,
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: theme.secondary,
+  },
+  subtitle: {
+    marginTop: 3,
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: '500',
+    color: theme.secondaryLight,
+  },
+  cta: {
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  ctaOk: {
+    color: theme.success,
+  },
+  ctaTodo: {
+    color: theme.primary,
+  },
+});
