@@ -1,17 +1,20 @@
 import { Check, ChevronDown, Search, X } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   Modal,
+  Platform,
   Pressable,
+  StatusBar,
+  StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RequiredLabel } from '@/components/restaurant/SetupProgress';
-import { searchableSelectStyles as styles } from '@/components/ui/searchable-select-styles';
 import { theme } from '@/constants/theme';
 
 type Props = {
@@ -26,8 +29,11 @@ type Props = {
   emptyText?: string;
 };
 
+const H_PAD = 20;
+const ROW_H = 56;
+
 /**
- * Production searchable picker — clean list rows (no pill borders).
+ * Swiggy-style searchable picker — padded list rows, safe area, reliable on Android.
  */
 export function SearchableSelect({
   label,
@@ -41,6 +47,7 @@ export function SearchableSelect({
   emptyText = 'Try a different spelling',
 }: Props) {
   const insets = useSafeAreaInsets();
+  const listRef = useRef<FlatList<string>>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
 
@@ -49,6 +56,24 @@ export function SearchableSelect({
     if (!q) return options;
     return options.filter((item) => item.toLowerCase().includes(q));
   }, [options, query]);
+
+  useEffect(() => {
+    if (!open || !value) return;
+    const index = filtered.findIndex((item) => item === value);
+    if (index < 0) return;
+    const t = setTimeout(() => {
+      try {
+        listRef.current?.scrollToIndex({
+          index,
+          animated: false,
+          viewPosition: 0.35,
+        });
+      } catch {
+        // ignore if list not measured yet
+      }
+    }, 80);
+    return () => clearTimeout(t);
+  }, [open, value, filtered]);
 
   const openPicker = () => {
     if (disabled) return;
@@ -62,12 +87,18 @@ export function SearchableSelect({
     setQuery('');
   };
 
+  const topInset =
+    Platform.OS === 'android'
+      ? Math.max(insets.top, StatusBar.currentHeight ?? 0, 12)
+      : Math.max(insets.top, 12);
+  const bottomInset = Math.max(insets.bottom, 16);
+
   return (
-    <View style={styles.fieldWrap}>
+    <View>
       {required ? (
         <RequiredLabel>{label}</RequiredLabel>
       ) : (
-        <Text style={styles.label}>{label}</Text>
+        <Text style={styles.fieldLabel}>{label}</Text>
       )}
 
       <Pressable
@@ -95,15 +126,14 @@ export function SearchableSelect({
       <Modal
         visible={open}
         animationType="slide"
-        presentationStyle="pageSheet"
+        presentationStyle="fullScreen"
+        statusBarTranslucent={Platform.OS === 'android'}
         onRequestClose={() => setOpen(false)}
       >
-        <View style={[styles.sheet, { paddingTop: Math.max(insets.top, 6) }]}>
-          <View style={styles.handle} />
-
+        <View style={[styles.sheet, { paddingTop: topInset }]}>
           <View style={styles.header}>
             <View style={styles.headerRow}>
-              <View style={{ flex: 1, paddingRight: 12 }}>
+              <View style={styles.headerCopy}>
                 <Text style={styles.headerTitle}>{label}</Text>
                 <Text style={styles.headerMeta}>
                   {filtered.length === options.length
@@ -111,14 +141,15 @@ export function SearchableSelect({
                     : `${filtered.length} of ${options.length} matches`}
                 </Text>
               </View>
-              <Pressable
+              <TouchableOpacity
                 onPress={() => setOpen(false)}
+                activeOpacity={0.7}
                 style={styles.closeBtn}
                 accessibilityRole="button"
                 accessibilityLabel="Close"
               >
-                <X color={theme.secondary} size={18} />
-              </Pressable>
+                <X color={theme.secondary} size={20} />
+              </TouchableOpacity>
             </View>
 
             <View style={styles.searchBox}>
@@ -133,22 +164,37 @@ export function SearchableSelect({
                 style={styles.searchInput}
               />
               {query ? (
-                <Pressable onPress={() => setQuery('')} hitSlop={10}>
+                <TouchableOpacity onPress={() => setQuery('')} hitSlop={12}>
                   <X color={theme.muted} size={16} />
-                </Pressable>
+                </TouchableOpacity>
               ) : null}
             </View>
           </View>
 
           <FlatList
-            style={styles.list}
+            ref={listRef}
             data={filtered}
             keyExtractor={(item) => item}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            showsVerticalScrollIndicator={false}
+            getItemLayout={(_, index) => ({
+              length: ROW_H,
+              offset: ROW_H * index,
+              index,
+            })}
+            onScrollToIndexFailed={(info) => {
+              setTimeout(() => {
+                listRef.current?.scrollToIndex({
+                  index: info.index,
+                  animated: false,
+                  viewPosition: 0.35,
+                });
+              }, 100);
+            }}
             contentContainerStyle={{
-              paddingBottom: Math.max(insets.bottom, 20) + 12,
+              paddingBottom: bottomInset + 24,
+              paddingTop: 4,
             }}
             ListEmptyComponent={
               <View style={styles.emptyWrap}>
@@ -156,29 +202,33 @@ export function SearchableSelect({
                 <Text style={styles.emptySub}>{emptyText}</Text>
               </View>
             }
-            renderItem={({ item }) => {
+            renderItem={({ item, index }) => {
               const active = item === value;
+              const isLast = index === filtered.length - 1;
               return (
-                <Pressable
+                <TouchableOpacity
+                  activeOpacity={0.65}
                   onPress={() => pick(item)}
-                  style={({ pressed }) => [
+                  style={[
                     styles.row,
                     active && styles.rowActive,
-                    pressed && !active && styles.rowPressed,
+                    isLast && styles.rowLast,
                   ]}
                 >
                   <Text
                     style={[styles.rowText, active && styles.rowTextActive]}
-                    numberOfLines={2}
+                    numberOfLines={1}
                   >
                     {item}
                   </Text>
                   {active ? (
-                    <View style={styles.check}>
-                      <Check color="#FFFFFF" size={13} strokeWidth={3} />
+                    <View style={styles.checkOn}>
+                      <Check color="#FFFFFF" size={14} strokeWidth={3} />
                     </View>
-                  ) : null}
-                </Pressable>
+                  ) : (
+                    <View style={styles.checkOff} />
+                  )}
+                </TouchableOpacity>
               );
             }}
           />
@@ -187,3 +237,168 @@ export function SearchableSelect({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  fieldLabel: {
+    marginBottom: 8,
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.secondary,
+  },
+  trigger: {
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+  },
+  triggerFilled: {
+    borderColor: '#FED7AA',
+    backgroundColor: '#FFFBEB',
+  },
+  triggerDisabled: {
+    opacity: 0.55,
+    backgroundColor: '#F8FAFC',
+  },
+  triggerText: {
+    flex: 1,
+    paddingRight: 10,
+    fontSize: 15,
+    fontWeight: '600',
+    color: theme.secondary,
+  },
+  triggerPlaceholder: {
+    fontWeight: '500',
+    color: theme.muted,
+  },
+  chevron: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F1F5F9',
+  },
+  sheet: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    paddingHorizontal: H_PAD,
+    paddingTop: 8,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  headerCopy: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: theme.secondary,
+    letterSpacing: -0.4,
+  },
+  headerMeta: {
+    marginTop: 3,
+    fontSize: 13,
+    fontWeight: '500',
+    color: theme.secondaryLight,
+  },
+  closeBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F1F5F9',
+  },
+  searchBox: {
+    height: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: '#F1F5F9',
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 16,
+    color: theme.secondary,
+    paddingVertical: 0,
+  },
+  row: {
+    height: ROW_H,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: H_PAD,
+    paddingRight: H_PAD,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#EEF2F7',
+  },
+  rowActive: {
+    backgroundColor: '#FFF7ED',
+  },
+  rowLast: {
+    borderBottomWidth: 0,
+  },
+  rowText: {
+    flex: 1,
+    paddingRight: 14,
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '500',
+    color: theme.secondary,
+  },
+  rowTextActive: {
+    fontWeight: '700',
+    color: theme.primary,
+  },
+  checkOn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.primary,
+  },
+  checkOff: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+  },
+  emptyWrap: {
+    paddingTop: 72,
+    paddingHorizontal: 32,
+  },
+  emptyTitle: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.secondary,
+  },
+  emptySub: {
+    marginTop: 6,
+    textAlign: 'center',
+    fontSize: 13,
+    fontWeight: '500',
+    color: theme.secondaryLight,
+    lineHeight: 18,
+  },
+});
