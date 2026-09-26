@@ -140,15 +140,20 @@ export function LocationMapPicker({
             <MapPin color={theme.primary} size={18} />
             <View style={{ flex: 1 }}>
               <Text style={styles.detectedLabel}>{locationTitle}</Text>
-              <Text style={styles.detectedValue} numberOfLines={2}>
+              <Text style={styles.detectedValue} numberOfLines={3}>
                 {picker.locating && !picker.detectedAddress
                   ? 'Getting your address…'
-                  : picker.detectedAddress ??
-                    `Lat ${picker.pin.lat.toFixed(5)}, Lng ${picker.pin.lng.toFixed(5)}`}
+                  : picker.addressUpdating && !picker.detectedAddress
+                    ? 'Looking up address…'
+                    : picker.detectedAddress || 'Move the map or search above'}
               </Text>
-              <Text style={styles.detectedHint}>
-                Drag the map to fine-tune · or search Google Places above
-              </Text>
+              {picker.addressUpdating && picker.detectedAddress ? (
+                <Text style={styles.detectedHint}>Updating address…</Text>
+              ) : (
+                <Text style={styles.detectedHint}>
+                  Drag the map to fine-tune · or search Google Places above
+                </Text>
+              )}
             </View>
           </View>
 

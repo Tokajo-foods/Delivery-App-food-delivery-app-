@@ -2,8 +2,12 @@ import { addressApi, type AddressSuggestion, type GeocodeResult } from '@/lib/ad
 import {
   googlePlacesApi,
   type PlacesSearchBias,
+  type ReverseGeocodeResult,
 } from '@/lib/address/google-places';
 import { assertGoogleMapsApiKey } from '@/lib/google-maps';
+import { stripPlusCodes } from '@/lib/location/parse-address';
+
+export type { ReverseGeocodeResult };
 
 export type SearchAddressesOptions = {
   bias?: PlacesSearchBias;
@@ -118,11 +122,16 @@ export async function geocodeAddress(input: {
 export async function reverseGeocodeAddress(input: {
   lat: number;
   lng: number;
-}): Promise<string | null> {
+}): Promise<ReverseGeocodeResult | null> {
   if (googlePlacesApi.isConfigured()) {
     const google = await googlePlacesApi.reverseGeocode(input);
     if (google) return google;
   }
 
-  return addressApi.reverseGeocode(input);
+  const fallback = await addressApi.reverseGeocode(input);
+  if (!fallback) return null;
+  return {
+    formattedAddress: stripPlusCodes(fallback),
+    components: [],
+  };
 }

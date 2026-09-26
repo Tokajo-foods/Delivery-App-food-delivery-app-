@@ -43,11 +43,13 @@ export function RegisterAddressStep({ values, onChange, disabled }: Props) {
       label: result.label,
       lat: result.lat,
       lng: result.lng,
+      components: result.components,
     });
     onChange({
       latitude: result.lat,
       longitude: result.lng,
       address:
+        parsed.formattedAddress?.trim() ||
         result.formattedAddress?.trim() ||
         result.label?.trim() ||
         values.address,

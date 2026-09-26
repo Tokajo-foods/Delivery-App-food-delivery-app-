@@ -5,7 +5,13 @@ import type { WebViewMessageEvent } from 'react-native-webview';
 import type { AddressSuggestion } from '@/lib/address/api';
 import { geocodeAddress } from '@/lib/address/search';
 import { getApiErrorMessage } from '@/lib/errors';
-import { normalizeLat, normalizeLng, shortAddressLabel } from '@/lib/location/format';
+import {
+  isCoordinateFallbackAddress,
+  normalizeLat,
+  normalizeLng,
+  shortAddressLabel,
+} from '@/lib/location/format';
+import { stripPlusCodes } from '@/lib/location/parse-address';
 
 import type { MapPickResult } from '@/components/restaurant/location-map-types';
 
@@ -37,6 +43,13 @@ type Ctx = {
   onConfirm: (result: MapPickResult) => void;
 };
 
+function cleanConfirmAddress(value?: string | null): string {
+  if (!value?.trim() || isCoordinateFallbackAddress(value)) {
+    return 'Selected location';
+  }
+  return stripPlusCodes(value) || 'Selected location';
+}
+
 export function handleLocationMapWebMessage(
   event: WebViewMessageEvent,
   ctx: Ctx
@@ -51,7 +64,7 @@ export function handleLocationMapWebMessage(
       const lat = normalizeLat(msg.lat);
       const lng = normalizeLng(msg.lng);
       ctx.setPin({ lat, lng });
-      ctx.setDetectedAddress(undefined);
+      // Keep last address visible while reverse-geocoding (avoids Lat/Lng flicker).
       ctx.setGpsReady(false);
       ctx.sourceRef.current = 'search';
       ctx.reverseLookup(lat, lng);
@@ -146,9 +159,7 @@ export function handleLocationMapWebMessage(
       typeof msg.lng === 'number'
     ) {
       ctx.confirmPending.current = false;
-      const formatted =
-        ctx.detectedRef.current ??
-        `Lat ${msg.lat.toFixed(5)}, Lng ${msg.lng.toFixed(5)}`;
+      const formatted = cleanConfirmAddress(ctx.detectedRef.current);
       ctx.onConfirm({
         lat: msg.lat,
         lng: msg.lng,

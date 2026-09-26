@@ -23,12 +23,18 @@ export function shortAddressLabel(formattedAddress: string, source?: string): st
     return source === 'gps' ? 'Current location' : 'Selected location';
   }
 
-  const parts = formattedAddress
+  const cleaned = formattedAddress
+    .replace(/\b[A-Z0-9]{4,8}\+[A-Z0-9]{2,3}\b/gi, '')
+    .replace(/\s*,\s*,+/g, ',')
+    .replace(/^[\s,]+|[\s,]+$/g, '')
+    .trim();
+
+  const parts = cleaned
     .split(',')
     .map((p) => p.trim())
     .filter(Boolean);
 
-  if (parts.length === 0) return 'Delivery address';
+  if (parts.length === 0) return source === 'gps' ? 'Current location' : 'Selected location';
   if (parts.length === 1) return parts[0];
 
   const first = parts[0];
@@ -38,7 +44,7 @@ export function shortAddressLabel(formattedAddress: string, source?: string): st
     return `${first}, ${second}`;
   }
 
-  return first.length <= 28 ? first : `${first.slice(0, 25)}…`;
+  return first.length <= 36 ? first : `${first.slice(0, 33)}…`;
 }
 
 /** Extract city name from a full formatted address (e.g. Google reverse geocode). */
@@ -47,16 +53,51 @@ export function extractCityFromAddress(formattedAddress: string): string | null 
     return null;
   }
 
+  const plusCodeRe = /\b[A-Z0-9]{4,8}\+[A-Z0-9]{2,3}\b/gi;
+
   const parts = formattedAddress
+    .replace(plusCodeRe, '')
     .split(',')
     .map((p) => p.trim())
     .filter(Boolean)
-    .filter((part) => !/^lat\b/i.test(part) && !/^lng\b/i.test(part));
+    .filter((part) => {
+      if (/^lat\b/i.test(part) || /^lng\b/i.test(part)) return false;
+      if (/^[A-Z0-9]{4,8}\+[A-Z0-9]{2,3}$/i.test(part)) return false;
+      return true;
+    });
 
   if (parts.length === 0) return null;
 
-  // Common Google format: ..., Area, City, State PIN, Country
-  // Prefer the part before state (Madhya Pradesh / etc.)
+  // Prefer well-known NCR / metro city tokens when present in the string.
+  const preferredCities = [
+    'Greater Noida',
+    'Noida',
+    'New Delhi',
+    'Delhi',
+    'Gurgaon',
+    'Gurugram',
+    'Ghaziabad',
+    'Faridabad',
+    'Bengaluru',
+    'Bangalore',
+    'Mumbai',
+    'Pune',
+    'Hyderabad',
+    'Chennai',
+    'Kolkata',
+    'Jaipur',
+    'Ahmedabad',
+    'Lucknow',
+    'Indore',
+    'Bhopal',
+    'Gwalior',
+    'Tikamgarh',
+  ];
+  const lowerFull = formattedAddress.toLowerCase();
+  for (const city of preferredCities) {
+    if (lowerFull.includes(city.toLowerCase())) return city;
+  }
+
   const stateHints = [
     'madhya pradesh',
     'uttar pradesh',
@@ -80,14 +121,17 @@ export function extractCityFromAddress(formattedAddress: string): string | null 
     'india',
   ];
 
+  // Walk from the end: skip country / state / pin, take locality (not village urf-nawada fragments after city).
   for (let i = parts.length - 1; i >= 0; i -= 1) {
-    const lower = parts[i].toLowerCase().replace(/\d+/g, '').trim();
+    const raw = parts[i];
+    const lower = raw.toLowerCase().replace(/\d+/g, '').trim();
     if (stateHints.some((h) => lower.includes(h))) continue;
-    if (/^\d{5,6}$/.test(parts[i])) continue;
-    // Skip very short tokens and house numbers
-    if (parts[i].length < 3) continue;
-    if (/^\d/.test(parts[i]) && parts[i].length < 8) continue;
-    return parts[i].replace(/\s+\d{5,6}$/, '').trim();
+    if (/^\d{5,6}$/.test(raw)) continue;
+    if (raw.length < 3) continue;
+    if (/^\d/.test(raw) && raw.length < 8) continue;
+    // Skip "X Urf Y" village strings when a better city token exists earlier
+    if (/\burf\b/i.test(raw) && i > 0) continue;
+    return raw.replace(/\s+\d{5,6}$/, '').trim();
   }
 
   return parts.length >= 2 ? parts[parts.length - 2] : parts[0];
@@ -113,7 +157,13 @@ export function formatFullDeliveryAddress(formattedAddress?: string | null): str
     return '';
   }
 
-  const parts = formattedAddress
+  const cleaned = formattedAddress
+    .replace(/\b[A-Z0-9]{4,8}\+[A-Z0-9]{2,3}\b/gi, '')
+    .replace(/\s*,\s*,+/g, ',')
+    .replace(/^[\s,]+|[\s,]+$/g, '')
+    .trim();
+
+  const parts = cleaned
     .split(',')
     .map((p) => p.trim())
     .filter(Boolean)
@@ -121,6 +171,7 @@ export function formatFullDeliveryAddress(formattedAddress?: string | null): str
       const lower = part.toLowerCase();
       if (lower === 'india' || lower === 'in') return false;
       if (/^lat\b/i.test(part) || /^lng\b/i.test(part)) return false;
+      if (/^[A-Z0-9]{4,8}\+[A-Z0-9]{2,3}$/i.test(part)) return false;
       return true;
     });
 

@@ -2,6 +2,7 @@ import axios from 'axios';
 
 import type { AddressSuggestion, GeocodeResult } from '@/lib/address/api';
 import { GOOGLE_MAPS_API_KEY } from '@/lib/google-maps';
+import { stripPlusCodes } from '@/lib/location/parse-address';
 
 const GOOGLE_BASE = 'https://maps.googleapis.com/maps/api';
 const PLACES_NEW = 'https://places.googleapis.com/v1';
@@ -21,9 +22,23 @@ type GoogleGeocodeResponse = {
   results?: Array<{
     formatted_address: string;
     types?: string[];
+    address_components?: Array<{
+      long_name: string;
+      short_name: string;
+      types: string[];
+    }>;
     geometry: { location: { lat: number; lng: number } };
   }>;
   error_message?: string;
+};
+
+export type ReverseGeocodeResult = {
+  formattedAddress: string;
+  components: Array<{
+    long_name: string;
+    short_name: string;
+    types: string[];
+  }>;
 };
 
 type PlacesNewAutocompleteResponse = {
@@ -368,8 +383,9 @@ export const googlePlacesApi = {
           return {
             lat: hit.location.latitude,
             lng: hit.location.longitude,
-            formattedAddress:
-              hit.formattedAddress || hit.displayName?.text || input.address,
+            formattedAddress: stripPlusCodes(
+              hit.formattedAddress || hit.displayName?.text || input.address || ''
+            ),
           };
         }
       } catch {
@@ -400,11 +416,13 @@ export const googlePlacesApi = {
     return {
       lat: result.geometry.location.lat,
       lng: result.geometry.location.lng,
-      formattedAddress: result.formatted_address,
+      formattedAddress: stripPlusCodes(result.formatted_address),
     };
   },
 
-  reverseGeocode: async (input: { lat: number; lng: number }): Promise<string | null> => {
+  reverseGeocode: async (
+    input: { lat: number; lng: number }
+  ): Promise<ReverseGeocodeResult | null> => {
     if (!GOOGLE_MAPS_API_KEY) return null;
 
     try {
@@ -415,24 +433,58 @@ export const googlePlacesApi = {
             latlng: `${input.lat},${input.lng}`,
             key: GOOGLE_MAPS_API_KEY,
             language: 'en',
+            result_type:
+              'street_address|route|premise|subpremise|neighborhood|sublocality|locality',
           },
           timeout: 12000,
         }
       );
 
-      if (data.status !== 'OK' || !data.results?.[0]) return null;
-      const poi = data.results.find((row) =>
-        row.types?.some((type) =>
-          [
-            'establishment',
-            'point_of_interest',
-            'premise',
-            'food',
-            'restaurant',
-          ].includes(type)
-        )
-      );
-      return (poi ?? data.results[0]).formatted_address;
+      let results = data.results;
+      if (data.status === 'ZERO_RESULTS' || !results?.length) {
+        const wide = await axios.get<GoogleGeocodeResponse>(
+          `${GOOGLE_BASE}/geocode/json`,
+          {
+            params: {
+              latlng: `${input.lat},${input.lng}`,
+              key: GOOGLE_MAPS_API_KEY,
+              language: 'en',
+            },
+            timeout: 12000,
+          }
+        );
+        if (wide.data.status !== 'OK' || !wide.data.results?.[0]) return null;
+        results = wide.data.results;
+      } else if (data.status !== 'OK') {
+        return null;
+      }
+
+      // Prefer a real street/POI result over a bare Plus Code.
+      const scored =
+        results.find((row) =>
+          row.types?.some((type) =>
+            [
+              'street_address',
+              'premise',
+              'subpremise',
+              'establishment',
+              'point_of_interest',
+              'route',
+              'food',
+              'restaurant',
+            ].includes(type)
+          )
+        ) ||
+        results.find((row) => !row.types?.includes('plus_code')) ||
+        results[0];
+
+      const formatted = stripPlusCodes(scored.formatted_address || '');
+      if (!formatted) return null;
+
+      return {
+        formattedAddress: formatted,
+        components: scored.address_components ?? [],
+      };
     } catch {
       return null;
     }

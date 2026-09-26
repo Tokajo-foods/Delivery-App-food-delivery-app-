@@ -12,10 +12,15 @@ import {
 import { getApiErrorMessage } from '@/lib/errors';
 import { assertGoogleMapsApiKey, GOOGLE_MAPS_API_KEY } from '@/lib/google-maps';
 import {
+  isCoordinateFallbackAddress,
   normalizeLat,
   normalizeLng,
   shortAddressLabel,
 } from '@/lib/location/format';
+import {
+  stripPlusCodes,
+  type GoogleAddressComponent,
+} from '@/lib/location/parse-address';
 
 import type { MapPickResult } from '@/components/restaurant/location-map-types';
 import { handleLocationMapWebMessage } from '@/components/restaurant/location-map-webview-messages';
@@ -29,6 +34,13 @@ type Args = {
   onConfirm: (result: MapPickResult) => void;
 };
 
+function cleanDisplayAddress(value?: string | null): string | undefined {
+  if (!value?.trim()) return undefined;
+  if (isCoordinateFallbackAddress(value)) return undefined;
+  const cleaned = stripPlusCodes(value);
+  return cleaned || undefined;
+}
+
 export function useLocationMapPicker({
   visible,
   initial,
@@ -40,12 +52,14 @@ export function useLocationMapPicker({
   const reverseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const confirmPending = useRef(false);
   const detectedRef = useRef<string | undefined>(undefined);
+  const componentsRef = useRef<GoogleAddressComponent[]>([]);
   const sourceRef = useRef<'gps' | 'search'>('search');
   const requestIdRef = useRef(0);
   const pendingRequest = useRef<{
     id: number;
     kind: 'autocomplete' | 'details' | 'geocode';
   } | null>(null);
+  const reverseSeq = useRef(0);
 
   const startPoint = useMemo(() => initial ?? DEFAULT, [initial]);
 
@@ -54,6 +68,7 @@ export function useLocationMapPicker({
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [addressUpdating, setAddressUpdating] = useState(false);
   const [detectedAddress, setDetectedAddress] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -81,9 +96,16 @@ export function useLocationMapPicker({
 
   const reverseLookup = useCallback((lat: number, lng: number) => {
     if (reverseTimer.current) clearTimeout(reverseTimer.current);
+    const seq = ++reverseSeq.current;
+    setAddressUpdating(true);
     reverseTimer.current = setTimeout(async () => {
-      const addr = await reverseGeocodeAddress({ lat, lng });
-      if (addr) setDetectedAddress(addr);
+      const result = await reverseGeocodeAddress({ lat, lng });
+      if (seq !== reverseSeq.current) return;
+      if (result?.formattedAddress) {
+        componentsRef.current = result.components ?? [];
+        setDetectedAddress(result.formattedAddress);
+      }
+      setAddressUpdating(false);
     }, 450);
   }, []);
 
@@ -100,12 +122,35 @@ export function useLocationMapPicker({
       setPin({ lat: safeLat, lng: safeLng });
       sendToMap(safeLat, safeLng, 17);
       setTimeout(() => sendToMap(safeLat, safeLng, 17), 350);
-      if (formatted && !/^lat\s*-?\d/i.test(formatted)) {
-        setDetectedAddress(formatted);
+
+      const cleaned = cleanDisplayAddress(formatted);
+      if (cleaned) {
+        componentsRef.current = [];
+        setDetectedAddress(cleaned);
+        setAddressUpdating(false);
+        // Still enrich with components in background (street/city parse).
+        void reverseGeocodeAddress({ lat: safeLat, lng: safeLng }).then(
+          (result) => {
+            if (!result) return;
+            componentsRef.current = result.components ?? [];
+            if (result.formattedAddress) {
+              setDetectedAddress(result.formattedAddress);
+            }
+          }
+        );
         return;
       }
-      const addr = await reverseGeocodeAddress({ lat: safeLat, lng: safeLng });
-      setDetectedAddress(addr || 'Selected location');
+
+      setAddressUpdating(true);
+      const result = await reverseGeocodeAddress({
+        lat: safeLat,
+        lng: safeLng,
+      });
+      componentsRef.current = result?.components ?? [];
+      setDetectedAddress(
+        result?.formattedAddress || 'Selected location'
+      );
+      setAddressUpdating(false);
     },
     [sendToMap]
   );
@@ -441,13 +486,16 @@ export function useLocationMapPicker({
       return;
     }
     const formatted =
-      detectedAddress ?? `Lat ${pin.lat.toFixed(5)}, Lng ${pin.lng.toFixed(5)}`;
+      cleanDisplayAddress(detectedAddress) || 'Selected location';
     onConfirm({
       lat: pin.lat,
       lng: pin.lng,
       formattedAddress: formatted,
       label: shortAddressLabel(formatted, sourceRef.current),
       source: sourceRef.current,
+      components: componentsRef.current.length
+        ? componentsRef.current
+        : undefined,
     });
   };
 
@@ -459,6 +507,7 @@ export function useLocationMapPicker({
     suggestions,
     searching,
     locating,
+    addressUpdating,
     detectedAddress,
     error,
     searchError,

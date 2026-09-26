@@ -90,8 +90,8 @@ async function geocodeLatLng(lat: number, lng: number): Promise<string | null> {
   const cached = geoCache.get(key);
   if (cached) return cached;
   const addr = await reverseGeocodeAddress({ lat, lng });
-  if (addr) geoCache.set(key, addr);
-  return addr;
+  if (addr?.formattedAddress) geoCache.set(key, addr.formattedAddress);
+  return addr?.formattedAddress ?? null;
 }
 
 export function useResolvedTripStops(delivery: PartnerDelivery) {

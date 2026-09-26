@@ -189,6 +189,7 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
       label: result.label,
       lat: result.lat,
       lng: result.lng,
+      components: result.components,
     });
 
     setCoords({ lat: result.lat, lng: result.lng });
@@ -201,7 +202,7 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
     setPincode(parsed.pincode === '000000' ? '' : parsed.pincode);
     if (!country.trim()) setCountry('India');
     setMapHint(
-      `Pin updated · ${result.lat.toFixed(5)}, ${result.lng.toFixed(5)}. Address fields filled — tap Save Profile.`
+      `Pin updated · address fields filled from map — tap Save Profile.`
     );
     setMapOpen(false);
   };

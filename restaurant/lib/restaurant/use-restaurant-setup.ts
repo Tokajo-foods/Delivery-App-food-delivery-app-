@@ -239,6 +239,11 @@ export function useRestaurantSetup() {
     lng: number;
     formattedAddress?: string;
     label: string;
+    components?: Array<{
+      long_name?: string;
+      short_name?: string;
+      types: string[];
+    }>;
   }) => {
     setCoords({ lat: result.lat, lng: result.lng });
     setLocationLabel(result.formattedAddress || result.label);
@@ -247,6 +252,7 @@ export function useRestaurantSetup() {
       label: result.label,
       lat: result.lat,
       lng: result.lng,
+      components: result.components,
     });
     setStreet(parsed.street);
     setArea(parsed.area);
