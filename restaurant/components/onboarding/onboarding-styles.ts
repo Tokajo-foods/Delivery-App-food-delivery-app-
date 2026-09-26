@@ -137,6 +137,16 @@ export const onboardingStyles = StyleSheet.create({
     padding: 14,
     gap: 10,
   },
+  formCardNested: {
+    marginHorizontal: 4,
+    marginBottom: 12,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: authTheme.cardBorder,
+    padding: 12,
+    gap: 10,
+  },
   formTitle: {
     fontFamily: fonts.bold,
     fontSize: 15,

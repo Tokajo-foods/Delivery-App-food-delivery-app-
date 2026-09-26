@@ -34,6 +34,7 @@ export type KycExpandKey =
 
 type Props = {
   expand: KycExpandKey;
+  nested?: boolean;
   docs?: KycDocumentsList;
   pendingFile: UploadFile | null;
   busyUpload: boolean;
@@ -69,6 +70,7 @@ function latest(
 export function KycExpandPanels(props: Props) {
   const {
     expand,
+    nested,
     docs,
     pendingFile,
     busyUpload,
@@ -94,9 +96,12 @@ export function KycExpandPanels(props: Props) {
     onUploadPhoto,
   } = props;
 
+  const shell = nested ? styles.formCardNested : styles.formCard;
+
   if (expand === 'fssai') {
     return (
       <LicenseCard
+        nested={nested}
         title="FSSAI license"
         hint="14-digit number + certificate photo."
         placeholder="14-digit FSSAI"
@@ -117,6 +122,7 @@ export function KycExpandPanels(props: Props) {
   if (expand === 'gst') {
     return (
       <LicenseCard
+        nested={nested}
         title="GST certificate"
         hint="Optional GSTIN + certificate photo."
         placeholder="15-character GSTIN"
@@ -137,6 +143,7 @@ export function KycExpandPanels(props: Props) {
   if (expand === 'pan') {
     return (
       <LicenseCard
+        nested={nested}
         title="PAN card"
         hint="10-character PAN + card photo."
         placeholder="ABCDE1234F"
@@ -157,7 +164,7 @@ export function KycExpandPanels(props: Props) {
   if (expand === 'idProof') {
     const doc = latest(docs, 'idProof');
     return (
-      <View style={styles.formCard}>
+      <View style={shell}>
         <Text style={styles.formTitle}>ID proof</Text>
         <Text style={styles.formHint}>
           Aadhaar / DL / Voter ID / Passport of the owner.
@@ -213,7 +220,7 @@ export function KycExpandPanels(props: Props) {
   if (expand === 'bank' || expand === 'cancelledCheque') {
     const cheque = latest(docs, 'cancelledCheque');
     return (
-      <View style={styles.formCard}>
+      <View style={shell}>
         <Text style={styles.formTitle}>Bank & cancelled cheque</Text>
         <Text style={styles.formHint}>
           Account details plus cancelled cheque / passbook photo.
@@ -270,7 +277,7 @@ export function KycExpandPanels(props: Props) {
 
   if (expand === 'photos') {
     return (
-      <View style={styles.formCard}>
+      <View style={shell}>
         <Text style={styles.formTitle}>Outlet photos</Text>
         <Text style={styles.formHint}>
           Optional storefront / interior photos (max 8).

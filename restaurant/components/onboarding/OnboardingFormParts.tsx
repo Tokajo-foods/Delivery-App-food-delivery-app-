@@ -74,8 +74,12 @@ export function StepRow({
   const verified = docStatus === 'verified';
 
   return (
-    <Pressable onPress={onPress} disabled={verified && !rejectReason}>
-      <View style={[styles.stepRow, !last && styles.stepBorder]}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ expanded: Boolean(expanded) }}
+    >
+      <View style={[styles.stepRow, !last && !expanded && styles.stepBorder]}>
         <View
           style={[
             styles.stepIcon,
@@ -96,13 +100,17 @@ export function StepRow({
           <Text style={styles.stepMeta} numberOfLines={2}>
             {meta
               ? `${meta.label}${
-                  rejectReason ? ` — ${rejectReason}` : step.detail ? ` · ${step.detail}` : ''
+                  rejectReason
+                    ? ` — ${rejectReason}`
+                    : step.detail
+                      ? ` · ${step.detail}`
+                      : ''
                 }`
               : step.done
                 ? step.detail || 'Done'
                 : step.required
-                  ? 'Tap to upload document'
-                  : 'Optional'}
+                  ? 'Tap to expand and upload'
+                  : 'Optional · tap to expand'}
           </Text>
         </View>
         {meta ? (
@@ -113,9 +121,9 @@ export function StepRow({
           </View>
         ) : null}
         {expanded ? (
-          <ChevronDown color={authTheme.textDim} size={16} />
+          <ChevronDown color={authTheme.brand} size={18} />
         ) : (
-          <ChevronRight color={authTheme.textDim} size={16} />
+          <ChevronRight color={authTheme.textDim} size={18} />
         )}
       </View>
     </Pressable>
@@ -137,6 +145,7 @@ export function LicenseCard({
   keyboard,
   autoCapitalize,
   maxLength,
+  nested,
 }: {
   title: string;
   hint: string;
@@ -152,12 +161,13 @@ export function LicenseCard({
   keyboard?: 'default' | 'number-pad';
   autoCapitalize?: 'none' | 'characters';
   maxLength?: number;
+  nested?: boolean;
 }) {
   const meta = docStatusMeta(doc?.status);
   const locked = !canReuploadDoc(doc?.status);
 
   return (
-    <View style={styles.formCard}>
+    <View style={nested ? styles.formCardNested : styles.formCard}>
       <Text style={styles.formTitle}>{title}</Text>
       <Text style={styles.formHint}>{hint}</Text>
       {masked ? <Text style={styles.masked}>On file: {masked}</Text> : null}
@@ -358,6 +368,15 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: authTheme.cardBorder,
     padding: 14,
+    gap: 10,
+  },
+  formCardNested: {
+    marginBottom: 8,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#E2E8F0',
+    padding: 12,
     gap: 10,
   },
   formTitle: {

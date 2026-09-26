@@ -1,4 +1,3 @@
-import * as ImagePicker from 'expo-image-picker';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -12,13 +11,12 @@ import { useRouter } from 'expo-router';
 
 import { PrimaryButton } from '@/components/auth/PrimaryButton';
 import { RestaurantPageHeader } from '@/components/dashboard/RestaurantPageHeader';
-import {
-  KycExpandPanels,
-  type KycExpandKey,
-} from '@/components/onboarding/KycExpandPanels';
-import { StepRow } from '@/components/onboarding/OnboardingFormParts';
+import { KycDocumentsAccordion } from '@/components/onboarding/KycDocumentsAccordion';
+import { type KycExpandKey } from '@/components/onboarding/KycExpandPanels';
 import { OnboardingStatusHeader } from '@/components/onboarding/OnboardingStatusHeader';
 import { type UploadFile } from '@/components/onboarding/kyc-doc-meta';
+import { pickKycPhoto } from '@/components/onboarding/kyc-pick';
+import { saveKycBank, saveKycLicense } from '@/components/onboarding/kyc-save';
 import { onboardingStyles as styles } from '@/components/onboarding/onboarding-styles';
 import { authTheme } from '@/constants/auth-theme';
 import { getApiErrorMessage } from '@/lib/errors';
@@ -31,49 +29,7 @@ import {
   useOnboardingStatus,
   useRestaurantBank,
 } from '@/lib/restaurant/onboarding-hooks';
-import {
-  FSSAI_RE,
-  GSTIN_RE,
-  IFSC_RE,
-  KYC_FILE,
-  PAN_RE,
-  type KycDocType,
-  type OnboardingStepKey,
-} from '@/lib/restaurant/onboarding-types';
-
-function mimeFromAsset(asset: ImagePicker.ImagePickerAsset) {
-  const mime = (asset.mimeType || '').toLowerCase();
-  if (mime) return mime;
-  const name = (asset.fileName || asset.uri).toLowerCase();
-  if (name.endsWith('.png')) return 'image/png';
-  if (name.endsWith('.webp')) return 'image/webp';
-  return 'image/jpeg';
-}
-
-async function pickKycPhoto(): Promise<UploadFile | null> {
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!permission.granted) {
-    Alert.alert('Photos needed', 'Allow photo access to upload KYC documents.');
-    return null;
-  }
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
-    quality: 0.85,
-  });
-  if (result.canceled || !result.assets[0]) return null;
-  const asset = result.assets[0];
-  if (asset.fileSize && asset.fileSize > KYC_FILE.maxBytes) {
-    Alert.alert('File too large', 'Each document must be under 8 MB.');
-    return null;
-  }
-  const mime = mimeFromAsset(asset);
-  const ext = mime.includes('png') ? 'png' : 'jpg';
-  return {
-    uri: asset.uri,
-    fileName: asset.fileName || `kyc-${Date.now()}.${ext}`,
-    mimeType: mime.startsWith('image/') ? mime : 'image/jpeg',
-  };
-}
+import { type OnboardingStepKey } from '@/lib/restaurant/onboarding-types';
 
 export function OnboardingManager() {
   const router = useRouter();
@@ -102,9 +58,6 @@ export function OnboardingManager() {
   const docs = docsQuery.data;
   const bank = bankQuery.data;
   const listingLive = isListingLive(status?.listingStatus);
-
-  const latest = (type: KycDocType) =>
-    docs?.documents.find((row) => row.type === type);
 
   const setPicked = (file: UploadFile | null) => {
     pendingFile.current = file;
@@ -159,81 +112,28 @@ export function OnboardingManager() {
   };
 
   const saveLicense = async (kind: 'fssai' | 'gst' | 'pan' | 'idProof') => {
-    if (kind === 'fssai') {
-      if (fssaiNo && !FSSAI_RE.test(fssaiNo)) {
-        Alert.alert('Invalid FSSAI', 'FSSAI license must be 14 digits.');
-        return;
-      }
-      await runUpload({
-        fssaiLicense: fssaiNo || undefined,
-        fssai: pendingFile.current ?? undefined,
-      });
-      return;
-    }
-    if (kind === 'gst') {
-      const value = gstin.trim().toUpperCase();
-      if (value && !GSTIN_RE.test(value)) {
-        Alert.alert('Invalid GSTIN', 'Enter a valid 15-character GSTIN.');
-        return;
-      }
-      await runUpload({
-        gstin: value || undefined,
-        gst: pendingFile.current ?? undefined,
-      });
-      return;
-    }
-    if (kind === 'idProof') {
-      await runUpload({
-        idProofType,
-        idProof: pendingFile.current ?? undefined,
-      });
-      return;
-    }
-    const value = panNo.trim().toUpperCase();
-    if (value && !PAN_RE.test(value)) {
-      Alert.alert('Invalid PAN', 'Enter a valid 10-character PAN.');
-      return;
-    }
-    await runUpload({
-      panNumber: value || undefined,
-      pan: pendingFile.current ?? undefined,
+    await saveKycLicense({
+      kind,
+      fssaiNo,
+      gstin,
+      panNo,
+      idProofType,
+      file: pendingFile.current,
+      runUpload,
     });
   };
 
   const saveBank = async () => {
-    const code = ifsc.replace(/\s/g, '').toUpperCase();
-    const account = accountNo.replace(/\s/g, '');
-    if (!IFSC_RE.test(code)) {
-      Alert.alert('Invalid IFSC', 'IFSC looks like HDFC0001234.');
-      return;
-    }
-    if (!/^\d{9,18}$/.test(account)) {
-      Alert.alert('Invalid account', 'Account number must be 9–18 digits.');
-      return;
-    }
-    if (holderName.trim().length < 2) {
-      Alert.alert('Holder name', 'Enter the name as printed on the passbook.');
-      return;
-    }
-    try {
-      await mutations.updateBank.mutateAsync({
-        accountNo: account,
-        ifsc: code,
-        holderName: holderName.trim(),
-      });
-      if (pendingFile.current) {
-        await mutations.uploadDocuments.mutateAsync({
-          cancelledCheque: pendingFile.current,
-        });
-        setPicked(null);
-      }
-      Alert.alert('Bank saved', 'Account saved. Upload cancelled cheque if needed.');
-    } catch (error) {
-      Alert.alert(
-        'Could not save bank',
-        getApiErrorMessage(error, 'Check IFSC and account number.')
-      );
-    }
+    await saveKycBank({
+      ifsc,
+      accountNo,
+      holderName,
+      file: pendingFile.current,
+      updateBank: (body) => mutations.updateBank.mutateAsync(body),
+      uploadCheque: (file) =>
+        mutations.uploadDocuments.mutateAsync({ cancelledCheque: file }),
+      clearFile: () => setPicked(null),
+    });
   };
 
   const loading =
@@ -287,35 +187,8 @@ export function OnboardingManager() {
             />
 
             <Text style={styles.sectionLabel}>Documents</Text>
-            <View style={styles.card}>
-              {status.steps.map((step, index) => {
-                const doc =
-                  step.key === 'fssai' ||
-                  step.key === 'gst' ||
-                  step.key === 'pan' ||
-                  step.key === 'idProof'
-                    ? latest(step.key)
-                    : step.key === 'bank' || step.key === 'cancelledCheque'
-                      ? latest('cancelledCheque')
-                      : undefined;
-                return (
-                  <StepRow
-                    key={step.key}
-                    step={step}
-                    last={index === status.steps.length - 1}
-                    expanded={
-                      expand === step.key ||
-                      (step.key === 'bank' && expand === 'cancelledCheque')
-                    }
-                    docStatus={doc?.status}
-                    rejectReason={doc?.rejectReason}
-                    onPress={() => stepNav(step.key)}
-                  />
-                );
-              })}
-            </View>
-
-            <KycExpandPanels
+            <KycDocumentsAccordion
+              steps={status.steps}
               expand={expand}
               docs={docs}
               pendingFile={pendingFile.current}
@@ -336,6 +209,7 @@ export function OnboardingManager() {
               holderName={holderName}
               setHolderName={setHolderName}
               ifscInfo={ifscQuery.data}
+              onStepPress={stepNav}
               onPick={() => {
                 void pickKycPhoto().then((file) => {
                   if (file) setPicked(file);
