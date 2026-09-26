@@ -383,13 +383,13 @@ export default function RestaurantSetupScreen() {
                   label="FSSAI License"
                   value={fssai}
                   onChangeText={(v) => setFssai(normalizeFssaiInput(v))}
-                  placeholder="14 digits"
+                  placeholder="If you have FSSAI, enter 14 digits"
                   keyboardType="number-pad"
                   maxLength={14}
                   hint={
                     fssai
                       ? fssaiValidationError(fssai) ?? `${fssai.length}/14 digits`
-                      : 'Optional · exactly 14 digits'
+                      : 'Optional — only if you have an FSSAI number'
                   }
                   hintError={Boolean(fssaiValidationError(fssai))}
                 />
@@ -399,13 +399,13 @@ export default function RestaurantSetupScreen() {
                   label="GSTIN"
                   value={gstin}
                   onChangeText={(v) => setGstin(normalizeGstinInput(v))}
-                  placeholder="15 characters"
+                  placeholder="If you have GSTIN, enter number"
                   autoCapitalize="characters"
                   maxLength={15}
                   hint={
                     gstin
                       ? gstinValidationError(gstin) ?? `${gstin.length}/15 characters`
-                      : 'Optional · exactly 15 characters'
+                      : 'Optional — only if you have a GSTIN number'
                   }
                   hintError={Boolean(gstinValidationError(gstin))}
                 />
