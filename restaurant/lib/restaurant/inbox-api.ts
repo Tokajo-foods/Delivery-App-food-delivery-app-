@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 
 import { api } from '@/lib/api';
 import { notificationApi } from '@/lib/notification/api';
+import { isExpoGoRuntime } from '@/lib/notification/device-alerts';
 import type { AppNotification, NotificationListResult } from '@/lib/notification/types';
 import { storageDeleteItem, storageGetItem, storageSetItem } from '@/lib/storage';
 
@@ -161,6 +162,9 @@ export function kitchenPushPlatform(): 'ios' | 'android' | 'web' {
 
 export async function resolveKitchenPushToken(): Promise<string | null> {
   if (Platform.OS === 'web') return null;
+  // Android Expo Go (SDK 53+) cannot receive remote push — need a dev/prod build.
+  if (isExpoGoRuntime() && Platform.OS === 'android') return null;
+
   try {
     const Notifications = await import('expo-notifications');
     const current = await Notifications.getPermissionsAsync();
@@ -171,23 +175,31 @@ export async function resolveKitchenPushToken(): Promise<string | null> {
     }
     if (status !== 'granted') return null;
 
+    const extra = Constants.expoConfig?.extra as
+      | { eas?: { projectId?: string } }
+      | undefined;
+    const projectId = extra?.eas?.projectId;
+
+    // Prefer Expo push token — notification-service can deliver without FCM JSON.
+    try {
+      const expoToken = await Notifications.getExpoPushTokenAsync(
+        projectId ? { projectId } : undefined
+      );
+      if (expoToken.data?.trim()) return expoToken.data.trim();
+    } catch {
+      // Fall through to native FCM/APNs when Expo credentials are missing.
+    }
+
     try {
       const token = await Notifications.getDevicePushTokenAsync();
       if (typeof token.data === 'string' && token.data.trim().length >= 10) {
         return token.data.trim();
       }
     } catch {
-      // Expo Go / missing credentials — try Expo token next.
+      // Missing native push credentials.
     }
 
-    const extra = Constants.expoConfig?.extra as
-      | { eas?: { projectId?: string } }
-      | undefined;
-    const projectId = extra?.eas?.projectId;
-    const expoToken = await Notifications.getExpoPushTokenAsync(
-      projectId ? { projectId } : undefined
-    );
-    return expoToken.data?.trim() || null;
+    return null;
   } catch {
     return null;
   }

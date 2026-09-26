@@ -64,12 +64,12 @@ export async function clearStoredRiderOfferDevice(): Promise<void> {
 }
 
 /**
- * Native FCM/APNs token. Skips Expo Go (Android SDK 53 throws on import).
- * Never invents a token.
+ * Native / Expo push token. Skips Android Expo Go (SDK 53+ has no remote push).
+ * Prefers ExpoPushToken so notification-service can deliver without FCM JSON.
  */
 export async function resolvePlatformPushToken(): Promise<string | null> {
   if (Platform.OS === 'web') return null;
-  if (isExpoGoRuntime()) return null;
+  if (isExpoGoRuntime() && Platform.OS === 'android') return null;
 
   try {
     const Notifications = await import('expo-notifications');
@@ -81,23 +81,30 @@ export async function resolvePlatformPushToken(): Promise<string | null> {
     }
     if (status !== 'granted') return null;
 
+    const extra = Constants.expoConfig?.extra as
+      | { eas?: { projectId?: string } }
+      | undefined;
+    const projectId = extra?.eas?.projectId;
+
+    try {
+      const expoToken = await Notifications.getExpoPushTokenAsync(
+        projectId ? { projectId } : undefined
+      );
+      if (expoToken.data?.trim()) return expoToken.data.trim();
+    } catch {
+      // Fall through to native token.
+    }
+
     try {
       const native = await Notifications.getDevicePushTokenAsync();
       if (typeof native.data === 'string' && native.data.trim().length >= 10) {
         return native.data.trim();
       }
     } catch {
-      // Missing FCM/APNs credentials — try Expo token next.
+      // Missing FCM/APNs credentials.
     }
 
-    const extra = Constants.expoConfig?.extra as
-      | { eas?: { projectId?: string } }
-      | undefined;
-    const projectId = extra?.eas?.projectId;
-    const expoToken = await Notifications.getExpoPushTokenAsync(
-      projectId ? { projectId } : undefined
-    );
-    return expoToken.data?.trim() || null;
+    return null;
   } catch {
     return null;
   }

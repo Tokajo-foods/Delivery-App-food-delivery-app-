@@ -6,6 +6,7 @@ import { authTheme } from '@/constants/auth-theme';
 import { RestaurantLiveSync } from '@/components/dashboard/RestaurantLiveSync';
 import { KitchenConfigGate } from '@/components/dashboard/KitchenConfigGate';
 import { KitchenPushSync } from '@/components/dashboard/KitchenPushSync';
+import { KitchenInboxSync } from '@/components/dashboard/KitchenInboxSync';
 import { KitchenNewOrderAlerts } from '@/components/dashboard/KitchenNewOrderAlerts';
 import { RiderLiveSync } from '@/components/delivery/RiderLiveSync';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
@@ -258,6 +259,7 @@ export default function AppLayout() {
           <RestaurantLiveSync />
           <KitchenConfigGate />
           <KitchenPushSync />
+          <KitchenInboxSync />
           <KitchenNewOrderAlerts />
         </>
       ) : null}

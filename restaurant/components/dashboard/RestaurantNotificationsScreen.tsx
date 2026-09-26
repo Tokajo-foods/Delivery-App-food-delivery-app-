@@ -245,8 +245,9 @@ export function RestaurantNotificationsScreen() {
         <View style={styles.prefsCard}>
           <Text style={styles.prefsTitle}>Channel prefs</Text>
           <Text style={styles.muted}>
-            Notification-service push / SMS / email. Account-level toggles are in
-            Admin → Your account.
+            Order push covers KYC reject / go-live alerts. Offer/promo are
+            marketing only. Phone tray push needs a development or production
+            build — Expo Go on Android cannot show remote push.
           </Text>
           {channelPrefs.isLoading && !channelPrefs.data ? (
             <ActivityIndicator color={authTheme.brand} />
