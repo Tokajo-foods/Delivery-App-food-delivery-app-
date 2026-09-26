@@ -31,6 +31,7 @@ import {
 import { cardShadow, theme } from '@/constants/theme';
 import { getApiErrorMessage } from '@/lib/errors';
 import { parseDeliveryAddress } from '@/lib/location';
+import { launchLibraryImage } from '@/lib/media/pick-image';
 import { markRestaurantSetupComplete } from '@/lib/navigation/post-auth';
 import { restaurantOwnerApi, buildCreateRestaurantPayload } from '@/lib/restaurant/api';
 import { useCuisineCatalog, useRestaurantServiceHealth } from '@/lib/restaurant/hooks';
@@ -92,15 +93,21 @@ export default function RestaurantSetupScreen() {
       Alert.alert('Permission required', 'Photo library permission is required.');
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: kind === 'logo' ? [1, 1] : [16, 9],
-      quality: 0.85,
-    });
-    if (result.canceled || !result.assets[0]) return;
-    if (kind === 'logo') setLogo(result.assets[0]);
-    else setCover(result.assets[0]);
+    try {
+      const result = await launchLibraryImage({
+        aspect: kind === 'logo' ? [1, 1] : [16, 9],
+        quality: 0.85,
+        allowsEditing: true,
+      });
+      if (result.canceled || !result.assets[0]) return;
+      if (kind === 'logo') setLogo(result.assets[0]);
+      else setCover(result.assets[0]);
+    } catch {
+      Alert.alert(
+        'Could not open photo',
+        'Try again, or pick a different image from your gallery.'
+      );
+    }
   };
 
   const stepError = (s: Step): string | null => {

@@ -18,6 +18,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -182,7 +183,7 @@ export function KitchenAccountManager() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.8,
-      allowsEditing: true,
+      allowsEditing: Platform.OS === 'ios',
       aspect: [1, 1],
       exif: false,
     });

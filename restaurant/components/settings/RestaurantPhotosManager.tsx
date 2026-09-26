@@ -23,6 +23,7 @@ import {
 import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
 import { getApiErrorMessage } from '@/lib/errors';
+import { launchCameraImage, launchLibraryImage } from '@/lib/media/pick-image';
 import {
   RESTAURANT_PHOTO,
   type RestaurantDetail,
@@ -132,16 +133,13 @@ export function RestaurantPhotosManager({
         if (!ok) return;
         const result =
           source === 'camera'
-            ? await ImagePicker.launchCameraAsync({
-                mediaTypes: ['images'],
+            ? await launchCameraImage({
                 quality: 0.85,
                 allowsEditing: true,
                 aspect: [16, 9],
               })
-            : await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ['images'],
+            : await launchLibraryImage({
                 quality: 0.85,
-                allowsMultipleSelection: false,
                 allowsEditing: true,
                 aspect: [16, 9],
               });
@@ -165,10 +163,8 @@ export function RestaurantPhotosManager({
     void (async () => {
       try {
         if (!(await requestLibrary())) return;
-        const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ['images'],
+        const result = await launchLibraryImage({
           quality: 0.85,
-          allowsMultipleSelection: false,
           allowsEditing: true,
           aspect: [1, 1],
         });
@@ -199,13 +195,10 @@ export function RestaurantPhotosManager({
         if (!ok) return;
         const result =
           source === 'camera'
-            ? await ImagePicker.launchCameraAsync({
-                mediaTypes: ['images'],
+            ? await launchCameraImage({ quality: 0.85, allowsEditing: false })
+            : await launchLibraryImage({
                 quality: 0.85,
-              })
-            : await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ['images'],
-                quality: 0.85,
+                allowsEditing: false,
                 allowsMultipleSelection: true,
                 selectionLimit: remaining,
               });
