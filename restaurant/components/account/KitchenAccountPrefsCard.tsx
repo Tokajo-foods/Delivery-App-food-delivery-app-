@@ -1,6 +1,4 @@
-export { ContactChangeModal } from '@/components/account/ContactChangeModal';
-
-import { Bell, Globe, Mail, Phone } from 'lucide-react-native';
+import { Bell, Mail, Phone } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -12,7 +10,7 @@ import {
   View,
 } from 'react-native';
 
-import { PlatformAccountDeleteRow } from '@/components/delivery/profile/PlatformAccountDeleteRow';
+import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
 import {
   formatAccountError,
@@ -27,35 +25,40 @@ const DEFAULT_PREFS: NotificationPrefs = {
   email: true,
 };
 
-export function PlatformAccountSection() {
+/**
+ * Push / SMS / email preference toggles (persisted on user-service).
+ */
+export function KitchenAccountPrefsCard() {
   const prefs = usePlatformPreferences(true);
   const { updateNotifications } = usePlatformAccountMutations();
   const [local, setLocal] = useState<NotificationPrefs>(DEFAULT_PREFS);
-  const [prefsError, setPrefsError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<keyof NotificationPrefs | null>(
     null
   );
 
   useEffect(() => {
-    if (prefs.data?.notifications) setLocal(prefs.data.notifications);
+    if (prefs.data?.notifications) {
+      setLocal(prefs.data.notifications);
+    }
   }, [prefs.data?.notifications]);
 
-  const patchNotifications = async (
+  const patch = async (
     key: keyof NotificationPrefs,
     value: boolean
   ) => {
     const previous = local;
     const next = { ...local, [key]: value };
     setLocal(next);
-    setPrefsError(null);
+    setError(null);
     setSavingKey(key);
     try {
       const saved = await updateNotifications.mutateAsync(next);
       setLocal(saved.notifications);
     } catch (err) {
       setLocal(previous);
-      setPrefsError(
-        formatAccountError(err, 'Could not save notification prefs.')
+      setError(
+        formatAccountError(err, 'Could not save notification preferences.')
       );
     } finally {
       setSavingKey(null);
@@ -63,20 +66,24 @@ export function PlatformAccountSection() {
   };
 
   return (
-    <View style={styles.section}>
-      <View style={styles.sectionTitleRow}>
-        <Globe color="#EA4B14" size={16} />
-        <Text style={styles.sectionTitle}>Notification preferences</Text>
+    <View style={styles.card}>
+      <View style={styles.titleRow}>
+        <Bell color={authTheme.brand} size={16} />
+        <Text style={styles.cardTitle}>Notification preferences</Text>
       </View>
+      <Text style={styles.hint}>
+        Choose how Tokajo contacts you for account alerts. Changes save on this
+        phone immediately.
+      </Text>
 
       {prefs.isLoading && !prefs.data ? (
-        <ActivityIndicator color="#EA4B14" style={{ marginVertical: 12 }} />
+        <ActivityIndicator color={authTheme.brand} />
       ) : prefs.isError && !prefs.data ? (
-        <Pressable onPress={() => void prefs.refetch()} style={styles.retry}>
-          <Text style={styles.retryText}>
+        <Pressable onPress={() => void prefs.refetch()}>
+          <Text style={styles.linkText}>
             {formatAccountError(
               prefs.error,
-              'Could not load preferences. Retry'
+              'Could not load preferences. Tap to retry'
             )}
           </Text>
         </Pressable>
@@ -85,10 +92,10 @@ export function PlatformAccountSection() {
           <PrefToggle
             icon={Bell}
             label="Push"
-            hint="Order offers and duty alerts"
+            hint="Alerts on this Android / iOS phone"
             value={local.push}
             busy={savingKey === 'push'}
-            onChange={(push) => void patchNotifications('push', push)}
+            onChange={(push) => void patch('push', push)}
           />
           <PrefToggle
             icon={Phone}
@@ -96,22 +103,19 @@ export function PlatformAccountSection() {
             hint="OTP and important account texts"
             value={local.sms}
             busy={savingKey === 'sms'}
-            onChange={(sms) => void patchNotifications('sms', sms)}
+            onChange={(sms) => void patch('sms', sms)}
           />
           <PrefToggle
             icon={Mail}
             label="Email"
-            hint="Receipts and verification mail"
+            hint="Verification and account mail"
             value={local.email}
             busy={savingKey === 'email'}
-            onChange={(email) => void patchNotifications('email', email)}
+            onChange={(email) => void patch('email', email)}
           />
         </>
       )}
-      {prefsError ? <Text style={styles.error}>{prefsError}</Text> : null}
-
-      <View style={styles.divider} />
-      <PlatformAccountDeleteRow />
+      {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
 }
@@ -133,51 +137,55 @@ function PrefToggle({
 }) {
   return (
     <View style={styles.prefRow}>
-      <Icon color="#64748B" size={16} />
-      <View style={{ flex: 1 }}>
-        <Text style={styles.prefLabel}>{label}</Text>
-        <Text style={styles.prefHint}>{hint}</Text>
+      <Icon color={authTheme.textMuted} size={16} />
+      <View style={styles.prefCopy}>
+        <Text style={styles.rowLabel}>{label}</Text>
+        <Text style={styles.meta}>{hint}</Text>
       </View>
-      {busy ? <ActivityIndicator color="#EA4B14" size="small" /> : null}
+      {busy ? (
+        <ActivityIndicator color={authTheme.brand} size="small" />
+      ) : null}
       <Switch
         value={value}
         onValueChange={onChange}
         disabled={busy}
         style={Platform.OS === 'android' ? styles.androidSwitch : undefined}
-        trackColor={{ false: '#E5E7EB', true: '#FDBA74' }}
+        trackColor={{ false: '#E2E8F0', true: 'rgba(122,14,34,0.45)' }}
         thumbColor={
           Platform.OS === 'android'
             ? value
-              ? '#EA4B14'
-              : '#F9FAFB'
+              ? authTheme.brand
+              : '#F8FAFC'
             : value
               ? '#FFFFFF'
-              : '#F9FAFB'
+              : '#F8FAFC'
         }
-        ios_backgroundColor="#E5E7EB"
+        ios_backgroundColor="#E2E8F0"
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  section: {
+  card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#F3F4F6',
+    borderColor: authTheme.cardBorder,
     padding: 14,
+    gap: 10,
   },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  sectionTitle: {
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  cardTitle: {
     fontFamily: fonts.bold,
     fontSize: 15,
-    color: '#111827',
+    color: authTheme.text,
+  },
+  hint: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    lineHeight: 17,
+    color: authTheme.textMuted,
   },
   prefRow: {
     flexDirection: 'row',
@@ -186,20 +194,28 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     minHeight: 52,
   },
-  prefLabel: { fontFamily: fonts.semiBold, fontSize: 14, color: '#111827' },
-  prefHint: { fontFamily: fonts.medium, fontSize: 11, color: '#6B7280' },
-  error: {
-    marginTop: 8,
+  prefCopy: { flex: 1 },
+  rowLabel: {
+    fontFamily: fonts.semiBold,
+    fontSize: 14,
+    color: authTheme.text,
+  },
+  meta: {
+    marginTop: 2,
     fontFamily: fonts.medium,
     fontSize: 12,
-    color: '#B91C1C',
+    color: authTheme.textMuted,
+    lineHeight: 16,
   },
-  retry: { paddingVertical: 8 },
-  retryText: { fontFamily: fonts.semiBold, fontSize: 13, color: '#EA4B14' },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: '#F3F4F6',
-    marginVertical: 14,
+  linkText: {
+    fontFamily: fonts.semiBold,
+    fontSize: 13,
+    color: authTheme.brand,
+  },
+  error: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    color: authTheme.error,
   },
   androidSwitch: {
     transform: [{ scaleX: 1.05 }, { scaleY: 1.05 }],

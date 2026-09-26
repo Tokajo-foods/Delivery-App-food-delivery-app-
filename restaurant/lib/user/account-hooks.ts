@@ -184,6 +184,41 @@ export function usePlatformAccountMutations() {
     onSuccess: (prefs) => {
       queryClient.setQueryData(platformAccountKeys.preferences(), prefs);
     },
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({
+        queryKey: platformAccountKeys.preferences(),
+      });
+      const previous = queryClient.getQueryData(
+        platformAccountKeys.preferences()
+      );
+      queryClient.setQueryData(
+        platformAccountKeys.preferences(),
+        (current: unknown) => {
+          const base =
+            current && typeof current === 'object'
+              ? (current as Record<string, unknown>)
+              : {};
+          return {
+            ...base,
+            notifications: payload,
+            language:
+              typeof base.language === 'string' ? base.language : 'en',
+            languages: Array.isArray(base.languages)
+              ? base.languages
+              : ['en', 'hi'],
+          };
+        }
+      );
+      return { previous };
+    },
+    onError: (_err, _payload, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          platformAccountKeys.preferences(),
+          context.previous
+        );
+      }
+    },
   });
 
   const updateLanguage = useMutation({

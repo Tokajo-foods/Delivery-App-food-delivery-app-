@@ -294,7 +294,11 @@ function mapContactOtpResult(
 
 function mapNotifications(raw: unknown): NotificationPrefs {
   const record = asRecord(unwrap(raw));
-  const nested = asRecord(record.notifications ?? record);
+  const nested = asRecord(
+    record.notificationPreferences ??
+      record.notifications ??
+      record
+  );
   return {
     push: pickBool(nested, ['push', 'pushEnabled', 'mobile']) ?? true,
     sms: pickBool(nested, ['sms', 'smsEnabled']) ?? true,
@@ -319,10 +323,14 @@ function mapPreferences(raw: unknown): UserPreferences {
         .map((row) => String(row).trim().toLowerCase())
         .filter(Boolean)
     : [...DEFAULT_LANGUAGES];
+  const notifSource =
+    record.notificationPreferences ??
+    nestedPrefs.notificationPreferences ??
+    record.notifications ??
+    nestedPrefs.notifications ??
+    record;
   return {
-    notifications: mapNotifications(
-      record.notifications ?? nestedPrefs.notifications ?? record
-    ),
+    notifications: mapNotifications(notifSource),
     language: language || 'en',
     languages: languages.length ? languages : [...DEFAULT_LANGUAGES],
   };
@@ -442,9 +450,14 @@ export const userAccountApi = {
         },
       }
     );
+    const mapped = mapPreferences(data);
     return {
-      ...mapPreferences(data),
-      notifications: payload,
+      ...mapped,
+      notifications: {
+        push: mapped.notifications.push,
+        sms: mapped.notifications.sms,
+        email: mapped.notifications.email,
+      },
     };
   },
 
