@@ -73,6 +73,8 @@ export type RestaurantDetail = {
   fssaiLicense?: string;
   gstin?: string;
   phone?: string;
+  /** Optional public contact email shown to customers. */
+  email?: string;
   priceRange?: PriceRange;
   costForTwo?: number;
   cuisines?: string[];
@@ -92,6 +94,7 @@ export type UpdateRestaurantPayload = {
   fssaiLicense?: string;
   gstin?: string;
   phone?: string;
+  email?: string;
   priceRange?: PriceRange;
   costForTwo?: number;
   cuisines?: string[];

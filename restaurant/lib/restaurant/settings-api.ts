@@ -609,6 +609,7 @@ export function mapRestaurantDetail(
     fssaiLicense: pickString(raw, ['fssaiLicense', 'fssai', 'fssaiNo']),
     gstin: pickString(raw, ['gstin', 'gst', 'gstNumber']),
     phone: pickString(raw, ['phone', 'contactPhone', 'mobile']),
+    email: pickString(raw, ['email', 'contactEmail', 'restaurantEmail']),
     priceRange: pickString(raw, ['priceRange', 'pricing']),
     costForTwo: pickNumber(raw, ['costForTwo', 'averageCostForTwo', 'avgCost']),
     cuisines: mapCuisines(raw.cuisines ?? raw.cuisine ?? raw.cuisineTypes),
@@ -778,6 +779,9 @@ export const restaurantSettingsApi = {
       body.gstin = payload.gstin.trim();
     }
     if (payload.phone !== undefined) body.phone = payload.phone.trim();
+    if (payload.email !== undefined) {
+      body.email = payload.email.trim().toLowerCase();
+    }
     if (payload.priceRange !== undefined) body.priceRange = payload.priceRange;
     if (payload.costForTwo !== undefined) body.costForTwo = payload.costForTwo;
     if (payload.cuisines !== undefined) body.cuisines = payload.cuisines;

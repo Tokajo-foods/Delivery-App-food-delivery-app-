@@ -135,6 +135,7 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
   const [fssai, setFssai] = useState(detail.fssaiLicense ?? '');
   const [gstin, setGstin] = useState(detail.gstin ?? '');
   const [phone, setPhone] = useState(detail.phone ?? '');
+  const [email, setEmail] = useState(detail.email ?? '');
   const [street, setStreet] = useState(detail.address?.street ?? '');
   const [area, setArea] = useState(detail.address?.area ?? '');
   const [city, setCity] = useState(detail.address?.city ?? '');
@@ -164,6 +165,7 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
     setFssai(detail.fssaiLicense ?? '');
     setGstin(detail.gstin ?? '');
     setPhone(detail.phone ?? '');
+    setEmail(detail.email ?? '');
     setStreet(detail.address?.street ?? '');
     setArea(detail.address?.area ?? '');
     setCity(detail.address?.city ?? '');
@@ -241,6 +243,9 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
     if (!sameString(phone, detail.phone ?? '')) {
       payload.phone = phone.trim();
     }
+    if (!sameString(email, detail.email ?? '')) {
+      payload.email = email.trim().toLowerCase();
+    }
 
     const addressChanged =
       !sameString(street, detail.address?.street ?? '') ||
@@ -278,13 +283,6 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
       <Section title="Basic Information">
         <Field label="Restaurant Name *" value={name} onChangeText={setName} />
         <Field
-          label="Phone"
-          value={phone}
-          onChangeText={setPhone}
-          keyboardType="phone-pad"
-          placeholder="Outlet contact number"
-        />
-        <Field
           label="Description"
           value={description}
           onChangeText={setDescription}
@@ -314,6 +312,27 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
             );
           })}
         </View>
+      </Section>
+
+      <Section
+        title="Customer contact"
+        subtitle="Shown on the customer app restaurant page when set. Optional."
+      >
+        <Field
+          label="Restaurant phone"
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="phone-pad"
+          placeholder="Outlet contact number"
+        />
+        <Field
+          label="Restaurant email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          placeholder="If you have one (e.g. orders@kitchen.com)"
+        />
       </Section>
 
       <Section title="Cuisines">
@@ -475,6 +494,17 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
           const gstinErr = gstinValidationError(gstin);
           if (gstinErr) {
             Alert.alert('Invalid GSTIN', gstinErr);
+            return;
+          }
+          const emailTrim = email.trim();
+          if (
+            emailTrim &&
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)
+          ) {
+            Alert.alert(
+              'Invalid email',
+              'Enter a valid restaurant email, or leave it blank.'
+            );
             return;
           }
           const payload = buildPartialPayload();
