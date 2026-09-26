@@ -11,6 +11,12 @@ import { fonts } from '@/constants/typography';
 import { parseDeliveryAddress } from '@/lib/location';
 import { useCuisineCatalog } from '@/lib/restaurant/hooks';
 import {
+  fssaiValidationError,
+  gstinValidationError,
+  normalizeFssaiInput,
+  normalizeGstinInput,
+} from '@/lib/restaurant/license-validation';
+import {
   PRICE_RANGE_OPTIONS,
   type RestaurantDetail,
   type UpdateRestaurantPayload,
@@ -23,13 +29,21 @@ function Field({
   placeholder,
   multiline,
   keyboardType,
+  maxLength,
+  autoCapitalize,
+  hint,
+  hintError,
 }: {
   label: string;
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
   multiline?: boolean;
-  keyboardType?: 'default' | 'numeric' | 'email-address' | 'phone-pad';
+  keyboardType?: 'default' | 'numeric' | 'email-address' | 'phone-pad' | 'number-pad';
+  maxLength?: number;
+  autoCapitalize?: 'none' | 'characters';
+  hint?: string;
+  hintError?: boolean;
 }) {
   return (
     <View style={styles.field}>
@@ -41,8 +55,18 @@ function Field({
         placeholderTextColor={authTheme.textDim}
         multiline={multiline}
         keyboardType={keyboardType}
-        style={[styles.input, multiline && styles.inputMultiline]}
+        maxLength={maxLength}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={false}
+        style={[
+          styles.input,
+          multiline && styles.inputMultiline,
+          hintError && styles.inputError,
+        ]}
       />
+      {hint ? (
+        <Text style={[styles.hint, hintError && styles.hintError]}>{hint}</Text>
+      ) : null}
     </View>
   );
 }
@@ -202,10 +226,12 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
       payload.cuisines = cuisines;
     }
     if (!sameString(fssai, detail.fssaiLicense ?? '')) {
-      payload.fssaiLicense = fssai.trim();
+      const next = normalizeFssaiInput(fssai);
+      if (next) payload.fssaiLicense = next;
     }
     if (!sameString(gstin, detail.gstin ?? '')) {
-      payload.gstin = gstin.trim();
+      const next = normalizeGstinInput(gstin);
+      if (next) payload.gstin = next;
     }
     if (!sameString(phone, detail.phone ?? '')) {
       payload.phone = phone.trim();
@@ -311,8 +337,34 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
       </Section>
 
       <Section title="Legal Information">
-        <Field label="FSSAI License" value={fssai} onChangeText={setFssai} />
-        <Field label="GSTIN" value={gstin} onChangeText={setGstin} />
+        <Field
+          label="FSSAI License"
+          value={fssai}
+          onChangeText={(v) => setFssai(normalizeFssaiInput(v))}
+          placeholder="14 digits"
+          keyboardType="number-pad"
+          maxLength={14}
+          hint={
+            fssai
+              ? fssaiValidationError(fssai) ?? `${fssai.length}/14 digits`
+              : 'Optional · exactly 14 digits when provided'
+          }
+          hintError={Boolean(fssaiValidationError(fssai))}
+        />
+        <Field
+          label="GSTIN"
+          value={gstin}
+          onChangeText={(v) => setGstin(normalizeGstinInput(v))}
+          placeholder="22AAAAA0000A1Z5"
+          autoCapitalize="characters"
+          maxLength={15}
+          hint={
+            gstin
+              ? gstinValidationError(gstin) ?? `${gstin.length}/15 characters`
+              : 'Optional · exactly 15 characters when provided'
+          }
+          hintError={Boolean(gstinValidationError(gstin))}
+        />
       </Section>
 
       <Section
@@ -381,6 +433,16 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
             );
             return;
           }
+          const fssaiErr = fssaiValidationError(fssai);
+          if (fssaiErr) {
+            Alert.alert('Invalid FSSAI', fssaiErr);
+            return;
+          }
+          const gstinErr = gstinValidationError(gstin);
+          if (gstinErr) {
+            Alert.alert('Invalid GSTIN', gstinErr);
+            return;
+          }
           const payload = buildPartialPayload();
           if (!payload) {
             Alert.alert('No changes', 'Edit a field or move the map pin before saving.');
@@ -439,11 +501,23 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     fontSize: 14,
     color: '#111827',
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#FFFFFF',
+  },
+  inputError: {
+    borderColor: '#EF4444',
+  },
+  hint: {
+    fontFamily: fonts.medium,
+    fontSize: 11,
+    color: '#6B7280',
+  },
+  hintError: {
+    color: '#DC2626',
   },
   inputMultiline: {
     minHeight: 88,
     textAlignVertical: 'top',
+    backgroundColor: '#FAFAFA',
   },
   chipRow: {
     flexDirection: 'row',

@@ -34,6 +34,12 @@ import { parseDeliveryAddress } from '@/lib/location';
 import { markRestaurantSetupComplete } from '@/lib/navigation/post-auth';
 import { restaurantOwnerApi, buildCreateRestaurantPayload } from '@/lib/restaurant/api';
 import { useCuisineCatalog, useRestaurantServiceHealth } from '@/lib/restaurant/hooks';
+import {
+  fssaiValidationError,
+  gstinValidationError,
+  normalizeFssaiInput,
+  normalizeGstinInput,
+} from '@/lib/restaurant/license-validation';
 import { useAuthStore } from '@/store/auth-store';
 
 type Step = 0 | 1 | 2;
@@ -101,6 +107,10 @@ export default function RestaurantSetupScreen() {
     if (s === 0) {
       if (!logo?.uri) return 'Restaurant logo is required.';
       if (name.trim().length < 2) return 'Enter your restaurant name.';
+      const fssaiErr = fssaiValidationError(fssai);
+      if (fssaiErr) return fssaiErr;
+      const gstinErr = gstinValidationError(gstin);
+      if (gstinErr) return gstinErr;
       return null;
     }
     if (s === 1) {
@@ -182,8 +192,8 @@ export default function RestaurantSetupScreen() {
       const payload = buildCreateRestaurantPayload({
         name: name.trim(),
         description: description.trim() || undefined,
-        fssaiLicense: fssai.trim() || undefined,
-        gstin: gstin.trim() || undefined,
+        fssaiLicense: normalizeFssaiInput(fssai) || undefined,
+        gstin: normalizeGstinInput(gstin) || undefined,
         priceRange,
         costForTwo: costForTwoNumber,
         cuisines,
@@ -362,10 +372,36 @@ export default function RestaurantSetupScreen() {
             <TextArea label="Description" value={description} onChangeText={setDescription} />
             <View className="flex-row gap-3">
               <View className="flex-1">
-                <Field label="FSSAI License" value={fssai} onChangeText={setFssai} placeholder="12345678901234" />
+                <Field
+                  label="FSSAI License"
+                  value={fssai}
+                  onChangeText={(v) => setFssai(normalizeFssaiInput(v))}
+                  placeholder="14 digits"
+                  keyboardType="number-pad"
+                  maxLength={14}
+                  hint={
+                    fssai
+                      ? fssaiValidationError(fssai) ?? `${fssai.length}/14 digits`
+                      : 'Optional · exactly 14 digits'
+                  }
+                  hintError={Boolean(fssaiValidationError(fssai))}
+                />
               </View>
               <View className="flex-1">
-                <Field label="GSTIN" value={gstin} onChangeText={setGstin} placeholder="22AAAAA0000A1Z5" />
+                <Field
+                  label="GSTIN"
+                  value={gstin}
+                  onChangeText={(v) => setGstin(normalizeGstinInput(v))}
+                  placeholder="15 characters"
+                  autoCapitalize="characters"
+                  maxLength={15}
+                  hint={
+                    gstin
+                      ? gstinValidationError(gstin) ?? `${gstin.length}/15 characters`
+                      : 'Optional · exactly 15 characters'
+                  }
+                  hintError={Boolean(gstinValidationError(gstin))}
+                />
               </View>
             </View>
             <Text className="text-sm font-semibold text-secondary">Price Range</Text>
@@ -578,6 +614,10 @@ function Field({
   placeholder,
   keyboardType,
   required,
+  maxLength,
+  autoCapitalize,
+  hint,
+  hintError,
 }: {
   label: string;
   value: string;
@@ -585,6 +625,10 @@ function Field({
   placeholder?: string;
   keyboardType?: 'default' | 'number-pad';
   required?: boolean;
+  maxLength?: number;
+  autoCapitalize?: 'none' | 'characters';
+  hint?: string;
+  hintError?: boolean;
 }) {
   return (
     <View>
@@ -593,16 +637,32 @@ function Field({
       ) : (
         <Text className="mb-1.5 text-sm font-semibold text-secondary">{label}</Text>
       )}
-      <View className="h-12 justify-center rounded-xl border border-gray-200 bg-white px-3.5">
+      <View
+        className={`h-12 justify-center rounded-xl border bg-white px-3.5 ${
+          hintError ? 'border-danger' : 'border-gray-200'
+        }`}
+      >
         <TextInput
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
           placeholderTextColor={theme.muted}
           keyboardType={keyboardType}
+          maxLength={maxLength}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={false}
           className="text-[15px] text-secondary"
         />
       </View>
+      {hint ? (
+        <Text
+          className={`mt-1 text-[11px] font-medium ${
+            hintError ? 'text-danger' : 'text-secondary-light'
+          }`}
+        >
+          {hint}
+        </Text>
+      ) : null}
     </View>
   );
 }
