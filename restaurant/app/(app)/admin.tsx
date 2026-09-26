@@ -4,14 +4,12 @@ import { StatusBar } from 'expo-status-bar';
 import {
   BadgeCheck,
   Banknote,
-  Bike,
   ChevronRight,
   Clock3,
   Headphones,
   KeyRound,
   LogOut,
   Mail,
-  MailCheck,
   MessageSquareQuote,
   MonitorSmartphone,
   ShieldAlert,
@@ -124,7 +122,6 @@ export default function AdminScreen() {
   const me = usePlatformMe(true);
   const logout = useAuthStore((s) => s.logout);
   const logoutAll = useAuthStore((s) => s.logoutAll);
-  const resendEmailVerification = useAuthStore((s) => s.resendEmailVerification);
   const { data } = useDashboardStats();
   const restaurant = useMyRestaurantId();
 
@@ -197,14 +194,6 @@ export default function AdminScreen() {
       soft: '#F8F9FA',
       onPress: () => router.push('/support'),
     },
-    {
-      label: 'Delivery partners',
-      hint: 'Invite and manage riders',
-      icon: Bike,
-      accent: '#0F172A',
-      soft: '#F8F9FA',
-      onPress: () => router.push('/partners'),
-    },
   ];
 
   const accountRows: AdminRow[] = [
@@ -223,30 +212,6 @@ export default function AdminScreen() {
       accent: '#0F172A',
       soft: '#F8F9FA',
       onPress: () => router.push('/change-password'),
-    },
-    {
-      label: 'Resend email verification',
-      hint: user?.emailVerified
-        ? 'Email already verified'
-        : user?.email ?? 'Send verification link',
-      icon: MailCheck,
-      accent: '#0F172A',
-      soft: '#F8F9FA',
-      onPress: async () => {
-        if (user?.emailVerified) {
-          Alert.alert('Already verified', 'Your email is already verified.');
-          return;
-        }
-        try {
-          await resendEmailVerification();
-          Alert.alert('Email sent', 'Verification link sent to your inbox.');
-        } catch (err) {
-          Alert.alert(
-            'Failed',
-            err instanceof Error ? err.message : 'Could not resend email'
-          );
-        }
-      },
     },
   ];
 
