@@ -16,3 +16,13 @@ export {
   type GoogleAddressComponent,
   type ParsedDeliveryAddress,
 } from './parse-address';
+
+export {
+  INDIA_STATES,
+  citiesForState,
+  matchCatalogGeo,
+  matchIndiaCity,
+  matchIndiaState,
+  searchCitiesForState,
+  searchIndiaStates,
+} from './india-geo';

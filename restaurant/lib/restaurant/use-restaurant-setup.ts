@@ -254,16 +254,16 @@ export function useRestaurantSetup() {
       lng: result.lng,
       components: result.components,
     });
-    setStreet(parsed.street);
-    setArea(parsed.area);
-    setCity(parsed.city);
-    setStateName(parsed.state);
-    setPincode(parsed.pincode === '000000' ? '' : parsed.pincode);
+    // Street, area, city, state are user-entered (city/state via searchable dropdowns).
+    if (parsed.pincode && parsed.pincode !== '000000') {
+      setPincode(parsed.pincode);
+    }
     if (!country.trim()) setCountry('India');
     setMapOpen(false);
     setBanner({
       type: 'success',
-      message: 'Location confirmed. Address fields updated — review before continuing.',
+      message:
+        'Location pinned. Enter street & area, then pick state and city from the lists.',
     });
   };
 

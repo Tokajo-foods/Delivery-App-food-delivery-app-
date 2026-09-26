@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/auth/PrimaryButton';
@@ -6,9 +6,14 @@ import {
   LocationMapPicker,
   type MapPickResult,
 } from '@/components/restaurant/LocationMapPicker';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
 import { parseDeliveryAddress } from '@/lib/location';
+import {
+  INDIA_STATES,
+  citiesForState,
+} from '@/lib/location/india-geo';
 import { useCuisineCatalog } from '@/lib/restaurant/hooks';
 import {
   fssaiValidationError,
@@ -148,6 +153,8 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
   const [mapOpen, setMapOpen] = useState(false);
   const [mapHint, setMapHint] = useState<string | null>(null);
 
+  const cityOptions = useMemo(() => citiesForState(stateName), [stateName]);
+
   useEffect(() => {
     setName(detail.name ?? '');
     setDescription(detail.description ?? '');
@@ -194,15 +201,13 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
 
     setCoords({ lat: result.lat, lng: result.lng });
     setMapDirty(true);
-    // Always refresh address fields from the confirmed pin (user can still edit).
-    setStreet(parsed.street);
-    setArea(parsed.area);
-    setCity(parsed.city);
-    setStateName(parsed.state);
-    setPincode(parsed.pincode === '000000' ? '' : parsed.pincode);
+    // Street, area, city, state stay user-entered (city/state via dropdowns).
+    if (parsed.pincode && parsed.pincode !== '000000') {
+      setPincode(parsed.pincode);
+    }
     if (!country.trim()) setCountry('India');
     setMapHint(
-      `Pin updated · address fields filled from map — tap Save Profile.`
+      'Pin updated. Enter street & area, pick state & city from the lists, then Save Profile.'
     );
     setMapOpen(false);
   };
@@ -372,7 +377,7 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
 
       <Section
         title="Address & Location"
-        subtitle="Pin the exact outlet on the map. Street, area, city, state and pincode fill from that pin — then tap Save Profile."
+        subtitle="Pin the outlet on the map. Enter street & area yourself; pick city and state from the searchable lists."
       >
         <Pressable
           onPress={() => setMapOpen(true)}
@@ -401,8 +406,34 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
         {mapHint ? <Text style={styles.mapHint}>{mapHint}</Text> : null}
         <Field label="Street *" value={street} onChangeText={setStreet} />
         <Field label="Area / Locality" value={area} onChangeText={setArea} />
-        <Field label="City *" value={city} onChangeText={setCity} />
-        <Field label="State *" value={stateName} onChangeText={setStateName} />
+        <SearchableSelect
+          label="State"
+          required
+          value={stateName}
+          onChange={(next) => {
+            setStateName(next);
+            const cities = citiesForState(next);
+            if (city && !cities.some((c) => c === city)) setCity('');
+          }}
+          options={[...INDIA_STATES]}
+          placeholder="Select state"
+          searchPlaceholder="Search state…"
+        />
+        <SearchableSelect
+          label="City"
+          required
+          value={city}
+          onChange={setCity}
+          options={cityOptions}
+          placeholder={stateName ? 'Select city' : 'Select state first'}
+          searchPlaceholder="Search city…"
+          disabled={!stateName}
+          emptyText={
+            stateName
+              ? 'No cities match — try another search'
+              : 'Select a state first'
+          }
+        />
         <Field
           label="Pincode *"
           value={pincode}

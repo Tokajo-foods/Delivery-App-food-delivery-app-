@@ -1,11 +1,17 @@
 import { ChevronRight, MapPin } from 'lucide-react-native';
+import { useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import {
   FormSection,
   SetupField,
 } from '@/components/restaurant/setup-form-fields';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { theme } from '@/constants/theme';
+import {
+  INDIA_STATES,
+  citiesForState,
+} from '@/lib/location/india-geo';
 
 type Props = {
   coords: { lat: number; lng: number } | null;
@@ -26,12 +32,25 @@ type Props = {
 };
 
 export function SetupAddressStep(props: Props) {
+  const cityOptions = useMemo(
+    () => citiesForState(props.stateName),
+    [props.stateName]
+  );
+
+  const onStateChange = (next: string) => {
+    props.setStateName(next);
+    const cities = citiesForState(next);
+    if (props.city && !cities.some((c) => c === props.city)) {
+      props.setCity('');
+    }
+  };
+
   return (
     <View className="gap-4">
       <FormSection
         icon={MapPin}
         title="Address & location"
-        subtitle="Pin the exact outlet on the map, then confirm the address fields."
+        subtitle="Pin the outlet on the map, then enter street and pick city / state."
       >
         <Pressable
           onPress={props.onOpenMap}
@@ -61,34 +80,40 @@ export function SetupAddressStep(props: Props) {
           required
           value={props.street}
           onChangeText={props.setStreet}
-          placeholder="45 MG Road"
+          placeholder="Shop / building / road (type yourself)"
         />
         <SetupField
           label="Area / Locality"
           value={props.area}
           onChangeText={props.setArea}
-          placeholder="Koramangala"
+          placeholder="e.g. Sector Alpha II, Koramangala"
         />
-        <View className="flex-row gap-3">
-          <View className="flex-1">
-            <SetupField
-              label="City"
-              required
-              value={props.city}
-              onChangeText={props.setCity}
-              placeholder="Bengaluru"
-            />
-          </View>
-          <View className="flex-1">
-            <SetupField
-              label="State"
-              required
-              value={props.stateName}
-              onChangeText={props.setStateName}
-              placeholder="Karnataka"
-            />
-          </View>
-        </View>
+        <SearchableSelect
+          label="State"
+          required
+          value={props.stateName}
+          onChange={onStateChange}
+          options={[...INDIA_STATES]}
+          placeholder="Select state"
+          searchPlaceholder="Search state…"
+        />
+        <SearchableSelect
+          label="City"
+          required
+          value={props.city}
+          onChange={props.setCity}
+          options={cityOptions}
+          placeholder={
+            props.stateName ? 'Select city' : 'Select state first'
+          }
+          searchPlaceholder="Search city…"
+          disabled={!props.stateName}
+          emptyText={
+            props.stateName
+              ? 'No cities match — try another search'
+              : 'Select a state first'
+          }
+        />
         <View className="flex-row gap-3">
           <View className="flex-1">
             <SetupField
