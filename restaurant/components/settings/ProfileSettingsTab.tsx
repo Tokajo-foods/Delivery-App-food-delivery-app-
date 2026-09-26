@@ -343,13 +343,13 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
           label="FSSAI License *"
           value={fssai}
           onChangeText={(v) => setFssai(normalizeFssaiInput(v))}
-          placeholder="Enter your 14-digit FSSAI number"
+          placeholder="Enter FSSAI number"
           keyboardType="number-pad"
           maxLength={14}
           hint={
             fssai
-              ? fssaiValidationError(fssai, { required: true }) ?? `${fssai.length}/14 digits`
-              : 'Required — enter your 14-digit FSSAI number'
+              ? fssaiValidationError(fssai, { required: true }) ?? `${fssai.length}/14`
+              : undefined
           }
           hintError={Boolean(fssaiValidationError(fssai, { required: true }))}
         />
@@ -435,9 +435,9 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
             );
             return;
           }
-          const fssaiErr = fssaiValidationError(fssai);
+          const fssaiErr = fssaiValidationError(fssai, { required: true });
           if (fssaiErr) {
-            Alert.alert('Invalid FSSAI', fssaiErr);
+            Alert.alert('FSSAI required', fssaiErr);
             return;
           }
           const gstinErr = gstinValidationError(gstin);

@@ -94,13 +94,13 @@ export function SetupBasicStep(props: Props) {
           required
           value={props.fssai}
           onChangeText={(v) => props.setFssai(normalizeFssaiInput(v))}
-          placeholder="Enter your 14-digit FSSAI number"
+          placeholder="Enter FSSAI number"
           keyboardType="number-pad"
           maxLength={14}
           hint={
             props.fssai
-              ? fssaiErr ?? `${props.fssai.length}/14 digits`
-              : 'Required — exactly 14 digits'
+              ? fssaiErr ?? `${props.fssai.length}/14`
+              : undefined
           }
           hintError={Boolean(fssaiErr)}
         />
