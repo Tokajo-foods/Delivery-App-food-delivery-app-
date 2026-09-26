@@ -114,7 +114,7 @@ export default function RestaurantSetupScreen() {
     if (s === 0) {
       if (!logo?.uri) return 'Restaurant logo is required.';
       if (name.trim().length < 2) return 'Enter your restaurant name.';
-      const fssaiErr = fssaiValidationError(fssai);
+      const fssaiErr = fssaiValidationError(fssai, { required: true });
       if (fssaiErr) return fssaiErr;
       const gstinErr = gstinValidationError(gstin);
       if (gstinErr) return gstinErr;
@@ -199,7 +199,7 @@ export default function RestaurantSetupScreen() {
       const payload = buildCreateRestaurantPayload({
         name: name.trim(),
         description: description.trim() || undefined,
-        fssaiLicense: normalizeFssaiInput(fssai) || undefined,
+        fssaiLicense: normalizeFssaiInput(fssai),
         gstin: normalizeGstinInput(gstin) || undefined,
         priceRange,
         costForTwo: costForTwoNumber,
@@ -381,17 +381,19 @@ export default function RestaurantSetupScreen() {
               <View className="flex-1">
                 <Field
                   label="FSSAI License"
+                  required
                   value={fssai}
                   onChangeText={(v) => setFssai(normalizeFssaiInput(v))}
-                  placeholder="If you have FSSAI, enter 14 digits"
+                  placeholder="Enter your 14-digit FSSAI number"
                   keyboardType="number-pad"
                   maxLength={14}
                   hint={
                     fssai
-                      ? fssaiValidationError(fssai) ?? `${fssai.length}/14 digits`
-                      : 'Optional — only if you have an FSSAI number'
+                      ? fssaiValidationError(fssai, { required: true }) ??
+                        `${fssai.length}/14 digits`
+                      : 'Required — enter your 14-digit FSSAI number'
                   }
-                  hintError={Boolean(fssaiValidationError(fssai))}
+                  hintError={Boolean(fssaiValidationError(fssai, { required: true }))}
                 />
               </View>
               <View className="flex-1">

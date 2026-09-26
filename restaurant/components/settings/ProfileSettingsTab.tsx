@@ -226,8 +226,7 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
       payload.cuisines = cuisines;
     }
     if (!sameString(fssai, detail.fssaiLicense ?? '')) {
-      const next = normalizeFssaiInput(fssai);
-      if (next) payload.fssaiLicense = next;
+      payload.fssaiLicense = normalizeFssaiInput(fssai);
     }
     if (!sameString(gstin, detail.gstin ?? '')) {
       const next = normalizeGstinInput(gstin);
@@ -338,21 +337,21 @@ export function ProfileSettingsTab({ detail, busy, onSave }: Props) {
 
       <Section
         title="Legal Information"
-        subtitle="Add these only if you already have the numbers. Leave blank if not."
+        subtitle="FSSAI is required. Add GSTIN only if you already have the number."
       >
         <Field
-          label="FSSAI License"
+          label="FSSAI License *"
           value={fssai}
           onChangeText={(v) => setFssai(normalizeFssaiInput(v))}
-          placeholder="If you have FSSAI, enter 14 digits"
+          placeholder="Enter your 14-digit FSSAI number"
           keyboardType="number-pad"
           maxLength={14}
           hint={
             fssai
-              ? fssaiValidationError(fssai) ?? `${fssai.length}/14 digits`
-              : 'Optional — only if you have an FSSAI number'
+              ? fssaiValidationError(fssai, { required: true }) ?? `${fssai.length}/14 digits`
+              : 'Required — enter your 14-digit FSSAI number'
           }
-          hintError={Boolean(fssaiValidationError(fssai))}
+          hintError={Boolean(fssaiValidationError(fssai, { required: true }))}
         />
         <Field
           label="GSTIN"

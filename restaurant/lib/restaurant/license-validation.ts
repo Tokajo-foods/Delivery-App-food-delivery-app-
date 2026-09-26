@@ -22,9 +22,11 @@ export function isValidGstin(value: string): boolean {
  * Optional fields: empty is OK. Partial / wrong length / bad format → message.
  * Returns null when the value may be submitted.
  */
-export function fssaiValidationError(raw: string): string | null {
+export function fssaiValidationError(raw: string, options?: { required?: boolean }): string | null {
   const value = normalizeFssaiInput(raw);
-  if (!value) return null;
+  if (!value) {
+    return options?.required ? 'FSSAI license number is required (14 digits).' : null;
+  }
   if (value.length < 14) {
     return `FSSAI must be exactly 14 digits (${value.length}/14 entered).`;
   }
