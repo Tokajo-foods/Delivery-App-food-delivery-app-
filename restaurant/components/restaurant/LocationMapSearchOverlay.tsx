@@ -54,7 +54,7 @@ export function LocationMapSearchOverlay({
             value={search}
             onChangeText={onSearchChange}
             onSubmitEditing={onSubmitSearch}
-            placeholder="Search Google Places…"
+            placeholder="Search Google Maps"
             placeholderTextColor={theme.secondaryLight}
             style={styles.searchInput}
             returnKeyType="search"
@@ -109,7 +109,7 @@ export function LocationMapSearchOverlay({
           {searching && suggestions.length === 0 ? (
             <View style={styles.searchingCard}>
               <ActivityIndicator color={theme.primary} size="small" />
-              <Text style={styles.searchingText}>Searching Google Places…</Text>
+              <Text style={styles.searchingText}>Searching Google Maps…</Text>
             </View>
           ) : null}
 
@@ -122,13 +122,13 @@ export function LocationMapSearchOverlay({
             nestedScrollEnabled
             style={styles.suggestionsScroll}
           >
-            {suggestions.slice(0, 8).map((item, index) => (
+            {suggestions.slice(0, 10).map((item, index) => (
               <Pressable
                 key={`${item.placeId ?? item.description}-${index}`}
                 onPress={() => onPickSuggestion(item)}
                 style={[
                   styles.suggestionRow,
-                  index === Math.min(suggestions.length, 8) - 1 &&
+                  index === Math.min(suggestions.length, 10) - 1 &&
                     styles.suggestionRowLast,
                 ]}
               >
@@ -149,6 +149,9 @@ export function LocationMapSearchOverlay({
                 </View>
               </Pressable>
             ))}
+            {suggestions.length > 0 ? (
+              <Text style={styles.poweredBy}>Powered by Google Maps</Text>
+            ) : null}
           </ScrollView>
         </View>
       )}

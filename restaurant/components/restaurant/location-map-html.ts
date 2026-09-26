@@ -82,10 +82,16 @@ export function buildGoogleMapHtml(lat: number, lng: number, apiKey: string): st
         setMapView(msg.lat, msg.lng, msg.zoom);
       }
       if (msg.type === 'autocomplete' && autocompleteService) {
-        var req = { input: msg.query || '', componentRestrictions: { country: 'in' } };
+        var req = {
+          input: String(msg.query || '').trim(),
+          componentRestrictions: { country: 'in' },
+          language: 'en'
+        };
         if (typeof msg.lat === 'number' && typeof msg.lng === 'number') {
           req.location = new google.maps.LatLng(msg.lat, msg.lng);
-          req.radius = msg.radius || 40000;
+          req.radius = typeof msg.radius === 'number' ? msg.radius : 50000;
+          // Soft bias toward the visible map area (Google Maps-style local search).
+          req.origin = req.location;
         }
         autocompleteService.getPlacePredictions(req, function(predictions, status) {
           post({
@@ -97,7 +103,8 @@ export function buildGoogleMapHtml(lat: number, lng: number, apiKey: string): st
                 description: p.description,
                 placeId: p.place_id,
                 mainText: (p.structured_formatting && p.structured_formatting.main_text) || '',
-                secondaryText: (p.structured_formatting && p.structured_formatting.secondary_text) || ''
+                secondaryText: (p.structured_formatting && p.structured_formatting.secondary_text) || '',
+                types: p.types || []
               };
             })
           });

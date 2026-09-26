@@ -198,21 +198,29 @@ export function useLocationMapPicker({
       setSearchError(null);
       try {
         const res = await searchAddresses(query, {
-          bias: { lat: pin.lat, lng: pin.lng, radiusMeters: 40000 },
+          bias: { lat: pin.lat, lng: pin.lng, radiusMeters: 50000 },
         });
         if (requestId !== requestIdRef.current) return;
-        setSuggestions(res);
+        // Only fill if WebView Google Maps search has not already returned.
+        setSuggestions((prev) => (prev.length ? prev : res));
         if (res.length === 0) {
-          setSearchError(
-            'No Google places found. Try a landmark, area, or full address.'
-          );
+          setSuggestions((prev) => {
+            if (prev.length) return prev;
+            setSearchError(
+              'No Google Maps places found. Try a landmark, area, or full address.'
+            );
+            return prev;
+          });
         }
       } catch (err) {
         if (requestId !== requestIdRef.current) return;
-        setSuggestions([]);
-        setSearchError(
-          getApiErrorMessage(err, 'Could not load Google Places suggestions')
-        );
+        setSuggestions((prev) => {
+          if (prev.length) return prev;
+          setSearchError(
+            getApiErrorMessage(err, 'Could not load Google Maps suggestions')
+          );
+          return prev;
+        });
       } finally {
         if (requestId === requestIdRef.current) setSearching(false);
       }
@@ -230,7 +238,7 @@ export function useLocationMapPicker({
         requestId,
         lat: pin.lat,
         lng: pin.lng,
-        radius: 40000,
+        radius: 50000,
       });
       webRef.current.injectJavaScript(`
       (function() {
@@ -244,6 +252,54 @@ export function useLocationMapPicker({
     `);
     },
     [mapReady, pin.lat, pin.lng]
+  );
+
+  const askWebViewPlaceDetails = useCallback(
+    (placeId: string, requestId: number) => {
+      if (!mapReady || !webRef.current || !placeId) return false;
+      pendingRequest.current = { id: requestId, kind: 'details' };
+      const payload = JSON.stringify({
+        type: 'placeDetails',
+        placeId,
+        requestId,
+      });
+      webRef.current.injectJavaScript(`
+      (function() {
+        try {
+          if (typeof handleRN === 'function') {
+            handleRN({ data: ${JSON.stringify(payload)} });
+          }
+        } catch (e) {}
+      })();
+      true;
+    `);
+      return true;
+    },
+    [mapReady]
+  );
+
+  const askWebViewGeocode = useCallback(
+    (query: string, requestId: number) => {
+      if (!mapReady || !webRef.current) return false;
+      pendingRequest.current = { id: requestId, kind: 'geocode' };
+      const payload = JSON.stringify({
+        type: 'geocodeText',
+        query,
+        requestId,
+      });
+      webRef.current.injectJavaScript(`
+      (function() {
+        try {
+          if (typeof handleRN === 'function') {
+            handleRN({ data: ${JSON.stringify(payload)} });
+          }
+        } catch (e) {}
+      })();
+      true;
+    `);
+      return true;
+    },
+    [mapReady]
   );
 
   const onSearchChange = (text: string) => {
@@ -262,9 +318,11 @@ export function useLocationMapPicker({
       const id = ++requestIdRef.current;
       setSearching(true);
       setSuggestions([]);
-      void runGoogleAutocomplete(query, id);
+      // Google Maps JS Autocomplete first (same engine as maps.google.com).
       askWebViewAutocomplete(query, id);
-    }, 280);
+      // Places REST backup if WebView is slow / empty.
+      void runGoogleAutocomplete(query, id);
+    }, 250);
   };
 
   const onMapMessage = (event: WebViewMessageEvent) => {
@@ -298,6 +356,7 @@ export function useLocationMapPicker({
     setSearchError(null);
     setError(null);
     setGpsReady(false);
+    let waitingOnMap = false;
     try {
       const lat = typeof item.lat === 'number' ? item.lat : undefined;
       const lng = typeof item.lng === 'number' ? item.lng : undefined;
@@ -310,6 +369,17 @@ export function useLocationMapPicker({
         await applyCoords(lat, lng, 'search', item.description);
         return;
       }
+
+      // Resolve pin via Google Maps PlacesService in the WebView (same place_id).
+      if (item.placeId) {
+        const id = ++requestIdRef.current;
+        const asked = askWebViewPlaceDetails(item.placeId, id);
+        if (asked) {
+          waitingOnMap = true;
+          return;
+        }
+      }
+
       const geo = await geocodeAddress({
         placeId: item.placeId,
         address: item.description,
@@ -323,7 +393,7 @@ export function useLocationMapPicker({
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to open this place on Google Maps'));
     } finally {
-      setSearching(false);
+      if (!waitingOnMap) setSearching(false);
     }
   };
 
@@ -335,6 +405,9 @@ export function useLocationMapPicker({
     setSearching(true);
     setSearchError(null);
     setError(null);
+    const id = ++requestIdRef.current;
+    const asked = askWebViewGeocode(query, id);
+    if (asked) return;
     void (async () => {
       try {
         const geo = await geocodeAddress({ address: query });

@@ -146,6 +146,13 @@ export const locationMapPickerStyles = StyleSheet.create({
     zIndex: 50,
   },
   suggestionsScroll: { maxHeight: 340 },
+  poweredBy: {
+    textAlign: 'center',
+    fontSize: 11,
+    color: theme.secondaryLight,
+    fontWeight: '500',
+    paddingVertical: 10,
+  },
   suggestionRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',

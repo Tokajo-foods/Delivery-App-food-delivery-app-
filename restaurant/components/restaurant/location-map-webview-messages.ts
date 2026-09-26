@@ -77,16 +77,11 @@ export function handleLocationMapWebMessage(
             placeId: p.placeId,
             mainText: p.mainText,
             secondaryText: p.secondaryText,
-            source: 'google-webview',
+            source: 'google-maps',
           })
         );
-        ctx.setSuggestions((prev) => {
-          const seen = new Set(mapped.map((s) => s.description.toLowerCase()));
-          const rest = prev.filter(
-            (s) => !seen.has(s.description.toLowerCase())
-          );
-          return [...mapped, ...rest].slice(0, 10);
-        });
+        // Google Maps JS Autocomplete is authoritative — keep its order.
+        ctx.setSuggestions(mapped.slice(0, 10));
         ctx.setSearching(false);
         ctx.setSearchError(null);
       }
