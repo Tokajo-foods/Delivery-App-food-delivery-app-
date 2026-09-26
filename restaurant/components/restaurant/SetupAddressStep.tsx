@@ -1,13 +1,13 @@
-import { ChevronRight, MapPin } from 'lucide-react-native';
+import { Building2, MapPin } from 'lucide-react-native';
 import { useMemo } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
+import { SetupMapPinCard } from '@/components/restaurant/SetupMapPinCard';
 import {
   FormSection,
   SetupField,
 } from '@/components/restaurant/setup-form-fields';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { theme } from '@/constants/theme';
 import {
   INDIA_STATES,
   citiesForState,
@@ -31,6 +31,19 @@ type Props = {
   setCountry: (v: string) => void;
 };
 
+function FieldGroupTitle({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <View className="mb-1 mt-1">
+      <Text className="text-[11px] font-bold uppercase tracking-wider text-secondary-light">
+        {title}
+      </Text>
+      {hint ? (
+        <Text className="mt-0.5 text-[11px] leading-4 text-gray-400">{hint}</Text>
+      ) : null}
+    </View>
+  );
+}
+
 export function SetupAddressStep(props: Props) {
   const cityOptions = useMemo(
     () => citiesForState(props.stateName),
@@ -43,50 +56,49 @@ export function SetupAddressStep(props: Props) {
     if (props.city && !cities.some((c) => c === props.city)) {
       props.setCity('');
     }
+    if (!props.country.trim()) props.setCountry('India');
   };
 
   return (
     <View className="gap-4">
       <FormSection
         icon={MapPin}
-        title="Address & location"
-        subtitle="Pin the outlet on the map, then enter street and pick city / state."
+        title="Map location"
+        subtitle="Customers and riders use this pin for delivery."
       >
-        <Pressable
+        <SetupMapPinCard
+          coords={props.coords}
+          locationLabel={props.locationLabel}
           onPress={props.onOpenMap}
-          className="overflow-hidden rounded-2xl border border-primary/30 bg-[#FFF7ED] p-4"
-        >
-          <View className="flex-row items-center gap-3">
-            <View className="h-11 w-11 items-center justify-center rounded-xl bg-primary">
-              <MapPin color="#FFFFFF" size={22} />
-            </View>
-            <View className="flex-1">
-              <Text className="text-sm font-bold text-secondary">
-                {props.coords ? 'Location confirmed' : 'Set outlet on map'}
-              </Text>
-              <Text className="mt-0.5 text-xs leading-4 text-secondary-light">
-                {props.coords
-                  ? props.locationLabel ??
-                    `${props.coords.lat.toFixed(4)}, ${props.coords.lng.toFixed(4)}`
-                  : 'Search or use GPS, then drag the pin to your entrance'}
-              </Text>
-            </View>
-            <ChevronRight color={theme.primary} size={20} />
-          </View>
-        </Pressable>
+        />
+      </FormSection>
 
+      <FormSection
+        icon={Building2}
+        title="Outlet address"
+        subtitle="Enter the address as it should appear on orders."
+      >
+        <FieldGroupTitle
+          title="Street details"
+          hint="Shop number, building and road — type these yourself"
+        />
         <SetupField
-          label="Street Address"
+          label="Street address"
           required
           value={props.street}
           onChangeText={props.setStreet}
-          placeholder="Shop / building / road (type yourself)"
+          placeholder="e.g. Shop 12, Block K, Main Road"
         />
         <SetupField
-          label="Area / Locality"
+          label="Area / locality"
           value={props.area}
           onChangeText={props.setArea}
-          placeholder="e.g. Sector Alpha II, Koramangala"
+          placeholder="e.g. Delta II, Koramangala 5th Block"
+        />
+
+        <FieldGroupTitle
+          title="City & region"
+          hint="Search and select from the official India list"
         />
         <SearchableSelect
           label="State"
@@ -94,8 +106,8 @@ export function SetupAddressStep(props: Props) {
           value={props.stateName}
           onChange={onStateChange}
           options={[...INDIA_STATES]}
-          placeholder="Select state"
-          searchPlaceholder="Search state…"
+          placeholder="Search & select state"
+          searchPlaceholder="Type to search states…"
         />
         <SearchableSelect
           label="City"
@@ -104,16 +116,17 @@ export function SetupAddressStep(props: Props) {
           onChange={props.setCity}
           options={cityOptions}
           placeholder={
-            props.stateName ? 'Select city' : 'Select state first'
+            props.stateName ? 'Search & select city' : 'Select state first'
           }
-          searchPlaceholder="Search city…"
+          searchPlaceholder="Type to search cities…"
           disabled={!props.stateName}
           emptyText={
             props.stateName
-              ? 'No cities match — try another search'
+              ? 'No cities match your search'
               : 'Select a state first'
           }
         />
+
         <View className="flex-row gap-3">
           <View className="flex-1">
             <SetupField
@@ -122,17 +135,20 @@ export function SetupAddressStep(props: Props) {
               value={props.pincode}
               onChangeText={props.setPincode}
               keyboardType="number-pad"
-              placeholder="560034"
+              placeholder="6-digit PIN"
               maxLength={6}
             />
           </View>
           <View className="flex-1">
-            <SetupField
-              label="Country"
-              value={props.country}
-              onChangeText={props.setCountry}
-              placeholder="India"
-            />
+            <Text className="mb-1.5 text-sm font-semibold text-secondary">
+              Country
+            </Text>
+            <View className="h-[52px] flex-row items-center rounded-2xl border border-gray-200 bg-[#F1F5F9] px-4">
+              <View className="mr-2 h-2 w-2 rounded-full bg-success" />
+              <Text className="text-[15px] font-semibold text-secondary">
+                {props.country.trim() || 'India'}
+              </Text>
+            </View>
           </View>
         </View>
       </FormSection>
