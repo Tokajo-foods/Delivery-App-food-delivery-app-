@@ -300,6 +300,8 @@ export const restaurantOnboardingApi = {
     pushFile('gst', payload.gst);
     pushFile('pan', payload.pan);
     pushFile('idProof', payload.idProof);
+    pushFile('ownerPhoto', payload.ownerPhoto);
+    pushFile('passbook', payload.passbook);
     pushFile('cancelledCheque', payload.cancelledCheque);
     for (const photo of payload.outletPhotos ?? []) {
       pushFile('outletPhotos', photo);

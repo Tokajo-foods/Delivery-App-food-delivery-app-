@@ -3,6 +3,8 @@ export type KycDocType =
   | 'gst'
   | 'pan'
   | 'idProof'
+  | 'ownerPhoto'
+  | 'passbook'
   | 'cancelledCheque'
   | 'outletPhoto';
 
@@ -19,6 +21,7 @@ export type KycSubmissionStatus =
 export type OnboardingStepKey =
   | 'profile'
   | 'address'
+  | 'ownerPhoto'
   | 'fssai'
   | 'pan'
   | 'idProof'
@@ -111,6 +114,8 @@ export type UploadKycPayload = {
   gst?: { uri: string; fileName: string; mimeType: string };
   pan?: { uri: string; fileName: string; mimeType: string };
   idProof?: { uri: string; fileName: string; mimeType: string };
+  ownerPhoto?: { uri: string; fileName: string; mimeType: string };
+  passbook?: { uri: string; fileName: string; mimeType: string };
   cancelledCheque?: { uri: string; fileName: string; mimeType: string };
   outletPhotos?: { uri: string; fileName: string; mimeType: string }[];
 };

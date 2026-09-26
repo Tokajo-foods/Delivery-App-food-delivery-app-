@@ -6,6 +6,7 @@ import {
   Landmark,
   MapPin,
   Upload,
+  User,
   UtensilsCrossed,
 } from 'lucide-react-native';
 import {
@@ -69,7 +70,9 @@ export function StepRow({
         ? MapPin
         : step.key === 'menu'
           ? UtensilsCrossed
-          : Building2;
+          : step.key === 'ownerPhoto'
+            ? User
+            : Building2;
   const meta = docStatus ? docStatusMeta(docStatus) : null;
   const verified = docStatus === 'verified';
 

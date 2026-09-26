@@ -1,6 +1,11 @@
 import { Alert, Pressable, Text, View } from 'react-native';
 
 import {
+  BankAccountPanel,
+  CancelledChequePanel,
+  OwnerPhotoPanel,
+} from '@/components/onboarding/KycBankPanels';
+import {
   Field,
   LicenseCard,
   UploadRow,
@@ -27,6 +32,7 @@ export type KycExpandKey =
   | 'gst'
   | 'pan'
   | 'idProof'
+  | 'ownerPhoto'
   | 'bank'
   | 'cancelledCheque'
   | 'photos'
@@ -57,6 +63,8 @@ type Props = {
   onPick: () => void;
   onSaveLicense: (kind: 'fssai' | 'gst' | 'pan' | 'idProof') => void;
   onSaveBank: () => void;
+  onSaveOwnerPhoto: () => void;
+  onSaveCheque: () => void;
   onUploadPhoto: () => void;
 };
 
@@ -93,10 +101,25 @@ export function KycExpandPanels(props: Props) {
     onPick,
     onSaveLicense,
     onSaveBank,
+    onSaveOwnerPhoto,
+    onSaveCheque,
     onUploadPhoto,
   } = props;
 
   const shell = nested ? styles.formCardNested : styles.formCard;
+
+  if (expand === 'ownerPhoto') {
+    return (
+      <OwnerPhotoPanel
+        shell={shell}
+        docs={docs}
+        pendingFile={pendingFile}
+        busyUpload={busyUpload}
+        onPick={onPick}
+        onSave={onSaveOwnerPhoto}
+      />
+    );
+  }
 
   if (expand === 'fssai') {
     return (
@@ -217,61 +240,37 @@ export function KycExpandPanels(props: Props) {
     );
   }
 
-  if (expand === 'bank' || expand === 'cancelledCheque') {
-    const cheque = latest(docs, 'cancelledCheque');
+  if (expand === 'bank') {
     return (
-      <View style={shell}>
-        <Text style={styles.formTitle}>Bank & cancelled cheque</Text>
-        <Text style={styles.formHint}>
-          Account details plus cancelled cheque / passbook photo.
-        </Text>
-        {cheque?.rejectReason ? (
-          <Text style={styles.rejectText}>
-            Cheque rejected: {cheque.rejectReason}
-          </Text>
-        ) : null}
-        <Field
-          label="IFSC"
-          value={ifsc}
-          onChangeText={(t) => setIfsc(t.toUpperCase().slice(0, 11))}
-          placeholder="HDFC0001234"
-          autoCapitalize="characters"
-          maxLength={11}
-        />
-        {ifscInfo ? (
-          <Text style={styles.formHint}>
-            {ifscInfo.bank} · {ifscInfo.branch}
-          </Text>
-        ) : null}
-        <Field
-          label="Account number"
-          value={accountNo}
-          onChangeText={(t) => setAccountNo(t.replace(/\D/g, '').slice(0, 18))}
-          placeholder="9–18 digits"
-          keyboardType="number-pad"
-        />
-        <Field
-          label="Holder name"
-          value={holderName}
-          onChangeText={setHolderName}
-          placeholder="As on passbook"
-        />
-        {canReuploadDoc(cheque?.status) ? (
-          <UploadRow
-            file={pendingFile}
-            doc={cheque}
-            onPick={onPick}
-            label="Upload cancelled cheque"
-          />
-        ) : (
-          <Text style={styles.formHint}>Cheque verified — locked.</Text>
-        )}
-        <PrimaryButton
-          label="Save bank details"
-          loading={busyBank || busyUpload}
-          onPress={onSaveBank}
-        />
-      </View>
+      <BankAccountPanel
+        shell={shell}
+        docs={docs}
+        pendingFile={pendingFile}
+        busyUpload={busyUpload}
+        busyBank={busyBank}
+        onPick={onPick}
+        onSaveBank={onSaveBank}
+        ifsc={ifsc}
+        setIfsc={setIfsc}
+        accountNo={accountNo}
+        setAccountNo={setAccountNo}
+        holderName={holderName}
+        setHolderName={setHolderName}
+        ifscInfo={ifscInfo}
+      />
+    );
+  }
+
+  if (expand === 'cancelledCheque') {
+    return (
+      <CancelledChequePanel
+        shell={shell}
+        docs={docs}
+        pendingFile={pendingFile}
+        busyUpload={busyUpload}
+        onPick={onPick}
+        onSave={onSaveCheque}
+      />
     );
   }
 

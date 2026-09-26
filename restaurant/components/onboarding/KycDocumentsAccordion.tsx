@@ -16,6 +16,7 @@ import type {
 } from '@/lib/restaurant/onboarding-types';
 
 const EXPANDABLE: OnboardingStepKey[] = [
+  'ownerPhoto',
   'fssai',
   'gst',
   'pan',
@@ -53,6 +54,8 @@ type Props = {
   onPick: () => void;
   onSaveLicense: (kind: 'fssai' | 'gst' | 'pan' | 'idProof') => void;
   onSaveBank: () => void;
+  onSaveOwnerPhoto: () => void;
+  onSaveCheque: () => void;
   onUploadPhoto: () => void;
 };
 
@@ -71,11 +74,15 @@ function docForStep(
     step.key === 'fssai' ||
     step.key === 'gst' ||
     step.key === 'pan' ||
-    step.key === 'idProof'
+    step.key === 'idProof' ||
+    step.key === 'ownerPhoto'
   ) {
     return latestDoc(docs, step.key);
   }
-  if (step.key === 'bank' || step.key === 'cancelledCheque') {
+  if (step.key === 'bank') {
+    return latestDoc(docs, 'passbook');
+  }
+  if (step.key === 'cancelledCheque') {
     return latestDoc(docs, 'cancelledCheque');
   }
   return undefined;
@@ -132,6 +139,8 @@ export function KycDocumentsAccordion(props: Props) {
                 onPick={props.onPick}
                 onSaveLicense={props.onSaveLicense}
                 onSaveBank={props.onSaveBank}
+                onSaveOwnerPhoto={props.onSaveOwnerPhoto}
+                onSaveCheque={props.onSaveCheque}
                 onUploadPhoto={props.onUploadPhoto}
               />
             ) : null}

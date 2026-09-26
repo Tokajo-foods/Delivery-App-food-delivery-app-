@@ -22,6 +22,8 @@ export const KYC_DOC_LABELS: Record<string, string> = {
   gst: 'GST certificate',
   pan: 'PAN card',
   idProof: 'ID proof',
+  ownerPhoto: 'Owner photo',
+  passbook: 'Bank passbook',
   cancelledCheque: 'Cancelled cheque',
   outletPhoto: 'Outlet photo',
   bank: 'Bank account',

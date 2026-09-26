@@ -97,6 +97,7 @@ export function OnboardingManager() {
       return;
     }
     const map: Partial<Record<OnboardingStepKey, KycExpandKey>> = {
+      ownerPhoto: 'ownerPhoto',
       fssai: 'fssai',
       gst: 'gst',
       pan: 'pan',
@@ -130,10 +131,31 @@ export function OnboardingManager() {
       holderName,
       file: pendingFile.current,
       updateBank: (body) => mutations.updateBank.mutateAsync(body),
-      uploadCheque: (file) =>
-        mutations.uploadDocuments.mutateAsync({ cancelledCheque: file }),
+      uploadPassbook: (file) =>
+        mutations.uploadDocuments.mutateAsync({ passbook: file }),
       clearFile: () => setPicked(null),
     });
+  };
+
+  const saveOwnerPhoto = async () => {
+    const file = pendingFile.current;
+    if (!file) return;
+    await runUpload({ ownerPhoto: file });
+    try {
+      const { userAccountApi } = await import('@/lib/user/account-api');
+      await userAccountApi.uploadPhoto({
+        uri: file.uri,
+        name: file.fileName,
+        type: file.mimeType,
+      });
+    } catch {
+      // KYC doc is source of truth; account avatar sync is best-effort.
+    }
+  };
+
+  const saveCheque = async () => {
+    if (!pendingFile.current) return;
+    await runUpload({ cancelledCheque: pendingFile.current });
   };
 
   const loading =
@@ -217,6 +239,8 @@ export function OnboardingManager() {
               }}
               onSaveLicense={(kind) => void saveLicense(kind)}
               onSaveBank={() => void saveBank()}
+              onSaveOwnerPhoto={() => void saveOwnerPhoto()}
+              onSaveCheque={() => void saveCheque()}
               onUploadPhoto={() => {
                 if (!pendingFile.current) return;
                 void runUpload({ outletPhotos: [pendingFile.current] });

@@ -66,7 +66,7 @@ export async function saveKycBank(opts: {
     ifsc: string;
     holderName: string;
   }) => Promise<unknown>;
-  uploadCheque: (file: UploadFile) => Promise<unknown>;
+  uploadPassbook: (file: UploadFile) => Promise<unknown>;
   clearFile: () => void;
 }) {
   const code = opts.ifsc.replace(/\s/g, '').toUpperCase();
@@ -90,10 +90,15 @@ export async function saveKycBank(opts: {
       holderName: opts.holderName.trim(),
     });
     if (opts.file) {
-      await opts.uploadCheque(opts.file);
+      await opts.uploadPassbook(opts.file);
       opts.clearFile();
     }
-    Alert.alert('Bank saved', 'Account saved. Upload cancelled cheque if needed.');
+    Alert.alert(
+      'Bank saved',
+      opts.file
+        ? 'Account and passbook saved.'
+        : 'Account saved. Upload passbook photo if you have not yet.'
+    );
   } catch (error) {
     Alert.alert(
       'Could not save bank',
