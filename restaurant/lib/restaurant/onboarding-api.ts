@@ -56,6 +56,18 @@ function extractError(error: unknown, fallback: string) {
         'KYC is locked while admin reviews your listing.'
       );
     }
+    if (code === 'DOCUMENT_VERIFIED') {
+      return (
+        data?.message ||
+        'This document is verified. Re-upload only if admin asks for a new file.'
+      );
+    }
+    if (code === 'DOCUMENT_REJECTED') {
+      return (
+        data?.message ||
+        'This document was rejected. Upload a new file first.'
+      );
+    }
     if (code === 'OUTLET_PHOTOS_LIMIT') {
       return data?.message || 'You can upload up to 8 outlet photos.';
     }
