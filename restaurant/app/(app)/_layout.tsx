@@ -164,7 +164,31 @@ export default function AppLayout() {
       !onRestaurantSetup &&
       !onStaffInvite
     ) {
-      go('/restaurant-setup');
+      // Setup finished (or user left setup) — re-check outlet profile / local done flag.
+      if (redirectingRef.current) return;
+      redirectingRef.current = true;
+      void resolvePostAuthRoute('restaurant')
+        .then((route) => {
+          if (route === '/restaurant-setup') {
+            setGate('restaurant-setup');
+            router.replace('/restaurant-setup' as never);
+          } else {
+            resolvedForToken.current = token;
+            setGate('ready');
+            router.replace('/dashboard' as never);
+          }
+        })
+        .catch(() => {
+          // Local flag may already be set; prefer home over trapping on the form.
+          resolvedForToken.current = token;
+          setGate('ready');
+          router.replace('/dashboard' as never);
+        })
+        .finally(() => {
+          setTimeout(() => {
+            redirectingRef.current = false;
+          }, 400);
+        });
       return;
     }
 

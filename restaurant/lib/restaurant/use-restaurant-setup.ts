@@ -221,12 +221,9 @@ export function useRestaurantSetup() {
         }
       }
 
-      setBanner({
-        type: 'success',
-        message: 'Restaurant registered and pending verification.',
-      });
       await markRestaurantSetupComplete(restaurantId);
-      setTimeout(() => router.replace('/dashboard'), 900);
+      // Go home immediately — app gate re-checks the setup-done flag and opens dashboard.
+      router.replace('/dashboard');
     } catch (error) {
       setBanner({ type: 'error', message: getApiErrorMessage(error, 'Setup failed') });
     } finally {
