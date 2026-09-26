@@ -197,17 +197,22 @@ export function useLocationMapPicker({
       setSearching(true);
       setSearchError(null);
       try {
-        const res = await searchAddresses(query, {
-          bias: { lat: pin.lat, lng: pin.lng, radiusMeters: 50000 },
-        });
+        // Long / multi-part queries: search India-wide (no pin bias), like Google Maps.
+        const looksBroad =
+          query.length >= 16 || /,/.test(query) || /\d{5,6}/.test(query);
+        const res = await searchAddresses(
+          query,
+          looksBroad
+            ? undefined
+            : { bias: { lat: pin.lat, lng: pin.lng, radiusMeters: 80000 } }
+        );
         if (requestId !== requestIdRef.current) return;
-        // Only fill if WebView Google Maps search has not already returned.
         setSuggestions((prev) => (prev.length ? prev : res));
         if (res.length === 0) {
           setSuggestions((prev) => {
             if (prev.length) return prev;
             setSearchError(
-              'No Google Maps places found. Try a landmark, area, or full address.'
+              'No Google Maps places found. Try a fuller address (area + city).'
             );
             return prev;
           });

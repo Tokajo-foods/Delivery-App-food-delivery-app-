@@ -82,31 +82,66 @@ export function buildGoogleMapHtml(lat: number, lng: number, apiKey: string): st
         setMapView(msg.lat, msg.lng, msg.zoom);
       }
       if (msg.type === 'autocomplete' && autocompleteService) {
-        var req = {
-          input: String(msg.query || '').trim(),
+        var query = String(msg.query || '').trim();
+        if (!query) {
+          post({ type: 'autocompleteResults', requestId: msg.requestId, status: 'ZERO_RESULTS', predictions: [] });
+          return;
+        }
+        function mapPredictions(predictions) {
+          return (predictions || []).map(function(p) {
+            return {
+              description: p.description,
+              placeId: p.place_id,
+              mainText: (p.structured_formatting && p.structured_formatting.main_text) || '',
+              secondaryText: (p.structured_formatting && p.structured_formatting.secondary_text) || '',
+              types: p.types || []
+            };
+          });
+        }
+        function runPass(opts, onDone) {
+          autocompleteService.getPlacePredictions(opts, function(predictions, status) {
+            if (status === google.maps.places.PlacesServiceStatus.OK && predictions && predictions.length) {
+              onDone(true, status, predictions);
+            } else {
+              onDone(false, status, predictions || []);
+            }
+          });
+        }
+        // Pass 1: India + soft map bias (local results, like Maps nearby)
+        var pass1 = {
+          input: query,
           componentRestrictions: { country: 'in' },
           language: 'en'
         };
         if (typeof msg.lat === 'number' && typeof msg.lng === 'number') {
-          req.location = new google.maps.LatLng(msg.lat, msg.lng);
-          req.radius = typeof msg.radius === 'number' ? msg.radius : 50000;
-          // Soft bias toward the visible map area (Google Maps-style local search).
-          req.origin = req.location;
+          pass1.location = new google.maps.LatLng(msg.lat, msg.lng);
+          pass1.radius = typeof msg.radius === 'number' ? msg.radius : 80000;
+          pass1.origin = pass1.location;
         }
-        autocompleteService.getPlacePredictions(req, function(predictions, status) {
-          post({
-            type: 'autocompleteResults',
-            requestId: msg.requestId,
-            status: status,
-            predictions: (predictions || []).map(function(p) {
-              return {
-                description: p.description,
-                placeId: p.place_id,
-                mainText: (p.structured_formatting && p.structured_formatting.main_text) || '',
-                secondaryText: (p.structured_formatting && p.structured_formatting.secondary_text) || '',
-                types: p.types || []
-              };
-            })
+        runPass(pass1, function(ok1, status1, preds1) {
+          if (ok1) {
+            post({ type: 'autocompleteResults', requestId: msg.requestId, status: status1, predictions: mapPredictions(preds1) });
+            return;
+          }
+          // Pass 2: India only — no pin bias (finds other cities like Google Maps)
+          runPass({
+            input: query,
+            componentRestrictions: { country: 'in' },
+            language: 'en'
+          }, function(ok2, status2, preds2) {
+            if (ok2) {
+              post({ type: 'autocompleteResults', requestId: msg.requestId, status: status2, predictions: mapPredictions(preds2) });
+              return;
+            }
+            // Pass 3: unrestricted (last resort — same breadth as maps.google.com)
+            runPass({ input: query, language: 'en' }, function(_ok3, status3, preds3) {
+              post({
+                type: 'autocompleteResults',
+                requestId: msg.requestId,
+                status: status3,
+                predictions: mapPredictions(preds3)
+              });
+            });
           });
         });
       }
@@ -133,22 +168,31 @@ export function buildGoogleMapHtml(lat: number, lng: number, apiKey: string): st
         });
       }
       if (msg.type === 'geocodeText' && geocoder) {
-        geocoder.geocode({ address: msg.query, componentRestrictions: { country: 'IN' } }, function(results, status) {
-          if (status !== 'OK' || !results || !results[0]) {
-            post({ type: 'geocodeTextResult', requestId: msg.requestId, ok: false });
-            return;
+        var gQuery = String(msg.query || '').trim();
+        function finishGeocode(results, status) {
+          if (status === 'OK' && results && results[0]) {
+            var r = results[0];
+            var glat = r.geometry.location.lat();
+            var glng = r.geometry.location.lng();
+            setMapView(glat, glng, 17);
+            post({
+              type: 'geocodeTextResult',
+              requestId: msg.requestId,
+              ok: true,
+              lat: glat,
+              lng: glng,
+              formattedAddress: r.formatted_address || gQuery
+            });
+            return true;
           }
-          var r = results[0];
-          var glat = r.geometry.location.lat();
-          var glng = r.geometry.location.lng();
-          setMapView(glat, glng, 17);
-          post({
-            type: 'geocodeTextResult',
-            requestId: msg.requestId,
-            ok: true,
-            lat: glat,
-            lng: glng,
-            formattedAddress: r.formatted_address || msg.query
+          return false;
+        }
+        geocoder.geocode({ address: gQuery, componentRestrictions: { country: 'IN' } }, function(results, status) {
+          if (finishGeocode(results, status)) return;
+          // Retry without country lock — matches Google Maps when place is ambiguous
+          geocoder.geocode({ address: gQuery }, function(results2, status2) {
+            if (finishGeocode(results2, status2)) return;
+            post({ type: 'geocodeTextResult', requestId: msg.requestId, ok: false });
           });
         });
       }

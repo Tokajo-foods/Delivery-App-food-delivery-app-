@@ -83,15 +83,33 @@ async function autocompleteLegacy(
 
   if (bias && Number.isFinite(bias.lat) && Number.isFinite(bias.lng)) {
     params.location = `${bias.lat},${bias.lng}`;
-    params.radius = bias.radiusMeters ?? 30000;
+    params.radius = bias.radiusMeters ?? 80000;
   }
 
   const { data } = await axios.get<GoogleAutocompleteResponse>(
     `${GOOGLE_BASE}/place/autocomplete/json`,
-    { params, timeout: 5000 }
+    { params, timeout: 7000 }
   );
 
-  if (data.status === 'ZERO_RESULTS') return [];
+  if (data.status === 'ZERO_RESULTS') {
+    // Retry India-wide without pin bias
+    const { data: wide } = await axios.get<GoogleAutocompleteResponse>(
+      `${GOOGLE_BASE}/place/autocomplete/json`,
+      {
+        params: {
+          input: query,
+          key: GOOGLE_MAPS_API_KEY,
+          components: 'country:in',
+          language: 'en',
+        },
+        timeout: 7000,
+      }
+    );
+    if (wide.status === 'OK') {
+      return (wide.predictions ?? []).map(mapGooglePrediction);
+    }
+    return [];
+  }
   if (data.status !== 'OK') return [];
   return (data.predictions ?? []).map(mapGooglePrediction);
 }
@@ -106,68 +124,95 @@ async function autocompleteNew(
 ): Promise<AddressSuggestion[]> {
   if (!GOOGLE_MAPS_API_KEY) return [];
 
-  const body: Record<string, unknown> = {
-    input: query,
-    languageCode: 'en',
-    regionCode: 'IN',
-    includedRegionCodes: ['in'],
-    includeQueryPredictions: true,
+  const run = async (withBias: boolean, regionOnly: boolean) => {
+    const body: Record<string, unknown> = {
+      input: query,
+      languageCode: 'en',
+      includeQueryPredictions: true,
+    };
+    if (regionOnly) {
+      body.regionCode = 'IN';
+    }
+    if (
+      withBias &&
+      bias &&
+      Number.isFinite(bias.lat) &&
+      Number.isFinite(bias.lng)
+    ) {
+      body.locationBias = {
+        circle: {
+          center: { latitude: bias.lat, longitude: bias.lng },
+          radius: bias.radiusMeters ?? 80000.0,
+        },
+      };
+    }
+
+    const { data } = await axios.post<PlacesNewAutocompleteResponse>(
+      `${PLACES_NEW}/places:autocomplete`,
+      body,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY,
+        },
+        timeout: 7000,
+      }
+    );
+
+    if (!data.suggestions?.length) return [] as AddressSuggestion[];
+
+    const out: AddressSuggestion[] = [];
+    for (const suggestion of data.suggestions) {
+      const place = suggestion.placePrediction;
+      if (place) {
+        const main = place.structuredFormat?.mainText?.text ?? '';
+        const secondary = place.structuredFormat?.secondaryText?.text ?? '';
+        const description =
+          place.text?.text ||
+          (main && secondary ? `${main}, ${secondary}` : main || secondary);
+        if (!description) continue;
+        out.push({
+          description,
+          placeId: place.placeId,
+          mainText: main || description.split(',')[0],
+          secondaryText:
+            secondary || description.split(',').slice(1).join(',').trim(),
+          source: 'google-new',
+        });
+        continue;
+      }
+
+      const queryPred = suggestion.queryPrediction?.text?.text;
+      if (queryPred) {
+        out.push({
+          description: queryPred,
+          mainText: queryPred.split(',')[0],
+          secondaryText: queryPred.split(',').slice(1).join(',').trim(),
+          source: 'google-query',
+        });
+      }
+    }
+    return out;
   };
 
-  if (bias && Number.isFinite(bias.lat) && Number.isFinite(bias.lng)) {
-    body.locationBias = {
-      circle: {
-        center: { latitude: bias.lat, longitude: bias.lng },
-        radius: bias.radiusMeters ?? 35000.0,
-      },
-    };
+  // Prefer local bias, then India-wide (no pin), then fully open — like Google Maps.
+  try {
+    const local = await run(true, true);
+    if (local.length) return local;
+  } catch {
+    // continue
   }
-
-  const { data } = await axios.post<PlacesNewAutocompleteResponse>(
-    `${PLACES_NEW}/places:autocomplete`,
-    body,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY,
-      },
-      timeout: 6000,
-    }
-  );
-
-  if (!data.suggestions?.length) return [];
-
-  const out: AddressSuggestion[] = [];
-  for (const suggestion of data.suggestions) {
-    const place = suggestion.placePrediction;
-    if (place) {
-      const main = place.structuredFormat?.mainText?.text ?? '';
-      const secondary = place.structuredFormat?.secondaryText?.text ?? '';
-      const description =
-        place.text?.text ||
-        (main && secondary ? `${main}, ${secondary}` : main || secondary);
-      if (!description) continue;
-      out.push({
-        description,
-        placeId: place.placeId,
-        mainText: main || description.split(',')[0],
-        secondaryText: secondary || description.split(',').slice(1).join(',').trim(),
-        source: 'google-new',
-      });
-      continue;
-    }
-
-    const queryPred = suggestion.queryPrediction?.text?.text;
-    if (queryPred) {
-      out.push({
-        description: queryPred,
-        mainText: queryPred.split(',')[0],
-        secondaryText: queryPred.split(',').slice(1).join(',').trim(),
-        source: 'google-query',
-      });
-    }
+  try {
+    const india = await run(false, true);
+    if (india.length) return india;
+  } catch {
+    // continue
   }
-  return out;
+  try {
+    return await run(false, false);
+  } catch {
+    return [];
+  }
 }
 
 async function placeDetailsNew(placeId: string): Promise<GeocodeResult> {

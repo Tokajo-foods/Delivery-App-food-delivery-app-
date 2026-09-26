@@ -58,12 +58,15 @@ export function handleLocationMapWebMessage(
       return;
     }
     if (msg.type === 'autocompleteResults') {
+      const matchesRequest =
+        ctx.pendingRequest.current?.id === msg.requestId ||
+        msg.requestId === ctx.requestIdRef.current;
+      if (!matchesRequest) return;
+
       if (
         msg.status === 'OK' &&
         Array.isArray(msg.predictions) &&
-        msg.predictions.length &&
-        (ctx.pendingRequest.current?.id === msg.requestId ||
-          msg.requestId === ctx.requestIdRef.current)
+        msg.predictions.length
       ) {
         ctx.pendingRequest.current = null;
         const mapped: AddressSuggestion[] = msg.predictions.map(
@@ -80,11 +83,18 @@ export function handleLocationMapWebMessage(
             source: 'google-maps',
           })
         );
-        // Google Maps JS Autocomplete is authoritative — keep its order.
         ctx.setSuggestions(mapped.slice(0, 10));
         ctx.setSearching(false);
         ctx.setSearchError(null);
+        return;
       }
+
+      if (msg.status === 'REQUEST_DENIED' || msg.status === 'INVALID_REQUEST') {
+        ctx.setSearchError(
+          'Google Maps search is blocked for this API key. Enable Places API (and Maps JavaScript API) in Google Cloud.'
+        );
+      }
+      // ZERO_RESULTS / empty — leave searching on so Places REST backup can fill.
       return;
     }
     if (msg.type === 'placeDetailsResult') {
