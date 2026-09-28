@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 
+import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
 import {
   breakDurationOptions,
@@ -312,22 +313,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    paddingVertical: 13,
+    borderRadius: 16,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   info: { flex: 1, paddingRight: 8 },
   hint: {
-    color: '#9A3412',
+    color: authTheme.textMuted,
     fontFamily: fonts.medium,
     fontSize: 12,
   },
   title: {
-    color: '#C2410C',
+    color: authTheme.text,
     fontFamily: fonts.bold,
-    fontSize: 15,
-    marginTop: 2,
+    fontSize: 16,
+    marginTop: 1,
   },
   breakBtn: {
     flexDirection: 'row',
@@ -426,24 +427,25 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   summaryCell: {
     flex: 1,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
     alignItems: 'center',
   },
   summaryValue: {
     color: '#EA4B14',
-    fontFamily: fonts.bold,
-    fontSize: 15,
+    fontFamily: fonts.extraBold,
+    fontSize: 16,
+    letterSpacing: -0.3,
   },
   summaryLabel: {
-    marginTop: 2,
-    color: '#9A3412',
+    marginTop: 3,
+    color: authTheme.textMuted,
     fontFamily: fonts.medium,
     fontSize: 11,
   },

@@ -955,9 +955,10 @@ export function DeliveryHomeScreen() {
                 </Pressable>
               ))
             ) : (
-              <View style={[styles.orderCard, { justifyContent: 'center', flexDirection: 'column' }]}>
-                <Package color={authTheme.textDim} size={26} />
-                <Text style={styles.emptyText}>No deliveries yet</Text>
+              <View style={styles.emptyHistory}>
+                <Package color={authTheme.textDim} size={22} />
+                <Text style={styles.emptyTitle}>No deliveries yet</Text>
+                <Text style={styles.emptyText}>Finished trips will show up here</Text>
               </View>
             )}
           </View>
@@ -1071,14 +1072,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   dhAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
   },
   dhAvatarFallback: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1089,9 +1090,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   dhBell: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: 'rgba(255,255,255,0.16)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1166,8 +1167,8 @@ const styles = StyleSheet.create({
   dhEarnAmount: {
     color: '#FFFFFF',
     fontFamily: fonts.extraBold,
-    fontSize: 30,
-    letterSpacing: -0.6,
+    fontSize: 32,
+    letterSpacing: -0.8,
     marginTop: 2,
   },
   scooterImg: {
@@ -1185,7 +1186,7 @@ const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   scroll: {
     paddingHorizontal: 16,
-    gap: 12,
+    gap: 16,
   },
   heroBleed: {
     marginHorizontal: -16,
@@ -1280,11 +1281,10 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#FFE4D6',
-    paddingVertical: 4,
-    paddingHorizontal: 4,
+    overflow: 'hidden',
   },
   cardTitle: {
     fontFamily: fonts.bold,
@@ -1513,16 +1513,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 16,
+    borderRadius: 16,
+    paddingVertical: 14,
     gap: 4,
     borderWidth: 1,
     borderColor: '#FFE4D6',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   statValueRow: {
     flexDirection: 'row',
@@ -1591,20 +1586,30 @@ const styles = StyleSheet.create({
   recentList: {
     gap: 12,
   },
+  emptyHistory: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 28,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#FFE4D6',
+  },
+  emptyTitle: {
+    fontFamily: fonts.semiBold,
+    fontSize: 14,
+    color: authTheme.text,
+  },
   orderCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 16,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     borderWidth: 1,
     borderColor: '#FFE4D6',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   orderStatusPill: {
     backgroundColor: '#FFF7ED',
@@ -1634,20 +1639,15 @@ const styles = StyleSheet.create({
   moreCard: {
     minWidth: 116,
     paddingHorizontal: 12,
-    height: 110,
+    height: 104,
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 10,
     gap: 8,
     borderWidth: 1,
     borderColor: '#FFE4D6',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   moreIcon: {
     width: 44,
