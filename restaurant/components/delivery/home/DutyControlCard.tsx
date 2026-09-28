@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 
+import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
 import {
   breakDurationOptions,
@@ -127,7 +128,7 @@ export function DutyControlCard({
       >
         <View style={styles.info}>
           {statusLoading && !snapshot ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
+            <ActivityIndicator color={authTheme.brand} size="small" />
           ) : (
             <>
               <Text style={styles.hint}>
@@ -156,7 +157,7 @@ export function DutyControlCard({
             style={[styles.breakChoice, { flex: 1.2 }]}
           >
             {breakBusy ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
+              <ActivityIndicator color="#EA4B14" size="small" />
             ) : (
               <>
                 <Coffee color="#EA4B14" size={15} />
@@ -192,7 +193,7 @@ export function DutyControlCard({
                 style={styles.breakChoice}
               >
                 {breakBusy ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
+                  <ActivityIndicator color="#EA4B14" size="small" />
                 ) : (
                   <>
                     <Coffee color="#EA4B14" size={14} />
@@ -313,9 +314,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    paddingVertical: 13,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#FFE4D6',
   },
   info: { flex: 1, paddingRight: 8 },
   hint: {
@@ -324,9 +327,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   title: {
-    color: '#C2410C',
+    color: authTheme.text,
     fontFamily: fonts.bold,
-    fontSize: 15,
+    fontSize: 16,
     marginTop: 2,
   },
   breakBtn: {
@@ -353,6 +356,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#FFE4D6',
   },
   breakBtnText: {
     color: '#EA4B14',
@@ -375,7 +380,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   quotaNote: {
-    color: 'rgba(255,255,255,0.88)',
+    color: '#9A3412',
     fontFamily: fonts.medium,
     fontSize: 12,
     marginBottom: 10,
@@ -405,7 +410,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   hubLinkText: {
-    color: '#FFFFFF',
+    color: '#EA4B14',
     fontFamily: fonts.semiBold,
     fontSize: 13,
   },
@@ -414,14 +419,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontFamily: fonts.medium,
     fontSize: 12,
-    color: '#FFFFFF',
+    color: '#9A3412',
     lineHeight: 17,
   },
   actionError: {
     marginBottom: 10,
     fontFamily: fonts.medium,
     fontSize: 12,
-    color: '#FCA5A5',
+    color: authTheme.error,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -435,6 +440,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFE4D6',
   },
   summaryValue: {
     color: '#EA4B14',
@@ -443,7 +450,7 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     marginTop: 2,
-    color: '#9A3412',
+    color: authTheme.textMuted,
     fontFamily: fonts.medium,
     fontSize: 11,
   },
@@ -457,12 +464,12 @@ const styles = StyleSheet.create({
   },
   summaryErrorText: {
     flex: 1,
-    color: '#FCA5A5',
+    color: authTheme.error,
     fontFamily: fonts.medium,
     fontSize: 12,
   },
   summaryRetry: {
-    color: '#FFFFFF',
+    color: '#EA4B14',
     fontFamily: fonts.semiBold,
     fontSize: 12,
   },

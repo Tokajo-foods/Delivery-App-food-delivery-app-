@@ -699,46 +699,6 @@ export function DeliveryHomeScreen() {
             </View>
           </View>
 
-          {/* Status Pill */}
-          <DutyControlCard
-            snapshot={duty.data}
-            fallbackStatus={dutyStatus}
-            isOnDuty={isOnline}
-            summary={dutySummary.data}
-            policy={breakPolicy.data}
-            statusLoading={duty.isLoading}
-            statusError={
-              duty.isError
-                ? formatDutyError(duty.error, 'Could not load duty status.')
-                : null
-            }
-            onRetryStatus={() => void duty.refetch()}
-            togglePending={setOnline.isPending}
-            breakBusy={breakBusy}
-            resumeBusy={checkOutHub.isPending || setDutyStatus.isPending}
-            onToggle={onToggleOnline}
-            onStartBreak={onStartBreak}
-            onEndBreak={onEndBreak}
-            onExtendBreak={onExtendBreak}
-            onLeaveHub={onLeaveHub}
-            onOpenHubs={() => router.push(DELIVERY_ROUTES.hubs as never)}
-            gpsBanner={gpsBanner}
-            actionError={
-              setOnline.isError
-                ? formatGoOnlineError(setOnline.error, 'Could not update status')
-                : null
-            }
-            summaryError={
-              dutySummary.isError && !dutySummary.data
-                ? formatDutyError(
-                    dutySummary.error,
-                    'Could not load today’s duty summary.'
-                  )
-                : null
-            }
-            onRetrySummary={() => void dutySummary.refetch()}
-          />
-
           <View style={styles.dhEarnPanel}>
             <View style={styles.dhEarnCol}>
               <Text style={styles.dhEarnLabel}>Today's earning</Text>
@@ -747,6 +707,45 @@ export function DeliveryHomeScreen() {
             <Image source={require('../../../public/scooter.png')} style={styles.scooterImg} resizeMode="contain" />
           </View>
         </View>
+
+        <DutyControlCard
+          snapshot={duty.data}
+          fallbackStatus={dutyStatus}
+          isOnDuty={isOnline}
+          summary={dutySummary.data}
+          policy={breakPolicy.data}
+          statusLoading={duty.isLoading}
+          statusError={
+            duty.isError
+              ? formatDutyError(duty.error, 'Could not load duty status.')
+              : null
+          }
+          onRetryStatus={() => void duty.refetch()}
+          togglePending={setOnline.isPending}
+          breakBusy={breakBusy}
+          resumeBusy={checkOutHub.isPending || setDutyStatus.isPending}
+          onToggle={onToggleOnline}
+          onStartBreak={onStartBreak}
+          onEndBreak={onEndBreak}
+          onExtendBreak={onExtendBreak}
+          onLeaveHub={onLeaveHub}
+          onOpenHubs={() => router.push(DELIVERY_ROUTES.hubs as never)}
+          gpsBanner={gpsBanner}
+          actionError={
+            setOnline.isError
+              ? formatGoOnlineError(setOnline.error, 'Could not update status')
+              : null
+          }
+          summaryError={
+            dutySummary.isError && !dutySummary.data
+              ? formatDutyError(
+                  dutySummary.error,
+                  'Could not load today’s duty summary.'
+                )
+              : null
+          }
+          onRetrySummary={() => void dutySummary.refetch()}
+        />
 
         {delivery ? (
           <View style={styles.section}>
@@ -1032,7 +1031,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
     paddingHorizontal: 18,
-    paddingBottom: 28,
+    paddingBottom: 22,
   },
   dhTopRow: {
     flexDirection: 'row',
@@ -1149,10 +1148,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    marginTop: 6,
   },
   dhEarnCol: {
     flex: 1,
