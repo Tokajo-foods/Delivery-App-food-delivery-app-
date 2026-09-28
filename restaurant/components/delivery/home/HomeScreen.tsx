@@ -664,7 +664,7 @@ export function DeliveryHomeScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.darkHeader, { paddingTop: insets.top + 16 }]}>
+        <View style={[styles.darkHeader, { paddingTop: insets.top + 36 }]}>
           <View style={styles.dhTopRow}>
             <View style={styles.dhLocation}>
               <Text style={styles.dhHello} numberOfLines={1}>
@@ -1032,13 +1032,14 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
     paddingHorizontal: 18,
-    paddingBottom: 18,
+    paddingBottom: 28,
   },
   dhTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginTop: 8,
+    marginBottom: 18,
   },
   dhLocation: {
     flex: 1,
@@ -1151,7 +1152,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.12)',
     borderRadius: 18,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   dhEarnCol: {
     flex: 1,
@@ -1170,8 +1171,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   scooterImg: {
-    width: 92,
-    height: 64,
+    width: 128,
+    height: 96,
   },
   root: {
     flex: 1,
