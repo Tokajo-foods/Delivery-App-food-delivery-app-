@@ -253,7 +253,7 @@ function DeliveryScreenShellInner({
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F3F4F6', // greyish background
+    backgroundColor: '#FFF7F2',
   },
   screenDark: {
     backgroundColor: '#0B1220',

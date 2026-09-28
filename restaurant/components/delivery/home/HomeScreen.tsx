@@ -673,7 +673,7 @@ export function DeliveryHomeScreen() {
             >
               <Text style={styles.dhLocLabel}>Live Location</Text>
               <View style={styles.dhLocRow}>
-                <MapPin color="#EA4B14" size={16} />
+                <MapPin color="#FFFFFF" size={16} />
                 <Text style={styles.dhLocText} numberOfLines={1}>
                   {locationChip}
                 </Text>
@@ -1029,13 +1029,13 @@ const styles = StyleSheet.create({
     marginHorizontal: -16,
     marginTop: -40,
     marginBottom: 16,
-    backgroundColor: '#121212',
+    backgroundColor: '#EA4B14',
     borderBottomLeftRadius: 36,
     borderBottomRightRadius: 36,
     paddingHorizontal: 24,
     paddingBottom: 24,
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
+    shadowColor: '#C2410C',
+    shadowOpacity: 0.28,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
     elevation: 10,
@@ -1050,7 +1050,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dhLocLabel: {
-    color: '#9CA3AF',
+    color: 'rgba(255,255,255,0.78)',
     fontFamily: fonts.medium,
     fontSize: 12,
   },
@@ -1082,12 +1082,12 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#374151',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   dhAvatarText: {
-    color: '#FFFFFF',
+    color: '#EA4B14',
     fontFamily: fonts.bold,
     fontSize: 16,
   },
@@ -1096,7 +1096,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: 'rgba(255,255,255,0.45)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1107,13 +1107,15 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#EA4B14',
+    backgroundColor: '#FFFFFF',
   },
   dhStatusPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#262626',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#FFE4D6',
     borderRadius: 24,
     padding: 16,
     marginBottom: 16,
@@ -1137,13 +1139,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#3F3F46',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingVertical: 12,
     marginBottom: 16,
   },
   dhBreakBtnText: {
-    color: '#FFFFFF',
+    color: '#EA4B14',
     fontFamily: fonts.semiBold,
     fontSize: 14,
   },
@@ -1156,12 +1158,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dhEarnLabel: {
-    color: '#9CA3AF',
+    color: 'rgba(255,255,255,0.82)',
     fontFamily: fonts.medium,
     fontSize: 14,
   },
   dhEarnAmount: {
-    color: '#EA4B14',
+    color: '#FFFFFF',
     fontFamily: fonts.extraBold,
     fontSize: 42,
     letterSpacing: -1.5,
@@ -1189,7 +1191,7 @@ const styles = StyleSheet.create({
   },
   root: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFF7F2',
   },
   centered: {
     alignItems: 'center',
@@ -1269,12 +1271,12 @@ const styles = StyleSheet.create({
   statusPillTitle: {
     fontFamily: fonts.bold,
     fontSize: 16,
-    color: '#000000',
+    color: '#FFFFFF',
   },
   statusPillSub: {
     fontFamily: fonts.medium,
     fontSize: 12,
-    color: '#000000',
+    color: 'rgba(255,255,255,0.82)',
     opacity: 0.7,
     marginTop: 2,
   },
@@ -1287,7 +1289,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   statusBtnText: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontFamily: fonts.bold,
     fontSize: 13,
   },
@@ -1398,7 +1400,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: '#FFE4D6',
   },
   activeTop: {
     flexDirection: 'row',
@@ -1408,7 +1410,7 @@ const styles = StyleSheet.create({
   activeCardLabel: {
     fontFamily: fonts.semiBold,
     fontSize: 11,
-    color: '#374151',
+    color: 'rgba(255,255,255,0.78)',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
@@ -1416,16 +1418,16 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontFamily: fonts.bold,
     fontSize: 15,
-    color: '#000000',
+    color: '#FFFFFF',
   },
   activeBadge: {
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   activeBadgeText: {
-    color: '#FFFFFF',
+    color: '#EA4B14',
     fontFamily: fonts.bold,
     fontSize: 12,
   },
@@ -1437,7 +1439,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
     borderRadius: 3,
   },
   activeBottom: {
@@ -1449,7 +1451,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: '#FFE4D6',
     shadowColor: '#000',
     shadowOpacity: 0.03,
     shadowRadius: 10,
@@ -1502,17 +1504,17 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontFamily: fonts.bold,
     fontSize: 28,
-    color: '#000000',
+    color: '#EA4B14',
     letterSpacing: -0.6,
   },
   trendPill: {
-    backgroundColor: '#000000',
+    backgroundColor: '#FFF1E8',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   trendText: {
-    color: '#FFFFFF',
+    color: '#EA4B14',
     fontSize: 12,
     fontFamily: fonts.semiBold,
   },
@@ -1529,7 +1531,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     gap: 4,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: '#FFE4D6',
     shadowColor: '#000',
     shadowOpacity: 0.03,
     shadowRadius: 8,
@@ -1560,9 +1562,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sectionTitle: {
-    fontFamily: fonts.medium,
+    fontFamily: fonts.semiBold,
     fontSize: 16,
-    color: '#374151',
+    color: '#9A3412',
     marginBottom: 4,
   },
   perfGrid: {
@@ -1594,7 +1596,7 @@ const styles = StyleSheet.create({
   listTitle: {
     fontFamily: fonts.medium,
     fontSize: 15,
-    color: '#000000',
+    color: '#1C1917',
   },
   recentList: {
     gap: 12,
@@ -1607,7 +1609,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: '#FFE4D6',
     shadowColor: '#000',
     shadowOpacity: 0.03,
     shadowRadius: 8,
@@ -1650,7 +1652,7 @@ const styles = StyleSheet.create({
     padding: 10,
     gap: 8,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: '#FFE4D6',
     shadowColor: '#000',
     shadowOpacity: 0.03,
     shadowRadius: 8,
@@ -1668,7 +1670,7 @@ const styles = StyleSheet.create({
   moreLabel: {
     fontFamily: fonts.semiBold,
     fontSize: 12,
-    color: '#000000',
+    color: '#9A3412',
     textAlign: 'center',
   },
 });

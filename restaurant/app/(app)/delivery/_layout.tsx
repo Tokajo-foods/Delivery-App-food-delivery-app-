@@ -35,7 +35,7 @@ export default function DeliveryLayout() {
         screenOptions={{
           headerShown: false,
           animation: 'fade',
-          contentStyle: { backgroundColor: '#F6F6F7' },
+          contentStyle: { backgroundColor: '#FFF7F2' },
         }}
       />
     </>

@@ -143,8 +143,8 @@ export function DutyControlCard({
           value={isOnDuty}
           onValueChange={onToggle}
           disabled={togglePending || onDelivery}
-          trackColor={{ false: '#374151', true: '#EA4B14' }}
-          thumbColor={isOnDuty ? '#000000' : '#9CA3AF'}
+          trackColor={{ false: '#FED7AA', true: '#EA4B14' }}
+          thumbColor="#FFFFFF"
         />
       </View>
 
@@ -159,7 +159,7 @@ export function DutyControlCard({
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
               <>
-                <Coffee color="#FFFFFF" size={15} />
+                <Coffee color="#EA4B14" size={15} />
                 <Text style={styles.breakBtnText}>
                   {secondsLeft != null
                     ? `End · ${formatCountdown(secondsLeft)}`
@@ -174,7 +174,7 @@ export function DutyControlCard({
               disabled={breakBusy}
               style={styles.extendBtn}
             >
-              <Plus color="#111827" size={15} />
+              <Plus color="#EA4B14" size={15} />
               <Text style={styles.extendBtnText}>+{extendBy} min</Text>
             </Pressable>
           ) : null}
@@ -195,7 +195,7 @@ export function DutyControlCard({
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
                   <>
-                    <Coffee color="#FFFFFF" size={14} />
+                    <Coffee color="#EA4B14" size={14} />
                     <Text style={styles.breakBtnText}>{mins} min break</Text>
                   </>
                 )}
@@ -227,7 +227,7 @@ export function DutyControlCard({
             style={styles.resumeBtn}
           >
             {resumeBusy ? (
-              <ActivityIndicator color="#111827" size="small" />
+              <ActivityIndicator color="#EA4B14" size="small" />
             ) : (
               <Text style={styles.resumeBtnText}>
                 {snapshot?.hub?.checkedInAt
@@ -311,19 +311,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#262626',
+    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     padding: 16,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#FFE4D6',
   },
   info: { flex: 1, paddingRight: 8 },
   hint: {
-    color: '#9CA3AF',
+    color: '#9A3412',
     fontFamily: fonts.medium,
     fontSize: 13,
   },
   title: {
-    color: '#FFFFFF',
+    color: '#C2410C',
     fontFamily: fonts.bold,
     fontSize: 16,
     marginTop: 4,
@@ -333,7 +335,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#3F3F46',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingVertical: 12,
     marginBottom: 8,
@@ -349,12 +351,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#3F3F46',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingVertical: 12,
   },
   breakBtnText: {
-    color: '#FFFFFF',
+    color: '#EA4B14',
     fontFamily: fonts.semiBold,
     fontSize: 13,
   },
@@ -364,17 +366,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    backgroundColor: '#FDBA74',
+    backgroundColor: '#FFF1E8',
     borderRadius: 16,
     paddingVertical: 12,
   },
   extendBtnText: {
-    color: '#111827',
+    color: '#C2410C',
     fontFamily: fonts.bold,
     fontSize: 13,
   },
   quotaNote: {
-    color: '#A1A1AA',
+    color: 'rgba(255,255,255,0.88)',
     fontFamily: fonts.medium,
     fontSize: 12,
     marginBottom: 10,
@@ -383,12 +385,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FDBA74',
+    backgroundColor: '#FFF1E8',
     borderRadius: 16,
     paddingVertical: 12,
   },
   resumeBtnText: {
-    color: '#111827',
+    color: '#C2410C',
     fontFamily: fonts.bold,
     fontSize: 14,
   },
@@ -404,7 +406,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   hubLinkText: {
-    color: '#FDBA74',
+    color: '#FFFFFF',
     fontFamily: fonts.semiBold,
     fontSize: 13,
   },
@@ -413,7 +415,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontFamily: fonts.medium,
     fontSize: 12,
-    color: '#FDBA74',
+    color: '#FFFFFF',
     lineHeight: 17,
   },
   actionError: {
@@ -429,20 +431,20 @@ const styles = StyleSheet.create({
   },
   summaryCell: {
     flex: 1,
-    backgroundColor: '#1F1F1F',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingVertical: 12,
     paddingHorizontal: 8,
     alignItems: 'center',
   },
   summaryValue: {
-    color: '#FFFFFF',
+    color: '#EA4B14',
     fontFamily: fonts.bold,
     fontSize: 15,
   },
   summaryLabel: {
     marginTop: 2,
-    color: '#9CA3AF',
+    color: '#9A3412',
     fontFamily: fonts.medium,
     fontSize: 11,
   },
@@ -461,7 +463,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   summaryRetry: {
-    color: '#FDBA74',
+    color: '#FFFFFF',
     fontFamily: fonts.semiBold,
     fontSize: 12,
   },

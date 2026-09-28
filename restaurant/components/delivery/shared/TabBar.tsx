@@ -59,7 +59,7 @@ export function DeliveryTabBar() {
                 style={[styles.iconWrap, isActive && styles.iconWrapActive]}
               >
                 <Icon
-                  color={isActive ? '#EA4B14' : '#FFFFFF'}
+                  color={isActive ? '#FFFFFF' : '#EA4B14'}
                   size={22}
                   strokeWidth={isActive ? 2.4 : 1.9}
                 />
@@ -78,7 +78,9 @@ const styles = StyleSheet.create({
     left: 20,
     right: 20,
     zIndex: 40,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#FFE4D6',
     borderRadius: 32,
     paddingVertical: 12,
     shadowColor: '#000',
@@ -108,7 +110,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconWrapActive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#EA4B14',
   },
   pressed: {
     opacity: 0.75,
