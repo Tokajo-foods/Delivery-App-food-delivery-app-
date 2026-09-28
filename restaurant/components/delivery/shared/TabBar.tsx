@@ -60,10 +60,13 @@ export function DeliveryTabBar() {
               >
                 <Icon
                   color={isActive ? '#FFFFFF' : '#EA4B14'}
-                  size={22}
+                  size={20}
                   strokeWidth={isActive ? 2.4 : 1.9}
                 />
               </View>
+              <Text style={[styles.label, isActive && styles.labelActive]}>
+                {tab.label}
+              </Text>
             </Pressable>
           );
         })}
@@ -81,13 +84,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#FFE4D6',
-    borderRadius: 32,
-    paddingVertical: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 15,
+    borderRadius: 28,
+    paddingVertical: 8,
+    shadowColor: '#C2410C',
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
-    elevation: 12,
+    elevation: 8,
   },
   bar: {
     flexDirection: 'row',
@@ -103,14 +106,23 @@ const styles = StyleSheet.create({
   },
   tabActive: {},
   iconWrap: {
-    width: 60,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconWrapActive: {
     backgroundColor: '#EA4B14',
+  },
+  label: {
+    fontFamily: fonts.medium,
+    fontSize: 10,
+    color: '#C2410C',
+  },
+  labelActive: {
+    fontFamily: fonts.bold,
+    color: '#EA4B14',
   },
   pressed: {
     opacity: 0.75,

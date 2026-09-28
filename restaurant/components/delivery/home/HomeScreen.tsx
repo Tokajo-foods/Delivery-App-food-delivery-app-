@@ -37,6 +37,7 @@ import {
   type MapPickResult,
 } from '@/components/restaurant/LocationMapPicker';
 import { authTheme, PARTNER_BOTTOM_NAV_INSET } from '@/constants/auth-theme';
+import { useUnreadNotificationCount } from '@/lib/notification/hooks';
 import { fonts } from '@/constants/typography';
 import {
   formatCurrency,
@@ -206,6 +207,7 @@ export function DeliveryHomeScreen() {
     me.data?.name ||
     [authUser?.firstName, authUser?.lastName].filter(Boolean).join(' ') ||
     'Partner';
+  const unread = useUnreadNotificationCount();
   const active = useActiveDelivery();
   const actives = useActiveDeliveries();
   const history = useDeliveryHistory(5);
@@ -662,23 +664,24 @@ export function DeliveryHomeScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.darkHeader, { paddingTop: insets.top + 48 }]}>
-          {/* Top Row */}
+        <View style={[styles.darkHeader, { paddingTop: insets.top + 16 }]}>
           <View style={styles.dhTopRow}>
-            <Pressable
-              onPress={() => setMapOpen(true)}
-              style={styles.dhLocation}
-              accessibilityRole="button"
-              accessibilityLabel="Set live location"
-            >
-              <Text style={styles.dhLocLabel}>Live Location</Text>
-              <View style={styles.dhLocRow}>
-                <MapPin color="#FFFFFF" size={16} />
+            <View style={styles.dhLocation}>
+              <Text style={styles.dhHello} numberOfLines={1}>
+                Hi, {displayName.split(' ')[0] || 'Partner'}
+              </Text>
+              <Pressable
+                onPress={() => setMapOpen(true)}
+                style={styles.dhLocRow}
+                accessibilityRole="button"
+                accessibilityLabel="Set live location"
+              >
+                <MapPin color="#FFFFFF" size={13} />
                 <Text style={styles.dhLocText} numberOfLines={1}>
                   {locationChip}
                 </Text>
-              </View>
-            </Pressable>
+              </Pressable>
+            </View>
             <View style={styles.dhActions}>
               <Pressable onPress={() => router.push(DELIVERY_ROUTES.profile)}>
                 {me.data?.photoUrl ? (
@@ -691,7 +694,7 @@ export function DeliveryHomeScreen() {
               </Pressable>
               <Pressable style={styles.dhBell} onPress={() => router.push(DELIVERY_ROUTES.notifications)}>
                 <Bell color="#FFFFFF" size={18} />
-                <View style={styles.dhBellDot} />
+                {(unread.data ?? 0) > 0 ? <View style={styles.dhBellDot} /> : null}
               </Pressable>
             </View>
           </View>
@@ -736,16 +739,12 @@ export function DeliveryHomeScreen() {
             onRetrySummary={() => void dutySummary.refetch()}
           />
 
-          {/* Earning & Profile Bottom */}
-          <View style={styles.dhBottomRow}>
+          <View style={styles.dhEarnPanel}>
             <View style={styles.dhEarnCol}>
-              <Text style={styles.dhEarnLabel}>Today's Earning</Text>
+              <Text style={styles.dhEarnLabel}>Today's earning</Text>
               <Text style={styles.dhEarnAmount}>{formatCurrency(todayEarnings, currency)}</Text>
-              <Text style={styles.dhName}>{displayName}</Text>
             </View>
-            <View style={styles.dhGraphic}>
-              <Image source={require('../../../public/scooter.png')} style={styles.scooterImg} resizeMode="contain" />
-            </View>
+            <Image source={require('../../../public/scooter.png')} style={styles.scooterImg} resizeMode="contain" />
           </View>
         </View>
 
@@ -859,7 +858,7 @@ export function DeliveryHomeScreen() {
             onPress={() => router.push(DELIVERY_ROUTES.performance)}
           >
             <View style={styles.statValueRow}>
-              <Star color="#D97706" size={13} fill="#FBBF24" />
+              <Star color={authTheme.brand} size={13} fill={authTheme.brand} />
               <Text style={styles.statValue}>{formatRating(avgRating)}</Text>
             </View>
             <Text style={styles.statLabel}>Rating</Text>
@@ -1028,50 +1027,47 @@ const styles = StyleSheet.create({
   darkHeader: {
     marginHorizontal: -16,
     marginTop: -40,
-    marginBottom: 16,
+    marginBottom: 8,
     backgroundColor: '#EA4B14',
-    borderBottomLeftRadius: 36,
-    borderBottomRightRadius: 36,
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-    shadowColor: '#C2410C',
-    shadowOpacity: 0.28,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    paddingHorizontal: 18,
+    paddingBottom: 18,
   },
   dhTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
+    alignItems: 'center',
+    marginBottom: 14,
   },
   dhLocation: {
     flex: 1,
+    minWidth: 0,
+    paddingRight: 10,
   },
-  dhLocLabel: {
-    color: 'rgba(255,255,255,0.78)',
-    fontFamily: fonts.medium,
-    fontSize: 12,
+  dhHello: {
+    color: '#FFFFFF',
+    fontFamily: fonts.extraBold,
+    fontSize: 22,
+    letterSpacing: -0.4,
   },
   dhLocRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     marginTop: 4,
-    paddingRight: 8,
   },
   dhLocText: {
     flex: 1,
     minWidth: 0,
-    color: '#FFFFFF',
-    fontFamily: fonts.bold,
-    fontSize: 14,
+    color: 'rgba(255,255,255,0.92)',
+    fontFamily: fonts.medium,
+    fontSize: 13,
   },
   dhActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   dhAvatar: {
     width: 44,
@@ -1092,11 +1088,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   dhBell: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.45)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.16)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1149,45 +1144,34 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semiBold,
     fontSize: 14,
   },
-  dhBottomRow: {
+  dhEarnPanel: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   dhEarnCol: {
     flex: 1,
   },
   dhEarnLabel: {
-    color: 'rgba(255,255,255,0.82)',
+    color: 'rgba(255,255,255,0.85)',
     fontFamily: fonts.medium,
-    fontSize: 14,
+    fontSize: 12,
+    letterSpacing: 0.2,
   },
   dhEarnAmount: {
     color: '#FFFFFF',
     fontFamily: fonts.extraBold,
-    fontSize: 42,
-    letterSpacing: -1.5,
-    marginVertical: 4,
-  },
-  dhName: {
-    color: '#FFFFFF',
-    fontFamily: fonts.semiBold,
-    fontSize: 20,
-    marginTop: 4,
-  },
-  dhGraphic: {
-    width: 140,
-    height: 140,
-    alignItems: 'flex-end',
-    justifyContent: 'flex-end',
-    position: 'relative',
+    fontSize: 30,
+    letterSpacing: -0.6,
+    marginTop: 2,
   },
   scooterImg: {
-    width: '120%',
-    height: '120%',
-    position: 'absolute',
-    bottom: -20,
-    right: -20,
+    width: 92,
+    height: 64,
   },
   root: {
     flex: 1,
@@ -1295,10 +1279,11 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: authTheme.cardBorder,
-    padding: 14,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#FFE4D6',
+    paddingVertical: 4,
+    paddingHorizontal: 4,
   },
   cardTitle: {
     fontFamily: fonts.bold,
@@ -1432,10 +1417,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   progressTrack: {
-    height: 6,
-    backgroundColor: 'rgba(255,255,255,0.8)',
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.28)',
     borderRadius: 3,
-    marginVertical: 24,
+    marginVertical: 16,
   },
   progressFill: {
     height: '100%',
@@ -1562,10 +1547,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sectionTitle: {
-    fontFamily: fonts.semiBold,
+    fontFamily: fonts.bold,
     fontSize: 16,
-    color: '#9A3412',
-    marginBottom: 4,
+    color: authTheme.text,
+    letterSpacing: -0.2,
+    marginBottom: 2,
   },
   perfGrid: {
     flexDirection: 'row',
@@ -1573,9 +1559,12 @@ const styles = StyleSheet.create({
   },
   perfItem: {
     width: '50%',
-    paddingVertical: 10,
-    paddingHorizontal: 6,
-    gap: 4,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    gap: 2,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderRightWidth: StyleSheet.hairlineWidth,
+    borderColor: '#FFE4D6',
   },
   perfValue: {
     fontFamily: fonts.bold,
@@ -1670,7 +1659,7 @@ const styles = StyleSheet.create({
   moreLabel: {
     fontFamily: fonts.semiBold,
     fontSize: 12,
-    color: '#9A3412',
+    color: authTheme.textMuted,
     textAlign: 'center',
   },
 });
