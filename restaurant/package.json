@@ -83,5 +83,10 @@
     "build:apk": "eas build -p android --profile preview",
     "build:apk:local": "powershell -ExecutionPolicy Bypass -File ./scripts/build-from-short-path.ps1"
   },
-  "private": true
+  "private": true,
+  "expo": {
+    "autolinking": {
+      "exclude": ["expo-firebase-core"]
+    }
+  }
 }
