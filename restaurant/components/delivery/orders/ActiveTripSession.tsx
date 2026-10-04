@@ -576,7 +576,14 @@ function ActiveTripBody({
           />
 
           {delivery.orderId ? (
-            <OrderCallPanel orderId={delivery.orderId} viewer="rider" />
+            <OrderCallPanel
+              orderId={delivery.orderId}
+              viewer="rider"
+              names={{
+                customer: customerName || 'Customer',
+                restaurant: restaurantName || 'Restaurant',
+              }}
+            />
           ) : null}
 
           <View style={styles.auxRow}>

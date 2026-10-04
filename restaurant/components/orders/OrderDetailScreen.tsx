@@ -502,7 +502,14 @@ export function OrderDetailScreen({ orderId }: Props) {
               ) : null}
             </View>
             {order.fulfillmentTone !== 'table' ? (
-              <OrderCallPanel orderId={orderId} viewer="restaurant" />
+              <OrderCallPanel
+                orderId={orderId}
+                viewer="restaurant"
+                names={{
+                  customer: order.customerName?.trim() || 'Customer',
+                  rider: rider?.name || 'Delivery partner',
+                }}
+              />
             ) : null}
 
             {(cooking || canDelay || canPrint || canKitchenCancel) ? (

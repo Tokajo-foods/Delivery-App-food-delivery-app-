@@ -1,35 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Linking } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import {
-  acceptInternetCall,
-  callErrorMessage,
-  createInternetCall,
-  declineInternetCall,
-  endInternetCall,
-  getOrderMasks,
-  recordAttempt,
-} from '@/lib/call/api';
-import { connectVoice, disconnectVoice } from '@/lib/call/internet-audio';
+import { callErrorMessage, getOrderMasks, recordAttempt } from '@/lib/call/api';
 import { listenOrderCallEvents } from '@/lib/call/listen';
 import { buildCallRows } from '@/lib/call/rows';
-import {
-  DISCLOSURE,
-  isCallRole,
-  pairKeyFor,
-  type CallRole,
-  type LiveCall,
-  type ViewerKind,
-} from '@/lib/call/types';
-
-const TERMINAL = new Set(['ended', 'declined', 'timed_out']);
-
-function terminalCopy(state: string): string {
-  if (state === 'timed_out') return 'They did not answer. You can try again or use chat.';
-  if (state === 'declined') return 'The call was declined.';
-  return 'The call ended.';
-}
+import { DISCLOSURE, pairKeyFor, type CallRole, type ViewerKind } from '@/lib/call/types';
+import { useLiveCall } from '@/lib/call/use-live-call';
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
@@ -41,55 +18,25 @@ export function useOrderCalls(orderId: string, viewer: ViewerKind) {
     queryKey: ['order-call-masks', orderId],
     queryFn: () => getOrderMasks(orderId),
     enabled: Boolean(orderId),
-    refetchInterval: (current) =>
-      (current.state.data?.masks.length ?? 0) === 0 ? 8_000 : 20_000,
+    refetchInterval: 10_000,
   });
   const [notice, setNotice] = useState<string | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [live, setLive] = useState<LiveCall | null>(null);
-  const liveRef = useRef<LiveCall | null>(null);
-  liveRef.current = live;
+  const [dialBusy, setDialBusy] = useState<string | null>(null);
   const rows = useMemo(() => buildCallRows(query.data, viewer), [query.data, viewer]);
+  const voice = useLiveCall(orderId, viewer, query.data?.live, setNotice);
 
   useEffect(() => {
     if (!orderId) return undefined;
     return listenOrderCallEvents(viewer, orderId, (event, payload) => {
+      if (event !== 'call:masks') return;
       const row = asRecord(payload);
       if (String(row.orderId ?? '') !== orderId) return;
-      if (event === 'call:masks') {
-        const reason = String(row.reason ?? '');
-        if (/reassign/i.test(reason)) {
-          setNotice('Call numbers were refreshed after the rider changed.');
-        } else if (/expir|terminal|closed/i.test(reason)) {
-          setNotice('Masked numbers for this order have expired.');
-        }
-        void queryClient.invalidateQueries({ queryKey: ['order-call-masks', orderId] });
-        return;
-      }
-      const callId = String(row.callId ?? '');
-      const state = String(row.state ?? '');
-      const callerRole = String(row.callerRole ?? '');
-      const calleeRole = String(row.calleeRole ?? '');
-      const current = liveRef.current;
-      if (current && current.callId === callId) {
-        if (TERMINAL.has(state)) {
-          void disconnectVoice();
-          setLive(null);
-          setNotice(terminalCopy(state));
-          return;
-        }
-        setLive({ ...current, state });
-        return;
-      }
-      if (state === 'ringing' && calleeRole === viewer && isCallRole(callerRole)) {
-        setLive({ callId, state, direction: 'in', role: callerRole, callerRole, calleeRole });
-      }
+      const reason = String(row.reason ?? '');
+      if (/reassign/i.test(reason)) setNotice('Call numbers were refreshed after the rider changed.');
+      else if (/expir|terminal|closed/i.test(reason)) setNotice('Masked numbers for this order have expired.');
+      void queryClient.invalidateQueries({ queryKey: ['order-call-masks', orderId] });
     });
   }, [orderId, queryClient, viewer]);
-
-  useEffect(() => () => {
-    void disconnectVoice();
-  }, []);
 
   async function dial(role: CallRole) {
     const pairKey = pairKeyFor(viewer, role);
@@ -98,7 +45,7 @@ export function useOrderCalls(orderId: string, viewer: ViewerKind) {
       setNotice('No virtual number is ready. You can still use an in-app call or chat.');
       return;
     }
-    setBusy(`cell:${role}`);
+    setDialBusy(`cell:${role}`);
     setNotice(null);
     try {
       await recordAttempt(orderId, pairKey);
@@ -106,77 +53,7 @@ export function useOrderCalls(orderId: string, viewer: ViewerKind) {
     } catch (err) {
       setNotice(callErrorMessage(err));
     } finally {
-      setBusy(null);
-    }
-  }
-
-  async function startInternet(role: CallRole) {
-    setBusy(`net:${role}`);
-    setNotice(null);
-    try {
-      const session = await createInternetCall(orderId, role);
-      setLive({
-        callId: session.callId,
-        state: session.state,
-        direction: 'out',
-        role,
-        callerRole: session.callerRole,
-        calleeRole: session.calleeRole,
-      });
-      if (session.token && session.livekitUrl) {
-        try {
-          await connectVoice(session.livekitUrl, session.token);
-        } catch (err) {
-          setNotice(callErrorMessage(err));
-        }
-      }
-    } catch (err) {
-      setNotice(callErrorMessage(err));
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function accept() {
-    if (!live) return;
-    setBusy('accept');
-    setNotice(null);
-    try {
-      const session = await acceptInternetCall(live.callId);
-      setLive({ ...live, state: 'accepted' });
-      if (session.token && session.livekitUrl) await connectVoice(session.livekitUrl, session.token);
-    } catch (err) {
-      setNotice(callErrorMessage(err));
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function decline() {
-    if (!live) return;
-    setBusy('decline');
-    try {
-      await declineInternetCall(live.callId);
-      setLive(null);
-      setNotice('The call was declined.');
-    } catch (err) {
-      setNotice(callErrorMessage(err));
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function hangup() {
-    if (!live) return;
-    setBusy('end');
-    try {
-      await endInternetCall(live.callId);
-      await disconnectVoice();
-      setLive(null);
-    } catch (err) {
-      setNotice(callErrorMessage(err));
-    } finally {
-      setBusy(null);
+      setDialBusy(null);
     }
   }
 
@@ -186,12 +63,14 @@ export function useOrderCalls(orderId: string, viewer: ViewerKind) {
     loading: query.isLoading,
     loadError: query.error ? callErrorMessage(query.error) : null,
     notice,
-    busy,
-    live,
+    busy: dialBusy || voice.busy,
+    live: voice.live,
+    muted: voice.muted,
     dial,
-    startInternet,
-    accept,
-    decline,
-    hangup,
+    startInternet: voice.startInternet,
+    accept: voice.accept,
+    decline: voice.decline,
+    hangup: voice.hangup,
+    toggleMute: voice.toggleMute,
   };
 }

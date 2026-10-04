@@ -1000,7 +1000,14 @@ export function TripLifecycleBar({
       ) : null}
 
       {postAccept && !hideCallActions && delivery.orderId ? (
-        <OrderCallPanel orderId={delivery.orderId} viewer="rider" />
+        <OrderCallPanel
+          orderId={delivery.orderId}
+          viewer="rider"
+          names={{
+            customer: delivery.customerName || 'Customer',
+            restaurant: delivery.restaurantName || 'Restaurant',
+          }}
+        />
       ) : null}
 
       {postAccept ? (

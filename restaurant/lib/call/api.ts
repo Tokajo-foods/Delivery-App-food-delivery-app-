@@ -44,6 +44,16 @@ export async function endInternetCall(callId: string): Promise<void> {
   unwrap(res.data);
 }
 
+export async function disconnectInternetCall(callId: string): Promise<void> {
+  const res = await api.post(`${ROOT}/internet-calls/${encodeURIComponent(callId)}/disconnect`, {});
+  unwrap(res.data);
+}
+
+export async function getInternetCall(callId: string): Promise<InternetCallSession> {
+  const res = await api.get(`${ROOT}/internet-calls/${encodeURIComponent(callId)}`);
+  return unwrap<InternetCallSession>(res.data);
+}
+
 export function callErrorMessage(error: unknown): string {
   const parsed = readError(error);
   if (parsed.code === 'CALL_RATE_LIMITED' || parsed.status === 429) {
@@ -61,6 +71,9 @@ export function callErrorMessage(error: unknown): string {
   }
   if (parsed.code === 'CALL_IN_PROGRESS') {
     return safe(parsed.message, 'A call is already in progress on this order.');
+  }
+  if (parsed.code === 'ILLEGAL_CALL_STATE') {
+    return safe(parsed.message, 'This call has already ended.');
   }
   if (parsed.code === 'RIDER_NOT_ASSIGNED') {
     return 'No rider has accepted this order yet.';

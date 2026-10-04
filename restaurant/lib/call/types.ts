@@ -19,11 +19,22 @@ export type InternetChoice = {
   available: boolean;
 };
 
+export type LiveCallSummary = {
+  callId: string;
+  state: string;
+  pairKey: string;
+  callerRole: string;
+  calleeRole: string;
+  role: CallRole;
+  direction: 'in' | 'out';
+};
+
 export type OrderMasks = {
   orderId: string;
   disclosure: string;
   masks: CallMask[];
   internet: InternetChoice[];
+  live?: LiveCallSummary[];
 };
 
 export type InternetCallSession = {
