@@ -4,8 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 
 import { usePartnerDutyStatus } from '@/lib/delivery-partner/availability-hooks';
 import { isDutySwitchOn } from '@/lib/delivery-partner/availability-types';
+import { normalizeDeliveryStatus } from '@/lib/delivery-partner/api';
+import { syncTripBackgroundLocation } from '@/lib/delivery-partner/background-location-task';
 import {
   deliveryPartnerKeys,
+  useActiveDelivery,
   useDeliveryPartnerMe,
 } from '@/lib/delivery-partner/hooks';
 import {
@@ -31,6 +34,10 @@ export function usePartnerLocationSync(enabled = true) {
     Boolean(me.data?.isOnline ?? me.data?.isAvailable ?? duty.data?.isOnline)
   );
   const shouldTrack = enabled && isOnline && Boolean(me.data?.id);
+  const active = useActiveDelivery(shouldTrack);
+  const tripStatus = active.data?.status
+    ? normalizeDeliveryStatus(active.data.status)
+    : null;
   const startedRef = useRef(false);
   const lastDeliveryIdRef = useRef<string | null>(null);
 
@@ -66,6 +73,16 @@ export function usePartnerLocationSync(enabled = true) {
       partnerLocationTracker.requestStop();
     };
   }, [shouldTrack]);
+
+  useEffect(() => {
+    void syncTripBackgroundLocation(tripStatus, shouldTrack);
+  }, [tripStatus, shouldTrack]);
+
+  useEffect(() => {
+    return () => {
+      void syncTripBackgroundLocation(null, false);
+    };
+  }, []);
 
   useEffect(() => {
     if (!shouldTrack) return;

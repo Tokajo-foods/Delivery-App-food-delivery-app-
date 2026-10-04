@@ -25,8 +25,10 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Allow TOKAJO FOODS to access your location so we can assign nearby deliveries and share your live position while you are online.",
-          "isAndroidBackgroundLocationEnabled": false,
-          "isIosBackgroundLocationEnabled": false
+          "locationAlwaysAndWhenInUsePermission": "Allow TOKAJO FOODS to share your live location during an active delivery, including when the app is in the background. Sharing stops when the trip ends.",
+          "locationAlwaysPermission": "Allow TOKAJO FOODS to share your live location during an active delivery, including when the app is in the background. Sharing stops when the trip ends.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isIosBackgroundLocationEnabled": true
         }
       ],
       [
@@ -57,7 +59,8 @@
       "bundleIdentifier": "com.tokajofoods.restaurant",
       "usesAppleSignIn": true,
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Allow TOKAJO FOODS to use the microphone for in-app calls on an order. Your mobile number stays hidden."
+        "NSMicrophoneUsageDescription": "Allow TOKAJO FOODS to use the microphone for in-app calls on an order. Your mobile number stays hidden.",
+        "UIBackgroundModes": ["location"]
       }
     },
     "android": {
@@ -70,6 +73,9 @@
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
         "POST_NOTIFICATIONS",
         "CAMERA",
         "RECORD_AUDIO",
