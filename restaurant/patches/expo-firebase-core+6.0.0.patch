@@ -1,0 +1,14 @@
+diff --git a/node_modules/expo-firebase-core/android/build.gradle b/node_modules/expo-firebase-core/android/build.gradle
+index 9bda09b..bcc3896 100644
+--- a/node_modules/expo-firebase-core/android/build.gradle
++++ b/node_modules/expo-firebase-core/android/build.gradle
+@@ -59,7 +59,8 @@ afterEvaluate {
+ }
+ 
+ android {
+-  compileSdkVersion safeExtGet("compileSdkVersion", 31)
++  namespace "expo.modules.firebase.core"
++  compileSdk safeExtGet("compileSdkVersion", 36) as Integer
+ 
+   compileOptions {
+     sourceCompatibility JavaVersion.VERSION_11

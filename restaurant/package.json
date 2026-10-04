@@ -61,6 +61,7 @@
     "@types/react": "~19.1.10",
     "babel-preset-expo": "~54.0.10",
     "eas-cli": "^16.28.0",
+    "patch-package": "^8.0.1",
     "prettier-plugin-tailwindcss": "^0.5.14",
     "tailwindcss": "^3.4.19",
     "typescript": "~5.9.2"
@@ -70,6 +71,7 @@
     "react-dom": "19.1.0"
   },
   "scripts": {
+    "postinstall": "patch-package",
     "start": "expo start --offline",
     "start:online": "expo start",
     "start:dev-client": "expo start --dev-client",
