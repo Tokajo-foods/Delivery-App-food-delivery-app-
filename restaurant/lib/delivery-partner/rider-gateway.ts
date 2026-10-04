@@ -32,6 +32,8 @@ const INBOUND: RiderGatewayEvent[] = [
   'partner:location',
   'tracking:location',
   'tracking:eta',
+  'call:masks',
+  'call:internet',
 ];
 
 type RiderListener = (event: RiderGatewayEvent, payload: unknown) => void;

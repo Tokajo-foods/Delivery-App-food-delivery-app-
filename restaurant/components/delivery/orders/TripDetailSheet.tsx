@@ -225,9 +225,6 @@ export function TripDetailSheet({
                     {orderCtx.data.restaurantName}
                     {orderCtx.data.customerName ? ` → ${orderCtx.data.customerName}` : ''}
                   </Text>
-                  {orderCtx.data.customerPhone ? (
-                    <Text style={styles.mutedLeft}>Customer {orderCtx.data.customerPhone}</Text>
-                  ) : null}
                   {orderCtx.data.items.slice(0, 4).map((item, idx) => (
                     <Text key={`${item.name}-${idx}`} style={styles.mutedLeft}>
                       {item.quantity}× {item.name}

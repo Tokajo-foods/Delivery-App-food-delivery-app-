@@ -12,7 +12,9 @@ export type RiderGatewayEvent =
   | 'typing'
   | 'partner:location'
   | 'tracking:location'
-  | 'tracking:eta';
+  | 'tracking:eta'
+  | 'call:masks'
+  | 'call:internet';
 
 export type RiderOutboundEvent =
   | 'partner:online'

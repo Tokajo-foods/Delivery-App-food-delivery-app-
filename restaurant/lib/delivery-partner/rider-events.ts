@@ -96,6 +96,7 @@ export function applyRiderSocketEvent(
   event: RiderGatewayEvent,
   payload: unknown
 ) {
+  if (event === 'call:masks' || event === 'call:internet') return;
   const record = asRecord(payload);
 
   switch (event) {

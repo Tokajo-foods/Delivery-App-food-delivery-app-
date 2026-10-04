@@ -1,6 +1,5 @@
 import {
   Bike,
-  Phone,
   Star,
 } from 'lucide-react-native';
 import {
@@ -22,9 +21,7 @@ type Props = {
   loading?: boolean;
   error?: unknown;
   canRate?: boolean;
-  callBusy?: boolean;
   onRetry: () => void;
-  onCallCustomer: () => void;
   onRate: () => void;
 };
 
@@ -42,18 +39,11 @@ export function KitchenRiderCard({
   loading,
   error,
   canRate,
-  callBusy,
   onRetry,
-  onCallCustomer,
   onRate,
 }: Props) {
   const assigned = Boolean(rider?.assigned && (rider.name || rider.partnerId));
   const searching = !assigned && (rider?.searching === true || Boolean(rider?.message));
-  const phone = assigned
-    ? rider?.isFleetPartner
-      ? rider?.phone || rider?.phoneMasked
-      : rider?.phoneMasked
-    : undefined;
 
   return (
     <View style={styles.card}>
@@ -85,12 +75,9 @@ export function KitchenRiderCard({
               .filter(Boolean)
               .join(' · ')}
           </Text>
-          {phone ? <Text style={styles.phone}>{phone}</Text> : null}
-          {!rider?.isFleetPartner ? (
-            <Text style={styles.hint}>
-              Number is masked. Use Call customer — the platform connects you.
-            </Text>
-          ) : null}
+          <Text style={styles.hint}>
+            Calls use a Tokajo number. Your mobile stays hidden.
+          </Text>
         </>
       ) : (
         <View style={styles.finding}>
@@ -108,18 +95,6 @@ export function KitchenRiderCard({
       )}
 
       <View style={styles.actions}>
-        <Pressable
-          disabled={callBusy}
-          onPress={onCallCustomer}
-          style={styles.action}
-        >
-          {callBusy ? (
-            <ActivityIndicator color={authTheme.brand} size="small" />
-          ) : (
-            <Phone color={authTheme.brand} size={15} />
-          )}
-          <Text style={styles.actionText}>Call customer</Text>
-        </Pressable>
         {canRate && assigned ? (
           <Pressable onPress={onRate} style={styles.action}>
             <Star color="#D97706" size={15} />

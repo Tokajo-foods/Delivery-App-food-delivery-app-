@@ -4,7 +4,6 @@ import {
   Ban,
   Clock3,
   Package,
-  Phone,
   Printer,
   ShoppingBag,
   Timer,
@@ -24,6 +23,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { OrderCallPanel } from '@/components/call/OrderCallPanel';
 import { RestaurantPageHeader } from '@/components/dashboard/RestaurantPageHeader';
 import {
   AcceptPrepSheet,
@@ -243,30 +243,6 @@ export function OrderDetailScreen({ orderId }: Props) {
     }
   };
 
-  const callCustomer = async () => {
-    try {
-      const result = await ticket.callCustomer.mutateAsync(orderId);
-      const to = result.toMasked ? ` ${result.toMasked}` : ' the customer';
-      Alert.alert(
-        'Calling customer',
-        `Your restaurant phone will ring first, then we connect${to}. Their number stays hidden.`
-      );
-    } catch (error) {
-      const message = getApiErrorMessage(error);
-      const title = message.includes('MASKED_CALL_UNAVAILABLE')
-        ? 'Calling unavailable'
-        : message.includes('CALL_RATE_LIMITED')
-          ? 'Too many calls'
-          : 'Could not call customer';
-      Alert.alert(
-        title,
-        message.includes('MASKED_CALL_UNAVAILABLE')
-          ? 'Masked calling is down right now. Use trip chat, or try again later.'
-          : message
-      );
-    }
-  };
-
   const goBack = () => {
     if (router.canGoBack()) router.back();
     else router.replace('/orders');
@@ -300,14 +276,6 @@ export function OrderDetailScreen({ orderId }: Props) {
   const lineIds = (order?.items ?? []).filter((item) => item.id);
   const busy = updateStatus.isPending || ticket.isPending;
   const sla = slaQuery.data;
-  const canCall = Boolean(
-    order &&
-      order.fulfillmentTone !== 'table' &&
-      (order.status === 'accepted' ||
-        order.status === 'preparing' ||
-        order.status === 'ready' ||
-        order.status === 'out_for_delivery')
-  );
   const canRate = Boolean(
     !rated &&
       rider?.assigned &&
@@ -514,13 +482,6 @@ export function OrderDetailScreen({ orderId }: Props) {
                 <Text style={styles.kvValueCustom}>{order.fulfillmentLabel}</Text>
               </View>
 
-              {order.customerPhone ? (
-                <View style={styles.kvRowCustom}>
-                  <Text style={styles.kvLabelCustom}>Phone</Text>
-                  <Text style={styles.kvValueCustom}>{order.customerPhone}</Text>
-                </View>
-              ) : null}
-
               <View style={styles.kvRowCustom}>
                 <Text style={styles.kvLabelCustom}>Placed</Text>
                 <Text style={styles.kvValueCustom}>
@@ -539,21 +500,10 @@ export function OrderDetailScreen({ orderId }: Props) {
                   <Text style={styles.kvValueCustom}>{order.prepMinutes} min</Text>
                 </View>
               ) : null}
-              {canCall ? (
-                <Pressable
-                  disabled={ticket.callCustomer.isPending}
-                  onPress={() => void callCustomer()}
-                  style={styles.callBtn}
-                >
-                  {ticket.callCustomer.isPending ? (
-                    <ActivityIndicator color={authTheme.brand} size="small" />
-                  ) : (
-                    <Phone color={authTheme.brand} size={15} />
-                  )}
-                  <Text style={styles.callBtnText}>Call customer</Text>
-                </Pressable>
-              ) : null}
             </View>
+            {order.fulfillmentTone !== 'table' ? (
+              <OrderCallPanel orderId={orderId} viewer="restaurant" />
+            ) : null}
 
             {(cooking || canDelay || canPrint || canKitchenCancel) ? (
               <View style={styles.card}>
@@ -727,9 +677,7 @@ export function OrderDetailScreen({ orderId }: Props) {
                   loading={riderQuery.isLoading}
                   error={riderQuery.error}
                   canRate={canRate}
-                  callBusy={ticket.callCustomer.isPending}
                   onRetry={() => void riderQuery.refetch()}
-                  onCallCustomer={() => void callCustomer()}
                   onRate={() => setRateOpen(true)}
                 />
                 {trackLive ? (

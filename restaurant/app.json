@@ -48,12 +48,17 @@
             "newArchEnabled": true
           }
         }
-      ]
+      ],
+      "@livekit/react-native-expo-plugin",
+      "@config-plugins/react-native-webrtc"
     ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tokajofoods.restaurant",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Allow TOKAJO FOODS to use the microphone for in-app calls on an order. Your mobile number stays hidden."
+      }
     },
     "android": {
       "package": "com.tokajofoods.restaurant",
@@ -67,6 +72,9 @@
         "ACCESS_FINE_LOCATION",
         "POST_NOTIFICATIONS",
         "CAMERA",
+        "RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ]

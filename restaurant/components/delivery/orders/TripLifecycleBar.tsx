@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { X } from 'lucide-react-native';
 
 import { fonts } from '@/constants/typography';
+import { OrderCallPanel } from '@/components/call/OrderCallPanel';
 import { CodUpiSheet } from '@/components/delivery/orders/CodUpiSheet';
 import {
   nextDeliveryAction,
@@ -671,36 +672,6 @@ export function TripLifecycleBar({
     }
   };
 
-  const announceCall = (
-    result: {
-      toMasked?: string;
-      virtualNumberMasked?: string;
-      target: string;
-    },
-    who: string
-  ) => {
-    const dest = result.toMasked ? ` ${result.toMasked}` : '';
-    const via = result.virtualNumberMasked
-      ? ` via ${result.virtualNumberMasked}`
-      : '';
-    Alert.alert(
-      `Calling ${who}`,
-      `Masked number${dest}${via}. Your phone should ring — numbers stay hidden.`
-    );
-  };
-
-  const onCallCustomer = () =>
-    void run('Calling customer…', async () => {
-      const result = await mutations.callCustomer.mutateAsync(delivery.id);
-      announceCall(result, 'customer');
-    }).catch(() => undefined);
-
-  const onCallRestaurant = () =>
-    void run('Calling restaurant…', async () => {
-      const result = await mutations.callRestaurant.mutateAsync(delivery.id);
-      announceCall(result, 'restaurant');
-    }).catch(() => undefined);
-
   const rtoLeft = rtoRemainingSeconds(delivery);
   useEffect(() => {
     if (rtoLeft == null) return;
@@ -1028,23 +999,8 @@ export function TripLifecycleBar({
         </View>
       ) : null}
 
-      {postAccept && !hideCallActions ? (
-        <View style={styles.moreRow}>
-          <Pressable
-            onPress={onCallCustomer}
-            disabled={disabled}
-            style={styles.moreBtn}
-          >
-            <Text style={styles.moreText}>Call customer</Text>
-          </Pressable>
-          <Pressable
-            onPress={onCallRestaurant}
-            disabled={disabled}
-            style={styles.moreBtn}
-          >
-            <Text style={styles.moreText}>Call restaurant</Text>
-          </Pressable>
-        </View>
+      {postAccept && !hideCallActions && delivery.orderId ? (
+        <OrderCallPanel orderId={delivery.orderId} viewer="rider" />
       ) : null}
 
       {postAccept ? (

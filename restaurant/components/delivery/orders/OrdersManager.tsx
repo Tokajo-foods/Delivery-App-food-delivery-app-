@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import {
   Navigation,
   Package,
-  Phone,
   Power,
   MessageCircle,
   X,
@@ -811,7 +810,6 @@ function DeliveryCard({
     live && Boolean(delivery.orderId)
   );
   const historyQuery = useLocationHistory(delivery.id, live);
-  const orderMutations = useDeliveryOrderMutations();
   const [trackingPatch, setTrackingPatch] = useState<Partial<OrderTracking> | null>(
     null
   );
@@ -910,28 +908,6 @@ function DeliveryCard({
     void etaQuery.refetch();
     void liveLocationQuery.refetch();
     void historyQuery.refetch();
-  };
-
-  const placeCall = async (target: 'customer' | 'restaurant') => {
-    try {
-      const result =
-        target === 'customer'
-          ? await orderMutations.callCustomer.mutateAsync(delivery.id)
-          : await orderMutations.callRestaurant.mutateAsync(delivery.id);
-      const dest = result.toMasked ? ` ${result.toMasked}` : '';
-      const via = result.virtualNumberMasked
-        ? ` via ${result.virtualNumberMasked}`
-        : '';
-      Alert.alert(
-        `Calling ${target}`,
-        `Masked number${dest}${via}. Your phone should ring — numbers stay hidden.`
-      );
-    } catch (error) {
-      Alert.alert(
-        'Could not call',
-        formatTripError(error, 'Use in-trip chat instead.')
-      );
-    }
   };
 
   const [offerLeft, setOfferLeft] = useState<number | null>(null);
@@ -1072,15 +1048,6 @@ function DeliveryCard({
               </Text>
             )}
             <View style={styles.stopActions}>
-              {live ? (
-                <Pressable
-                  onPress={() => void placeCall('restaurant')}
-                  style={styles.miniBtn}
-                >
-                  <Phone color={'#000000'} size={14} />
-                  <Text style={styles.miniBtnText}>Call</Text>
-                </Pressable>
-              ) : null}
               <Pressable
                 onPress={() =>
                   openMaps(
@@ -1114,15 +1081,6 @@ function DeliveryCard({
               </Text>
             ) : null}
             <View style={styles.stopActions}>
-              {live ? (
-                <Pressable
-                  onPress={() => void placeCall('customer')}
-                  style={styles.miniBtn}
-                >
-                  <Phone color={'#000000'} size={14} />
-                  <Text style={styles.miniBtnText}>Call</Text>
-                </Pressable>
-              ) : null}
               <Pressable
                 onPress={() =>
                   openMaps(

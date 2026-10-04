@@ -20,6 +20,8 @@ const INBOUND: KitchenInboundEvent[] = [
   'typing',
   'tracking:location',
   'partner:location',
+  'call:masks',
+  'call:internet',
 ];
 
 export type KitchenChatMessage = {

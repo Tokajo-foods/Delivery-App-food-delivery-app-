@@ -3,7 +3,6 @@ import {
   MapPin,
   MessageCircle,
   Package,
-  Phone,
   Store,
   User,
   Wallet,
@@ -11,7 +10,6 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Dimensions,
   Modal,
   Pressable,
@@ -22,6 +20,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { OrderCallPanel } from '@/components/call/OrderCallPanel';
 import { DeliveryTripMap } from '@/components/delivery/orders/DeliveryTripMap';
 import { TripChatSheet } from '@/components/delivery/orders/TripChatSheet';
 import { TripDetailSheet } from '@/components/delivery/orders/TripDetailSheet';
@@ -43,7 +42,6 @@ import {
   useActiveDeliveries,
   useActiveDelivery,
   useDeliveryDetail,
-  useDeliveryOrderMutations,
   useTripNavRoute,
 } from '@/lib/delivery-partner/hooks';
 import { formatLocationError } from '@/lib/delivery-partner/tracking-api';
@@ -57,7 +55,6 @@ import {
   useTrackingStatus,
 } from '@/lib/delivery-partner/tracking-hooks';
 import type { OrderTracking } from '@/lib/delivery-partner/tracking-types';
-import { formatTripError } from '@/lib/delivery-partner/rider-ack';
 import type { PartnerDelivery } from '@/lib/delivery-partner/types';
 
 const LIVE = new Set([
@@ -257,7 +254,6 @@ function ActiveTripBody({
     live && Boolean(delivery.orderId)
   );
   const historyQuery = useLocationHistory(delivery.id, live);
-  const orderMutations = useDeliveryOrderMutations();
   const [trackingPatch, setTrackingPatch] = useState<Partial<OrderTracking> | null>(
     null
   );
@@ -362,36 +358,11 @@ function ActiveTripBody({
     void detail.refetch();
   };
 
-  const placeCall = async (target: 'customer' | 'restaurant') => {
-    try {
-      const result =
-        target === 'customer'
-          ? await orderMutations.callCustomer.mutateAsync(delivery.id)
-          : await orderMutations.callRestaurant.mutateAsync(delivery.id);
-      const dest = result.toMasked ? ` ${result.toMasked}` : '';
-      const via = result.virtualNumberMasked
-        ? ` via ${result.virtualNumberMasked}`
-        : '';
-      Alert.alert(
-        `Calling ${target}`,
-        `Masked number${dest}${via}. Your phone should ring — numbers stay hidden.`
-      );
-    } catch (error) {
-      Alert.alert(
-        'Could not call',
-        formatTripError(error, 'Use in-trip chat instead.')
-      );
-    }
-  };
-
   const showRestaurant = phase === 'restaurant' || phase === 'return';
   const stopTitle = showRestaurant ? restaurantName : customerName;
   const stopAddr = showRestaurant ? pickupLabel : dropLabel;
   const nextTitle = showRestaurant ? customerName : restaurantName;
   const nextAddr = showRestaurant ? dropLabel : pickupLabel;
-  const stopCall: 'restaurant' | 'customer' = showRestaurant
-    ? 'restaurant'
-    : 'customer';
   const sheetMax = Math.round(Dimensions.get('window').height * 0.56);
   const earnAmount =
     phase === 'return' && delivery.rtoFee && delivery.rtoFee > 0
@@ -575,12 +546,6 @@ function ActiveTripBody({
                 </Text>
               ) : null}
             </View>
-            <Pressable
-              onPress={() => void placeCall(stopCall)}
-              style={styles.callBtn}
-            >
-              <Phone color="#111827" size={16} />
-            </Pressable>
           </View>
 
           {phase !== 'return' &&
@@ -610,19 +575,14 @@ function ActiveTripBody({
             hideCallActions
           />
 
+          {delivery.orderId ? (
+            <OrderCallPanel orderId={delivery.orderId} viewer="rider" />
+          ) : null}
+
           <View style={styles.auxRow}>
             <Pressable onPress={() => setChatOpen(true)} style={styles.auxBtn}>
               <MessageCircle color="#EA4B14" size={16} />
               <Text style={styles.auxText}>Chat</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => void placeCall(showRestaurant ? 'customer' : 'restaurant')}
-              style={styles.auxBtn}
-            >
-              <Phone color="#EA4B14" size={16} />
-              <Text style={styles.auxText}>
-                {showRestaurant ? 'Call customer' : 'Call store'}
-              </Text>
             </Pressable>
             <Pressable onPress={() => setDetailsOpen(true)} style={styles.auxBtn}>
               <Wallet color="#EA4B14" size={16} />

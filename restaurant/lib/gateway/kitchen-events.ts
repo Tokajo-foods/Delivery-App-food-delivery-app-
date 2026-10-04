@@ -20,7 +20,9 @@ export type KitchenInboundEvent =
   | 'chat:new-message'
   | 'typing'
   | 'tracking:location'
-  | 'partner:location';
+  | 'partner:location'
+  | 'call:masks'
+  | 'call:internet';
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object'
@@ -151,7 +153,7 @@ export function applyKitchenSocketEvent(
     return;
   }
 
-  if (event === 'typing') return;
+  if (event === 'typing' || event === 'call:masks' || event === 'call:internet') return;
 
   const record = asRecord(payload);
   const orderId = pickString(record, ['orderId', 'id', '_id']);
