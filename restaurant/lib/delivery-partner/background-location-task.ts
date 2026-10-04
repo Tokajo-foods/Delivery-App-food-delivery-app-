@@ -1,7 +1,6 @@
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
-import { AppState } from 'react-native';
 
 import {
   clearFixQueue,
@@ -16,6 +15,7 @@ import {
   shouldSampleFix,
   type QueuedFix,
 } from '@/lib/delivery-partner/background-location-policy';
+import { foregroundOwnsLocation } from '@/lib/delivery-partner/foreground-location-owner';
 import { partnerTrackingApi } from '@/lib/delivery-partner/tracking-api';
 
 export const TRIP_LOCATION_TASK = 'tokajo-trip-location';
@@ -27,7 +27,7 @@ let flushing = false;
 
 TaskManager.defineTask(TRIP_LOCATION_TASK, async ({ data, error }) => {
   if (error) return;
-  if (AppState.currentState === 'active') return;
+  if (foregroundOwnsLocation()) return;
   const locations = (data as { locations?: Location.LocationObject[] } | undefined)?.locations ?? [];
   for (const pos of locations) {
     const fix = toFix(pos);
@@ -67,6 +67,7 @@ export async function syncTripBackgroundLocation(
         notificationTitle: 'Delivery in progress',
         notificationBody: 'TOKAJO is sharing your location for this trip.',
         notificationColor: '#7A0E22',
+        killServiceOnDestroy: false,
       },
     });
   } catch {

@@ -1,11 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { usePathname, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
 
 import { usePartnerDutyStatus } from '@/lib/delivery-partner/availability-hooks';
 import { isDutySwitchOn } from '@/lib/delivery-partner/availability-types';
 import { normalizeDeliveryStatus } from '@/lib/delivery-partner/api';
 import { syncTripBackgroundLocation } from '@/lib/delivery-partner/background-location-task';
+import { setForegroundOwnsLocation } from '@/lib/delivery-partner/foreground-location-owner';
 import {
   deliveryPartnerKeys,
   useActiveDelivery,
@@ -77,6 +79,18 @@ export function usePartnerLocationSync(enabled = true) {
   useEffect(() => {
     void syncTripBackgroundLocation(tripStatus, shouldTrack);
   }, [tripStatus, shouldTrack]);
+
+  useEffect(() => {
+    const sync = (state: AppStateStatus) => {
+      setForegroundOwnsLocation(shouldTrack && state === 'active');
+    };
+    sync(AppState.currentState);
+    const sub = AppState.addEventListener('change', sync);
+    return () => {
+      sub.remove();
+      setForegroundOwnsLocation(false);
+    };
+  }, [shouldTrack]);
 
   useEffect(() => {
     return () => {
