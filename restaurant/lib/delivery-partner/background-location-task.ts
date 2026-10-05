@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
+import { requireOptionalNativeModule } from 'expo-modules-core';
 import * as Location from 'expo-location';
-import * as TaskManager from 'expo-task-manager';
 
 import {
   clearFixQueue,
@@ -18,6 +18,16 @@ import {
 import { foregroundOwnsLocation } from '@/lib/delivery-partner/foreground-location-owner';
 import { partnerTrackingApi } from '@/lib/delivery-partner/tracking-api';
 
+type TaskManagerModule = typeof import('expo-task-manager');
+
+/** Expo Go and an older dev build have no ExpoTaskManager native module. */
+function loadTaskManager(): TaskManagerModule | null {
+  if (!requireOptionalNativeModule('ExpoTaskManager')) return null;
+  return require('expo-task-manager') as TaskManagerModule;
+}
+
+const tasks = loadTaskManager();
+
 export const TRIP_LOCATION_TASK = 'tokajo-trip-location';
 
 let lastSample: { latitude: number; longitude: number; at: number } | null = null;
@@ -25,7 +35,7 @@ let attempt = 0;
 let nextAllowedAt = 0;
 let flushing = false;
 
-TaskManager.defineTask(TRIP_LOCATION_TASK, async ({ data, error }) => {
+if (tasks) tasks.defineTask(TRIP_LOCATION_TASK, async ({ data, error }) => {
   if (error) return;
   if (foregroundOwnsLocation()) return;
   const locations = (data as { locations?: Location.LocationObject[] } | undefined)?.locations ?? [];
@@ -49,7 +59,7 @@ export async function syncTripBackgroundLocation(
       await stopTripBackgroundLocation();
       return;
     }
-    if (Constants.appOwnership === 'expo') return;
+    if (!tasks || Constants.appOwnership === 'expo') return;
     const foreground = await Location.getForegroundPermissionsAsync();
     if (foreground.status !== 'granted') return;
     const background = await Location.requestBackgroundPermissionsAsync();
@@ -79,6 +89,10 @@ export async function stopTripBackgroundLocation(): Promise<void> {
   lastSample = null;
   attempt = 0;
   nextAllowedAt = 0;
+  if (!tasks) {
+    await clearFixQueue().catch(() => undefined);
+    return;
+  }
   try {
     const started = await Location.hasStartedLocationUpdatesAsync(TRIP_LOCATION_TASK);
     if (started) await Location.stopLocationUpdatesAsync(TRIP_LOCATION_TASK);
