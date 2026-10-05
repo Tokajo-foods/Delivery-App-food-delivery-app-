@@ -187,6 +187,11 @@ class PartnerLocationTracker {
   private async doStart() {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
+      this.patchSnapshot({
+        locationRequired: true,
+        lastErrorCode: 'LOCATION_REQUIRED',
+        lastErrorMessage: 'Location permission is required while you are online. Enable it in Settings.',
+      });
       throw new Error(
         'Location permission is required while you are online. Enable it in Settings.'
       );
