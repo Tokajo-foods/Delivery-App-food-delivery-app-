@@ -77,6 +77,13 @@ export function KitchenNewOrderAlerts() {
       const orderId = String(data.orderId ?? '').trim();
       const kind = String(data.kind ?? data.type ?? '');
       if (!orderId) return;
+      if (kind === 'restaurant_chat') {
+        router.push({
+          pathname: '/order/chat/[orderId]',
+          params: { orderId },
+        });
+        return;
+      }
       if (
         kind === 'kitchen_new_order' ||
         kind === 'order_update' ||

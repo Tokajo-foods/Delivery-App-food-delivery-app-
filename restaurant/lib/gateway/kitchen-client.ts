@@ -228,6 +228,23 @@ export function getKitchenChat(orderId: string): KitchenChatMessage[] {
   return chatByOrder.get(orderId) ?? [];
 }
 
+export function seedKitchenChat(orderId: string, rows: KitchenChatMessage[]) {
+  const id = orderId.trim();
+  if (!id || rows.length === 0) return;
+  const list = chatByOrder.get(id) ?? [];
+  const seen = new Set(list.map((row) => row.id));
+  const merged = [...list];
+  for (const row of rows) {
+    if (!seen.has(row.id)) {
+      seen.add(row.id);
+      merged.push(row);
+    }
+  }
+  merged.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  chatByOrder.set(id, merged);
+  emitLocal('chat:new-message', { orderId: id });
+}
+
 export function isKitchenPeerTyping(orderId: string): boolean {
   return typingByOrder.get(orderId) === true;
 }

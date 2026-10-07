@@ -697,6 +697,25 @@ export function OrderDetailScreen({ orderId }: Props) {
               </>
             ) : null}
 
+            {order.fulfillmentTone === 'delivery' ? (
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: '/order/chat/[orderId]',
+                    params: {
+                      orderId: order.id,
+                      customerName: order.customerName?.trim() || 'Customer',
+                    },
+                  })
+                }
+                style={styles.backToOrders}
+              >
+                <Text style={styles.backToOrdersText}>
+                  Message {order.customerName?.trim() || 'customer'}
+                </Text>
+              </Pressable>
+            ) : null}
+
             <KitchenOrderChat
               orderId={order.id}
               fulfillmentTone={order.fulfillmentTone}

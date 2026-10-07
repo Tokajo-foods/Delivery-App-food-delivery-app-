@@ -28,12 +28,13 @@ export function KitchenOrderChat({
 }: Props) {
   const chat = useKitchenOrderChat(orderId, true);
   const [draft, setDraft] = useState('');
-  const [to, setTo] = useState<'customer' | 'partner'>('customer');
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
     return () => sendKitchenTyping(orderId, false);
   }, [orderId]);
+
+  if (!hasPartner) return null;
 
   const send = async () => {
     const text = draft.trim();
@@ -41,7 +42,7 @@ export function KitchenOrderChat({
     setSending(true);
     chat.setTyping(false);
     try {
-      await chat.send(text, to);
+      await chat.send(text, 'partner');
       setDraft('');
     } catch (error) {
       Alert.alert(
@@ -57,7 +58,7 @@ export function KitchenOrderChat({
     <View style={styles.card}>
       <View style={styles.cardHead}>
         <MessageCircle color={authTheme.brand} size={16} />
-        <Text style={styles.cardTitle}>Trip chat</Text>
+        <Text style={styles.cardTitle}>Chat with rider</Text>
       </View>
       {fulfillmentTone && fulfillmentTone !== 'delivery' ? (
         <Text style={styles.hint}>
@@ -66,30 +67,10 @@ export function KitchenOrderChat({
         </Text>
       ) : null}
 
-      {hasPartner ? (
-        <View style={styles.toRow}>
-          {(['customer', 'partner'] as const).map((target) => (
-            <Pressable
-              key={target}
-              onPress={() => setTo(target)}
-              style={[styles.toChip, to === target && styles.toChipOn]}
-            >
-              <Text style={[styles.toChipText, to === target && styles.toChipTextOn]}>
-                {target === 'customer' ? 'Customer' : 'Rider'}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      ) : (
-        <Text style={styles.hint}>
-          Messages go to the customer. Rider chat opens after assignment.
-        </Text>
-      )}
-
-      {chat.messages.length === 0 ? (
+      {(chat.messages.filter((row) => row.to === 'partner' || row.fromRole === 'partner')).length === 0 ? (
         <Text style={styles.muted}>No messages yet.</Text>
       ) : (
-        chat.messages.map((row) => {
+        chat.messages.filter((row) => row.to === 'partner' || row.fromRole === 'partner').map((row) => {
           const mine = row.fromRole === 'restaurant';
           return (
             <View
@@ -117,9 +98,7 @@ export function KitchenOrderChat({
             setDraft(value);
             chat.setTyping(value.trim().length > 0);
           }}
-          placeholder={
-            to === 'partner' ? 'Message the rider…' : 'Message the customer…'
-          }
+          placeholder="Message the rider…"
           placeholderTextColor={authTheme.textDim}
           style={styles.input}
           maxLength={500}
