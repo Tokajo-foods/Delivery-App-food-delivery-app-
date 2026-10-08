@@ -16,10 +16,15 @@ Set-Location C:\p
 $env:ANDROID_HOME = "$env:LOCALAPPDATA\Android\Sdk"
 $env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
 # Prefer Android Studio JBR (JDK 21); fall back to common JDK installs.
+$adoptium = Get-ChildItem "C:\Program Files\Eclipse Adoptium" -Directory -ErrorAction SilentlyContinue |
+  Where-Object { $_.Name -like "jdk-17*" } |
+  Select-Object -First 1
 if (Test-Path "C:\Program Files\Android\Android Studio\jbr") {
   $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 } elseif (Test-Path "C:\Program Files\Java\jdk-17") {
   $env:JAVA_HOME = "C:\Program Files\Java\jdk-17"
+} elseif ($adoptium) {
+  $env:JAVA_HOME = $adoptium.FullName
 } else {
   throw "No suitable JDK found (need Android Studio JBR or JDK 17+)."
 }
