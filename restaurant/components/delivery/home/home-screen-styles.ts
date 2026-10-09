@@ -122,13 +122,17 @@ export const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
   },
   earnCard: {
+    position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingLeft: 16,
+    paddingRight: 150,
+    paddingVertical: 14,
+    minHeight: 104,
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: CARD_BORDER,
     ...SOFT_SHADOW,
@@ -149,8 +153,11 @@ export const styles = StyleSheet.create({
     marginTop: 1,
   },
   scooterImg: {
-    width: 118,
-    height: 88,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 168,
   },
 
   /* ---------- Sections ---------- */
