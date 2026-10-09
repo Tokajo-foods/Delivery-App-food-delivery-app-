@@ -31,13 +31,6 @@ export const styles = StyleSheet.create({
     gap: 12,
   },
 
-  topWash: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 280,
-  },
   header: {
     marginHorizontal: -16,
     paddingHorizontal: 16,

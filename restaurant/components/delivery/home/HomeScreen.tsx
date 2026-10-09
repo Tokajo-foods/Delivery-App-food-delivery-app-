@@ -566,12 +566,6 @@ export function DeliveryHomeScreen() {
 
   return (
     <View style={styles.root}>
-      <LinearGradient
-        colors={['#FFE9D6', '#FFF4EB', '#FFFFFF']}
-        locations={[0, 0.55, 1]}
-        style={styles.topWash}
-        pointerEvents="none"
-      />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
@@ -591,7 +585,11 @@ export function DeliveryHomeScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <LinearGradient
+          colors={['#FFE9D6', '#FFF4EB', '#F6F3F0']}
+          locations={[0, 0.62, 1]}
+          style={[styles.header, { paddingTop: insets.top + 8 }]}
+        >
           <View style={styles.logoRow}>
             <Image
               source={require('../../../assets/tokajo-wordmark.webp')}
@@ -636,7 +634,7 @@ export function DeliveryHomeScreen() {
               {(unread.data ?? 0) > 0 ? <View style={styles.dhBellDot} /> : null}
             </Pressable>
           </View>
-        </View>
+        </LinearGradient>
 
         <DutyControlCard
             snapshot={duty.data}
