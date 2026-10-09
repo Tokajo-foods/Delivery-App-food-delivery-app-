@@ -124,11 +124,11 @@ export const styles = StyleSheet.create({
   earnCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 22,
+    borderRadius: 26,
     paddingLeft: 16,
     paddingRight: 8,
     paddingVertical: 14,
-    overflow: 'visible',
+    overflow: 'hidden',
     shadowColor: '#EA4B14',
     shadowOpacity: 0.28,
     shadowRadius: 16,
@@ -141,6 +141,7 @@ export const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
+    borderRadius: 26,
   },
   dhEarnCol: {
     flex: 1,
