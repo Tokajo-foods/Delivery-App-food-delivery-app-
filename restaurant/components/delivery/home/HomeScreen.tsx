@@ -667,10 +667,26 @@ export function DeliveryHomeScreen() {
             onRetrySummary={() => void dutySummary.refetch()}
           />
 
-          <View style={styles.earnCard}>
+          <Pressable
+            onPress={() => router.push(DELIVERY_ROUTES.earnings)}
+            style={styles.earnCard}
+          >
+            <LinearGradient
+              colors={['#FF8A4C', '#EA4B14', '#C9340C']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.earnWash}
+            />
             <View style={styles.dhEarnCol}>
               <Text style={styles.dhEarnLabel}>Today's earning</Text>
               <Text style={styles.dhEarnAmount}>{formatCurrency(todayEarnings, currency)}</Text>
+              <Text style={styles.earnHook}>
+                {!isOnline
+                  ? 'Go online and grow today’s number'
+                  : streak > 0
+                    ? `${streak}-day streak — one more trip keeps it`
+                    : 'You are live. Each trip adds to this'}
+              </Text>
             </View>
             <View style={styles.scooterSlot}>
               <Image
@@ -679,7 +695,7 @@ export function DeliveryHomeScreen() {
                 resizeMode="contain"
               />
             </View>
-          </View>
+          </Pressable>
 
         {delivery ? (
           <View style={styles.section}>
@@ -845,7 +861,14 @@ export function DeliveryHomeScreen() {
             onPress={() => router.push(DELIVERY_ROUTES.performance)}
             style={styles.sectionRow}
           >
-            <Text style={styles.sectionTitle}>Performance</Text>
+            <View>
+              <Text style={styles.sectionTitle}>Performance</Text>
+              <Text style={styles.sectionKicker}>
+                {streak > 0
+                  ? `${streak}-day streak · tap to climb`
+                  : 'Tap to see how you rank'}
+              </Text>
+            </View>
             <ChevronRight color={authTheme.textMuted} size={18} />
           </Pressable>
           <Pressable
