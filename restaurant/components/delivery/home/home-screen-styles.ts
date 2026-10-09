@@ -62,27 +62,17 @@ export const styles = StyleSheet.create({
     gap: 4,
     marginLeft: '-2%',
   },
-  locCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
   locKicker: {
     fontFamily: fonts.bold,
     fontSize: 12,
     color: '#EA4B14',
   },
   locTitle: {
+    flex: 1,
     fontFamily: fonts.medium,
     fontSize: 13,
     lineHeight: 18,
     color: '#4B5563',
-  },
-  locCoords: {
-    fontFamily: fonts.semiBold,
-    fontSize: 12,
-    lineHeight: 16,
-    color: '#111827',
   },
   greeting: {
     fontFamily: fonts.extraBold,
