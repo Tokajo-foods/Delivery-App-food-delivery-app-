@@ -111,7 +111,10 @@ export default function RootLayout() {
               animation: 'fade',
               contentStyle: { backgroundColor: '#F7EFE4' },
             }}
-          />
+          >
+            <Stack.Screen name="index" options={{ animation: 'none' }} />
+            <Stack.Screen name="(auth)" options={{ animation: 'none' }} />
+          </Stack>
           {brandSplashVisible ? (
             <AppSplashScreen onFinished={onBrandSplashFinished} />
           ) : null}

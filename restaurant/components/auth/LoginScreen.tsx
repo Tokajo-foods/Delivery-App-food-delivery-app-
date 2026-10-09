@@ -11,9 +11,10 @@ import {
   ScrollView,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AuthSlideSheet } from '@/components/auth/AuthSlideSheet';
 import { AuthBanner } from '@/components/auth/AuthBanner';
 import { AuthLoadingScreen } from '@/components/auth/AuthLoadingScreen';
 import { CheckboxRow, LegalFooter } from '@/components/auth/AuthExtras';
@@ -25,8 +26,13 @@ import { useAuthStore } from '@/store/auth-store';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function LoginScreen() {
+type LoginScreenProps = {
+  onDismiss?: () => void;
+};
+
+export function LoginScreen({ onDismiss }: LoginScreenProps) {
   const router = useRouter();
+  const { height: screenH } = useWindowDimensions();
   const { registered, email: registeredEmail, role: registeredRole } =
     useLocalSearchParams<{
       registered?: string;
@@ -152,25 +158,15 @@ export function LoginScreen() {
   }
 
   return (
-    <View className="flex-1 bg-transparent">
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+    <AuthSlideSheet
+      onDismissed={() => (onDismiss ? onDismiss() : router.replace('/'))}
+    >
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          style={{ maxHeight: Math.round(screenH * 0.78) }}
         >
-          <SafeAreaView edges={['top']} className="flex-1 justify-end">
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Back to Get Started"
-              onPress={() => router.replace('/')}
-              className="flex-1"
-            />
-
             <View className="bg-white rounded-t-[40px] px-6 pt-6 pb-12">
               <RoleSelector value={role} onChange={setRole} disabled={formBusy} />
 
@@ -299,9 +295,8 @@ export function LoginScreen() {
 
               <LegalFooter />
             </View>
-          </SafeAreaView>
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </AuthSlideSheet>
   );
 }

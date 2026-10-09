@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AuthSlideSheet } from '@/components/auth/AuthSlideSheet';
 import { cardShadow, theme } from '@/constants/theme';
 
 type AuthShellProps = {
@@ -34,26 +35,17 @@ export function AuthShell({
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const posterClearance = Math.max(168, Math.round(height * 0.28));
+  const sheetMaxHeight = Math.round(height * 0.78);
 
   return (
     <View className="flex-1 bg-transparent">
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <AuthSlideSheet onDismissed={() => router.replace('/')}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          style={{ maxHeight: sheetMaxHeight }}
         >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Back to Get Started"
-            onPress={() => router.replace('/')}
-            style={{ flexGrow: 1, minHeight: posterClearance }}
-          />
           <View
             className="rounded-t-[32px] bg-white px-6 pt-5"
             style={[
@@ -83,7 +75,8 @@ export function AuthShell({
             {footer ? <View className="mt-6">{footer}</View> : null}
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </AuthSlideSheet>
     </View>
   );
 }
