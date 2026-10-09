@@ -473,7 +473,7 @@ export const styles = StyleSheet.create({
     top: 10,
     width: 1,
     height: 28,
-    backgroundColor: '#C5CAD3',
+    backgroundColor: '#D8DCE3',
   },
   moreCard: {
     alignItems: 'center',
