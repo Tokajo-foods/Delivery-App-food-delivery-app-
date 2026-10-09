@@ -264,10 +264,12 @@ export function DutyControlCard({
               </Text>
               <Text style={styles.summaryLabel}>Online today</Text>
             </View>
+            <View style={styles.summaryDivider} />
             <View style={styles.summaryCell}>
               <Text style={styles.summaryValue}>{summary?.deliveries ?? 0}</Text>
               <Text style={styles.summaryLabel}>Trips</Text>
             </View>
+            <View style={styles.summaryDivider} />
             <View style={styles.summaryCell}>
               <Text style={styles.summaryValue}>{formatDutyKm(summary?.km)}</Text>
               <Text style={styles.summaryLabel}>Distance</Text>
@@ -430,14 +432,25 @@ const styles = StyleSheet.create({
   },
   summaryRow: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'center',
+    marginTop: 4,
     marginBottom: 0,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
+    overflow: 'hidden',
   },
   summaryCell: {
     flex: 1,
-    paddingVertical: 4,
+    paddingVertical: 12,
     paddingHorizontal: 6,
     alignItems: 'center',
+  },
+  summaryDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: '#C5CAD3',
   },
   summaryValue: {
     color: '#EA4B14',
