@@ -128,7 +128,7 @@ export const styles = StyleSheet.create({
     paddingLeft: 16,
     paddingRight: 8,
     paddingVertical: 14,
-    overflow: 'hidden',
+    overflow: 'visible',
     shadowColor: '#EA4B14',
     shadowOpacity: 0.28,
     shadowRadius: 16,
@@ -170,11 +170,12 @@ export const styles = StyleSheet.create({
     height: 84,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'visible',
     zIndex: 1,
   },
   scooterImg: {
-    width: 128,
-    height: 84,
+    width: 168,
+    height: 118,
   },
   bellBtn: {
     marginTop: 8,
