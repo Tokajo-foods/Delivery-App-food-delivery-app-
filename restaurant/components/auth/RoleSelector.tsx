@@ -10,7 +10,7 @@ type RoleSelectorProps = {
 
 export function RoleSelector({ value, onChange, disabled }: RoleSelectorProps) {
   return (
-    <View className="mb-5 flex-row rounded-2xl bg-surface p-1">
+    <View className="mb-5 flex-row rounded-2xl bg-[#F6F3F0] p-1">
       {PARTNER_ROLES.map((role) => {
         const active = value === role.value;
         return (
@@ -19,25 +19,19 @@ export function RoleSelector({ value, onChange, disabled }: RoleSelectorProps) {
             disabled={disabled}
             onPress={() => onChange(role.value)}
             className={`flex-1 items-center justify-center rounded-xl py-2.5 ${
-              active ? 'bg-white' : ''
+              active ? 'bg-[#FFF1E8]' : 'bg-transparent'
             }`}
             style={
               active
-                ? {
-                    shadowColor: '#111827',
-                    shadowOpacity: 0.1,
-                    shadowRadius: 6,
-                    shadowOffset: { width: 0, height: 2 },
-                    elevation: 2,
-                  }
-                : undefined
+                ? { borderWidth: 1, borderColor: '#F3C4AE' }
+                : { borderWidth: 1, borderColor: 'transparent' }
             }
           >
             <Text
               className={`text-sm ${
                 active
-                  ? 'font-bold text-secondary'
-                  : 'font-semibold text-secondary-light'
+                  ? 'font-bold text-[#EA4B14]'
+                  : 'font-semibold text-[#94A3B8]'
               }`}
             >
               {role.label}
