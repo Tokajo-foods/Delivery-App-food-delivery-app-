@@ -49,10 +49,11 @@ export const styles = StyleSheet.create({
   },
   logoCaption: {
     marginTop: -2,
-    marginRight: 1,
+    marginRight: 6,
     fontFamily: 'GreatVibes_400Regular',
-    fontSize: 22,
-    lineHeight: 24,
+    fontSize: 26,
+    lineHeight: 28,
+    letterSpacing: 0.4,
     color: '#EA4B14',
   },
   headerRow: {
