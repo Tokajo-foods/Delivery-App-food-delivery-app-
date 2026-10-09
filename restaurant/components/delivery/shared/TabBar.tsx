@@ -1,5 +1,5 @@
 import { usePathname, useRouter } from 'expo-router';
-import { BarChart3, Home, Package, Wallet } from 'lucide-react-native';
+import { BarChart3, Home, Package, UserRound, Wallet } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -17,6 +17,7 @@ const ICONS: Partial<Record<DeliveryTabKey, typeof Home>> = {
   orders: Package,
   earnings: Wallet,
   analytics: BarChart3,
+  profile: UserRound,
 };
 
 /** Compact 4-tab bottom navbar for delivery partner. */

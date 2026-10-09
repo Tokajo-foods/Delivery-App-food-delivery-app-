@@ -616,17 +616,6 @@ export function DeliveryHomeScreen() {
             </Pressable>
             <Pressable
               style={styles.iconBtn}
-              onPress={() => router.push(DELIVERY_ROUTES.profile)}
-              accessibilityLabel="Profile"
-            >
-              {me.data?.photoUrl ? (
-                <Image source={{ uri: me.data.photoUrl }} style={styles.dhAvatar} />
-              ) : (
-                <Text style={styles.dhAvatarText}>{displayName.charAt(0)}</Text>
-              )}
-            </Pressable>
-            <Pressable
-              style={styles.iconBtn}
               onPress={() => router.push(DELIVERY_ROUTES.notifications)}
               accessibilityLabel="Notifications"
             >

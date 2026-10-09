@@ -52,6 +52,7 @@ export const DELIVERY_BOTTOM_TABS: DeliveryTabItem[] = [
   { key: 'orders', label: 'Orders', href: DELIVERY_ROUTES.orders },
   { key: 'earnings', label: 'Earnings', href: DELIVERY_ROUTES.earnings },
   { key: 'analytics', label: 'Analytics', href: DELIVERY_ROUTES.analytics },
+  { key: 'profile', label: 'Profile', href: DELIVERY_ROUTES.profile },
 ];
 
 /** Quick links shown on the Home dashboard. */
