@@ -377,8 +377,11 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     marginBottom: 6,
   },
+  perfTitle: {
+    fontFamily: fonts.bold,
+  },
   perfValue: {
-    fontFamily: fonts.extraBold,
+    fontFamily: fonts.bold,
     fontSize: 20,
     color: authTheme.text,
     letterSpacing: -0.4,

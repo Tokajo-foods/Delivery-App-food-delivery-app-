@@ -881,7 +881,7 @@ export function DeliveryHomeScreen() {
             style={styles.sectionRow}
           >
             <View>
-              <Text style={styles.sectionTitle}>Performance</Text>
+              <Text style={[styles.sectionTitle, styles.perfTitle]}>Performance</Text>
               <Text style={styles.sectionKicker}>
                 {streak > 0
                   ? `${streak}-day streak · tap to climb`
