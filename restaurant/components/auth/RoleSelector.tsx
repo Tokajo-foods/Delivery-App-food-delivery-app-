@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 
+import { fonts } from '@/constants/typography';
 import { PARTNER_ROLES, type PartnerRole } from '@/lib/auth/types';
 
 type RoleSelectorProps = {
@@ -10,7 +11,7 @@ type RoleSelectorProps = {
 
 export function RoleSelector({ value, onChange, disabled }: RoleSelectorProps) {
   return (
-    <View className="mb-5 flex-row overflow-hidden rounded-2xl bg-surface p-1">
+    <View className="mb-5 flex-row overflow-hidden rounded-2xl bg-[#E7E8EA] p-1">
       {PARTNER_ROLES.map((role) => {
         const active = value === role.value;
         return (
@@ -26,7 +27,7 @@ export function RoleSelector({ value, onChange, disabled }: RoleSelectorProps) {
               className="text-sm"
               style={{
                 color: active ? '#020617' : '#64748B',
-                fontWeight: active ? '600' : '500',
+                fontFamily: active ? fonts.semibold : fonts.regular,
               }}
             >
               {role.label}
