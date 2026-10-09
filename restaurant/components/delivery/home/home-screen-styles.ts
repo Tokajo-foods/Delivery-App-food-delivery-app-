@@ -149,8 +149,8 @@ export const styles = StyleSheet.create({
     marginTop: 1,
   },
   scooterImg: {
-    width: 96,
-    height: 72,
+    width: 118,
+    height: 88,
   },
 
   /* ---------- Sections ---------- */
