@@ -54,12 +54,13 @@ export const styles = StyleSheet.create({
   locationBtn: {
     flex: 1,
     minWidth: 0,
-    gap: 2,
+    gap: 6,
   },
   dhLocInline: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    marginLeft: '-2%',
   },
   locKicker: {
     fontFamily: fonts.bold,
