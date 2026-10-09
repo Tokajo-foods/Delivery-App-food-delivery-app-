@@ -44,14 +44,16 @@ export function AuthShell({
       >
         <ScrollView
           className="flex-1"
-          contentContainerStyle={{
-            flexGrow: 1,
-            justifyContent: 'flex-end',
-            paddingTop: posterClearance,
-          }}
+          contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Back to Get Started"
+            onPress={() => router.replace('/')}
+            style={{ flexGrow: 1, minHeight: posterClearance }}
+          />
           <View
             className="rounded-t-[32px] bg-white px-6 pt-5"
             style={[

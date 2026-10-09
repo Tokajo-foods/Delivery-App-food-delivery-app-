@@ -164,7 +164,12 @@ export function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           <SafeAreaView edges={['top']} className="flex-1 justify-end">
-            <View className="flex-1" />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Back to Get Started"
+              onPress={() => router.replace('/')}
+              className="flex-1"
+            />
 
             <View className="bg-white rounded-t-[40px] px-6 pt-6 pb-12">
               <RoleSelector value={role} onChange={setRole} disabled={formBusy} />
