@@ -615,7 +615,7 @@ export function DeliveryHomeScreen() {
               </View>
             </Pressable>
             <Pressable
-              style={styles.iconBtn}
+              style={[styles.iconBtn, styles.bellBtn]}
               onPress={() => router.push(DELIVERY_ROUTES.notifications)}
               accessibilityLabel="Notifications"
             >
@@ -669,7 +669,13 @@ export function DeliveryHomeScreen() {
               <Text style={styles.dhEarnLabel}>Today's earning</Text>
               <Text style={styles.dhEarnAmount}>{formatCurrency(todayEarnings, currency)}</Text>
             </View>
-            <Image source={require('../../../public/scooter.png')} style={styles.scooterImg} resizeMode="contain" />
+            <View style={styles.scooterSlot}>
+              <Image
+                source={require('../../../public/scooter.png')}
+                style={styles.scooterImg}
+                resizeMode="contain"
+              />
+            </View>
           </View>
 
         {delivery ? (
