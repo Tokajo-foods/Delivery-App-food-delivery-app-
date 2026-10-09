@@ -836,10 +836,12 @@ export function DeliveryHomeScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Services</Text>
           <View style={styles.serviceGrid}>
-            {MORE_FEATURES.map((item) => {
+            {MORE_FEATURES.map((item, index) => {
               const Icon = item.icon;
+              const showDivider = index % 4 !== 3;
               return (
                 <View key={item.key} style={styles.serviceSlot}>
+                  {showDivider ? <View style={styles.serviceDivider} /> : null}
                   <Pressable
                     onPress={() => router.push(item.href)}
                     style={styles.moreCard}

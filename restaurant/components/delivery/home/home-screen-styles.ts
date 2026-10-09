@@ -463,8 +463,17 @@ export const styles = StyleSheet.create({
   },
   serviceSlot: {
     width: '25%',
+    position: 'relative',
     paddingHorizontal: 4,
     paddingBottom: 12,
+  },
+  serviceDivider: {
+    position: 'absolute',
+    right: 0,
+    top: 10,
+    width: 1,
+    height: 28,
+    backgroundColor: '#C5CAD3',
   },
   moreCard: {
     alignItems: 'center',
