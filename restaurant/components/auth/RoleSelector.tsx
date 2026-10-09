@@ -23,11 +23,11 @@ export function RoleSelector({ value, onChange, disabled }: RoleSelectorProps) {
             }`}
           >
             <Text
-              className={`text-sm ${
-                active
-                  ? 'font-semibold text-secondary'
-                  : 'font-medium text-secondary-light'
-              }`}
+              className="text-sm"
+              style={{
+                color: active ? '#020617' : '#64748B',
+                fontWeight: active ? '600' : '500',
+              }}
             >
               {role.label}
             </Text>
