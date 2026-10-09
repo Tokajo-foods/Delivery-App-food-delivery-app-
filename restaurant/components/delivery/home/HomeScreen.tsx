@@ -2,12 +2,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
+  BadgeCheck,
   Bell,
   ChevronRight,
+  CircleCheck,
   Flame,
   MapPin,
   Package,
   Star,
+  Timer,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
@@ -851,27 +854,37 @@ export function DeliveryHomeScreen() {
           >
             <View style={styles.perfGrid}>
               <View style={styles.perfItem}>
+                <View style={styles.perfIcon}>
+                  <BadgeCheck color="#EA4B14" size={16} strokeWidth={2.2} />
+                </View>
                 <Text style={styles.perfValue}>
                   {formatPercent(acceptanceRate)}
                 </Text>
                 <Text style={styles.perfLabel}>Acceptance</Text>
               </View>
               <View style={styles.perfItem}>
+                <View style={styles.perfIcon}>
+                  <CircleCheck color="#EA4B14" size={16} strokeWidth={2.2} />
+                </View>
                 <Text style={styles.perfValue}>
                   {formatPercent(completionRate)}
                 </Text>
                 <Text style={styles.perfLabel}>Completion</Text>
               </View>
               <View style={styles.perfItem}>
+                <View style={styles.perfIcon}>
+                  <Timer color="#EA4B14" size={16} strokeWidth={2.2} />
+                </View>
                 <Text style={styles.perfValue}>
                   {formatPercent(onTimeRate)}
                 </Text>
                 <Text style={styles.perfLabel}>On-time</Text>
               </View>
               <View style={styles.perfItem}>
-                <Text style={styles.perfValue}>
-                  {streak}d
-                </Text>
+                <View style={styles.perfIcon}>
+                  <Flame color="#EA4B14" size={16} strokeWidth={2.2} />
+                </View>
+                <Text style={styles.perfValue}>{streak}d</Text>
                 <Text style={styles.perfLabel}>Streak</Text>
               </View>
             </View>
