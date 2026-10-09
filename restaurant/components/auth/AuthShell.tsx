@@ -8,10 +8,10 @@ import {
   ScrollView,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Brand } from '@/components/auth/Brand';
 import { cardShadow, theme } from '@/constants/theme';
 
 type AuthShellProps = {
@@ -32,6 +32,9 @@ export function AuthShell({
   onBackPress,
 }: AuthShellProps) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+  const posterClearance = Math.max(168, Math.round(height * 0.28));
 
   return (
     <View className="flex-1 bg-transparent">
@@ -41,41 +44,42 @@ export function AuthShell({
       >
         <ScrollView
           className="flex-1"
-          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'flex-end',
+            paddingTop: posterClearance,
+          }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <SafeAreaView edges={['top', 'bottom']}>
-            <View className="items-center mt-6 mb-8">
-              <Brand portal={false} />
-            </View>
-            <View
-              className="mx-4 mb-6 rounded-3xl border border-gray-100 bg-white px-6 py-7"
-              style={cardShadow}
-            >
-              {showBack ? (
-                <Pressable
-                  onPress={onBackPress ?? (() => router.back())}
-                  hitSlop={10}
-                  className="mb-4 h-9 w-9 items-center justify-center rounded-full bg-surface"
-                >
-                  <ArrowLeft color={theme.secondary} size={18} />
-                </Pressable>
-              ) : null}
+          <View
+            className="rounded-t-[32px] bg-white px-6 pt-5"
+            style={[
+              cardShadow,
+              { paddingBottom: Math.max(insets.bottom, 16) + 12 },
+            ]}
+          >
+            {showBack ? (
+              <Pressable
+                onPress={onBackPress ?? (() => router.back())}
+                hitSlop={10}
+                className="mb-4 h-9 w-9 items-center justify-center rounded-full bg-surface"
+              >
+                <ArrowLeft color={theme.secondary} size={18} />
+              </Pressable>
+            ) : null}
 
+            <Text className="text-2xl font-extrabold text-secondary">
+              {title}
+            </Text>
+            <Text className="mt-1 text-sm leading-5 text-secondary-light">
+              {subtitle}
+            </Text>
 
-              <Text className="mt-5 text-2xl font-extrabold text-secondary">
-                {title}
-              </Text>
-              <Text className="mt-1 text-sm leading-5 text-secondary-light">
-                {subtitle}
-              </Text>
+            <View className="mt-6">{children}</View>
 
-              <View className="mt-6">{children}</View>
-
-              {footer ? <View className="mt-6">{footer}</View> : null}
-            </View>
-          </SafeAreaView>
+            {footer ? <View className="mt-6">{footer}</View> : null}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
