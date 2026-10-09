@@ -34,7 +34,7 @@ export function AuthShell({
   const router = useRouter();
 
   return (
-    <View className="flex-1 bg-surface">
+    <View className="flex-1 bg-transparent">
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}

@@ -34,6 +34,8 @@ setupLiveQueryFocus();
 export default function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);
   const clearSession = useAuthStore((s) => s.clearSession);
+  const isHydrated = useAuthStore((s) => s.isHydrated);
+  const token = useAuthStore((s) => s.token);
   const router = useRouter();
 
   const [fontsLoaded] = useFonts({
@@ -57,7 +59,9 @@ export default function RootLayout() {
   }, []);
 
   const uiReady = fontsLoaded || fontWaitDone;
-  const brandSplashVisible = isColdStart && !(progressDone && uiReady);
+  const loggedOut = isHydrated && !token;
+  const brandSplashVisible =
+    isColdStart && !(progressDone && uiReady) && !loggedOut;
 
   useEffect(() => {
     if (isColdStart) {
@@ -67,6 +71,13 @@ export default function RootLayout() {
     }
     if (uiReady) void SplashScreen.hideAsync();
   }, [isColdStart, uiReady]);
+
+  useEffect(() => {
+    if (loggedOut) {
+      setProgressDone(true);
+      markColdStartSplashConsumed();
+    }
+  }, [loggedOut]);
 
   useEffect(() => {
     if (isColdStart && progressDone && uiReady) {

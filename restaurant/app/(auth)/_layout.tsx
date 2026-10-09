@@ -1,6 +1,7 @@
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 
 import { authTheme } from '@/constants/auth-theme';
 import { refreshCsrfToken } from '@/lib/api';
@@ -61,13 +62,19 @@ export default function AuthLayout() {
   }, [isHydrated, token, user?.id, user?.role, role, router]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <View style={{ flex: 1, backgroundColor: '#F7F0E8' }}>
+      <Image
+        source={require('../../assets/welcome/tokajo-get-started.jpg')}
+        style={StyleSheet.absoluteFillObject}
+        contentFit="cover"
+        contentPosition="bottom"
+      />
       <Stack
         screenOptions={{
           headerShown: false,
           animation: 'fade',
           animationDuration: 220,
-          contentStyle: { backgroundColor: '#FFFFFF' },
+          contentStyle: { backgroundColor: 'transparent' },
         }}
       />
       {!isHydrated || (token && resolving) ? (

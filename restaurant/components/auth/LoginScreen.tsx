@@ -11,7 +11,6 @@ import {
   ScrollView,
   Text,
   View,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -153,7 +152,7 @@ export function LoginScreen() {
   }
 
   return (
-    <View className="flex-1 bg-[#EA4B14]">
+    <View className="flex-1 bg-transparent">
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -165,20 +164,7 @@ export function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           <SafeAreaView edges={['top']} className="flex-1 justify-end">
-            <View className="flex-1 px-6 pt-6 items-center justify-center">
-              <Image 
-                source={require('../../assets/tokajo-logo.png')} 
-                style={{ width: 72, height: 72, borderRadius: 20, marginBottom: 16 }}
-              />
-              <Text className="text-white text-3xl font-extrabold mb-1 text-center">
-                Welcome Back
-              </Text>
-              <Text className="text-white/90 text-sm text-center px-4 mb-5">
-                {role === 'delivery'
-                  ? 'Sign in to continue accepting jobs and deliveries.'
-                  : 'Sign in to continue managing your outlet.'}
-              </Text>
-            </View>
+            <View className="flex-1" />
 
             <View className="bg-white rounded-t-[40px] px-6 pt-6 pb-12">
               <RoleSelector value={role} onChange={setRole} disabled={formBusy} />
