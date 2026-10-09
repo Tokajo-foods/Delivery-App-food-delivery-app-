@@ -566,6 +566,12 @@ export function DeliveryHomeScreen() {
 
   return (
     <View style={styles.root}>
+      <LinearGradient
+        colors={['#FFE9D6', '#FFF4EB', '#FFFFFF']}
+        locations={[0, 0.55, 1]}
+        style={styles.topWash}
+        pointerEvents="none"
+      />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
@@ -585,48 +591,55 @@ export function DeliveryHomeScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <LinearGradient
-          colors={['#F2591F', '#EA4B14', '#D83F0D']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.darkHeader, { paddingTop: insets.top + 36 }]}
-        >
-          <View style={styles.dhTopRow}>
-            <View style={styles.dhLocation}>
-              <Text style={styles.dhHello} numberOfLines={1}>
-                Hi, {displayName.split(' ')[0] || 'Partner'}
-              </Text>
-              <Pressable
-                onPress={() => setMapOpen(true)}
-                style={styles.dhLocRow}
-                accessibilityRole="button"
-                accessibilityLabel="Set live location"
-              >
-                <MapPin color="#FFFFFF" size={13} />
-                <Text style={styles.dhLocText} numberOfLines={1}>
+        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+          <View style={styles.logoRow}>
+            <Image
+              source={require('../../../assets/tokajo-wordmark.webp')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={styles.headerRow}>
+            <Pressable
+              onPress={() => setMapOpen(true)}
+              style={styles.locationBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Set live location"
+            >
+              <MapPin color="#EA4B14" size={18} strokeWidth={2.4} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={styles.locKicker}>You're in</Text>
+                <Text style={styles.locTitle} numberOfLines={2}>
                   {locationChip}
                 </Text>
-              </Pressable>
-            </View>
-            <View style={styles.dhActions}>
-              <Pressable onPress={() => router.push(DELIVERY_ROUTES.profile)}>
-                {me.data?.photoUrl ? (
-                  <Image source={{ uri: me.data.photoUrl }} style={styles.dhAvatar} />
-                ) : (
-                  <View style={styles.dhAvatarFallback}>
-                    <Text style={styles.dhAvatarText}>{displayName.charAt(0)}</Text>
-                  </View>
-                )}
-              </Pressable>
-              <Pressable style={styles.dhBell} onPress={() => router.push(DELIVERY_ROUTES.notifications)}>
-                <Bell color="#FFFFFF" size={18} />
-                {(unread.data ?? 0) > 0 ? <View style={styles.dhBellDot} /> : null}
-              </Pressable>
-            </View>
+              </View>
+            </Pressable>
+            <Pressable
+              style={styles.iconBtn}
+              onPress={() => router.push(DELIVERY_ROUTES.profile)}
+              accessibilityLabel="Profile"
+            >
+              {me.data?.photoUrl ? (
+                <Image source={{ uri: me.data.photoUrl }} style={styles.dhAvatar} />
+              ) : (
+                <Text style={styles.dhAvatarText}>{displayName.charAt(0)}</Text>
+              )}
+            </Pressable>
+            <Pressable
+              style={styles.iconBtn}
+              onPress={() => router.push(DELIVERY_ROUTES.notifications)}
+              accessibilityLabel="Notifications"
+            >
+              <Bell color="#EA4B14" size={20} strokeWidth={2.2} />
+              {(unread.data ?? 0) > 0 ? <View style={styles.dhBellDot} /> : null}
+            </Pressable>
           </View>
+          <Text style={styles.greeting} numberOfLines={1}>
+            Hi, {displayName.split(' ')[0] || 'Partner'}
+          </Text>
+        </View>
 
-          {/* Status Pill */}
-          <DutyControlCard
+        <DutyControlCard
             snapshot={duty.data}
             fallbackStatus={dutyStatus}
             isOnDuty={isOnline}
@@ -658,21 +671,20 @@ export function DeliveryHomeScreen() {
               dutySummary.isError && !dutySummary.data
                 ? formatDutyError(
                     dutySummary.error,
-                    'Could not load todayâ€™s duty summary.'
+                    "Could not load today's duty summary."
                   )
                 : null
             }
             onRetrySummary={() => void dutySummary.refetch()}
           />
 
-          <View style={styles.dhEarnPanel}>
+          <View style={styles.earnCard}>
             <View style={styles.dhEarnCol}>
               <Text style={styles.dhEarnLabel}>Today's earning</Text>
               <Text style={styles.dhEarnAmount}>{formatCurrency(todayEarnings, currency)}</Text>
             </View>
             <Image source={require('../../../public/scooter.png')} style={styles.scooterImg} resizeMode="contain" />
           </View>
-        </LinearGradient>
 
         {delivery ? (
           <View style={styles.section}>

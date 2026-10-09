@@ -314,6 +314,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
     paddingVertical: 14,
     paddingHorizontal: 16,
     marginBottom: 10,
@@ -353,6 +355,8 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F3E7DE',
     paddingVertical: 12,
   },
   breakBtnText: {
@@ -376,7 +380,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   quotaNote: {
-    color: 'rgba(255,255,255,0.88)',
+    color: '#64748B',
     fontFamily: fonts.medium,
     fontSize: 12,
     marginBottom: 10,
@@ -406,7 +410,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   hubLinkText: {
-    color: '#FFFFFF',
+    color: '#EA4B14',
     fontFamily: fonts.semiBold,
     fontSize: 13,
   },
@@ -415,7 +419,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontFamily: fonts.medium,
     fontSize: 12,
-    color: '#FFFFFF',
+    color: '#C2410C',
     lineHeight: 17,
   },
   actionError: {
@@ -433,6 +437,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
     paddingVertical: 14,
     paddingHorizontal: 6,
     alignItems: 'center',
@@ -464,7 +470,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   summaryRetry: {
-    color: '#FFFFFF',
+    color: '#EA4B14',
     fontFamily: fonts.semiBold,
     fontSize: 12,
   },
