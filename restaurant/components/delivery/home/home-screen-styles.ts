@@ -315,7 +315,7 @@ export const styles = StyleSheet.create({
     width: 1,
     height: 28,
     alignSelf: 'center',
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#C5CAD3',
   },
   statValueRow: {
     flexDirection: 'row',
