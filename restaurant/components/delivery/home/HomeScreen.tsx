@@ -1,17 +1,13 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+﻿import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
-  CalendarClock,
+  Bell,
   ChevronRight,
-  FileText,
   Flame,
-  HelpCircle,
+  MapPin,
   Package,
   Star,
-  UtensilsCrossed,
-  Building2,
-  Gift,
-  Award,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
@@ -21,15 +17,15 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { MapPin, Bell } from 'lucide-react-native';
-import { useAuthStore } from '@/store/auth-store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useAuthStore } from '@/store/auth-store';
 import { DutyControlCard } from '@/components/delivery/home/DutyControlCard';
+import { MORE_FEATURES } from '@/components/delivery/home/home-features';
+import { styles } from '@/components/delivery/home/home-screen-styles';
 import { TripLifecycleWithGeo } from '@/components/delivery/orders/TripLifecycleBar';
 import { TripDetailSheet } from '@/components/delivery/orders/TripDetailSheet';
 import {
@@ -103,82 +99,7 @@ type SavedLiveLocation = {
   lng: number;
 };
 
-const MORE_FEATURES = [
-  {
-    key: 'documents',
-    label: 'Documents',
-    description: 'KYC upload & verification',
-    href: DELIVERY_ROUTES.documents,
-    icon: FileText,
-    accent: '#7A0E22',
-    soft: '#F8E8EC',
-  },
-  {
-    key: 'restaurants',
-    label: 'Restaurants',
-    description: 'Partner outlets near you',
-    href: DELIVERY_ROUTES.restaurants,
-    icon: UtensilsCrossed,
-    accent: '#EA580C',
-    soft: '#FFF1E8',
-  },
-  {
-    key: 'shifts',
-    label: 'Shifts',
-    description: 'Book slots & attendance',
-    href: DELIVERY_ROUTES.shifts,
-    icon: CalendarClock,
-    accent: '#0F766E',
-    soft: '#ECFDF5',
-  },
-  {
-    key: 'hubs',
-    label: 'Hubs',
-    description: 'Check-in & cash drop',
-    href: DELIVERY_ROUTES.hubs,
-    icon: Building2,
-    accent: '#0369A1',
-    soft: '#E0F2FE',
-  },
-  {
-    key: 'heatmap',
-    label: 'Demand',
-    description: 'Nearby order heatmap',
-    href: DELIVERY_ROUTES.heatmap,
-    icon: Flame,
-    accent: '#B45309',
-    soft: '#FFFBEB',
-  },
-  {
-    key: 'incentives',
-    label: 'Incentives',
-    description: 'Bonuses, points & leaderboard',
-    href: DELIVERY_ROUTES.incentives,
-    icon: Gift,
-    accent: '#C2410C',
-    soft: '#FFF7ED',
-  },
-  {
-    key: 'performance',
-    label: 'Performance',
-    description: 'Ratings, tier, warnings & referrals',
-    href: DELIVERY_ROUTES.performance,
-    icon: Award,
-    accent: '#7C3AED',
-    soft: '#F5F3FF',
-  },
-  {
-    key: 'support',
-    label: 'Support',
-    description: 'Help & tickets',
-    href: DELIVERY_ROUTES.support,
-    icon: HelpCircle,
-    accent: '#2563EB',
-    soft: '#EFF4FF',
-  },
-] as const;
-
-/** Delivery Home — clean API-fed dashboard. */
+/** Delivery Home â€” clean API-fed dashboard. */
 export function DeliveryHomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -322,10 +243,10 @@ export function DeliveryHomeScreen() {
     setOnline.mutate(!isOnline, {
       onSuccess: () => {
         pushLiveToast({
-          title: !isOnline ? 'You’re online' : 'You’re offline',
+          title: !isOnline ? 'Youâ€™re online' : 'Youâ€™re offline',
           body: !isOnline
             ? 'Nearby orders will start coming in.'
-            : 'You won’t receive new orders.',
+            : 'You wonâ€™t receive new orders.',
           tone: 'success',
         });
       },
@@ -388,7 +309,7 @@ export function DeliveryHomeScreen() {
       onSuccess: () =>
         pushLiveToast({
           title: 'Break ended',
-          body: 'You’re back online for new orders.',
+          body: 'Youâ€™re back online for new orders.',
           tone: 'success',
         }),
       onError: (err) =>
@@ -404,7 +325,7 @@ export function DeliveryHomeScreen() {
       onSuccess: () =>
         pushLiveToast({
           title: 'Break extended',
-          body: `Added ${additionalMinutes} min within today’s cap.`,
+          body: `Added ${additionalMinutes} min within todayâ€™s cap.`,
           tone: 'info',
         }),
       onError: (err) =>
@@ -425,7 +346,7 @@ export function DeliveryHomeScreen() {
           onSuccess: () =>
             pushLiveToast({
               title: 'Back online',
-              body: 'You’ll receive nearby orders again.',
+              body: 'Youâ€™ll receive nearby orders again.',
               tone: 'success',
             }),
           onError: (err) =>
@@ -441,7 +362,7 @@ export function DeliveryHomeScreen() {
       onSuccess: () =>
         pushLiveToast({
           title: 'Left hub',
-          body: 'You’re back online for new orders.',
+          body: 'Youâ€™re back online for new orders.',
           tone: 'success',
         }),
       onError: (err) => {
@@ -452,7 +373,7 @@ export function DeliveryHomeScreen() {
               onSuccess: () =>
                 pushLiveToast({
                   title: 'Back online',
-                  body: 'You’ll receive nearby orders again.',
+                  body: 'Youâ€™ll receive nearby orders again.',
                   tone: 'success',
                 }),
               onError: (onlineErr) =>
@@ -517,7 +438,7 @@ export function DeliveryHomeScreen() {
   const locationChip =
     liveLocation?.label ??
     (gpsSnap?.coords || lastLocation.data
-      ? `Sharing GPS${gpsAge ? ` · ${gpsAge}` : ''}`
+      ? `Sharing GPS${gpsAge ? ` Â· ${gpsAge}` : ''}`
       : LIVE_LOCATION_FALLBACK);
 
   const gpsBanner = (() => {
@@ -528,7 +449,7 @@ export function DeliveryHomeScreen() {
     if (gpsSnap.offlineBlocked) {
       return LOCATION_ERROR_COPY.PARTNER_OFFLINE;
     }
-    if (gpsSnap.stale) return 'Location outdated — stay in open sky.';
+    if (gpsSnap.stale) return 'Location outdated â€” stay in open sky.';
     if (gpsSnap.lowAccuracy) {
       return 'Move to open sky / better GPS.';
     }
@@ -559,7 +480,7 @@ export function DeliveryHomeScreen() {
             textAlign: 'center',
           }}
         >
-          Couldn’t load your duty profile
+          Couldnâ€™t load your duty profile
         </Text>
         <Text
           style={{
@@ -664,7 +585,12 @@ export function DeliveryHomeScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.darkHeader, { paddingTop: insets.top + 36 }]}>
+        <LinearGradient
+          colors={['#F2591F', '#EA4B14', '#D83F0D']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.darkHeader, { paddingTop: insets.top + 36 }]}
+        >
           <View style={styles.dhTopRow}>
             <View style={styles.dhLocation}>
               <Text style={styles.dhHello} numberOfLines={1}>
@@ -732,7 +658,7 @@ export function DeliveryHomeScreen() {
               dutySummary.isError && !dutySummary.data
                 ? formatDutyError(
                     dutySummary.error,
-                    'Could not load today’s duty summary.'
+                    'Could not load todayâ€™s duty summary.'
                   )
                 : null
             }
@@ -746,7 +672,7 @@ export function DeliveryHomeScreen() {
             </View>
             <Image source={require('../../../public/scooter.png')} style={styles.scooterImg} resizeMode="contain" />
           </View>
-        </View>
+        </LinearGradient>
 
         {delivery ? (
           <View style={styles.section}>
@@ -817,7 +743,7 @@ export function DeliveryHomeScreen() {
             >
               <Package color={authTheme.brand} size={18} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.demandCtaTitle}>Couldn’t load active trip</Text>
+                <Text style={styles.demandCtaTitle}>Couldnâ€™t load active trip</Text>
                 <Text style={styles.demandCtaHint}>
                   {formatTripError(
                     active.error ?? actives.error,
@@ -847,7 +773,7 @@ export function DeliveryHomeScreen() {
 
 
 
-        {/* Key stats — performance API */}
+        {/* Key stats â€” performance API */}
         <View style={styles.statsRow}>
           <View style={styles.stat}>
             <Text style={styles.statValue}>{totalDeliveries}</Text>
@@ -869,6 +795,32 @@ export function DeliveryHomeScreen() {
             </Text>
             <Text style={styles.statLabel}>Completion</Text>
           </View>
+        </View>
+
+        {/* Services */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Services</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.moreScroll}
+          >
+            {MORE_FEATURES.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Pressable
+                  key={item.key}
+                  onPress={() => router.push(item.href)}
+                  style={styles.moreCard}
+                >
+                  <View style={styles.moreIcon}>
+                    <Icon color="#EA4B14" size={24} strokeWidth={1.5} />
+                  </View>
+                  <Text style={styles.moreLabel}>{item.label}</Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
         </View>
 
         {/* Performance */}
@@ -963,32 +915,6 @@ export function DeliveryHomeScreen() {
             )}
           </View>
         </View>
-
-        {/* Services */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Services</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.moreScroll}
-          >
-            {MORE_FEATURES.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Pressable
-                  key={item.key}
-                  onPress={() => router.push(item.href)}
-                  style={styles.moreCard}
-                >
-                  <View style={styles.moreIcon}>
-                    <Icon color="#EA4B14" size={24} strokeWidth={1.5} />
-                  </View>
-                  <Text style={styles.moreLabel}>{item.label}</Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
       </ScrollView>
 
       <LocationMapPicker
@@ -1023,644 +949,3 @@ export function DeliveryHomeScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  darkHeader: {
-    marginHorizontal: -16,
-    marginTop: -40,
-    marginBottom: 8,
-    backgroundColor: '#EA4B14',
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    paddingHorizontal: 18,
-    paddingBottom: 28,
-  },
-  dhTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 18,
-  },
-  dhLocation: {
-    flex: 1,
-    minWidth: 0,
-    paddingRight: 10,
-  },
-  dhHello: {
-    color: '#FFFFFF',
-    fontFamily: fonts.extraBold,
-    fontSize: 22,
-    letterSpacing: -0.4,
-  },
-  dhLocRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 4,
-  },
-  dhLocText: {
-    flex: 1,
-    minWidth: 0,
-    color: 'rgba(255,255,255,0.92)',
-    fontFamily: fonts.medium,
-    fontSize: 13,
-  },
-  dhActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  dhAvatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-  },
-  dhAvatarFallback: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dhAvatarText: {
-    color: '#EA4B14',
-    fontFamily: fonts.bold,
-    fontSize: 16,
-  },
-  dhBell: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dhBellDot: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FFFFFF',
-  },
-  dhStatusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#FFE4D6',
-    borderRadius: 24,
-    padding: 16,
-    marginBottom: 16,
-  },
-  dhStatusInfo: {
-    flex: 1,
-  },
-  dhStatusLabel: {
-    color: '#9CA3AF',
-    fontFamily: fonts.medium,
-    fontSize: 13,
-  },
-  dhStatusText: {
-    color: '#FFFFFF',
-    fontFamily: fonts.bold,
-    fontSize: 16,
-    marginTop: 4,
-  },
-  dhBreakBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 12,
-    marginBottom: 16,
-  },
-  dhBreakBtnText: {
-    color: '#EA4B14',
-    fontFamily: fonts.semiBold,
-    fontSize: 14,
-  },
-  dhEarnPanel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  dhEarnCol: {
-    flex: 1,
-  },
-  dhEarnLabel: {
-    color: 'rgba(255,255,255,0.85)',
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    letterSpacing: 0.2,
-  },
-  dhEarnAmount: {
-    color: '#FFFFFF',
-    fontFamily: fonts.extraBold,
-    fontSize: 32,
-    letterSpacing: -0.8,
-    marginTop: 2,
-  },
-  scooterImg: {
-    width: 128,
-    height: 96,
-  },
-  root: {
-    flex: 1,
-    backgroundColor: '#FFF7F2',
-  },
-  centered: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scrollView: { flex: 1 },
-  scroll: {
-    paddingHorizontal: 16,
-    gap: 16,
-  },
-  heroBleed: {
-    marginHorizontal: -16,
-    marginBottom: -8,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 999,
-    paddingLeft: 16,
-    paddingRight: 6,
-    paddingVertical: 6,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  searchLeft: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  searchText: {
-    fontFamily: fonts.medium,
-    fontSize: 15,
-    color: '#6B7280',
-  },
-  scanBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#EA4B14',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusPillContainer: {
-    backgroundColor: '#EA4B14',
-    borderRadius: 32,
-    padding: 16,
-    marginBottom: 24,
-    shadowColor: '#EA4B14',
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 16,
-  },
-  statusInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  statusPillTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
-    color: '#FFFFFF',
-  },
-  statusPillSub: {
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.82)',
-    opacity: 0.7,
-    marginTop: 2,
-  },
-  statusBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  statusBtnText: {
-    color: '#FFFFFF',
-    fontFamily: fonts.bold,
-    fontSize: 13,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#FFE4D6',
-    overflow: 'hidden',
-  },
-  cardTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
-    color: authTheme.text,
-  },
-  cardSub: {
-    marginTop: 2,
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    color: authTheme.textMuted,
-    lineHeight: 17,
-  },
-  primaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  primaryBtnText: {
-    fontFamily: fonts.semiBold,
-    fontSize: 13,
-    color: '#FFFFFF',
-  },
-  kycBlock: {
-    marginTop: 12,
-    gap: 8,
-  },
-  kycTrack: {
-    height: 5,
-    borderRadius: 999,
-    backgroundColor: '#E2E8F0',
-    overflow: 'hidden',
-  },
-  kycFill: {
-    height: '100%',
-    backgroundColor: authTheme.brand,
-    borderRadius: 999,
-  },
-  link: {
-    fontFamily: fonts.semiBold,
-    fontSize: 13,
-    color: authTheme.brand,
-  },
-  error: {
-    marginTop: 8,
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    color: authTheme.error,
-  },
-  gpsBanner: {
-    marginTop: 4,
-    marginBottom: 10,
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    color: '#FDBA74',
-    lineHeight: 17,
-  },
-  demandCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#FFF7ED',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#FED7AA',
-  },
-  demandCtaTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 15,
-    color: authTheme.text,
-  },
-  demandCtaHint: {
-    marginTop: 2,
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    color: authTheme.textMuted,
-  },
-  activeCard: {
-    backgroundColor: '#EA4B14',
-    borderRadius: 24,
-    padding: 20,
-    overflow: 'hidden',
-    shadowColor: '#EA4B14',
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
-  activeSummary: {
-    gap: 0,
-  },
-  tripActionsCard: {
-    marginTop: 10,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#FFE4D6',
-  },
-  activeTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  activeCardLabel: {
-    fontFamily: fonts.semiBold,
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.78)',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
-  activeCardValue: {
-    marginTop: 4,
-    fontFamily: fonts.bold,
-    fontSize: 15,
-    color: '#FFFFFF',
-  },
-  activeBadge: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  activeBadgeText: {
-    color: '#EA4B14',
-    fontFamily: fonts.bold,
-    fontSize: 12,
-  },
-  progressTrack: {
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.28)',
-    borderRadius: 3,
-    marginVertical: 16,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 3,
-  },
-  activeBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  modernEarnCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#FFE4D6',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-  modernEarnTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 20,
-  },
-  modernEarnIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modernEarnBottom: {},
-  modernEarnValue: {
-    fontFamily: fonts.bold,
-    fontSize: 36,
-    color: '#EA4B14',
-    letterSpacing: -1,
-  },
-  modernEarnLabel: {
-    fontFamily: fonts.medium,
-    fontSize: 13,
-    color: '#9CA3AF',
-    marginTop: 4,
-  },
-  earnCard: {
-    backgroundColor: '#EA4B14',
-    borderRadius: 24,
-    padding: 20,
-  },
-  earnTop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  earnLabel: {
-    fontFamily: fonts.medium,
-    fontSize: 13,
-    color: '#374151',
-  },
-  earnValue: {
-    marginTop: 2,
-    fontFamily: fonts.bold,
-    fontSize: 28,
-    color: '#EA4B14',
-    letterSpacing: -0.6,
-  },
-  trendPill: {
-    backgroundColor: '#FFF1E8',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  trendText: {
-    color: '#EA4B14',
-    fontSize: 12,
-    fontFamily: fonts.semiBold,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stat: {
-    flex: 1,
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 14,
-    gap: 4,
-    borderWidth: 1,
-    borderColor: '#FFE4D6',
-  },
-  statValueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statValue: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
-    color: authTheme.text,
-  },
-  statLabel: {
-    fontFamily: fonts.medium,
-    fontSize: 11,
-    color: authTheme.textMuted,
-  },
-  section: {
-    gap: 8,
-  },
-  sectionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
-    color: authTheme.text,
-    letterSpacing: -0.2,
-    marginBottom: 2,
-  },
-  perfGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  perfItem: {
-    width: '50%',
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    gap: 2,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderRightWidth: StyleSheet.hairlineWidth,
-    borderColor: '#FFE4D6',
-  },
-  perfValue: {
-    fontFamily: fonts.bold,
-    fontSize: 18,
-    color: authTheme.text,
-  },
-  perfLabel: {
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    color: authTheme.textMuted,
-  },
-  listLabel: {
-    fontFamily: fonts.semiBold,
-    fontSize: 11,
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  listTitle: {
-    fontFamily: fonts.medium,
-    fontSize: 15,
-    color: '#1C1917',
-  },
-  recentList: {
-    gap: 12,
-  },
-  emptyHistory: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 28,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#FFE4D6',
-  },
-  emptyTitle: {
-    fontFamily: fonts.semiBold,
-    fontSize: 14,
-    color: authTheme.text,
-  },
-  orderCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    borderWidth: 1,
-    borderColor: '#FFE4D6',
-  },
-  orderStatusPill: {
-    backgroundColor: '#FFF7ED',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  orderStatusText: {
-    fontSize: 12,
-    fontFamily: fonts.bold,
-    color: '#EA4B14',
-  },
-  empty: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 28,
-    gap: 8,
-  },
-  emptyText: {
-    fontFamily: fonts.medium,
-    fontSize: 13,
-    color: authTheme.textMuted,
-  },
-  moreScroll: {
-    gap: 12,
-  },
-  moreCard: {
-    minWidth: 116,
-    paddingHorizontal: 12,
-    height: 104,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 10,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#FFE4D6',
-  },
-  moreIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFF7ED',
-  },
-  moreLabel: {
-    fontFamily: fonts.semiBold,
-    fontSize: 12,
-    color: authTheme.textMuted,
-    textAlign: 'center',
-  },
-});
