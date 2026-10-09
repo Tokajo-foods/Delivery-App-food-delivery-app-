@@ -310,8 +310,12 @@ export const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 6,
     gap: 4,
-    borderRightWidth: StyleSheet.hairlineWidth,
-    borderRightColor: CARD_BORDER,
+  },
+  statDivider: {
+    width: 1,
+    height: 28,
+    alignSelf: 'center',
+    backgroundColor: '#E5E7EB',
   },
   statValueRow: {
     flexDirection: 'row',

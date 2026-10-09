@@ -806,6 +806,7 @@ export function DeliveryHomeScreen() {
               Deliveries
             </Text>
           </View>
+          <View style={styles.statDivider} />
           <Pressable
             style={styles.stat}
             onPress={() => router.push(DELIVERY_ROUTES.performance)}
@@ -820,6 +821,7 @@ export function DeliveryHomeScreen() {
               Rating
             </Text>
           </Pressable>
+          <View style={styles.statDivider} />
           <View style={styles.stat}>
             <Text style={styles.statValue} numberOfLines={1}>
               {formatPercent(completionRate)}
