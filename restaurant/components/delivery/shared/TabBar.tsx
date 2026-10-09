@@ -1,6 +1,7 @@
 import { usePathname, useRouter } from 'expo-router';
 import { BarChart3, Home, Package, UserRound, Wallet } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { fonts } from '@/constants/typography';
@@ -27,13 +28,35 @@ export function DeliveryTabBar() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const pathname = usePathname();
+  const glow = useRef(new Animated.Value(0.45)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glow, {
+          toValue: 0.95,
+          duration: 1400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(glow, {
+          toValue: 0.45,
+          duration: 1400,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [glow]);
 
   return (
     <View
       pointerEvents="box-none"
       style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 10) + 8 }]}
     >
-      <View style={styles.bar}>
+      <View>
+        <Animated.View pointerEvents="none" style={[styles.glow, { opacity: glow }]} />
+        <View style={styles.bar}>
         {DELIVERY_BOTTOM_TABS.map((tab) => {
           const Icon = ICONS[tab.key] ?? Home;
           const isActive =
@@ -72,6 +95,7 @@ export function DeliveryTabBar() {
             </Pressable>
           );
         })}
+        </View>
       </View>
     </View>
   );
@@ -85,6 +109,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 50,
   },
+  glow: {
+    position: 'absolute',
+    left: -8,
+    right: -8,
+    top: -8,
+    bottom: -8,
+    borderRadius: 40,
+    backgroundColor: 'rgba(249, 115, 22, 0.28)',
+  },
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -96,11 +129,11 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     borderWidth: 1,
     borderColor: '#F3E8DE',
-    shadowColor: '#B4541A',
-    shadowOpacity: 0.16,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 14,
+    shadowColor: '#F97316',
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 16,
   },
   tab: {
     flex: 1,
