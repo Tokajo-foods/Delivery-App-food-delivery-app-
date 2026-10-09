@@ -38,18 +38,21 @@ export const styles = StyleSheet.create({
     gap: 14,
   },
   logoRow: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
+    width: 156,
+    alignSelf: 'center',
+    alignItems: 'flex-end',
+    gap: 0,
   },
   logo: {
     width: 156,
     height: 40,
   },
   logoCaption: {
-    fontFamily: fonts.bold,
-    fontSize: 11,
-    letterSpacing: 3.4,
+    marginTop: -2,
+    marginRight: 1,
+    fontFamily: 'Caveat_600SemiBold',
+    fontSize: 20,
+    lineHeight: 22,
     color: '#EA4B14',
   },
   headerRow: {

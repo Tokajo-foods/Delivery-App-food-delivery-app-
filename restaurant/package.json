@@ -4,6 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@config-plugins/react-native-webrtc": "^13.0.0",
+    "@expo-google-fonts/caveat": "^0.4.2",
     "@expo-google-fonts/manrope": "^0.4.2",
     "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
     "@livekit/react-native": "^3.0.0",
@@ -87,7 +88,9 @@
   "private": true,
   "expo": {
     "autolinking": {
-      "exclude": ["expo-firebase-core"]
+      "exclude": [
+        "expo-firebase-core"
+      ]
     }
   }
 }

@@ -596,7 +596,7 @@ export function DeliveryHomeScreen() {
               style={styles.logo}
               resizeMode="contain"
             />
-            <Text style={styles.logoCaption}>DELIVERY</Text>
+            <Text style={styles.logoCaption}>delivery</Text>
           </View>
           <View style={styles.headerRow}>
             <Pressable

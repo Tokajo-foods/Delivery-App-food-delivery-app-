@@ -10,6 +10,7 @@ import {
   PlusJakartaSans_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/plus-jakarta-sans';
+import { Caveat_600SemiBold } from '@expo-google-fonts/caveat';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -44,6 +45,7 @@ export default function RootLayout() {
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
     PlusJakartaSans_800ExtraBold,
+    Caveat_600SemiBold,
   });
   const [fontWaitDone, setFontWaitDone] = useState(false);
   const [isColdStart] = useState(() => shouldShowColdStartSplash());
