@@ -2,6 +2,7 @@ import { Stack, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 
 import { DeliveryLiveSync } from '@/components/delivery/DeliveryLiveSync';
+import { RiderPlaceSync } from '@/components/delivery/RiderPlaceSync';
 import { PlatformPushSync } from '@/components/delivery/profile/PlatformPushSync';
 import { usePartnerLocationSync } from '@/lib/delivery-partner/use-partner-location-sync';
 import { useDeliveryNotificationSync } from '@/lib/notification/use-notification-sync';
@@ -30,6 +31,7 @@ export default function DeliveryLayout() {
   return (
     <>
       <DeliveryLiveSync enabled={isDelivery} />
+      <RiderPlaceSync enabled={isDelivery} />
       <PlatformPushSync enabled={isDelivery} />
       <Stack
         screenOptions={{

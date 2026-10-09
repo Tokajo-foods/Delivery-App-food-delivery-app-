@@ -173,7 +173,7 @@ export function useLocationMapPicker({
         return;
       }
       const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
+        accuracy: Location.Accuracy.BestForNavigation,
       });
       await applyCoords(pos.coords.latitude, pos.coords.longitude, 'gps');
       setGpsReady(true);

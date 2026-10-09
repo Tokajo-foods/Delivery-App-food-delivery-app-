@@ -249,7 +249,7 @@ async function readGpsForDuty(): Promise<{ latitude: number; longitude: number }
     );
   }
   const pos = await Location.getCurrentPositionAsync({
-    accuracy: Location.Accuracy.Balanced,
+    accuracy: Location.Accuracy.BestForNavigation,
   });
   const latitude = pos.coords.latitude;
   const longitude = pos.coords.longitude;

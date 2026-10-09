@@ -236,7 +236,7 @@ class PartnerLocationTracker {
 
     try {
       const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
+        accuracy: Location.Accuracy.BestForNavigation,
       });
       this.latest = fromExpoPosition(pos);
       this.emitCoords();
@@ -249,7 +249,7 @@ class PartnerLocationTracker {
 
     this.watchSub = await Location.watchPositionAsync(
       {
-        accuracy: Location.Accuracy.High,
+        accuracy: Location.Accuracy.BestForNavigation,
         timeInterval: WATCH_TIME_INTERVAL_MS,
         distanceInterval: DISTANCE_INTERVAL_M,
         mayShowUserSettingsDialog: true,
@@ -305,7 +305,7 @@ class PartnerLocationTracker {
   async captureLiveLocation(): Promise<PartnerGpsCoords | null> {
     try {
       const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
+        accuracy: Location.Accuracy.BestForNavigation,
       });
       this.latest = fromExpoPosition(pos);
       this.patchSnapshot({

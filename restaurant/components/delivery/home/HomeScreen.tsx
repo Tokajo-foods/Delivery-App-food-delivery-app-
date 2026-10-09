@@ -72,10 +72,7 @@ import {
   useLastLocation,
   useSaveHomeLocation,
 } from '@/lib/delivery-partner/tracking-hooks';
-import {
-  formatLocationAge,
-  LOCATION_ERROR_COPY,
-} from '@/lib/delivery-partner/tracking-types';
+import { LOCATION_ERROR_COPY } from '@/lib/delivery-partner/tracking-types';
 import {
   formatGoOnlineError,
   getGoOnlineBlocker,
@@ -91,6 +88,8 @@ import {
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
 import { formatTripError } from '@/lib/delivery-partner/rider-ack';
 import type { PartnerDelivery } from '@/lib/delivery-partner/types';
+import { askToEnableLocation } from '@/lib/delivery-partner/live-place';
+import { useLivePlaceSnapshot } from '@/lib/delivery-partner/live-place-store';
 import { getApiErrorCode, getApiErrorMessage } from '@/lib/errors';
 
 const LIVE_LOCATION_STORAGE_KEY = '@tokajo/partner-live-location';
@@ -123,6 +122,7 @@ export function DeliveryHomeScreen() {
   const { startBreak, endBreak, extendBreak, setDutyStatus, checkOutHub } =
     usePartnerDutyMutations();
   const gpsSnap = useLocationSyncSnapshot();
+  const livePlace = useLivePlaceSnapshot();
   const saveHome = useSaveHomeLocation();
   const lastLocation = useLastLocation(true);
   const authUser = useAuthStore((s) => s.user);
@@ -226,6 +226,17 @@ export function DeliveryHomeScreen() {
   };
 
   const onToggleOnline = () => {
+    if (!isOnline) {
+      void askToEnableLocation().then((ready) => {
+        if (!ready) return;
+        continueToggleOnline();
+      });
+      return;
+    }
+    continueToggleOnline();
+  };
+
+  const continueToggleOnline = () => {
     if (onDelivery) {
       Alert.alert(
         'Active delivery',
@@ -434,15 +445,13 @@ export function DeliveryHomeScreen() {
     }
   };
 
-  const gpsAge = formatLocationAge(
-    lastLocation.data?.updatedAt,
-    lastLocation.data?.ageSeconds
-  );
   const locationChip =
-    liveLocation?.label ??
-    (gpsSnap?.coords || lastLocation.data
-      ? `Sharing GPS${gpsAge ? ` Â· ${gpsAge}` : ''}`
-      : LIVE_LOCATION_FALLBACK);
+    livePlace.label ??
+    (livePlace.servicesOn === false
+      ? 'Turn on location'
+      : livePlace.locating
+        ? 'Finding your location…'
+        : LIVE_LOCATION_FALLBACK);
 
   const gpsBanner = (() => {
     if (!isOnline || !gpsSnap) return null;
@@ -602,7 +611,13 @@ export function DeliveryHomeScreen() {
           </View>
           <View style={styles.headerRow}>
             <Pressable
-              onPress={() => setMapOpen(true)}
+              onPress={() => {
+                if (livePlace.servicesOn === false) {
+                  void askToEnableLocation();
+                  return;
+                }
+                setMapOpen(true);
+              }}
               style={styles.locationBtn}
               accessibilityRole="button"
               accessibilityLabel="Set live location"

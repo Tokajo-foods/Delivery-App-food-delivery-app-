@@ -1444,7 +1444,7 @@ async function getCurrentPartnerCoords(): Promise<PartnerGpsCoords> {
   }
 
   const pos = await Location.getCurrentPositionAsync({
-    accuracy: Location.Accuracy.Balanced,
+      accuracy: Location.Accuracy.BestForNavigation,
   });
 
   const latitude = pos.coords.latitude;
