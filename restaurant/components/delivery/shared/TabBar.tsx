@@ -123,6 +123,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     fontSize: 11,
     color: IDLE,
+    textAlign: 'center',
+    marginLeft: 3,
   },
   labelActive: {
     fontFamily: fonts.bold,
