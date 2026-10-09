@@ -38,23 +38,13 @@ export const styles = StyleSheet.create({
     gap: 14,
   },
   logoRow: {
-    width: 156,
-    alignSelf: 'center',
-    alignItems: 'flex-end',
-    gap: 0,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logo: {
     width: 156,
     height: 40,
-  },
-  logoCaption: {
-    marginTop: -2,
-    marginRight: 6,
-    fontFamily: 'GreatVibes_400Regular',
-    fontSize: 26,
-    lineHeight: 28,
-    letterSpacing: 0.4,
-    color: '#EA4B14',
   },
   headerRow: {
     flexDirection: 'row',

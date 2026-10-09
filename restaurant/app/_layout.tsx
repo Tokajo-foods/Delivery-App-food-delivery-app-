@@ -10,7 +10,6 @@ import {
   PlusJakartaSans_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/plus-jakarta-sans';
-import { GreatVibes_400Regular } from '@expo-google-fonts/great-vibes';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -45,7 +44,6 @@ export default function RootLayout() {
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
     PlusJakartaSans_800ExtraBold,
-    GreatVibes_400Regular,
   });
   const [fontWaitDone, setFontWaitDone] = useState(false);
   const [isColdStart] = useState(() => shouldShowColdStartSplash());
