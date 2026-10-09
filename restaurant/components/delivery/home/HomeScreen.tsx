@@ -788,8 +788,12 @@ export function DeliveryHomeScreen() {
         {/* Key stats â€” performance API */}
         <View style={styles.statsRow}>
           <View style={styles.stat}>
-            <Text style={styles.statValue}>{totalDeliveries}</Text>
-            <Text style={styles.statLabel}>Deliveries</Text>
+            <Text style={styles.statValue} numberOfLines={1}>
+              {totalDeliveries}
+            </Text>
+            <Text style={styles.statLabel} numberOfLines={1}>
+              Deliveries
+            </Text>
           </View>
           <Pressable
             style={styles.stat}
@@ -797,15 +801,21 @@ export function DeliveryHomeScreen() {
           >
             <View style={styles.statValueRow}>
               <Star color={authTheme.brand} size={13} fill={authTheme.brand} />
-              <Text style={styles.statValue}>{formatRating(avgRating)}</Text>
+              <Text style={styles.statValue} numberOfLines={1}>
+                {formatRating(avgRating)}
+              </Text>
             </View>
-            <Text style={styles.statLabel}>Rating</Text>
+            <Text style={styles.statLabel} numberOfLines={1}>
+              Rating
+            </Text>
           </Pressable>
           <View style={styles.stat}>
-            <Text style={styles.statValue}>
+            <Text style={styles.statValue} numberOfLines={1}>
               {formatPercent(completionRate)}
             </Text>
-            <Text style={styles.statLabel}>Completion</Text>
+            <Text style={styles.statLabel} numberOfLines={1}>
+              Completion
+            </Text>
           </View>
         </View>
 
@@ -814,6 +824,7 @@ export function DeliveryHomeScreen() {
           <Text style={styles.sectionTitle}>Services</Text>
           <ScrollView
             horizontal
+            style={styles.servicesRail}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.moreScroll}
           >

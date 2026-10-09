@@ -267,16 +267,21 @@ export const styles = StyleSheet.create({
   /* ---------- Quick stats ---------- */
   statsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    alignItems: 'stretch',
+    gap: 8,
+    width: '100%',
   },
   stat: {
     flex: 1,
+    flexBasis: 0,
+    minWidth: 0,
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    paddingVertical: 16,
-    gap: 5,
+    paddingVertical: 14,
+    paddingHorizontal: 4,
+    gap: 4,
     borderWidth: 1,
     borderColor: CARD_BORDER,
     ...SOFT_SHADOW,
@@ -284,18 +289,22 @@ export const styles = StyleSheet.create({
   statValueRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
+    gap: 3,
+    maxWidth: '100%',
   },
   statValue: {
     fontFamily: fonts.extraBold,
-    fontSize: 18,
+    fontSize: 16,
     color: authTheme.text,
     letterSpacing: -0.3,
+    textAlign: 'center',
   },
   statLabel: {
     fontFamily: fonts.medium,
-    fontSize: 11.5,
+    fontSize: 11,
     color: authTheme.textMuted,
+    textAlign: 'center',
   },
 
   /* ---------- Performance card ---------- */
@@ -395,6 +404,10 @@ export const styles = StyleSheet.create({
   },
 
   /* ---------- Services rail ---------- */
+  servicesRail: {
+    width: '100%',
+    flexGrow: 0,
+  },
   moreScroll: {
     gap: 12,
     paddingVertical: 2,
