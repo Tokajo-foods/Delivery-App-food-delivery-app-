@@ -35,7 +35,7 @@ export const styles = StyleSheet.create({
     marginHorizontal: -16,
     paddingHorizontal: 16,
     paddingBottom: 2,
-    gap: 8,
+    gap: 14,
   },
   logoRow: {
     height: 40,
