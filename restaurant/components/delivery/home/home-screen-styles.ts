@@ -50,9 +50,9 @@ export const styles = StyleSheet.create({
   logoCaption: {
     marginTop: -2,
     marginRight: 1,
-    fontFamily: 'Caveat_600SemiBold',
-    fontSize: 20,
-    lineHeight: 22,
+    fontFamily: 'GreatVibes_400Regular',
+    fontSize: 22,
+    lineHeight: 24,
     color: '#EA4B14',
   },
   headerRow: {
