@@ -61,6 +61,7 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 4,
     marginLeft: '-2%',
+    maxWidth: '88%',
   },
   locKicker: {
     fontFamily: fonts.bold,
