@@ -43,7 +43,13 @@ export function useAutoLivePlace(enabled: boolean, isOnline: boolean) {
       try {
         const label = await labelForCoords(latitude, longitude);
         if (!alive) return;
-        patchLivePlace({ label, locating: false, servicesOn: true });
+        patchLivePlace({
+          label,
+          latitude,
+          longitude,
+          locating: false,
+          servicesOn: true,
+        });
         try {
           await deliveryPartnerApi.pushLocation({
             latitude,

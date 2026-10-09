@@ -2,7 +2,7 @@ import * as Location from 'expo-location';
 import { Alert, Linking, Platform } from 'react-native';
 
 import { reverseGeocodeAddress } from '@/lib/address/search';
-import { shortAddressLabel } from '@/lib/location/format';
+import { stripPlusCodes } from '@/lib/location/parse-address';
 
 export type GpsRead =
   | { ok: true; latitude: number; longitude: number; accuracy: number | null }
@@ -40,9 +40,9 @@ export async function readAccurateGps(): Promise<GpsRead> {
 
 export async function labelForCoords(latitude: number, longitude: number) {
   const geo = await reverseGeocodeAddress({ lat: latitude, lng: longitude });
-  const formatted = geo?.formattedAddress?.trim();
+  const formatted = stripPlusCodes(geo?.formattedAddress?.trim() ?? '');
   if (!formatted) return 'Current location';
-  return shortAddressLabel(formatted, 'gps');
+  return formatted;
 }
 
 /** System location dialog on Android, settings alert on iOS. */

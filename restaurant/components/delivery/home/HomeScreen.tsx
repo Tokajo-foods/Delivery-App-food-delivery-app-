@@ -452,6 +452,10 @@ export function DeliveryHomeScreen() {
       : livePlace.locating
         ? 'Finding your location…'
         : LIVE_LOCATION_FALLBACK);
+  const coordLine =
+    livePlace.latitude != null && livePlace.longitude != null
+      ? `${livePlace.latitude.toFixed(6)}, ${livePlace.longitude.toFixed(6)}`
+      : null;
 
   const gpsBanner = (() => {
     if (!isOnline || !gpsSnap) return null;
@@ -627,9 +631,14 @@ export function DeliveryHomeScreen() {
               </Text>
               <View style={styles.dhLocInline}>
                 <MapPin color="#EA4B14" size={14} strokeWidth={2.4} />
-                <Text style={styles.locTitle} numberOfLines={1}>
-                  {locationChip}
-                </Text>
+                <View style={styles.locCopy}>
+                  <Text style={styles.locTitle}>
+                    {locationChip}
+                  </Text>
+                  {coordLine ? (
+                    <Text style={styles.locCoords}>{coordLine}</Text>
+                  ) : null}
+                </View>
               </View>
             </Pressable>
             <Pressable

@@ -2,12 +2,16 @@ import { useSyncExternalStore } from 'react';
 
 export type LivePlaceSnapshot = {
   label: string | null;
+  latitude: number | null;
+  longitude: number | null;
   locating: boolean;
   servicesOn: boolean | null;
 };
 
 const EMPTY: LivePlaceSnapshot = {
   label: null,
+  latitude: null,
+  longitude: null,
   locating: false,
   servicesOn: null,
 };
