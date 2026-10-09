@@ -606,10 +606,12 @@ export function DeliveryHomeScreen() {
               accessibilityRole="button"
               accessibilityLabel="Set live location"
             >
-              <MapPin color="#EA4B14" size={18} strokeWidth={2.4} />
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={styles.locKicker}>You're in</Text>
-                <Text style={styles.locTitle} numberOfLines={2}>
+              <Text style={styles.greeting} numberOfLines={1}>
+                Hi, {displayName.split(' ')[0] || 'Partner'}
+              </Text>
+              <View style={styles.dhLocInline}>
+                <MapPin color="#EA4B14" size={14} strokeWidth={2.4} />
+                <Text style={styles.locTitle} numberOfLines={1}>
                   {locationChip}
                 </Text>
               </View>
@@ -634,9 +636,6 @@ export function DeliveryHomeScreen() {
               {(unread.data ?? 0) > 0 ? <View style={styles.dhBellDot} /> : null}
             </Pressable>
           </View>
-          <Text style={styles.greeting} numberOfLines={1}>
-            Hi, {displayName.split(' ')[0] || 'Partner'}
-          </Text>
         </View>
 
         <DutyControlCard
@@ -822,28 +821,26 @@ export function DeliveryHomeScreen() {
         {/* Services */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Services</Text>
-          <ScrollView
-            horizontal
-            style={styles.servicesRail}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.moreScroll}
-          >
+          <View style={styles.serviceGrid}>
             {MORE_FEATURES.map((item) => {
               const Icon = item.icon;
               return (
-                <Pressable
-                  key={item.key}
-                  onPress={() => router.push(item.href)}
-                  style={styles.moreCard}
-                >
-                  <View style={styles.moreIcon}>
-                    <Icon color="#EA4B14" size={24} strokeWidth={1.5} />
-                  </View>
-                  <Text style={styles.moreLabel}>{item.label}</Text>
-                </Pressable>
+                <View key={item.key} style={styles.serviceSlot}>
+                  <Pressable
+                    onPress={() => router.push(item.href)}
+                    style={styles.moreCard}
+                  >
+                    <View style={styles.moreIcon}>
+                      <Icon color="#EA4B14" size={20} strokeWidth={1.8} />
+                    </View>
+                    <Text style={styles.moreLabel} numberOfLines={1}>
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                </View>
               );
             })}
-          </ScrollView>
+          </View>
         </View>
 
         {/* Performance */}

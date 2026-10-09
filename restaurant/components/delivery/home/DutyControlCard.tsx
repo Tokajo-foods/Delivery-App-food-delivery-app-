@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     borderColor: '#F1EAE3',
     paddingVertical: 14,
     paddingHorizontal: 16,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   info: { flex: 1, paddingRight: 8 },
   hint: {
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 0,
   },
   summaryCell: {
     flex: 1,

@@ -19,7 +19,7 @@ const SOFT_SHADOW = {
 export const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F6F3F0',
   },
   centered: {
     alignItems: 'center',
@@ -28,7 +28,7 @@ export const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   scroll: {
     paddingHorizontal: 16,
-    gap: 20,
+    gap: 12,
   },
 
   topWash: {
@@ -41,17 +41,17 @@ export const styles = StyleSheet.create({
   header: {
     marginHorizontal: -16,
     paddingHorizontal: 16,
-    paddingBottom: 6,
-    gap: 16,
+    paddingBottom: 2,
+    gap: 8,
   },
   logoRow: {
-    height: 48,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   logo: {
-    width: 176,
-    height: 46,
+    width: 156,
+    height: 40,
   },
   headerRow: {
     flexDirection: 'row',
@@ -61,9 +61,12 @@ export const styles = StyleSheet.create({
   locationBtn: {
     flex: 1,
     minWidth: 0,
+    gap: 2,
+  },
+  dhLocInline: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
+    alignItems: 'center',
+    gap: 4,
   },
   locKicker: {
     fontFamily: fonts.bold,
@@ -71,16 +74,16 @@ export const styles = StyleSheet.create({
     color: '#EA4B14',
   },
   locTitle: {
-    marginTop: 1,
-    fontFamily: fonts.semiBold,
-    fontSize: 14,
+    flex: 1,
+    fontFamily: fonts.medium,
+    fontSize: 13,
     lineHeight: 18,
     color: '#4B5563',
   },
   greeting: {
     fontFamily: fonts.extraBold,
-    fontSize: 22,
-    letterSpacing: -0.4,
+    fontSize: 18,
+    letterSpacing: -0.3,
     color: authTheme.text,
   },
   iconBtn: {
@@ -129,9 +132,9 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderWidth: 1,
     borderColor: CARD_BORDER,
     ...SOFT_SHADOW,
@@ -147,18 +150,18 @@ export const styles = StyleSheet.create({
   dhEarnAmount: {
     color: '#EA4B14',
     fontFamily: fonts.extraBold,
-    fontSize: 32,
-    letterSpacing: -0.8,
-    marginTop: 2,
+    fontSize: 28,
+    letterSpacing: -0.6,
+    marginTop: 1,
   },
   scooterImg: {
-    width: 112,
-    height: 84,
+    width: 96,
+    height: 72,
   },
 
   /* ---------- Sections ---------- */
   section: {
-    gap: 10,
+    gap: 8,
   },
   sectionRow: {
     flexDirection: 'row',
@@ -382,8 +385,8 @@ export const styles = StyleSheet.create({
   },
   emptyHistory: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 30,
+    borderRadius: 18,
+    paddingVertical: 18,
     paddingHorizontal: 16,
     alignItems: 'center',
     gap: 6,
@@ -403,33 +406,32 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  /* ---------- Services rail ---------- */
-  servicesRail: {
-    width: '100%',
-    flexGrow: 0,
+  /* ---------- Services grid ---------- */
+  serviceGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -5,
   },
-  moreScroll: {
-    gap: 12,
-    paddingVertical: 2,
-    paddingRight: 4,
+  serviceSlot: {
+    width: '25%',
+    paddingHorizontal: 5,
+    paddingBottom: 10,
   },
   moreCard: {
-    width: 96,
-    paddingHorizontal: 10,
-    paddingVertical: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    gap: 8,
     borderWidth: 1,
     borderColor: CARD_BORDER,
-    ...SOFT_SHADOW,
   },
   moreIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFF1E8',
