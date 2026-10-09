@@ -38,13 +38,19 @@ export const styles = StyleSheet.create({
     gap: 14,
   },
   logoRow: {
-    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 2,
   },
   logo: {
     width: 156,
     height: 40,
+  },
+  logoCaption: {
+    fontFamily: fonts.bold,
+    fontSize: 11,
+    letterSpacing: 3.4,
+    color: '#EA4B14',
   },
   headerRow: {
     flexDirection: 'row',
