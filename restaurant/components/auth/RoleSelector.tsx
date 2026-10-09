@@ -25,8 +25,8 @@ export function RoleSelector({ value, onChange, disabled }: RoleSelectorProps) {
             <Text
               className={`text-sm ${
                 active
-                  ? 'font-bold text-secondary'
-                  : 'font-semibold text-secondary-light'
+                  ? 'font-semibold text-secondary'
+                  : 'font-medium text-secondary-light'
               }`}
             >
               {role.label}
