@@ -435,11 +435,7 @@ const styles = StyleSheet.create({
   },
   summaryCell: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#F1EAE3',
-    paddingVertical: 14,
+    paddingVertical: 4,
     paddingHorizontal: 6,
     alignItems: 'center',
   },

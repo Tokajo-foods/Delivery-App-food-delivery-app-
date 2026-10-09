@@ -833,7 +833,7 @@ export function DeliveryHomeScreen() {
                     <View style={styles.moreIcon}>
                       <Icon color="#EA4B14" size={20} strokeWidth={1.8} />
                     </View>
-                    <Text style={styles.moreLabel} numberOfLines={1}>
+                    <Text style={styles.moreLabel} numberOfLines={2}>
                       {item.label}
                     </Text>
                   </Pressable>
