@@ -1106,7 +1106,7 @@ export function isAssignableStatus(status: string) {
   return s === 'assigned';
 }
 
-/** Wallet credit on delivered (trip pay) or returned (RTO fee). */
+/** Wallet credit on delivered or returned (full trip pay). */
 export function tripCreditsEarnings(status?: string) {
   const s = normalizeDeliveryStatus(status ?? '');
   return s === 'delivered' || s === 'returned';

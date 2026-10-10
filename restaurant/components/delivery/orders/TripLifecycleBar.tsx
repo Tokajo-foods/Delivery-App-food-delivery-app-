@@ -556,7 +556,15 @@ export function TripLifecycleBar({
       );
       setSheet(null);
       setNote('');
-      Alert.alert('Issue reported', 'Dispatch can see this on the trip.');
+      const foodOut = ['picked_up', 'out_for_delivery', 'at_customer', 'arrived_at_customer'].includes(
+        normalize(delivery.status)
+      );
+      Alert.alert(
+        foodOut ? 'Return the order' : 'Issue reported',
+        foodOut
+          ? 'Take the food back to the restaurant to finish this trip. You are paid the full amount shown on this order when the kitchen receives it. If you do not return the food, your account is suspended for 1 day.'
+          : 'Issue saved. After you pick up the food, a report means you must return it to the restaurant.',
+      );
     } catch {
       // alerted
     }
@@ -671,9 +679,11 @@ export function TripLifecycleBar({
       );
       setSheet(null);
       setNote('');
+      const profile = await deliveryPartnerApi.getMe().catch(() => null);
       Alert.alert(
-        'Trip failed',
-        'This delivery is closed and will not pay a trip earning. Duty is restored.'
+        'Account suspended',
+        profile?.suspendReason ||
+          'The food was not returned to the restaurant. Your account is suspended for 1 day.',
       );
     } catch {
       // alerted
@@ -949,12 +959,11 @@ export function TripLifecycleBar({
       {status === 'returning_to_restaurant' ? (
         <View style={styles.group}>
           <Text style={styles.waitText}>
-            Take the food back to the restaurant. Do not collect cash.
+            Take the food back to the restaurant to finish this trip. If you do not return it, your account is suspended for 1 day. Do not collect cash.
           </Text>
           {delivery.rtoFee && delivery.rtoFee > 0 ? (
             <Text style={styles.waitText}>
-              You’ll earn ₹{Math.round(delivery.rtoFee)} for returning this
-              order.
+              You’ll be paid ₹{Math.round(delivery.rtoFee)}, the full amount shown for this trip, when the kitchen receives the food.
             </Text>
           ) : null}
           {step === 'return_store' ? (
@@ -1332,7 +1341,7 @@ export function TripLifecycleBar({
                 ? 'Attempt 2 starts a 5-minute wait. Then you can return the order.'
                 : sheet === 'return'
                   ? 'Customer refused returns immediately. Other reasons need two contact attempts and the timer.'
-                  : 'Only if the restaurant will not take the bag. There is no RTO fee on failed.'}
+                  : 'Only if the restaurant will not take the bag. Your account is suspended for 1 day because the food was not returned.'}
             </Text>
             {sheet === 'rto' ? (
               <View style={styles.chips}>

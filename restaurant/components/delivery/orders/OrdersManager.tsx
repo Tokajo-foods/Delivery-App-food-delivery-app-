@@ -1195,7 +1195,7 @@ function HistoryRow({
           {deliveryStatusLabel(delivery.status)}
           {normalizeDeliveryStatus(delivery.status) === 'returned' &&
           delivery.rtoFee
-            ? ` · RTO ₹${Math.round(delivery.rtoFee)}`
+            ? ` · Paid ₹${Math.round(delivery.rtoFee)}`
             : ''}
         </Text>
       </View>

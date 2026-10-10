@@ -469,7 +469,7 @@ function ActiveTripBody({
             {earn ? (
               <View style={styles.earnPill}>
                 <Text style={styles.earnKicker}>
-                  {phase === 'return' ? 'RTO fee' : 'Est. earn'}
+                  {phase === 'return' ? 'Trip pay' : 'Est. earn'}
                 </Text>
                 <Text style={styles.earnValue}>{earn}</Text>
               </View>

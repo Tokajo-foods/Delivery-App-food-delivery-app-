@@ -165,11 +165,9 @@ export function TripDetailSheet({
                     </Text>
                   ) : money(delivery.earning, delivery.currency) ? (
                     <Text style={styles.earn}>
-                      {normalizeDeliveryStatus(delivery.status) === 'returned'
-                        ? 'RTO fee '
-                        : tripCreditsEarnings(delivery.status)
-                          ? 'Earned '
-                          : 'Est. '}
+                      {tripCreditsEarnings(delivery.status)
+                        ? 'Earned '
+                        : 'Est. '}
                       {money(delivery.earning, delivery.currency)}
                     </Text>
                   ) : null}

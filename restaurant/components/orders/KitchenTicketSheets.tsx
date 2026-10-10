@@ -484,8 +484,8 @@ export function RiderHandoverCard({
         </Text>
         {handover?.rtoFee != null && handover.rtoFee > 0 ? (
           <Text style={styles.copy}>
-            Rider RTO fee ₹{Math.round(handover.rtoFee)} (platform pays the
-            rider — do not collect cash).
+            Rider is paid ₹{Math.round(handover.rtoFee)} for this return
+            (the full trip amount — do not collect cash).
           </Text>
         ) : null}
       </View>
