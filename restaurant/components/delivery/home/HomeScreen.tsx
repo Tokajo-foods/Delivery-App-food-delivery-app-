@@ -8,7 +8,6 @@ import {
   CircleCheck,
   Flame,
   MapPin,
-  Package,
   Star,
   Timer,
 } from 'lucide-react-native';
@@ -26,6 +25,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '@/store/auth-store';
+import { HomeDeliveryHistory } from '@/components/delivery/home/HomeDeliveryHistory';
+import { TripDetailSheet } from '@/components/delivery/orders/TripDetailSheet';
 import { DutyControlCard } from '@/components/delivery/home/DutyControlCard';
 import { MORE_FEATURES } from '@/components/delivery/home/home-features';
 import { styles } from '@/components/delivery/home/home-screen-styles';
@@ -47,7 +48,6 @@ import {
 } from '@/lib/delivery-partner/analytics-hooks';
 import {
   deliveryPartnerApi,
-  deliveryStatusLabel,
 } from '@/lib/delivery-partner/api';
 import {
   formatDutyError,
@@ -80,7 +80,7 @@ import {
   useDeliveryPartnerMe,
 } from '@/lib/delivery-partner/hooks';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
-import { formatTripError } from '@/lib/delivery-partner/rider-ack';
+import type { PartnerDelivery } from '@/lib/delivery-partner/types';
 import { askToEnableLocation } from '@/lib/delivery-partner/live-place';
 import { useLivePlaceSnapshot } from '@/lib/delivery-partner/live-place-store';
 import { getApiErrorCode, getApiErrorMessage } from '@/lib/errors';
@@ -100,6 +100,7 @@ export function DeliveryHomeScreen() {
   const insets = useSafeAreaInsets();
   const [pullRefreshing, setPullRefreshing] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+  const [historyItem, setHistoryItem] = useState<PartnerDelivery | null>(null);
   const [confirmingLocation, setConfirmingLocation] = useState(false);
   const [liveLocation, setLiveLocation] = useState<SavedLiveLocation | null>(
     null
@@ -833,57 +834,21 @@ export function DeliveryHomeScreen() {
           </Pressable>
         </View>
 
-        {/* History */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Delivery history</Text>
-
-          <View style={styles.recentList}>
-            {history.isLoading && !recent.length ? (
-              <View style={[styles.orderCard, { justifyContent: 'center' }]}>
-                <ActivityIndicator color={authTheme.brand} />
-              </View>
-            ) : history.isError && !recent.length ? (
-              <Pressable
-                onPress={() => void history.refetch()}
-                style={[styles.orderCard, { flexDirection: 'column' }]}
-              >
-                <Text style={styles.emptyText}>
-                  {formatTripError(history.error, 'Could not load history. Retry')}
-                </Text>
-              </Pressable>
-            ) : recent.length ? (
-              recent.map((item) => (
-                <Pressable
-                  key={item.id}
-                  onPress={() => setDetailDelivery(item)}
-                  style={styles.orderCard}
-                >
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={styles.listLabel} numberOfLines={1}>
-                      Order #{item.orderNumber || item.orderId || item.id.slice(-6)}
-                    </Text>
-                    <Text style={styles.listTitle} numberOfLines={1}>
-                      From {item.restaurantName || 'Restaurant'}
-                      {item.customerName ? ` to ${item.customerName}` : ''}
-                    </Text>
-                  </View>
-                  <View style={styles.orderStatusPill}>
-                    <Text style={styles.orderStatusText}>
-                      {deliveryStatusLabel(item.status)}
-                    </Text>
-                  </View>
-                </Pressable>
-              ))
-            ) : (
-              <View style={styles.emptyHistory}>
-                <Package color={authTheme.textDim} size={22} />
-                <Text style={styles.emptyTitle}>No deliveries yet</Text>
-                <Text style={styles.emptyText}>Finished trips will show up here</Text>
-              </View>
-            )}
-          </View>
-        </View>
+        <HomeDeliveryHistory
+          items={recent}
+          loading={history.isLoading}
+          error={history.isError ? history.error : null}
+          onRetry={() => void history.refetch()}
+          onOpen={setHistoryItem}
+        />
       </ScrollView>
+
+      <TripDetailSheet
+        visible={historyItem != null}
+        deliveryId={historyItem?.id ?? null}
+        fallback={historyItem}
+        onClose={() => setHistoryItem(null)}
+      />
 
       <LocationMapPicker
         visible={mapOpen}

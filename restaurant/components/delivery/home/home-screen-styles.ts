@@ -392,68 +392,6 @@ export const styles = StyleSheet.create({
     color: authTheme.textMuted,
   },
 
-  /* ---------- History ---------- */
-  recentList: {
-    gap: 10,
-  },
-  orderCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    borderWidth: 1,
-    borderColor: CARD_BORDER,
-    ...SOFT_SHADOW,
-  },
-  listLabel: {
-    fontFamily: fonts.semiBold,
-    fontSize: 11,
-    color: authTheme.textDim,
-    marginBottom: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
-  listTitle: {
-    fontFamily: fonts.semiBold,
-    fontSize: 14.5,
-    color: authTheme.text,
-  },
-  orderStatusPill: {
-    backgroundColor: '#FFF1E8',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  orderStatusText: {
-    fontSize: 12,
-    fontFamily: fonts.bold,
-    color: '#EA4B14',
-  },
-  emptyHistory: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    paddingVertical: 18,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: CARD_BORDER,
-    ...SOFT_SHADOW,
-  },
-  emptyTitle: {
-    fontFamily: fonts.semiBold,
-    fontSize: 14,
-    color: authTheme.text,
-  },
-  emptyText: {
-    fontFamily: fonts.medium,
-    fontSize: 13,
-    color: authTheme.textMuted,
-    textAlign: 'center',
-  },
-
   /* ---------- Services grid ---------- */
   serviceGrid: {
     flexDirection: 'row',
