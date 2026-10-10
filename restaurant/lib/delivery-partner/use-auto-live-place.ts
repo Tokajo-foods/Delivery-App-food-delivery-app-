@@ -1,6 +1,6 @@
 import * as Location from 'expo-location';
 import { useEffect, useRef } from 'react';
-import { AppState } from 'react-native';
+import { Alert, AppState } from 'react-native';
 
 import { deliveryPartnerApi } from '@/lib/delivery-partner/api';
 import { useDeliveryOrderMutations } from '@/lib/delivery-partner/hooks';
@@ -17,9 +17,23 @@ import { pushLiveToast } from '@/lib/delivery-partner/live-toast-store';
 
 const SERVICE_WATCH_MS = 4000;
 
+function confirmKeepLocation(): Promise<boolean> {
+  return new Promise((resolve) => {
+    Alert.alert(
+      'Location is required',
+      'By closing the location your ID goes offline.',
+      [
+        { text: 'Stay tuned', onPress: () => resolve(true) },
+        { text: 'OK', style: 'destructive', onPress: () => resolve(false) },
+      ],
+      { cancelable: false }
+    );
+  });
+}
+
 /**
- * On enter: if location is on, reverse-geocode the GPS fix for the header.
- * If it is off, ask to turn it on. If the rider is online and location drops, go offline.
+ * While the rider is online, location must stay on.
+ * The first time it drops, ask: OK goes offline, Stay tuned keeps duty and turns location back on.
  */
 export function useAutoLivePlace(enabled: boolean, isOnline: boolean) {
   const { setOnline } = useDeliveryOrderMutations();
@@ -105,32 +119,53 @@ export function useAutoLivePlace(enabled: boolean, isOnline: boolean) {
       patchLivePlace({ servicesOn: false, locating: false });
       watch?.remove();
       watch = null;
-      if (onlineRef.current && !forcedRef.current) {
+      if (!onlineRef.current) {
+        if (promptedRef.current) return;
+        promptedRef.current = true;
+        const turnedOn = await askToEnableLocation();
+        if (turnedOn && alive) {
+          promptedRef.current = false;
+          await refreshPlace();
+        }
+        return;
+      }
+      if (forcedRef.current || promptedRef.current) return;
+      promptedRef.current = true;
+      const stayTuned = await confirmKeepLocation();
+      if (!alive || !onlineRef.current) {
+        promptedRef.current = false;
+        return;
+      }
+      if (!stayTuned) {
+        promptedRef.current = false;
         forcedRef.current = true;
         goOfflineRef.current(false, {
           onSuccess: () => {
             pushLiveToast({
-              title: "You're offline",
-              body: 'Location was turned off, so duty stopped.',
+              title: 'You are offline',
+              body: 'Location is off, so your ID is offline.',
               tone: 'warn',
             });
           },
         });
+        return;
       }
-      if (promptedRef.current) return;
-      promptedRef.current = true;
       const turnedOn = await askToEnableLocation();
+      promptedRef.current = false;
       if (turnedOn && alive) {
-        forcedRef.current = false;
-        promptedRef.current = false;
         await refreshPlace();
       }
     };
 
     const checkServices = async (refresh: boolean) => {
       const servicesOn = await Location.hasServicesEnabledAsync().catch(() => false);
+      const permission = await Location.getForegroundPermissionsAsync().catch(
+        () => null
+      );
+      const allowed = permission?.status === 'granted';
       if (!alive) return;
-      if (!servicesOn) {
+      if (!onlineRef.current) forcedRef.current = false;
+      if (!servicesOn || (onlineRef.current && !allowed)) {
         await onServicesOff();
         return;
       }
