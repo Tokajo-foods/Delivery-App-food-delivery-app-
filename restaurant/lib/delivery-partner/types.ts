@@ -101,6 +101,8 @@ export type DeliveryPartnerProfile = {
   email?: string;
   phone?: string;
   dateOfBirth?: string;
+  homeAddress?: string;
+  city?: string;
   photoUrl?: string;
   vehicleType?: string;
   vehicleNumber?: string;

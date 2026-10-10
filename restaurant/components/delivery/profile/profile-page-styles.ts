@@ -105,6 +105,11 @@ export const profilePageStyles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 14,
   },
+  statDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: '#E2E8F0',
+  },
   stat: { flex: 1, alignItems: 'center' },
   statValue: { fontFamily: fonts.bold, fontSize: 17, color: '#0F172A' },
   statLabel: {
@@ -161,11 +166,12 @@ export const profilePageStyles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 52,
     gap: 10,
+    paddingVertical: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#F4EEE8',
   },
   rowFirst: { borderTopWidth: 0 },
-  rowLabel: { width: 72, fontFamily: fonts.medium, fontSize: 13, color: '#94A3B8' },
+  rowLabel: { width: 78, fontFamily: fonts.medium, fontSize: 13, color: '#94A3B8' },
   rowValue: {
     flex: 1,
     fontFamily: fonts.semiBold,

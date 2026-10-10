@@ -39,11 +39,10 @@ type Props = {
   onKyc: () => void;
   phone: string;
   email: string;
-  name: string;
   birthday: string;
+  address: string;
   onChangePhone: () => void;
   onChangeEmail: () => void;
-  onEditName: () => void;
   vehicleTitle: string;
   vehicleMeta: string;
   onEditVehicle: () => void;
@@ -67,11 +66,12 @@ function Row({
   action?: string;
   onAction?: () => void;
   first?: boolean;
+  lines?: number;
 }) {
   return (
     <View style={[styles.row, first && styles.rowFirst]}>
       <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue} numberOfLines={1}>
+      <Text style={styles.rowValue} numberOfLines={lines ?? 1}>
         {value}
       </Text>
       {onAction ? (
@@ -174,8 +174,11 @@ export function ProfilePageView(props: Props) {
             <View style={styles.performanceDivider} />
             <View style={styles.stats}>
               <Stat value={String(s.deliveries)} label="Trips" />
+              <View style={styles.statDivider} />
               <Stat value={Number.isFinite(s.rating) ? s.rating.toFixed(1) : '0.0'} label="Rating" />
+              <View style={styles.statDivider} />
               <Stat value={formatPercent(s.completion)} label="Done" />
+              <View style={styles.statDivider} />
               <Stat value={formatPercent(s.acceptance)} label="Accept" />
             </View>
             {s.docLine ? (
@@ -189,10 +192,10 @@ export function ProfilePageView(props: Props) {
 
           <Text style={styles.groupLabel}>Account</Text>
           <View style={styles.card}>
-            <Row first label="Phone" value={s.phone} action="Change" onAction={s.onChangePhone} />
-            <Row label="Email" value={s.email} action="Change" onAction={s.onChangeEmail} />
-            <Row label="Name" value={s.name} action="Edit" onAction={s.onEditName} />
+            <Row first label="Email" value={s.email} action="Change" onAction={s.onChangeEmail} />
+            <Row label="Phone" value={s.phone} action="Change" onAction={s.onChangePhone} />
             <Row label="Birthday" value={s.birthday} />
+            <Row label="Address" value={s.address} lines={2} />
           </View>
 
           <Text style={styles.groupLabel}>Vehicle</Text>

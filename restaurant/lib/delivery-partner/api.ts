@@ -975,6 +975,8 @@ function mapPartner(raw: unknown): DeliveryPartnerProfile {
       'birthDate',
       'birthday',
     ]),
+    homeAddress: pickString(source, ['homeAddress', 'address', 'fullAddress']),
+    city: pickString(source, ['city']),
     photoUrl,
     vehicleType,
     vehicleNumber,

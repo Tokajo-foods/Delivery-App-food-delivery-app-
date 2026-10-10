@@ -153,15 +153,12 @@ export function usePartnerProfileScreen() {
       onKyc: () => router.push(DELIVERY_ROUTES.documents),
       phone: dash(accountPhone),
       email: dash(accountEmail || profile?.email),
-      name: dash(
-        [platform?.firstName || profile?.firstName, platform?.lastName || profile?.lastName]
-          .filter(Boolean)
-          .join(' ') || displayName
-      ),
       birthday: dash(profile?.dateOfBirth),
+      address: dash(
+        [profile?.homeAddress, profile?.city].filter(Boolean).join(', ')
+      ),
       onChangePhone: () => setContactKind('phone'),
       onChangeEmail: () => setContactKind('email'),
-      onEditName: () => editor.openEdit('personal'),
       vehicleTitle: vehicleLabel(vehicleTypeRaw),
       vehicleMeta: vehicleBits.length ? vehicleBits.join(' · ') : 'Add your vehicle details',
       onEditVehicle: () => editor.openEdit('vehicle'),
