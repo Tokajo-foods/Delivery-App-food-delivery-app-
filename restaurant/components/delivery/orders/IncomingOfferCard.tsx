@@ -81,7 +81,7 @@ export function IncomingOfferCard({
               styles.timerFill,
               {
                 width: `${Math.round(progress * 100)}%`,
-                backgroundColor: urgent ? '#EF4444' : '#22C55E',
+                backgroundColor: urgent ? '#B91C1C' : '#EA4B14',
               },
             ]}
           />
@@ -96,14 +96,6 @@ export function IncomingOfferCard({
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        {urgent ? (
-          <View style={styles.expiringBanner}>
-            <Text style={styles.expiringText}>
-              Hurry — offer expires in {seconds}s
-            </Text>
-          </View>
-        ) : null}
-
         <OfferPayoutHeader
           offer={offer}
           stacked={stacked}

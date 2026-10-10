@@ -22,86 +22,18 @@ export function OfferPayoutHeader({
   stackEarnings,
 }: Props) {
   const earnings = stackEarnings ?? resolveOfferEarnings(offer);
-  const hasIncentive = Boolean(earnings?.showIncentive && (earnings?.incentive ?? 0) > 0);
-  const deliveryFee =
-    offer.deliveryFee != null && Number.isFinite(offer.deliveryFee)
-      ? offer.deliveryFee
-      : null;
+  const bonus = earnings?.showIncentive ? earnings.incentive : 0;
 
   return (
     <View style={styles.payoutBlock}>
       <Text style={styles.kicker}>
-        {stacked ? 'Stacked delivery request' : 'New delivery request'}
+        {stacked ? `${stackCount ?? 2} orders together` : 'New order'}
       </Text>
-
       <Text style={styles.payout}>
-        {earnings ? formatInr(earnings.netTotal) : 'New order'}
+        {earnings ? formatInr(earnings.netTotal) : 'Earnings on accept'}
       </Text>
       <Text style={styles.payoutSub}>
-        {earnings ? 'You earn on this trip' : 'Accept to view trip earnings'}
-      </Text>
-
-      {earnings ? (
-        <View style={styles.fareCard}>
-          <View style={styles.fareRow}>
-            <Text style={styles.fareLabel}>Delivery pay</Text>
-            <Text style={styles.fareValue}>{formatInr(earnings.basePay)}</Text>
-          </View>
-
-          {hasIncentive ? (
-            <View style={styles.fareRow}>
-              <Text style={[styles.fareLabel, styles.fareIncentiveLabel]}>
-                + Incentive
-              </Text>
-              <Text style={[styles.fareValue, styles.fareIncentiveValue]}>
-                {formatInr(earnings.incentive)}
-              </Text>
-            </View>
-          ) : null}
-
-          <View style={styles.fareDivider} />
-
-          <View style={styles.fareRow}>
-            <Text style={styles.fareTotalLabel}>
-              {hasIncentive ? 'Delivery + incentive' : 'Total payout'}
-            </Text>
-            <Text style={styles.fareTotalValue}>
-              {formatInr(earnings.netTotal)}
-            </Text>
-          </View>
-
-          {hasIncentive ? (
-            <Text style={styles.fareEquation}>
-              {formatInr(earnings.basePay)} + {formatInr(earnings.incentive)} ={' '}
-              {formatInr(earnings.netTotal)}
-            </Text>
-          ) : null}
-
-          {deliveryFee != null ? (
-            <Text style={styles.fareHint}>
-              From customer delivery fee {formatInr(deliveryFee)} · platform{' '}
-              {earnings.commissionPercent}%
-              {hasIncentive ? ' · incentive paid in full' : ''}
-            </Text>
-          ) : (
-            <Text style={styles.fareHint}>
-              After {earnings.commissionPercent}% platform fee
-              {hasIncentive ? ' · incentive paid in full' : ''}
-            </Text>
-          )}
-        </View>
-      ) : null}
-
-      <Text style={styles.meta}>
-        {[
-          stacked ? `${stackCount ?? 2} orders` : null,
-          offer.broadcast ? 'Broadcast offer' : 'Offered to you',
-          offer.searchRadiusKm != null
-            ? `Search ${offer.searchRadiusKm} km`
-            : null,
-        ]
-          .filter(Boolean)
-          .join(' · ')}
+        {bonus > 0 ? `Includes ${formatInr(bonus)} extra` : 'You earn this trip'}
       </Text>
     </View>
   );
