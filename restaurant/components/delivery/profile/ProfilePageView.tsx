@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PlatformAccountSection } from '@/components/delivery/profile/PlatformAccountSection';
 import { profilePageStyles as styles } from '@/components/delivery/profile/profile-page-styles';
 import { PARTNER_BOTTOM_NAV_INSET } from '@/constants/auth-theme';
-import { formatPercent, formatRating } from '@/lib/delivery-partner/analytics-api';
+import { formatPercent } from '@/lib/delivery-partner/analytics-api';
 import type { PartnerVerificationBadge } from '@/lib/delivery-partner/go-online-guard';
 
 type Props = {
@@ -131,6 +131,10 @@ export function ProfilePageView(props: Props) {
       ) : (
         <>
           <View style={styles.hero}>
+            <View style={styles.idBand}>
+              <Text style={styles.idBrand}>TOKAJO</Text>
+              <Text style={styles.idRole}>Delivery partner</Text>
+            </View>
             <View style={styles.identity}>
               <View style={styles.avatarWrap}>
                 {s.photoUrl ? (
@@ -149,11 +153,10 @@ export function ProfilePageView(props: Props) {
                 </Pressable>
               </View>
               <View style={styles.identityBody}>
+                <Text style={styles.idKicker}>Partner ID</Text>
+                <Text style={styles.idCode}>{s.partnerId}</Text>
                 <Text style={styles.name} numberOfLines={2}>
                   {s.displayName}
-                </Text>
-                <Text style={styles.meta} numberOfLines={1}>
-                  {formatRating(s.rating)} rating · ID {s.partnerId}
                 </Text>
                 <View style={styles.pills}>
                   <View style={[styles.pill, { backgroundColor: s.online ? '#DCFCE7' : '#F1F5F9' }]}>
