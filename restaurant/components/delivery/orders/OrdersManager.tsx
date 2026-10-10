@@ -50,6 +50,7 @@ import {
   useDeliveryPartnerMe,
   useDeliveryTimeline,
   useTripNavRoute,
+  useTripOrderContext,
 } from '@/lib/delivery-partner/hooks';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
 import { formatLocationError } from '@/lib/delivery-partner/tracking-api';
@@ -879,6 +880,14 @@ function DeliveryCard({
   const offerProgress =
     offerLeft == null ? 1 : Math.min(1, Math.max(0, offerLeft / offerTotal));
 
+  const orderCtx = useTripOrderContext(delivery.id, live || isNew);
+  const namedCustomer =
+    orderCtx.data?.customerName?.trim() ||
+    (stops.customerName &&
+    dropLabel &&
+    stops.customerName.trim() !== dropLabel.trim()
+      ? stops.customerName.trim()
+      : '');
   const headingToCustomer =
     status === 'picked_up' ||
     status === 'out_for_delivery' ||
@@ -1008,7 +1017,7 @@ function DeliveryCard({
           <View style={styles.stopBody}>
             <Text style={styles.stopLabel}>DROP-OFF</Text>
             <Text style={styles.stopTitle}>
-              {stops.customerName}
+              {namedCustomer || 'Customer'}
             </Text>
             {stops.dropKmLabel ? (
               <Text style={styles.stopKm}>{stops.dropKmLabel}</Text>
@@ -1049,7 +1058,7 @@ function DeliveryCard({
           </Pressable>
         </View>
       ) : live ? (
-        <View style={{ gap: 10 }}>
+        <View style={styles.liveActions}>
           <TripLifecycleBar
             delivery={delivery}
             geoBlocked={geoBlocked}
@@ -1368,11 +1377,10 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   placeTitle: {
-    fontFamily: fonts.extraBold,
-    fontSize: 22,
-    lineHeight: 28,
-    color: '#0F172A',
-    letterSpacing: -0.3,
+    fontFamily: fonts.bold,
+    fontSize: 20,
+    lineHeight: 26,
+    color: '#475569',
   },
   earnLine: {
     fontFamily: fonts.bold,
@@ -1612,7 +1620,7 @@ const styles = StyleSheet.create({
   stopTitle: {
     fontFamily: fonts.bold,
     fontSize: 15,
-    color: '#000000',
+    color: '#334155',
   },
   stopAddr: {
     fontFamily: fonts.medium,
@@ -1644,10 +1652,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#C2410C',
   },
+  liveActions: {
+    gap: 6,
+  },
   actionRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
+    gap: 8,
   },
   declineBtn: {
     flex: 1,

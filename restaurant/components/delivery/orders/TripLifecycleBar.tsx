@@ -702,7 +702,7 @@ export function TripLifecycleBar({
   }
 
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: 6 }}>
       {busy ? (
         <View style={styles.busyRow}>
           <ActivityIndicator color="#EA4B14" size="small" />
@@ -1509,9 +1509,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   moreText: {
-    fontFamily: fonts.semiBold,
-    fontSize: 13,
-    color: '#374151',
+    flex: 1,
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#64748B',
   },
   moreDanger: {
     fontFamily: fonts.semiBold,

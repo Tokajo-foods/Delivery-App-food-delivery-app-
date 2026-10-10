@@ -464,18 +464,15 @@ export function DeliveryTripMap({
           onPress={() => openExternalNav(navTarget.point, navTarget.label)}
           style={[styles.navBtn, fill && styles.navBtnFill]}
         >
-          <Navigation color="#fff" size={14} />
+          <Navigation color="#C2410C" size={15} />
           <Text style={styles.navBtnText} numberOfLines={1}>
-            Navigate{' '}
             {navRoute?.leg === 'return' || status === 'returning_to_restaurant'
-              ? 'back to restaurant'
-              : `to ${
-                  status === 'picked_up' ||
+              ? 'Navigate back to restaurant'
+              : status === 'picked_up' ||
                   status === 'out_for_delivery' ||
                   status === 'at_customer'
-                    ? delivery.customerName || 'customer'
-                    : delivery.restaurantName || 'restaurant'
-                }`}
+                ? `Navigate to ${delivery.customerName || 'customer'}`
+                : `Navigate to ${delivery.restaurantName || 'restaurant'}`}
           </Text>
         </Pressable>
       ) : null}
@@ -555,20 +552,23 @@ const styles = StyleSheet.create({
     color: '#EA4B14',
   },
   navBtn: {
-    margin: 10,
-    marginTop: 4,
-    minHeight: 44,
-    borderRadius: 11,
-    backgroundColor: authTheme.brand,
+    marginHorizontal: 12,
+    marginTop: 8,
+    marginBottom: 12,
+    minHeight: 42,
+    borderRadius: 12,
+    backgroundColor: '#FFF1E8',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    paddingHorizontal: 12,
   },
   navBtnText: {
-    fontFamily: fonts.semiBold,
-    fontSize: 13,
-    color: '#FFFFFF',
+    flexShrink: 1,
+    fontFamily: fonts.bold,
+    fontSize: 14,
+    color: '#C2410C',
   },
   fallback: {
     minHeight: 120,
