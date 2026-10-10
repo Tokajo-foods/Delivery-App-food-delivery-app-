@@ -576,6 +576,13 @@ export function formatDutyError(error: unknown, fallback: string): string {
     error instanceof PartnerApiError
       ? error.code
       : getApiErrorCode(error);
+  if (code === 'PARTNER_SUSPENDED') {
+    const suspended =
+      error instanceof Error && error.message.trim()
+        ? error.message.trim()
+        : DUTY_ERROR_COPY.PARTNER_SUSPENDED;
+    return suspended;
+  }
   if (code && DUTY_ERROR_COPY[code]) return DUTY_ERROR_COPY[code];
   const message =
     error instanceof Error

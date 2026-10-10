@@ -110,6 +110,8 @@ export type DeliveryPartnerProfile = {
   payout?: PartnerPayoutDetails;
   stats?: PartnerProfileStats;
   status?: string;
+  suspendReason?: string;
+  suspendUntil?: string;
   dutyStatus?: PartnerDutyStatus;
   isOnline?: boolean;
   isAvailable?: boolean;

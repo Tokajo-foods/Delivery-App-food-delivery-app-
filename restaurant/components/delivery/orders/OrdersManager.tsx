@@ -412,7 +412,9 @@ export function PartnerOrdersManager() {
               </Text>
               <Text style={styles.onlineSub}>
                 {goOnlineBlocker
-                  ? goOnlineBlocker.reason === 'documents'
+                  ? goOnlineBlocker.title === 'Account suspended'
+                    ? goOnlineBlocker.message
+                    : goOnlineBlocker.reason === 'documents'
                     ? `Upload documents (${docProgress.submitted}/${docProgress.total})`
                     : goOnlineBlocker.reason === 'pending_review'
                       ? `Under review (${docProgress.verified}/${docProgress.total} verified)`
@@ -441,7 +443,8 @@ export function PartnerOrdersManager() {
           </Pressable>
         </View>
 
-        {goOnlineBlocker && !isOnline ? (
+        {goOnlineBlocker &&
+        (!isOnline || goOnlineBlocker.title === 'Account suspended') ? (
           <Pressable
             onPress={() =>
               router.push(goOnlineBlocker.actionHref as never)

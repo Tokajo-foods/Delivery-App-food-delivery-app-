@@ -1013,6 +1013,8 @@ function mapPartner(raw: unknown): DeliveryPartnerProfile {
       acceptanceRate,
     },
     status: pickString(source, ['status']),
+    suspendReason: pickString(source, ['suspendReason', 'suspensionReason']),
+    suspendUntil: pickString(source, ['suspendUntil', 'suspendedUntil']),
     dutyStatus: normalizeDutyStatus(
       pickString(source, ['dutyStatus']) ||
         pickString(availability, ['dutyStatus', 'status'])

@@ -176,12 +176,24 @@ export function getGoOnlineBlocker(
     status === 'deactivated' ||
     status === 'banned'
   ) {
+    const until = profile.suspendUntil
+      ? new Date(profile.suspendUntil).toLocaleString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+          hour: 'numeric',
+          minute: '2-digit',
+        })
+      : '';
+    const reason = profile.suspendReason?.trim();
     return {
       reason: 'inactive',
       title:
         status === 'suspended' ? 'Account suspended' : 'Account blocked',
       message:
-        'This partner account cannot go online. Contact support if you think this is a mistake.',
+        status === 'suspended'
+          ? reason ||
+            `Your account is suspended${until ? ` until ${until}` : ''}.`
+          : 'This partner account cannot go online. Contact support if you think this is a mistake.',
       actionLabel: 'Open support',
       actionHref: DELIVERY_ROUTES.support,
     };

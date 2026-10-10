@@ -612,6 +612,16 @@ export function DeliveryHomeScreen() {
           </View>
         </LinearGradient>
 
+        {goOnlineBlocker?.title === 'Account suspended' ? (
+          <View style={styles.section}>
+            <View style={styles.demandCta}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.demandCtaTitle}>{goOnlineBlocker.title}</Text>
+                <Text style={styles.demandCtaHint}>{goOnlineBlocker.message}</Text>
+              </View>
+            </View>
+          </View>
+        ) : null}
         <DutyControlCard
             snapshot={duty.data}
             fallbackStatus={dutyStatus}

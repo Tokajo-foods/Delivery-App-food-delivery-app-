@@ -16,6 +16,7 @@ import { fonts } from '@/constants/typography';
 import { OrderCallPanel } from '@/components/call/OrderCallPanel';
 import { CodUpiSheet } from '@/components/delivery/orders/CodUpiSheet';
 import {
+  deliveryPartnerApi,
   nextDeliveryAction,
   normalizeDeliveryStatus,
   resolveTripStep,
@@ -217,16 +218,15 @@ export function TripLifecycleBar({
   const atRestaurant = status === 'arrived';
   const atDrop = status === 'at_customer';
   const postAccept = status !== 'assigned';
-  const cancelUnlockAt = delivery.cancelAvailableAt
-    ? new Date(delivery.cancelAvailableAt).getTime()
-    : null;
-  const cancelUnlocked =
-    delivery.canCancel !== false &&
-    (cancelUnlockAt == null || Date.now() >= cancelUnlockAt);
+  const foodPicked =
+    status === 'picked_up' ||
+    status === 'out_for_delivery' ||
+    status === 'at_customer' ||
+    status === 'returning_to_restaurant';
   const canCancel =
-    cancelUnlocked &&
-    postAccept &&
-    status !== 'returning_to_restaurant';
+    !foodPicked &&
+    (status === 'accepted' || status === 'arrived') &&
+    delivery.canCancel !== false;
   const cancelRequiresNote =
     delivery.cancelRequiresNote === true || status === 'accepted';
   const canIssue = delivery.canReportIssue !== false && postAccept;
@@ -530,6 +530,14 @@ export function TripLifecycleBar({
       );
       setSheet(null);
       setNote('');
+      const profile = await deliveryPartnerApi.getMe().catch(() => null);
+      if (profile?.status === 'suspended') {
+        Alert.alert(
+          'Account suspended',
+          profile.suspendReason ||
+            'You cancelled 3 trips. Your account is suspended for the next 3 hours.'
+        );
+      }
     } catch {
       // alerted
     }
@@ -1035,17 +1043,6 @@ export function TripLifecycleBar({
             >
               <Text style={styles.moreDanger}>Cancel trip</Text>
             </Pressable>
-          ) : status === 'accepted' && cancelUnlockAt ? (
-            <View style={styles.unlockNote}>
-              <Text style={styles.unlockText}>
-                Cancel unlocks in{' '}
-                {Math.max(
-                  1,
-                  Math.ceil((cancelUnlockAt - Date.now()) / 60_000)
-                )}{' '}
-                min
-              </Text>
-            </View>
           ) : null}
         </View>
       ) : null}
@@ -1249,9 +1246,7 @@ export function TripLifecycleBar({
             </View>
             <Text style={styles.sub}>
               {sheet === 'cancel'
-                ? cancelRequiresNote
-                  ? 'You waited 45+ minutes heading to the store. Pick a reason and add a remark.'
-                  : 'Pre-pickup rider reasons reassign the order. After pickup this cancels the trip.'
+                ? 'Cancel is only before you pick up the food. Three cancels in a day suspends your account for 3 hours.'
                 : 'This does not change trip status. Dispatch sees it on the timeline.'}
             </Text>
             <View style={styles.chips}>
