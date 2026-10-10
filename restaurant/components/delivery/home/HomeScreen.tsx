@@ -257,10 +257,10 @@ export function DeliveryHomeScreen() {
     setOnline.mutate(!isOnline, {
       onSuccess: () => {
         pushLiveToast({
-          title: !isOnline ? 'Youâ€™re online' : 'Youâ€™re offline',
+          title: !isOnline ? 'You are online' : 'You are offline',
           body: !isOnline
             ? 'Nearby orders will start coming in.'
-            : 'You wonâ€™t receive new orders.',
+            : 'New orders will stop.',
           tone: 'success',
         });
       },
@@ -323,7 +323,7 @@ export function DeliveryHomeScreen() {
       onSuccess: () =>
         pushLiveToast({
           title: 'Break ended',
-          body: 'Youâ€™re back online for new orders.',
+          body: 'You are back online for new orders.',
           tone: 'success',
         }),
       onError: (err) =>
@@ -339,7 +339,7 @@ export function DeliveryHomeScreen() {
       onSuccess: () =>
         pushLiveToast({
           title: 'Break extended',
-          body: `Added ${additionalMinutes} min within todayâ€™s cap.`,
+          body: `Added ${additionalMinutes} min within today's cap.`,
           tone: 'info',
         }),
       onError: (err) =>
@@ -360,7 +360,7 @@ export function DeliveryHomeScreen() {
           onSuccess: () =>
             pushLiveToast({
               title: 'Back online',
-              body: 'Youâ€™ll receive nearby orders again.',
+              body: 'Nearby orders can reach you again.',
               tone: 'success',
             }),
           onError: (err) =>
@@ -376,7 +376,7 @@ export function DeliveryHomeScreen() {
       onSuccess: () =>
         pushLiveToast({
           title: 'Left hub',
-          body: 'Youâ€™re back online for new orders.',
+          body: 'You are back online for new orders.',
           tone: 'success',
         }),
       onError: (err) => {
@@ -387,7 +387,7 @@ export function DeliveryHomeScreen() {
               onSuccess: () =>
                 pushLiveToast({
                   title: 'Back online',
-                  body: 'Youâ€™ll receive nearby orders again.',
+                  body: 'Nearby orders can reach you again.',
                   tone: 'success',
                 }),
               onError: (onlineErr) =>
@@ -488,7 +488,7 @@ export function DeliveryHomeScreen() {
             textAlign: 'center',
           }}
         >
-          Couldnâ€™t load your duty profile
+          Couldn't load your duty profile
         </Text>
         <Text
           style={{
@@ -777,7 +777,7 @@ export function DeliveryHomeScreen() {
             >
               <Package color={authTheme.brand} size={18} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.demandCtaTitle}>Couldnâ€™t load active trip</Text>
+                <Text style={styles.demandCtaTitle}>Couldn't load active trip</Text>
                 <Text style={styles.demandCtaHint}>
                   {formatTripError(
                     active.error ?? actives.error,
