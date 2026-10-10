@@ -430,13 +430,14 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
   },
   ordersTitle: {
-    fontSize: 26,
-    lineHeight: 32,
-    color: '#1E293B',
-    letterSpacing: -0.5,
+    fontFamily: fonts.bold,
+    fontSize: 28,
+    color: '#0F172A',
+    letterSpacing: -0.4,
   },
   ordersSubtitle: {
     marginTop: 2,
+    fontFamily: fonts.medium,
     fontSize: 13,
     color: '#64748B',
   },
