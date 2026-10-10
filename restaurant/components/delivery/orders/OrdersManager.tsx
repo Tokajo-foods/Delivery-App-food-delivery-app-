@@ -1380,7 +1380,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     fontSize: 20,
     lineHeight: 26,
-    color: '#475569',
+    color: '#1E293B',
   },
   earnLine: {
     fontFamily: fonts.bold,

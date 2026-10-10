@@ -405,7 +405,8 @@ export function DeliveryTripMap({
           <Marker
             coordinate={displayRider}
             anchor={{ x: 0.5, y: 0.5 }}
-            tracksViewChanges={tracksPins}
+            centerOffset={{ x: 0, y: 0 }}
+            tracksViewChanges
             title="You"
             description="Your location"
           >
@@ -469,7 +470,9 @@ export function DeliveryTripMap({
           onPress={() => openExternalNav(navTarget.point, navTarget.label)}
           style={[styles.navBtn, fill && styles.navBtnFill]}
         >
-          <Navigation color="#C2410C" size={15} />
+          <View style={styles.navIcon}>
+            <Navigation color="#FFFFFF" size={16} />
+          </View>
           <Text style={styles.navBtnText} numberOfLines={1}>
             {navRoute?.leg === 'return' || status === 'returning_to_restaurant'
               ? 'Navigate back to restaurant'
@@ -558,22 +561,30 @@ const styles = StyleSheet.create({
   },
   navBtn: {
     marginHorizontal: 12,
-    marginTop: 8,
+    marginTop: 4,
     marginBottom: 12,
-    minHeight: 42,
-    borderRadius: 12,
-    backgroundColor: '#FFF1E8',
+    minHeight: 48,
+    borderRadius: 14,
+    backgroundColor: '#EA4B14',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
+    gap: 10,
+    paddingHorizontal: 14,
+  },
+  navIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   navBtnText: {
     flexShrink: 1,
     fontFamily: fonts.bold,
-    fontSize: 14,
-    color: '#C2410C',
+    fontSize: 15,
+    color: '#FFFFFF',
   },
   fallback: {
     minHeight: 120,
