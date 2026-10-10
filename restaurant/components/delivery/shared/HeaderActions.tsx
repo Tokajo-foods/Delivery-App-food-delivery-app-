@@ -14,9 +14,11 @@ import { useAuthStore } from '@/store/auth-store';
 export function DeliveryHeaderActions({
   onBrand = true,
   hideProfile = false,
+  compact = false,
 }: {
   onBrand?: boolean;
   hideProfile?: boolean;
+  compact?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -62,6 +64,7 @@ export function DeliveryHeaderActions({
         }}
         style={[
           styles.btn,
+          compact && styles.btnCompact,
           { backgroundColor: btnBg, borderColor: btnBorder },
           notifActive && styles.btnActive,
         ]}
@@ -137,6 +140,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
+  },
+  btnCompact: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   btnActive: {
     backgroundColor: 'rgba(0,0,0,0.05)',

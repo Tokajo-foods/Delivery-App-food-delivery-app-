@@ -167,24 +167,36 @@ function PageHeader({
   subtitle,
   headerRight,
   hideProfile,
+  orders = false,
 }: {
   title: string;
   subtitle: string;
   headerRight?: ReactNode;
   hideProfile?: boolean;
+  orders?: boolean;
 }) {
   return (
-    <View style={styles.pageHero}>
-      <View style={styles.topRow}>
+    <View style={[styles.pageHero, orders && styles.pageHeroOrders]}>
+      <View style={[styles.topRow, orders && styles.topRowOrders]}>
         <View style={styles.pageCopy}>
-          <Text style={styles.pageTitle} numberOfLines={1}>
+          <Text
+            style={[styles.pageTitle, orders && styles.ordersTitle]}
+            numberOfLines={1}
+          >
             {title}
           </Text>
-          <Text style={styles.pageSubtitle} numberOfLines={1}>
+          <Text
+            style={[styles.pageSubtitle, orders && styles.ordersSubtitle]}
+            numberOfLines={1}
+          >
             {subtitle}
           </Text>
         </View>
-        <DeliveryHeaderActions onBrand hideProfile={hideProfile} />
+        <DeliveryHeaderActions
+          onBrand
+          hideProfile={hideProfile}
+          compact={orders}
+        />
         {headerRight ? (
           <View style={styles.headerRight}>{headerRight}</View>
         ) : null}
@@ -224,7 +236,13 @@ function DeliveryScreenShellInner({
   return (
     <View style={[styles.screen, dark && styles.screenDark]}>
       {!hideHeader ? (
-        <View style={[styles.headerWrap, { paddingTop: insets.top + 10 }]}>
+        <View
+          style={[
+            styles.headerWrap,
+            headerTitle === 'Orders' && styles.headerWrapOrders,
+            { paddingTop: insets.top + (headerTitle === 'Orders' ? 6 : 10) },
+          ]}
+        >
           {showBrand ? (
             <HomeBrandHeader />
           ) : (
@@ -233,6 +251,7 @@ function DeliveryScreenShellInner({
               subtitle={headerSubtitle}
               headerRight={headerRight}
               hideProfile={hideProfile}
+              orders={headerTitle === 'Orders'}
             />
           )}
         </View>
@@ -270,6 +289,10 @@ const styles = StyleSheet.create({
     paddingBottom: 18,
     backgroundColor: 'transparent',
   },
+  headerWrapOrders: {
+    paddingHorizontal: 16,
+    paddingBottom: 6,
+  },
 
   homeHero: {
     gap: 0,
@@ -277,12 +300,19 @@ const styles = StyleSheet.create({
   pageHero: {
     paddingBottom: 2,
   },
+  pageHeroOrders: {
+    paddingBottom: 0,
+  },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 16,
     gap: 10,
+  },
+  topRowOrders: {
+    marginBottom: 0,
+    alignItems: 'center',
   },
   brandLeft: {
     flexDirection: 'row',
@@ -398,6 +428,17 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontSize: 12,
     fontFamily: fonts.medium,
+  },
+  ordersTitle: {
+    fontSize: 26,
+    lineHeight: 32,
+    color: '#1E293B',
+    letterSpacing: -0.5,
+  },
+  ordersSubtitle: {
+    marginTop: 2,
+    fontSize: 13,
+    color: '#64748B',
   },
   headerRight: {
     marginLeft: 2,
