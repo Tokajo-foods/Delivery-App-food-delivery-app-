@@ -163,7 +163,7 @@ export function usePartnerProfileScreen() {
       onKyc: () => router.push(DELIVERY_ROUTES.documents),
       phone: dash(accountPhone),
       email: dash(accountEmail || profile?.email),
-      birthday: dash(profile?.dateOfBirth),
+      age: dash(ageLabel(profile?.dateOfBirth)),
       address: dash(riderAddress(profile?.homeAddress, profile?.city)),
       onEditAddress: () => setAddressMapOpen(true),
       onChangePhone: () => setContactKind('phone'),
@@ -216,6 +216,18 @@ export function usePartnerProfileScreen() {
       },
     },
   };
+}
+
+function ageLabel(value?: string) {
+  if (!value?.trim()) return '';
+  const dob = new Date(value);
+  if (Number.isNaN(dob.getTime())) return '';
+  const today = new Date();
+  let years = today.getFullYear() - dob.getFullYear();
+  const month = today.getMonth() - dob.getMonth();
+  if (month < 0 || (month === 0 && today.getDate() < dob.getDate())) years -= 1;
+  if (years < 0 || years > 120) return '';
+  return `${years} years`;
 }
 
 function riderAddress(home?: string, city?: string) {

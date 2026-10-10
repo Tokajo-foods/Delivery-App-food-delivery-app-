@@ -38,7 +38,7 @@ type Props = {
   onKyc: () => void;
   phone: string;
   email: string;
-  birthday: string;
+  age: string;
   address: string;
   onEditAddress: () => void;
   onChangePhone: () => void;
@@ -191,7 +191,7 @@ export function ProfilePageView(props: Props) {
           <View style={styles.card}>
             <Row first label="Email" value={s.email} action="Change" onAction={s.onChangeEmail} />
             <Row label="Phone" value={s.phone} action="Change" onAction={s.onChangePhone} />
-            <Row label="Birthday" value={s.birthday} />
+            <Row label="Age" value={s.age} />
             <Row label="Address" value={s.address} lines={2} action="Edit" onAction={s.onEditAddress} />
             <Row label="Password" value="••••••••" action="Forgot password" onAction={s.onForgotPassword} />
           </View>
