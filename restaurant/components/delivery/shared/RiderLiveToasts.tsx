@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
 import {
   dismissLiveToast,
@@ -23,11 +24,7 @@ export function RiderLiveToasts() {
         <Pressable
           key={toast.id}
           onPress={() => dismissLiveToast(toast.id)}
-          style={[
-            styles.card,
-            toast.tone === 'success' && styles.success,
-            toast.tone === 'warn' && styles.warn,
-          ]}
+          style={[styles.card, toast.tone === 'warn' && styles.warn]}
         >
           <Text style={styles.title}>{toast.title}</Text>
           <Text style={styles.body}>{toast.body}</Text>
@@ -46,22 +43,30 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   card: {
-    backgroundColor: '#111827',
-    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
+    borderLeftWidth: 4,
+    borderLeftColor: authTheme.brand,
     paddingHorizontal: 14,
     paddingVertical: 12,
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
-  success: { backgroundColor: '#14532D' },
-  warn: { backgroundColor: '#7C2D12' },
+  warn: { borderLeftColor: '#C2410C' },
   title: {
     fontFamily: fonts.bold,
-    fontSize: 13,
-    color: '#FFFFFF',
+    fontSize: 14,
+    color: authTheme.text,
   },
   body: {
     marginTop: 2,
     fontFamily: fonts.medium,
     fontSize: 12,
-    color: 'rgba(255,255,255,0.88)',
+    color: authTheme.textMuted,
   },
 });

@@ -461,10 +461,6 @@ export function DeliveryHomeScreen() {
     if (gpsSnap.offlineBlocked) {
       return LOCATION_ERROR_COPY.PARTNER_OFFLINE;
     }
-    if (gpsSnap.stale) return 'Location outdated â€” stay in open sky.';
-    if (gpsSnap.lowAccuracy) {
-      return 'Move to open sky / better GPS.';
-    }
     if (gpsSnap.locationRequired) {
       return LOCATION_ERROR_COPY.LOCATION_REQUIRED;
     }

@@ -57,6 +57,11 @@ export const dutyStyles = StyleSheet.create({
     paddingBottom: 12,
     gap: 10,
   },
+  breakHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   breakLabel: {
     color: '#0F172A',
     fontFamily: fonts.semiBold,

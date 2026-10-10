@@ -1,10 +1,8 @@
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from '@react-native-community/datetimepicker';
 import { RotateCcw } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Switch, Text, View } from 'react-native';
 
+import { BreakTimePanel } from '@/components/delivery/home/BreakTimePanel';
 import { dutyStyles as styles } from '@/components/delivery/home/duty-control-styles';
 import {
   breakExtendMinutes,
@@ -42,19 +40,11 @@ type Props = {
   onRetrySummary?: () => void;
 };
 
-function clockLabel(date: Date) {
-  return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
-}
-
 function clockFromIso(iso?: string | null) {
   if (!iso) return null;
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return null;
-  return clockLabel(date);
-}
-
-function addMinutes(date: Date, minutes: number) {
-  return new Date(date.getTime() + minutes * 60_000);
+  return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
 }
 
 function statusCopy(status: PartnerDutyStatus | undefined, onDuty: boolean) {
@@ -113,9 +103,6 @@ export function DutyControlCard({
   const defaultMinutes = Math.min(policy?.defaultMinutes ?? 30, maxMinutes || 30);
   const extendBy = breakExtendMinutes(snapshot?.break, policy);
 
-  const [fromTime, setFromTime] = useState(() => new Date());
-  const [toTime, setToTime] = useState(() => addMinutes(new Date(), defaultMinutes));
-  const [picking, setPicking] = useState<'from' | 'to' | null>(null);
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -128,25 +115,6 @@ export function DutyControlCard({
     void tick;
     return breakSecondsLeft(snapshot?.break);
   }, [snapshot?.break, tick]);
-
-  const spanMinutes = Math.max(
-    1,
-    Math.round((toTime.getTime() - fromTime.getTime()) / 60_000),
-  );
-  const breakMinutes = Math.min(spanMinutes, Math.max(maxMinutes, 1));
-  const breakReady = maxMinutes >= 1;
-
-  const onPick = (event: DateTimePickerEvent, date?: Date) => {
-    const which = picking;
-    setPicking(null);
-    if (event.type === 'dismissed' || !date || !which) return;
-    if (which === 'from') {
-      setFromTime(date);
-      if (toTime.getTime() <= date.getTime()) setToTime(addMinutes(date, defaultMinutes));
-      return;
-    }
-    setToTime(date.getTime() <= fromTime.getTime() ? addMinutes(fromTime, defaultMinutes) : date);
-  };
 
   const breakWindow = onBreak
     ? [clockFromIso(snapshot?.break?.startedAt), clockFromIso(snapshot?.break?.expiresAt)]
@@ -209,41 +177,12 @@ export function DutyControlCard({
         ) : null}
 
         {accepting && !onDelivery ? (
-          <View style={styles.breakBlock}>
-            <Text style={styles.breakLabel}>Break</Text>
-            {maxMinutes < 1 ? (
-              <Text style={styles.note}>Daily break limit reached.</Text>
-            ) : (
-              <>
-                <View style={styles.timeRow}>
-                  <Pressable onPress={() => setPicking('from')} style={styles.timeBtn}>
-                    <Text style={styles.timeCaption}>From</Text>
-                    <Text style={styles.timeValue}>{clockLabel(fromTime)}</Text>
-                  </Pressable>
-                  <Pressable onPress={() => setPicking('to')} style={styles.timeBtn}>
-                    <Text style={styles.timeCaption}>To</Text>
-                    <Text style={styles.timeValue}>{clockLabel(toTime)}</Text>
-                  </Pressable>
-                </View>
-                <Pressable
-                  onPress={() => onStartBreak(breakMinutes)}
-                  disabled={breakBusy || !breakReady}
-                  style={[styles.startBtn, !breakReady && { opacity: 0.45 }]}
-                >
-                  {breakBusy ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
-                  ) : (
-                    <Text style={styles.startBtnText}>Start break</Text>
-                  )}
-                </Pressable>
-                <Text style={styles.note}>
-                  {spanMinutes > maxMinutes
-                    ? `Longest break right now is ${maxMinutes} min.`
-                    : 'Starts when you tap. Orders pause until the end time.'}
-                </Text>
-              </>
-            )}
-          </View>
+          <BreakTimePanel
+            maxMinutes={maxMinutes}
+            defaultMinutes={defaultMinutes}
+            busy={breakBusy}
+            onStart={onStartBreak}
+          />
         ) : null}
 
         {onWayToHub ? (
@@ -293,14 +232,6 @@ export function DutyControlCard({
         </View>
       </View>
 
-      {picking ? (
-        <DateTimePicker
-          value={picking === 'from' ? fromTime : toTime}
-          mode="time"
-          is24Hour={false}
-          onChange={onPick}
-        />
-      ) : null}
     </View>
   );
 }
