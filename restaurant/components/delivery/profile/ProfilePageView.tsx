@@ -153,22 +153,18 @@ export function ProfilePageView(props: Props) {
                 </Pressable>
               </View>
               <View style={styles.identityBody}>
-                <Text style={styles.idKicker}>Partner ID</Text>
-                <Text style={styles.idCode}>{s.partnerId}</Text>
                 <Text style={styles.name} numberOfLines={2}>
                   {s.displayName}
                 </Text>
-                <View style={styles.pills}>
-                  <View style={[styles.pill, { backgroundColor: s.online ? '#DCFCE7' : '#F1F5F9' }]}>
-                    <Text style={[styles.pillText, { color: s.online ? '#15803D' : '#64748B' }]}>
-                      {s.online ? 'Online' : 'Offline'}
-                    </Text>
-                  </View>
-                  <View style={[styles.pill, { backgroundColor: s.verification.soft }]}>
-                    <Text style={[styles.pillText, { color: s.verification.color }]}>
-                      {s.verification.label}
-                    </Text>
-                  </View>
+                <Text style={styles.idKicker}>Partner ID</Text>
+                <Text style={styles.idCode}>{s.partnerId}</Text>
+                <View style={styles.statusLine}>
+                  <View style={[styles.statusDot, { backgroundColor: s.online ? '#16A34A' : '#94A3B8' }]} />
+                  <Text style={styles.statusText}>{s.online ? 'Online' : 'Offline'}</Text>
+                  <Text style={styles.statusSep}>·</Text>
+                  <Text style={[styles.statusText, { color: s.verification.color }]} numberOfLines={1}>
+                    {s.verification.label}
+                  </Text>
                 </View>
               </View>
             </View>
