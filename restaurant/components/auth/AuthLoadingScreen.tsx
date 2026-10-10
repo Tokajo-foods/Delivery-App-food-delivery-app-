@@ -12,8 +12,9 @@ import { StatusBar } from 'expo-status-bar';
 
 import { fonts } from '@/constants/typography';
 import { BRAND_NAME, theme } from '@/constants/theme';
+import { appLogoSource } from '@/lib/app-logo';
 
-const logo = require('../../assets/tokajo-logo.png');
+const logo = appLogoSource();
 
 type AuthLoadingScreenProps = {
   message?: string;

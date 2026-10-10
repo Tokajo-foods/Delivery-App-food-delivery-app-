@@ -17,9 +17,10 @@ import {
   isDutySwitchOn,
 } from '@/lib/delivery-partner/availability-types';
 import { useDeliveryPartnerMe } from '@/lib/delivery-partner/hooks';
+import { appLogoSource } from '@/lib/app-logo';
 import { useAuthStore } from '@/store/auth-store';
 
-const tokajoLogo = require('../../../assets/tokajo-logo.png');
+const tokajoLogo = appLogoSource();
 
 type Props = {
   title: string;

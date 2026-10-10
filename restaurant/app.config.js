@@ -46,11 +46,17 @@ module.exports = ({ config }) => {
   const iosBundle = deliveryApp
     ? 'com.tokajofoods.delivery'
     : config.ios?.bundleIdentifier;
+  const appIcon = deliveryApp
+    ? './assets/tokajo-delivery-logo.png'
+    : restaurantApp
+      ? './assets/tokajo-restaurant-logo.png'
+      : config.icon;
 
   return {
     ...config,
     name: appName,
     scheme: appScheme,
+    icon: appIcon,
     ios: {
       ...config.ios,
       bundleIdentifier: iosBundle,
@@ -69,12 +75,21 @@ module.exports = ({ config }) => {
       ...config.android,
       package: androidPackage,
       usesCleartextTraffic: true,
+      adaptiveIcon: {
+        ...(config.android?.adaptiveIcon || {}),
+        foregroundImage: appIcon,
+        backgroundColor: '#FFD100',
+      },
       config: {
         ...(config.android?.config || {}),
         googleMaps: {
           apiKey: mapsKey,
         },
       },
+    },
+    web: {
+      ...(config.web || {}),
+      favicon: appIcon,
     },
     extra: {
       ...(config.extra || {}),

@@ -7,9 +7,10 @@ import {
   theme,
 } from '@/constants/theme';
 import type { PartnerRole } from '@/lib/auth/types';
+import { appLogoSource } from '@/lib/app-logo';
 import { useAuthStore } from '@/store/auth-store';
 
-const logo = require('../../assets/tokajo-logo.png');
+const logo = appLogoSource();
 
 type BrandProps = {
   size?: 'sm' | 'md' | 'lg' | 'hero';
