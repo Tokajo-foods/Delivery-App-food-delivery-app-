@@ -10,6 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnalyticsPeriodControls } from '@/components/delivery/analytics/AnalyticsPeriodControls';
+import { DeliveryHeaderActions } from '@/components/delivery/shared/HeaderActions';
 import { AnalyticsTrendChart } from '@/components/delivery/analytics/AnalyticsTrendChart';
 import {
   addDays,
@@ -126,8 +127,11 @@ export function PartnerAnalyticsManager() {
   return (
     <View style={[styles.root, { paddingTop: insets.top + 8 }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Analytics</Text>
-        <Text style={styles.sub}>Earnings and how your trips are going.</Text>
+        <View style={styles.headerCopy}>
+          <Text style={styles.title}>Analytics</Text>
+          <Text style={styles.sub}>Earnings and how your trips are going.</Text>
+        </View>
+        <DeliveryHeaderActions onBrand hideProfile compact />
       </View>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: PARTNER_BOTTOM_NAV_INSET + 24 }]}

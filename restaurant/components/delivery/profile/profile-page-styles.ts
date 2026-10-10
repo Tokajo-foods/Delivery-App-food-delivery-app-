@@ -6,6 +6,13 @@ import { fonts } from '@/constants/typography';
 export const profilePageStyles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#F6F3F0' },
   scroll: { paddingHorizontal: 16, gap: 12 },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  headerCopy: { flex: 1, minWidth: 0 },
   pageTitle: {
     fontFamily: fonts.bold,
     fontSize: 28,

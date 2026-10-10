@@ -5,7 +5,15 @@ import { fonts } from '@/constants/typography';
 
 export const analyticsPageStyles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#F6F3F0' },
-  header: { paddingHorizontal: 20, paddingBottom: 4 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 4,
+    gap: 12,
+  },
+  headerCopy: { flex: 1, minWidth: 0 },
   title: {
     fontFamily: fonts.bold,
     fontSize: 28,

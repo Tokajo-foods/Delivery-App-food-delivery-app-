@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   rowCompact: {
-    marginTop: 8,
+    marginTop: 14,
   },
   btn: {
     width: 48,

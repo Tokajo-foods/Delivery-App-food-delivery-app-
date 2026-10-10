@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PlatformAccountSection } from '@/components/delivery/profile/PlatformAccountSection';
+import { DeliveryHeaderActions } from '@/components/delivery/shared/HeaderActions';
 import { profilePageStyles as styles } from '@/components/delivery/profile/profile-page-styles';
 import { PARTNER_BOTTOM_NAV_INSET } from '@/constants/auth-theme';
 import { formatPercent } from '@/lib/delivery-partner/analytics-api';
@@ -105,8 +106,13 @@ export function ProfilePageView(props: Props) {
       }
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.pageTitle}>Profile</Text>
-      <Text style={styles.pageSub}>Your delivery partner account</Text>
+      <View style={styles.headerRow}>
+        <View style={styles.headerCopy}>
+          <Text style={styles.pageTitle}>Profile</Text>
+          <Text style={styles.pageSub}>Your delivery partner account</Text>
+        </View>
+        <DeliveryHeaderActions onBrand hideProfile compact />
+      </View>
 
       {s.loading ? (
         <View style={styles.center}>
