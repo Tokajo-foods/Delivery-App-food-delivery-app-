@@ -14,7 +14,7 @@ export const profilePageStyles = StyleSheet.create({
   },
   pageSub: {
     marginTop: -6,
-    marginBottom: 8,
+    marginBottom: 16,
     fontFamily: fonts.medium,
     fontSize: 13,
     color: '#64748B',
