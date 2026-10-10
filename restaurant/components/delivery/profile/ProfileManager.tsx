@@ -2,6 +2,7 @@ import { View } from 'react-native';
 
 import { ContactChangeModal } from '@/components/delivery/profile/PlatformAccountSection';
 import { ProfileEditSheet } from '@/components/delivery/profile/ProfileEditSheet';
+import { ProfileForgotPasswordSheet } from '@/components/delivery/profile/ProfileForgotPasswordSheet';
 import { ProfilePageView } from '@/components/delivery/profile/ProfilePageView';
 import { profilePageStyles } from '@/components/delivery/profile/profile-page-styles';
 import { usePartnerProfileScreen } from '@/components/delivery/profile/use-partner-profile-screen';
@@ -19,6 +20,12 @@ export function PartnerProfileManager() {
         onClose={() => screen.setContactKind(null)}
       />
       <ProfileEditSheet {...screen.edit} />
+      <ProfileForgotPasswordSheet
+        visible={screen.forgotOpen}
+        email={screen.accountEmail}
+        phone={screen.accountPhone ?? ''}
+        onClose={() => screen.setForgotOpen(false)}
+      />
       <LocationMapPicker
         visible={screen.addressMap.visible}
         initial={screen.addressMap.initial}

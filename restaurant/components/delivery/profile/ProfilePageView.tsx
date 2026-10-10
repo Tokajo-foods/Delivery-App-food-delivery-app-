@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PartnerBankTaxSection } from '@/components/delivery/profile/BankTaxSection';
 import { PlatformAccountSection } from '@/components/delivery/profile/PlatformAccountSection';
 import { profilePageStyles as styles } from '@/components/delivery/profile/profile-page-styles';
 import { PARTNER_BOTTOM_NAV_INSET } from '@/constants/auth-theme';
@@ -44,13 +43,10 @@ type Props = {
   onEditAddress: () => void;
   onChangePhone: () => void;
   onChangeEmail: () => void;
+  onForgotPassword: () => void;
   vehicleTitle: string;
   vehicleMeta: string;
   onEditVehicle: () => void;
-  emailVerified: boolean;
-  resendingEmail: boolean;
-  onResendEmail: () => void;
-  onPassword: () => void;
   loggingOut: boolean;
   onLogout: () => void;
 };
@@ -198,6 +194,7 @@ export function ProfilePageView(props: Props) {
             <Row label="Phone" value={s.phone} action="Change" onAction={s.onChangePhone} />
             <Row label="Birthday" value={s.birthday} />
             <Row label="Address" value={s.address} lines={2} action="Edit" onAction={s.onEditAddress} />
+            <Row label="Password" value="••••••••" action="Forgot password" onAction={s.onForgotPassword} />
           </View>
 
           <Text style={styles.groupLabel}>Vehicle</Text>
@@ -209,39 +206,6 @@ export function ProfilePageView(props: Props) {
               </Pressable>
             </View>
             <Text style={styles.vehicleLine}>{s.vehicleMeta}</Text>
-          </View>
-
-          <Text style={styles.groupLabel}>Payout</Text>
-          <PartnerBankTaxSection />
-
-          <Text style={styles.groupLabel}>Security</Text>
-          <View style={styles.card}>
-            <View style={[styles.row, styles.rowFirst]}>
-              <View style={styles.secureBody}>
-                <Text style={styles.secureTitle}>
-                  {s.emailVerified ? 'Email verified' : 'Verify email'}
-                </Text>
-                <Text style={styles.secureHint} numberOfLines={1}>
-                  {s.email}
-                </Text>
-              </View>
-              {!s.emailVerified ? (
-                <Pressable onPress={s.onResendEmail} disabled={s.resendingEmail} hitSlop={8}>
-                  {s.resendingEmail ? (
-                    <ActivityIndicator color="#EA4B14" size="small" />
-                  ) : (
-                    <Text style={styles.rowAction}>Resend</Text>
-                  )}
-                </Pressable>
-              ) : null}
-            </View>
-            <Pressable onPress={s.onPassword} style={styles.row}>
-              <View style={styles.secureBody}>
-                <Text style={styles.secureTitle}>Password</Text>
-                <Text style={styles.secureHint}>Change your login password</Text>
-              </View>
-              <ChevronRight color="#94A3B8" size={16} />
-            </Pressable>
           </View>
 
           <Text style={styles.groupLabel}>Alerts</Text>

@@ -55,6 +55,7 @@ export function usePartnerProfileScreen() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [contactKind, setContactKind] = useState<'phone' | 'email' | null>(null);
   const [addressMapOpen, setAddressMapOpen] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
   const [savingAddress, setSavingAddress] = useState(false);
   const saveHome = useSaveHomeLocation();
 
@@ -167,13 +168,10 @@ export function usePartnerProfileScreen() {
       onEditAddress: () => setAddressMapOpen(true),
       onChangePhone: () => setContactKind('phone'),
       onChangeEmail: () => setContactKind('email'),
+      onForgotPassword: () => setForgotOpen(true),
       vehicleTitle: vehicleLabel(vehicleTypeRaw),
       vehicleMeta: vehicleBits.length ? vehicleBits.join(' · ') : 'Add your vehicle details',
       onEditVehicle: () => editor.openEdit('vehicle'),
-      emailVerified,
-      resendingEmail: editor.resendingEmail,
-      onResendEmail: editor.onResendEmail,
-      onPassword: () => editor.openEdit('password'),
       loggingOut,
       onLogout,
     },
@@ -181,6 +179,8 @@ export function usePartnerProfileScreen() {
     accountPhone,
     accountEmail,
     setContactKind,
+    forgotOpen,
+    setForgotOpen,
     edit: editor.edit,
     addressMap: {
       visible: addressMapOpen,

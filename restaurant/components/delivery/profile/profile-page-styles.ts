@@ -178,7 +178,7 @@ export const profilePageStyles = StyleSheet.create({
     fontSize: 14,
     color: '#1E293B',
   },
-  rowAction: { fontFamily: fonts.bold, fontSize: 13, color: authTheme.brand },
+  rowAction: { fontFamily: fonts.bold, fontSize: 12, color: authTheme.brand },
   vehicleLine: {
     paddingBottom: 14,
     fontFamily: fonts.semiBold,
