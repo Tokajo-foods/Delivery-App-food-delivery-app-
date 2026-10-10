@@ -86,6 +86,10 @@ export function TripDetailSheet({
   const orderCtx = useTripOrderContext(deliveryId ?? undefined, enabled);
 
   const delivery = detail.data ?? fallback ?? null;
+  const incentiveAmount = Math.max(
+    0,
+    delivery?.incentiveBonus ?? tripEarn.data?.breakdown.incentive ?? 0
+  );
   const loading = detail.isLoading && !delivery;
   const error = !delivery && detail.isError ? detail.error : null;
 
@@ -157,6 +161,11 @@ export function TripDetailSheet({
                           ? 'Earned '
                           : 'Est. '}
                       {money(delivery.earning, delivery.currency)}
+                    </Text>
+                  ) : null}
+                  {incentiveAmount > 0 ? (
+                    <Text style={styles.incentive}>
+                      Incentive {money(incentiveAmount, delivery.currency)}
                     </Text>
                   ) : null}
                 </View>
@@ -265,6 +274,18 @@ export function TripDetailSheet({
                       </Text>
                     </View>
                   ))}
+                  {incentiveAmount > 0 &&
+                  !tripEarn.data?.breakdown.incentive &&
+                  !(orderCtx.data.bill?.partner.lines ?? []).some((line) =>
+                    /incentive/i.test(`${line.key} ${line.label}`)
+                  ) ? (
+                    <View style={styles.billRow}>
+                      <Text style={styles.billLabel}>Incentive</Text>
+                      <Text style={styles.billValue}>
+                        {money(incentiveAmount, 'INR')}
+                      </Text>
+                    </View>
+                  ) : null}
                   {orderCtx.data.bill?.partner?.netEarnings != null ? (
                     <View style={styles.earnHero}>
                       <Text style={styles.earnHeroLabel}>Your payout</Text>
@@ -467,6 +488,12 @@ const styles = StyleSheet.create({
     fontFamily: fonts.extraBold,
     fontSize: 16,
     color: '#111827',
+    marginTop: 4,
+  },
+  incentive: {
+    fontFamily: fonts.bold,
+    fontSize: 14,
+    color: '#EA4B14',
     marginTop: 4,
   },
   earnHero: {
