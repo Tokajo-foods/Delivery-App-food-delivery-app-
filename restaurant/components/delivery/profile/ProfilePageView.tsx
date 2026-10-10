@@ -60,6 +60,7 @@ function Row({
   action,
   onAction,
   first,
+  lines,
 }: {
   label: string;
   value: string;
