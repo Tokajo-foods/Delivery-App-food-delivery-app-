@@ -1,5 +1,5 @@
 import { usePathname, useRouter } from 'expo-router';
-import { BarChart3, Home, Package, UserRound, Wallet } from 'lucide-react-native';
+import { Home, Package, UserRound, Wallet } from 'lucide-react-native';
 import { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,7 +19,6 @@ const ICONS: Partial<Record<DeliveryTabKey, typeof Home>> = {
   home: Home,
   orders: Package,
   earnings: Wallet,
-  analytics: BarChart3,
   profile: UserRound,
 };
 

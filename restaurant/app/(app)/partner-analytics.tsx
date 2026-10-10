@@ -2,7 +2,7 @@ import { Redirect } from 'expo-router';
 
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
 
-/** @deprecated Use /delivery/analytics */
+/** @deprecated Analytics was removed from the rider app. */
 export default function LegacyPartnerAnalytics() {
-  return <Redirect href={DELIVERY_ROUTES.analytics} />;
+  return <Redirect href={DELIVERY_ROUTES.earnings} />;
 }

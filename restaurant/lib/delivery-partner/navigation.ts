@@ -29,7 +29,6 @@ export type DeliveryTabKey =
   | 'profile'
   | 'documents'
   | 'orders'
-  | 'analytics'
   | 'earnings'
   | 'restaurants'
   | 'notifications'
@@ -51,7 +50,6 @@ export const DELIVERY_BOTTOM_TABS: DeliveryTabItem[] = [
   { key: 'home', label: 'Home', href: DELIVERY_ROUTES.home },
   { key: 'orders', label: 'Orders', href: DELIVERY_ROUTES.orders },
   { key: 'earnings', label: 'Earnings', href: DELIVERY_ROUTES.earnings },
-  { key: 'analytics', label: 'Analytics', href: DELIVERY_ROUTES.analytics },
   { key: 'profile', label: 'Profile', href: DELIVERY_ROUTES.profile },
 ];
 
