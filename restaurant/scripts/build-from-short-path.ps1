@@ -6,7 +6,9 @@
 #   powershell -ExecutionPolicy Bypass -File .\scripts\build-from-short-path.ps1 -Variant delivery
 param(
   [ValidateSet('restaurant', 'delivery')]
-  [string]$Variant = 'restaurant'
+  [string]$Variant = 'restaurant',
+  [ValidateSet('debug', 'release')]
+  [string]$Configuration = 'debug'
 )
 
 $ErrorActionPreference = "Stop"
@@ -73,11 +75,15 @@ $sdk = ($env:ANDROID_HOME -replace '\\', '/')
 Set-Content C:\p\android\local.properties "sdk.dir=$sdk" -Encoding utf8
 
 Set-Location C:\p\android
-.\gradlew.bat assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon
+$gradleTask = if ($Configuration -eq 'release') { 'assembleRelease' } else { 'assembleDebug' }
+.\gradlew.bat $gradleTask -PreactNativeArchitectures=arm64-v8a --no-daemon
 if ($LASTEXITCODE -ne 0) { throw "Gradle failed $LASTEXITCODE" }
 
-$apk = "C:\p\android\app\build\outputs\apk\release\app-release.apk"
-$label = if ($Variant -eq 'delivery') { 'TOKAJO-Delivery-release.apk' } else { 'TOKAJO-Restaurant-release.apk' }
+$apkFolder = if ($Configuration -eq 'release') { 'release' } else { 'debug' }
+$apkFile = if ($Configuration -eq 'release') { 'app-release.apk' } else { 'app-debug.apk' }
+$apk = "C:\p\android\app\build\outputs\apk\$apkFolder\$apkFile"
+$kind = if ($Configuration -eq 'release') { 'release' } else { 'dev' }
+$label = if ($Variant -eq 'delivery') { "TOKAJO-Delivery-$kind.apk" } else { "TOKAJO-Restaurant-$kind.apk" }
 $dest = Join-Path $src $label
 Copy-Item $apk $dest -Force
 Copy-Item $apk (Join-Path 'C:\p' $label) -Force
