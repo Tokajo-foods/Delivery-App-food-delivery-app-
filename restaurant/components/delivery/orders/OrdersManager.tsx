@@ -429,11 +429,11 @@ export function PartnerOrdersManager() {
             style={[styles.onlineBtn, isOnline ? styles.onlineBtnQuiet : styles.onlineBtnLive]}
           >
             {mutations.setOnline.isPending ? (
-              <ActivityIndicator color={isOnline ? '#C2410C' : '#FFFFFF'} size="small" />
+              <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
               <>
-                <Power color={isOnline ? '#C2410C' : '#FFFFFF'} size={14} />
-                <Text style={[styles.onlineBtnText, isOnline && styles.onlineBtnTextQuiet]}>
+                <Power color="#FFFFFF" size={15} />
+                <Text style={styles.onlineBtnText}>
                   {isOnline ? 'Go offline' : 'Go online'}
                 </Text>
               </>
@@ -1291,15 +1291,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#EA4B14',
   },
   onlineBtnQuiet: {
-    backgroundColor: '#FFF1E8',
+    backgroundColor: '#C2410C',
   },
   onlineBtnText: {
     color: '#FFFFFF',
-    fontFamily: fonts.semiBold,
+    fontFamily: fonts.bold,
     fontSize: 13,
-  },
-  onlineBtnTextQuiet: {
-    color: '#C2410C',
   },
   blockerCard: {
     backgroundColor: '#FFFFFF',
