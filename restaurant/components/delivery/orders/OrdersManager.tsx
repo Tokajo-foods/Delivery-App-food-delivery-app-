@@ -219,19 +219,7 @@ export function PartnerOrdersManager() {
     [historyRows]
   );
 
-  const pendingBatchId = useMemo(() => {
-    const needsSequence = liveOrders.find(
-      (row) =>
-        row.batchId &&
-        (row.nextAction === 'confirm_sequence' ||
-          row.nextAction === 'accept_batch')
-    );
-    return (
-      needsSequence?.batchId ||
-      liveOrders.find((row) => row.batchId)?.batchId ||
-      null
-    );
-  }, [liveOrders]);
+  const pendingBatchId = null;
   const pendingBatch = useDeliveryBatch(pendingBatchId ?? undefined, {
     enabled: Boolean(pendingBatchId),
     live: true,
@@ -314,23 +302,9 @@ export function PartnerOrdersManager() {
   };
 
   const handleAccept = async (delivery: PartnerDelivery) => {
-    setBusyLabel(
-      delivery.batchId &&
-        (delivery.nextAction === 'accept_batch' ||
-          isAssignableStatus(delivery.status))
-        ? 'Accepting stacked orders…'
-        : 'Accepting…'
-    );
+    setBusyLabel('Accepting…');
     try {
-      if (
-        delivery.batchId &&
-        (delivery.nextAction === 'accept_batch' ||
-          isAssignableStatus(delivery.status))
-      ) {
-        await mutations.acceptBatch.mutateAsync(delivery.batchId);
-      } else {
-        await mutations.accept.mutateAsync(delivery.id);
-      }
+      await mutations.accept.mutateAsync(delivery.id);
       await Promise.all([
         active.refetch(),
         actives.refetch(),
