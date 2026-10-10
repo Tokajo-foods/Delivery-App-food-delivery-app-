@@ -318,6 +318,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   greetingLine: {
+    marginTop: 10,
     color: '#6B7280',
     fontSize: 13,
     fontFamily: fonts.medium,
