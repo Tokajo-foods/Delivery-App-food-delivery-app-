@@ -57,7 +57,7 @@ export function DeliveryHeaderActions({
     : authTheme.cardBorder;
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, compact && styles.rowCompact]}>
       <Pressable
         onPress={() => {
           if (!notifActive) router.push(DELIVERY_ROUTES.notifications);
@@ -130,6 +130,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  rowCompact: {
+    marginTop: 8,
   },
   btn: {
     width: 48,
