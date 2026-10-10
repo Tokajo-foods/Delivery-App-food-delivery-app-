@@ -1216,18 +1216,15 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: 16,
-    paddingTop: 8,
-    gap: 20,
+    paddingTop: 4,
+    gap: 12,
   },
   onlineCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#F1EAE3',
+    paddingHorizontal: 4,
+    paddingVertical: 4,
   },
   onlineLeft: {
     flex: 1,
@@ -1414,10 +1411,6 @@ const styles = StyleSheet.create({
   },
   statusPill: {
     flexShrink: 1,
-    backgroundColor: '#FFF1E8',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
   },
   statusPillText: {
     fontFamily: fonts.bold,
@@ -1705,13 +1698,11 @@ const styles = StyleSheet.create({
   },
   chatBtn: {
     flex: 1,
-    minHeight: 44,
-    borderRadius: 12,
+    minHeight: 36,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    gap: 8,
-    backgroundColor: '#FFF7F2',
+    gap: 6,
   },
   chatBtnText: {
     fontFamily: fonts.bold,
