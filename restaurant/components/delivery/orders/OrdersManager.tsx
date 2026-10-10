@@ -997,15 +997,15 @@ function DeliveryCard({
           <View style={styles.stopBody}>
             <Text style={styles.stopLabel}>PICKUP</Text>
             <View style={styles.stopNameRow}>
+              <Text style={styles.stopTitle} numberOfLines={1}>
+                {stops.restaurantName}
+              </Text>
               {live ? (
                 <StopContactIcons
                   onChat={() => onChat('restaurant')}
                   onCall={() => setCallPeer('restaurant')}
                 />
               ) : null}
-              <Text style={styles.stopTitle} numberOfLines={1}>
-                {stops.restaurantName}
-              </Text>
             </View>
             {pickupLabel ? (
               <Text style={styles.stopAddr} numberOfLines={2}>
@@ -1024,15 +1024,15 @@ function DeliveryCard({
           <View style={styles.stopBody}>
             <Text style={styles.stopLabel}>DROP-OFF</Text>
             <View style={styles.stopNameRow}>
+              <Text style={styles.stopTitle} numberOfLines={1}>
+                {namedCustomer || 'Customer'}
+              </Text>
               {live ? (
                 <StopContactIcons
                   onChat={() => onChat('customer')}
                   onCall={() => setCallPeer('customer')}
                 />
               ) : null}
-              <Text style={styles.stopTitle} numberOfLines={1}>
-                {namedCustomer || 'Customer'}
-              </Text>
             </View>
             {stops.dropKmLabel ? (
               <Text style={styles.stopKm}>{stops.dropKmLabel}</Text>
@@ -1642,6 +1642,7 @@ const styles = StyleSheet.create({
   stopNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   stopTitle: {
     flex: 1,

@@ -23,8 +23,8 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
-    marginRight: 6,
+    gap: 4,
+    marginLeft: 8,
   },
   hit: {
     width: 28,
