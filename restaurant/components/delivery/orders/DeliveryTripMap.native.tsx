@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
   },
   map: {
     width: '100%',
-    height: 300,
+    height: 180,
   },
   fillMap: {
     ...StyleSheet.absoluteFillObject,

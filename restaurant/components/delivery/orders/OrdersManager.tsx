@@ -83,6 +83,12 @@ const LIVE_STATUSES = new Set([
   'returning_to_restaurant',
 ]);
 
+function shortOrderCode(delivery: PartnerDelivery) {
+  const raw = delivery.orderNumber || delivery.orderId || delivery.id;
+  const clean = String(raw).replace(/[^a-zA-Z0-9]/g, '');
+  return (clean.slice(-6) || clean).toUpperCase();
+}
+
 function money(amount?: number, currency = 'INR') {
   if (amount == null || !Number.isFinite(amount)) return null;
   try {
@@ -407,14 +413,14 @@ export function PartnerOrdersManager() {
                 styles.onlineDot,
                 {
                   backgroundColor: isOnline
-                    ? '#10B981'
-                    : '#9CA3AF',
+                    ? '#EA4B14'
+                    : '#D6D3D1',
                 },
               ]}
             />
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={styles.onlineTitle}>
-                {isOnline ? 'You’re online' : 'You’re offline'}
+                {isOnline ? 'You are online' : 'You are offline'}
               </Text>
               <Text style={styles.onlineSub}>
                 {goOnlineBlocker
@@ -432,23 +438,14 @@ export function PartnerOrdersManager() {
           <Pressable
             onPress={() => void handleGoOnline()}
             disabled={mutations.setOnline.isPending}
-            style={[
-              styles.onlineBtn,
-              {
-                backgroundColor: isOnline
-                  ? '#6B7280'
-                  : goOnlineBlocker
-                    ? '#EA4B14'
-                    : '#15803D',
-              },
-            ]}
+            style={[styles.onlineBtn, isOnline ? styles.onlineBtnQuiet : styles.onlineBtnLive]}
           >
             {mutations.setOnline.isPending ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <ActivityIndicator color={isOnline ? '#C2410C' : '#FFFFFF'} size="small" />
             ) : (
               <>
-                <Power color="#fff" size={14} />
-                <Text style={styles.onlineBtnText}>
+                <Power color={isOnline ? '#C2410C' : '#FFFFFF'} size={14} />
+                <Text style={[styles.onlineBtnText, isOnline && styles.onlineBtnTextQuiet]}>
                   {isOnline ? 'Go offline' : 'Go online'}
                 </Text>
               </>
@@ -849,6 +846,10 @@ function DeliveryCard({
   const dropLabel = stops.dropAddress;
   const amount = money(delivery.amount, delivery.currency);
   const earning = money(delivery.earning, delivery.currency);
+  const tripKm =
+    delivery.distanceKm != null && delivery.distanceKm >= 0.1
+      ? `${delivery.distanceKm.toFixed(1)} km`
+      : null;
   const routePoints = (
     tripRouteQuery.data?.points ??
     routeQuery.data?.points ??
@@ -905,7 +906,7 @@ function DeliveryCard({
     <View style={styles.jobCard}>
       <View style={styles.jobTop}>
         <View style={styles.statusPill}>
-          <Text style={styles.statusPillText}>
+          <Text style={styles.statusPillText} numberOfLines={1}>
             {deliveryStatusLabel(delivery.status)}
           </Text>
         </View>
@@ -914,28 +915,28 @@ function DeliveryCard({
             <Text style={styles.batchPillText}>Stacked · {batchSize}</Text>
           </View>
         ) : null}
-        <Text style={styles.orderNo}>
-          #{delivery.orderNumber || delivery.orderId || delivery.id.slice(-6)}
+        <Text style={styles.orderNo} numberOfLines={1}>
+          #{shortOrderCode(delivery)}
         </Text>
       </View>
 
-      {(amount || earning || delivery.distanceKm != null) && (
+      {(earning || tripKm || delivery.etaMinutes != null) && (
         <View style={styles.metaRow}>
-          {amount ? <Text style={styles.metaStrong}>{amount}</Text> : null}
           {earning && !isUnpaidTripStatus(status) ? (
             <Text style={styles.metaEarn}>
-              {isAssignableStatus(status) ? 'Est. ' : 'Earn '}
+              {isAssignableStatus(status) ? 'Estimated ' : 'You earn '}
               {earning}
             </Text>
-          ) : null}
-          {delivery.distanceKm != null ? (
-            <Text style={styles.metaMuted}>
-              {delivery.distanceKm.toFixed(1)} km
-            </Text>
-          ) : null}
-          {delivery.etaMinutes != null ? (
-            <Text style={styles.metaMuted}>{delivery.etaMinutes} min</Text>
-          ) : null}
+          ) : amount ? (
+            <Text style={styles.metaEarn}>{amount}</Text>
+          ) : (
+            <View />
+          )}
+          <Text style={styles.metaMuted}>
+            {[tripKm, delivery.etaMinutes != null ? `${delivery.etaMinutes} min` : null]
+              .filter(Boolean)
+              .join(' · ')}
+          </Text>
         </View>
       )}
 
@@ -947,7 +948,7 @@ function DeliveryCard({
                 styles.offerTimerFill,
                 {
                   width: `${Math.round(offerProgress * 100)}%`,
-                  backgroundColor: offerUrgent ? '#EF4444' : '#16A34A',
+                  backgroundColor: offerUrgent ? '#B91C1C' : '#EA4B14',
                 },
               ]}
             />
@@ -1172,7 +1173,7 @@ function ApiTimelineStrip({
               styles.apiStepLabel,
               !step.completed && styles.apiStepPending,
             ]}
-            numberOfLines={1}
+            numberOfLines={2}
           >
             {step.label}
           </Text>
@@ -1315,10 +1316,19 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     justifyContent: 'center',
   },
+  onlineBtnLive: {
+    backgroundColor: '#EA4B14',
+  },
+  onlineBtnQuiet: {
+    backgroundColor: '#FFF1E8',
+  },
   onlineBtnText: {
     color: '#FFFFFF',
     fontFamily: fonts.semiBold,
     fontSize: 13,
+  },
+  onlineBtnTextQuiet: {
+    color: '#C2410C',
   },
   blockerCard: {
     backgroundColor: '#FFFFFF',
@@ -1411,11 +1421,12 @@ const styles = StyleSheet.create({
   },
   jobCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 20,
-    gap: 16,
+    borderRadius: 20,
+    padding: 16,
+    gap: 14,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.03)',
+    borderColor: '#F1EAE3',
+    overflow: 'hidden',
   },
   trackBanner: {
     flexDirection: 'row',
@@ -1435,23 +1446,21 @@ const styles = StyleSheet.create({
   jobTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
+    gap: 8,
   },
   statusPill: {
-    backgroundColor: '#F9FAFB',
+    flexShrink: 1,
+    backgroundColor: '#FFF1E8',
     borderRadius: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
   },
   statusPillText: {
-    fontFamily: fonts.semiBold,
-    fontSize: 12,
+    fontFamily: fonts.bold,
+    fontSize: 11,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    color: '#374151',
+    letterSpacing: 0.4,
+    color: '#C2410C',
   },
   batchPill: {
     backgroundColor: '#EEF2FF',
@@ -1520,27 +1529,30 @@ const styles = StyleSheet.create({
     color: '#EF4444',
   },
   apiSteps: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: 8,
   },
   apiStep: {
-    flexDirection: 'row',
+    flex: 1,
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   apiStepDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: '#E7D5C9',
   },
   apiStepDotDone: {
-    backgroundColor: '#16A34A',
+    backgroundColor: '#EA4B14',
   },
   apiStepLabel: {
-    flex: 1,
     fontFamily: fonts.semiBold,
-    fontSize: 12,
-    color: '#111827',
+    fontSize: 11,
+    lineHeight: 14,
+    color: '#0F172A',
+    textAlign: 'center',
   },
   apiStepPending: {
     color: '#9CA3AF',
@@ -1569,17 +1581,20 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   orderNo: {
-    fontFamily: fonts.medium,
-    fontSize: 14,
-    color: '#9CA3AF',
+    marginLeft: 'auto',
+    maxWidth: 88,
+    fontFamily: fonts.semiBold,
+    fontSize: 13,
+    color: '#94A3B8',
   },
   metaRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 12,
-    backgroundColor: '#F9FAFB',
-    padding: 12,
+    backgroundColor: '#FFF7F2',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     borderRadius: 12,
   },
   metaStrong: {
@@ -1588,9 +1603,10 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   metaEarn: {
-    fontFamily: fonts.semiBold,
-    fontSize: 14,
-    color: '#000000',
+    flex: 1,
+    fontFamily: fonts.bold,
+    fontSize: 16,
+    color: '#0F172A',
   },
   metaMuted: {
     fontFamily: fonts.medium,
