@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { authTheme } from '@/constants/auth-theme';
@@ -31,6 +31,7 @@ import {
 } from '@/lib/delivery-partner/tracking-types';
 import type { PartnerDelivery, TripNavRoute } from '@/lib/delivery-partner/types';
 import { useAuthStore } from '@/store/auth-store';
+import { PlaceMapPin, RiderMapPin } from '@/components/delivery/orders/trip-map-pins';
 
 type LatLng = { latitude: number; longitude: number };
 
@@ -242,7 +243,29 @@ export function DeliveryTripMap({
     tracking?.durationInTraffic;
   const nextInstruction = navRoute?.nextInstruction;
   const hint = tracking?.dutyHint;
-  const geo = tracking?.geofence;
+  const goingToCustomer =
+    status === 'picked_up' ||
+    status === 'out_for_delivery' ||
+    status === 'at_customer' ||
+    status === 'arrived_at_customer';
+  const destinationKind =
+    navRoute?.leg === 'return' ||
+    navRoute?.leg === 'pickup' ||
+    status === 'returning_to_restaurant' ||
+    !goingToCustomer
+      ? 'restaurant'
+      : 'customer';
+  const destination = destinationKind === 'restaurant' ? pickup : drop;
+  const [tracksPins, setTracksPins] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setTracksPins(false), 700);
+    return () => clearTimeout(timer);
+  }, [
+    destination?.latitude,
+    destination?.longitude,
+    displayRider?.latitude,
+    displayRider?.longitude,
+  ]);
   const historyCoords =
     historyPoints && historyPoints.length >= 2 ? historyPoints : [];
 
@@ -365,47 +388,29 @@ export function DeliveryTripMap({
         toolbarEnabled={false}
         loadingEnabled
       >
-        {pickup ? (
+        {destination ? (
           <Marker
-            coordinate={pickup}
-            title="Pickup"
-            description={pickupLabel}
-            pinColor={authTheme.brand}
-          />
-        ) : null}
-        {pickup && geo ? (
-          <Circle
-            center={pickup}
-            radius={geo.pickupMeters || 150}
-            fillColor={geo.atPickup ? '#22C55E22' : '#EA4B1422'}
-            strokeColor={geo.atPickup ? '#16A34A' : authTheme.brand}
-            strokeWidth={1}
-          />
-        ) : null}
-        {drop ? (
-          <Marker
-            coordinate={drop}
-            title="Customer"
-            description={dropLabel}
-            pinColor="#EA580C"
-          />
-        ) : null}
-        {drop && geo ? (
-          <Circle
-            center={drop}
-            radius={geo.dropMeters || 100}
-            fillColor={geo.atDrop ? '#22C55E22' : '#0EA5E922'}
-            strokeColor={geo.atDrop ? '#16A34A' : '#0284C7'}
-            strokeWidth={1}
-          />
+            coordinate={destination}
+            anchor={{ x: 0.5, y: 1 }}
+            tracksViewChanges={tracksPins}
+            title={destinationKind === 'restaurant' ? 'Restaurant' : 'Customer'}
+            description={
+              destinationKind === 'restaurant' ? pickupLabel : dropLabel
+            }
+          >
+            <PlaceMapPin kind={destinationKind} />
+          </Marker>
         ) : null}
         {displayRider ? (
           <Marker
             coordinate={displayRider}
+            anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={tracksPins}
             title="You"
-            description="Live location"
-            pinColor="#2563EB"
-          />
+            description="Your location"
+          >
+            <RiderMapPin />
+          </Marker>
         ) : null}
         {historyCoords.length >= 2 ? (
           <Polyline
@@ -492,7 +497,7 @@ const styles = StyleSheet.create({
   },
   map: {
     width: '100%',
-    height: 210,
+    height: 248,
   },
   fillMap: {
     ...StyleSheet.absoluteFillObject,
