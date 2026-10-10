@@ -19,7 +19,8 @@ import { AuthBanner } from '@/components/auth/AuthBanner';
 import { AuthLoadingScreen } from '@/components/auth/AuthLoadingScreen';
 import { CheckboxRow, LegalFooter } from '@/components/auth/AuthExtras';
 import { AuthField } from '@/components/auth/AuthField';
-import { RoleSelector } from '@/components/auth/RoleSelector';
+import { fonts } from '@/constants/typography';
+import { lockedPartnerRole } from '@/lib/app-variant';
 import { resolvePostAuthRoute } from '@/lib/navigation/post-auth';
 import { useGatewayProbe } from '@/lib/gateway/hooks';
 import { useAuthStore } from '@/store/auth-store';
@@ -41,6 +42,11 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
     }>();
   const role = useAuthStore((s) => s.role);
   const setRole = useAuthStore((s) => s.setRole);
+  const lockedRole = lockedPartnerRole();
+
+  useEffect(() => {
+    if (lockedRole && role !== lockedRole) setRole(lockedRole);
+  }, [lockedRole, role, setRole]);
   const login = useAuthStore((s) => s.login);
   const isLoading = useAuthStore((s) => s.isLoading);
 
@@ -168,7 +174,29 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
           style={{ maxHeight: Math.round(screenH * 0.78) }}
         >
             <View className="bg-white rounded-t-[40px] px-6 pt-6 pb-12">
-              <RoleSelector value={role} onChange={setRole} disabled={formBusy} />
+              <View className="mb-5">
+                <Text
+                  style={{
+                    color: '#020617',
+                    fontFamily: fonts.extraBold,
+                    fontSize: 26,
+                    letterSpacing: -0.4,
+                  }}
+                >
+                  Welcome back
+                </Text>
+                <Text
+                  style={{
+                    marginTop: 6,
+                    color: '#64748B',
+                    fontFamily: fonts.medium,
+                    fontSize: 14,
+                    lineHeight: 20,
+                  }}
+                >
+                  Sign in to continue
+                </Text>
+              </View>
 
               <AuthBanner type="success" message={success} />
               <AuthBanner
