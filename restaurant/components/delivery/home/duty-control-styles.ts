@@ -1,0 +1,173 @@
+import { StyleSheet } from 'react-native';
+
+import { authTheme } from '@/constants/auth-theme';
+import { fonts } from '@/constants/typography';
+
+export const dutyStyles = StyleSheet.create({
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    backgroundColor: '#7F1D1D',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 10,
+  },
+  errorBannerText: {
+    flex: 1,
+    color: '#FECACA',
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  retryChip: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  retryText: { color: '#FECACA', fontFamily: fonts.semiBold, fontSize: 12 },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 4,
+  },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 12,
+  },
+  hint: {
+    color: authTheme.textMuted,
+    fontFamily: fonts.medium,
+    fontSize: 12,
+  },
+  title: {
+    color: authTheme.text,
+    fontFamily: fonts.bold,
+    fontSize: 17,
+    marginTop: 2,
+  },
+  breakBlock: {
+    borderTopWidth: 1,
+    borderTopColor: '#F3E8DE',
+    paddingTop: 12,
+    paddingBottom: 12,
+    gap: 10,
+  },
+  breakLabel: {
+    color: '#0F172A',
+    fontFamily: fonts.semiBold,
+    fontSize: 13,
+  },
+  timeRow: { flexDirection: 'row', gap: 8 },
+  timeBtn: {
+    flex: 1,
+    backgroundColor: '#FFF7F2',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  timeCaption: {
+    color: '#94A3B8',
+    fontFamily: fonts.medium,
+    fontSize: 11,
+  },
+  timeValue: {
+    marginTop: 2,
+    color: '#0F172A',
+    fontFamily: fonts.bold,
+    fontSize: 15,
+  },
+  startBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EA4B14',
+    borderRadius: 12,
+    paddingVertical: 12,
+  },
+  startBtnText: {
+    color: '#FFFFFF',
+    fontFamily: fonts.semiBold,
+    fontSize: 14,
+  },
+  note: {
+    color: '#64748B',
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  endBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF1E8',
+    borderRadius: 12,
+    paddingVertical: 12,
+  },
+  endBtnText: {
+    color: '#C2410C',
+    fontFamily: fonts.bold,
+    fontSize: 14,
+  },
+  gpsBanner: {
+    color: '#C2410C',
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    lineHeight: 17,
+    paddingBottom: 8,
+  },
+  actionError: {
+    color: '#B91C1C',
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    paddingBottom: 8,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#F3E8DE',
+  },
+  summaryCell: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  summaryDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: '#C5CAD3',
+  },
+  summaryValue: {
+    color: '#EA4B14',
+    fontFamily: fonts.extraBold,
+    fontSize: 16,
+  },
+  summaryLabel: {
+    marginTop: 2,
+    color: authTheme.textMuted,
+    fontFamily: fonts.medium,
+    fontSize: 11,
+  },
+  summaryError: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    gap: 8,
+  },
+  summaryErrorText: {
+    flex: 1,
+    color: '#B91C1C',
+    fontFamily: fonts.medium,
+    fontSize: 12,
+  },
+  summaryRetry: {
+    color: '#EA4B14',
+    fontFamily: fonts.semiBold,
+    fontSize: 12,
+  },
+});

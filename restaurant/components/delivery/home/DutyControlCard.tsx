@@ -1,23 +1,15 @@
-import { Coffee, Plus, RotateCcw } from 'lucide-react-native';
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
+import { RotateCcw } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, Switch, Text, View } from 'react-native';
 
-import { authTheme } from '@/constants/auth-theme';
-import { fonts } from '@/constants/typography';
+import { dutyStyles as styles } from '@/components/delivery/home/duty-control-styles';
 import {
-  breakDurationOptions,
   breakExtendMinutes,
   breakSecondsLeft,
   canAcceptOffers,
-  dutyStatusHint,
-  dutyStatusLabel,
   formatDutyKm,
   formatMinutes,
   type PartnerBreakPolicy,
@@ -50,16 +42,38 @@ type Props = {
   onRetrySummary?: () => void;
 };
 
-function formatCountdown(totalSeconds: number) {
-  const mins = Math.floor(totalSeconds / 60);
-  const secs = totalSeconds % 60;
-  return `${mins}:${String(secs).padStart(2, '0')}`;
+function clockLabel(date: Date) {
+  return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
 }
 
-/**
- * Live duty control — GET /status + GET /duty-summary, mutations for
- * go-online / go-offline / break / PUT /status (resume from hub).
- */
+function clockFromIso(iso?: string | null) {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  return clockLabel(date);
+}
+
+function addMinutes(date: Date, minutes: number) {
+  return new Date(date.getTime() + minutes * 60_000);
+}
+
+function statusCopy(status: PartnerDutyStatus | undefined, onDuty: boolean) {
+  switch (status) {
+    case 'online':
+      return { title: 'Accepting orders', hint: 'New offers can reach you' };
+    case 'on_delivery':
+      return { title: 'With customer', hint: 'Finish this trip before a break' };
+    case 'on_break':
+      return { title: 'On a break', hint: 'Orders are paused' };
+    case 'on_way_to_hub':
+      return { title: 'Heading to hub', hint: 'Orders stay paused until you are back' };
+    default:
+      return onDuty
+        ? { title: 'Accepting orders', hint: 'New offers can reach you' }
+        : { title: 'Offline', hint: 'Go online to accept orders' };
+  }
+}
+
 export function DutyControlCard({
   snapshot,
   fallbackStatus,
@@ -85,18 +99,25 @@ export function DutyControlCard({
 }: Props) {
   const dutyStatus = snapshot?.dutyStatus ?? fallbackStatus;
   const onDelivery = dutyStatus === 'on_delivery';
-  const onBreak =
-    dutyStatus === 'on_break' || Boolean(snapshot?.break?.active);
+  const onBreak = dutyStatus === 'on_break' || Boolean(snapshot?.break?.active);
   const onWayToHub = dutyStatus === 'on_way_to_hub';
   const accepting = canAcceptOffers(dutyStatus);
-  const durations = breakDurationOptions(snapshot?.break, policy);
+  const copy = statusCopy(dutyStatus, isOnDuty);
+  const maxMinutes = Math.max(
+    0,
+    Math.min(
+      policy?.maxSingleMinutes ?? snapshot?.break?.maxSingleMinutes ?? 60,
+      snapshot?.break?.minutesRemainingToday ?? policy?.maxMinutesPerDay ?? 60,
+    ),
+  );
+  const defaultMinutes = Math.min(policy?.defaultMinutes ?? 30, maxMinutes || 30);
   const extendBy = breakExtendMinutes(snapshot?.break, policy);
-  const remainingToday =
-    snapshot?.break?.minutesRemainingToday ?? policy?.maxMinutesPerDay ?? 0;
-  const maxPerDay =
-    policy?.maxMinutesPerDay ?? snapshot?.break?.maxMinutesPerDay ?? 60;
 
+  const [fromTime, setFromTime] = useState(() => new Date());
+  const [toTime, setToTime] = useState(() => addMinutes(new Date(), defaultMinutes));
+  const [picking, setPicking] = useState<'from' | 'to' | null>(null);
   const [tick, setTick] = useState(0);
+
   useEffect(() => {
     if (!onBreak) return;
     const timer = setInterval(() => setTick((n) => n + 1), 1000);
@@ -107,6 +128,31 @@ export function DutyControlCard({
     void tick;
     return breakSecondsLeft(snapshot?.break);
   }, [snapshot?.break, tick]);
+
+  const spanMinutes = Math.max(
+    1,
+    Math.round((toTime.getTime() - fromTime.getTime()) / 60_000),
+  );
+  const breakMinutes = Math.min(spanMinutes, Math.max(maxMinutes, 1));
+  const breakReady = maxMinutes >= 1;
+
+  const onPick = (event: DateTimePickerEvent, date?: Date) => {
+    const which = picking;
+    setPicking(null);
+    if (event.type === 'dismissed' || !date || !which) return;
+    if (which === 'from') {
+      setFromTime(date);
+      if (toTime.getTime() <= date.getTime()) setToTime(addMinutes(date, defaultMinutes));
+      return;
+    }
+    setToTime(date.getTime() <= fromTime.getTime() ? addMinutes(fromTime, defaultMinutes) : date);
+  };
+
+  const breakWindow = onBreak
+    ? [clockFromIso(snapshot?.break?.startedAt), clockFromIso(snapshot?.break?.expiresAt)]
+        .filter(Boolean)
+        .join(' – ')
+    : '';
 
   return (
     <View>
@@ -120,363 +166,141 @@ export function DutyControlCard({
         </Pressable>
       ) : null}
 
-      <View
-        style={[
-          styles.pill,
-          accepting || onBreak || onWayToHub ? { marginBottom: 8 } : null,
-        ]}
-      >
-        <View style={styles.info}>
-          {statusLoading && !snapshot ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
-          ) : (
-            <>
-              <Text style={styles.hint}>
-                {dutyStatusHint(snapshot ?? { dutyStatus })}
-              </Text>
-              <Text style={styles.title}>
-                {dutyStatusLabel(dutyStatus ?? (isOnDuty ? 'online' : 'offline'))}
-              </Text>
-            </>
-          )}
-        </View>
-        <Switch
-          value={isOnDuty}
-          onValueChange={onToggle}
-          disabled={togglePending || onDelivery}
-          trackColor={{ false: '#FED7AA', true: '#EA4B14' }}
-          thumbColor="#FFFFFF"
-        />
-      </View>
-
-      {onBreak ? (
-        <View style={styles.breakRow}>
-          <Pressable
-            onPress={onEndBreak}
-            disabled={breakBusy}
-            style={[styles.breakChoice, { flex: 1.2 }]}
-          >
-            {breakBusy ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
+      <View style={styles.card}>
+        <View style={styles.head}>
+          <View style={{ flex: 1, paddingRight: 8 }}>
+            {statusLoading && !snapshot ? (
+              <ActivityIndicator color="#EA4B14" size="small" />
             ) : (
               <>
-                <Coffee color="#EA4B14" size={15} />
-                <Text style={styles.breakBtnText}>
-                  {secondsLeft != null
-                    ? `End · ${formatCountdown(secondsLeft)}`
-                    : 'End break'}
+                <Text style={styles.hint}>{copy.hint}</Text>
+                <Text style={styles.title}>{copy.title}</Text>
+              </>
+            )}
+          </View>
+          <Switch
+            value={isOnDuty}
+            onValueChange={onToggle}
+            disabled={togglePending || onDelivery}
+            trackColor={{ false: '#FED7AA', true: '#EA4B14' }}
+            thumbColor="#FFFFFF"
+          />
+        </View>
+
+        {onBreak ? (
+          <View style={styles.breakBlock}>
+            <Text style={styles.breakLabel}>
+              {breakWindow || 'Break in progress'}
+              {secondsLeft != null ? ` · ${Math.ceil(secondsLeft / 60)} min left` : ''}
+            </Text>
+            <Pressable onPress={onEndBreak} disabled={breakBusy} style={styles.endBtn}>
+              {breakBusy ? (
+                <ActivityIndicator color="#C2410C" size="small" />
+              ) : (
+                <Text style={styles.endBtnText}>End break</Text>
+              )}
+            </Pressable>
+            {extendBy > 0 ? (
+              <Pressable onPress={() => onExtendBreak(extendBy)} disabled={breakBusy}>
+                <Text style={styles.note}>Add {extendBy} min</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
+
+        {accepting && !onDelivery ? (
+          <View style={styles.breakBlock}>
+            <Text style={styles.breakLabel}>Break</Text>
+            {maxMinutes < 1 ? (
+              <Text style={styles.note}>Daily break limit reached.</Text>
+            ) : (
+              <>
+                <View style={styles.timeRow}>
+                  <Pressable onPress={() => setPicking('from')} style={styles.timeBtn}>
+                    <Text style={styles.timeCaption}>From</Text>
+                    <Text style={styles.timeValue}>{clockLabel(fromTime)}</Text>
+                  </Pressable>
+                  <Pressable onPress={() => setPicking('to')} style={styles.timeBtn}>
+                    <Text style={styles.timeCaption}>To</Text>
+                    <Text style={styles.timeValue}>{clockLabel(toTime)}</Text>
+                  </Pressable>
+                </View>
+                <Pressable
+                  onPress={() => onStartBreak(breakMinutes)}
+                  disabled={breakBusy || !breakReady}
+                  style={[styles.startBtn, !breakReady && { opacity: 0.45 }]}
+                >
+                  {breakBusy ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text style={styles.startBtnText}>Start break</Text>
+                  )}
+                </Pressable>
+                <Text style={styles.note}>
+                  {spanMinutes > maxMinutes
+                    ? `Longest break right now is ${maxMinutes} min.`
+                    : 'Starts when you tap. Orders pause until the end time.'}
                 </Text>
               </>
             )}
-          </Pressable>
-          {extendBy > 0 ? (
-            <Pressable
-              onPress={() => onExtendBreak(extendBy)}
-              disabled={breakBusy}
-              style={styles.extendBtn}
-            >
-              <Plus color="#EA4B14" size={15} />
-              <Text style={styles.extendBtnText}>+{extendBy} min</Text>
-            </Pressable>
-          ) : null}
-        </View>
-      ) : null}
-
-      {accepting && !onDelivery ? (
-        durations.length ? (
-          <View style={styles.breakRow}>
-            {durations.map((mins) => (
-              <Pressable
-                key={mins}
-                onPress={() => onStartBreak(mins)}
-                disabled={breakBusy}
-                style={styles.breakChoice}
-              >
-                {breakBusy ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <>
-                    <Coffee color="#EA4B14" size={14} />
-                    <Text style={styles.breakBtnText}>{mins} min break</Text>
-                  </>
-                )}
-              </Pressable>
-            ))}
           </View>
-        ) : (
-          <Text style={styles.quotaNote}>
-            Daily break limit reached ({snapshot?.break?.minutesUsedToday ?? 0}/
-            {maxPerDay} min).
-          </Text>
-        )
-      ) : null}
+        ) : null}
 
-      {accepting && remainingToday > 0 && remainingToday < maxPerDay ? (
-        <Text style={styles.quotaNote}>
-          {remainingToday}m break left today
-          {policy?.minOnlineMinutesBefore
-            ? ` · wait ${policy.minOnlineMinutesBefore}m online first`
-            : ''}
-        </Text>
-      ) : null}
+        {onWayToHub ? (
+          <View style={styles.breakBlock}>
+            <Pressable onPress={onLeaveHub} disabled={resumeBusy} style={styles.endBtn}>
+              {resumeBusy ? (
+                <ActivityIndicator color="#C2410C" size="small" />
+              ) : (
+                <Text style={styles.endBtnText}>
+                  {snapshot?.hub?.checkedInAt ? 'Check out and go online' : 'Cancel and go online'}
+                </Text>
+              )}
+            </Pressable>
+            <Pressable onPress={onOpenHubs}>
+              <Text style={styles.note}>Open hubs</Text>
+            </Pressable>
+          </View>
+        ) : null}
 
-      {onWayToHub ? (
-        <View style={styles.hubActions}>
-          <Pressable
-            onPress={onLeaveHub}
-            disabled={resumeBusy}
-            style={styles.resumeBtn}
-          >
-            {resumeBusy ? (
-              <ActivityIndicator color="#EA4B14" size="small" />
-            ) : (
-              <Text style={styles.resumeBtnText}>
-                {snapshot?.hub?.checkedInAt
-                  ? 'Check out → online'
-                  : 'Cancel heading → online'}
-              </Text>
-            )}
-          </Pressable>
-          <Pressable onPress={onOpenHubs} style={styles.hubLink}>
-            <Text style={styles.hubLinkText}>View hubs</Text>
-          </Pressable>
+        {gpsBanner ? <Text style={styles.gpsBanner}>{gpsBanner}</Text> : null}
+        {actionError ? <Text style={styles.actionError}>{actionError}</Text> : null}
+
+        <View style={styles.summaryRow}>
+          {summaryError ? (
+            <Pressable onPress={onRetrySummary} style={styles.summaryError}>
+              <Text style={styles.summaryErrorText}>{summaryError}</Text>
+              <Text style={styles.summaryRetry}>Retry</Text>
+            </Pressable>
+          ) : (
+            <>
+              <View style={styles.summaryCell}>
+                <Text style={styles.summaryValue}>{formatMinutes(summary?.onlineMinutes)}</Text>
+                <Text style={styles.summaryLabel}>Online today</Text>
+              </View>
+              <View style={styles.summaryDivider} />
+              <View style={styles.summaryCell}>
+                <Text style={styles.summaryValue}>{summary?.deliveries ?? 0}</Text>
+                <Text style={styles.summaryLabel}>Trips</Text>
+              </View>
+              <View style={styles.summaryDivider} />
+              <View style={styles.summaryCell}>
+                <Text style={styles.summaryValue}>{formatDutyKm(summary?.km)}</Text>
+                <Text style={styles.summaryLabel}>Distance</Text>
+              </View>
+            </>
+          )}
         </View>
-      ) : null}
-
-      {gpsBanner ? <Text style={styles.gpsBanner}>{gpsBanner}</Text> : null}
-      {actionError ? <Text style={styles.actionError}>{actionError}</Text> : null}
-
-      <View style={styles.summaryRow}>
-        {summaryError ? (
-          <Pressable onPress={onRetrySummary} style={styles.summaryError}>
-            <Text style={styles.summaryErrorText}>{summaryError}</Text>
-            <Text style={styles.summaryRetry}>Retry</Text>
-          </Pressable>
-        ) : (
-          <>
-            <View style={styles.summaryCell}>
-              <Text style={styles.summaryValue}>
-                {formatMinutes(summary?.onlineMinutes)}
-              </Text>
-              <Text style={styles.summaryLabel}>Online today</Text>
-            </View>
-            <View style={styles.summaryDivider} />
-            <View style={styles.summaryCell}>
-              <Text style={styles.summaryValue}>{summary?.deliveries ?? 0}</Text>
-              <Text style={styles.summaryLabel}>Trips</Text>
-            </View>
-            <View style={styles.summaryDivider} />
-            <View style={styles.summaryCell}>
-              <Text style={styles.summaryValue}>{formatDutyKm(summary?.km)}</Text>
-              <Text style={styles.summaryLabel}>Distance</Text>
-            </View>
-          </>
-        )}
       </View>
+
+      {picking ? (
+        <DateTimePicker
+          value={picking === 'from' ? fromTime : toTime}
+          mode="time"
+          is24Hour={false}
+          onChange={onPick}
+        />
+      ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    backgroundColor: '#7F1D1D',
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 10,
-  },
-  errorBannerText: {
-    flex: 1,
-    color: '#FECACA',
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  retryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  retryText: {
-    color: '#FECACA',
-    fontFamily: fonts.semiBold,
-    fontSize: 12,
-  },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#F1EAE3',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
-  info: { flex: 1, paddingRight: 8 },
-  hint: {
-    color: authTheme.textMuted,
-    fontFamily: fonts.medium,
-    fontSize: 12,
-  },
-  title: {
-    color: authTheme.text,
-    fontFamily: fonts.bold,
-    fontSize: 16,
-    marginTop: 1,
-  },
-  breakBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 12,
-    marginBottom: 8,
-  },
-  breakRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 8,
-  },
-  breakChoice: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#F3E7DE',
-    paddingVertical: 12,
-  },
-  breakBtnText: {
-    color: '#EA4B14',
-    fontFamily: fonts.semiBold,
-    fontSize: 13,
-  },
-  extendBtn: {
-    flex: 0.9,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    backgroundColor: '#FFF1E8',
-    borderRadius: 16,
-    paddingVertical: 12,
-  },
-  extendBtnText: {
-    color: '#C2410C',
-    fontFamily: fonts.bold,
-    fontSize: 13,
-  },
-  quotaNote: {
-    color: '#64748B',
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    marginBottom: 10,
-  },
-  resumeBtn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFF1E8',
-    borderRadius: 16,
-    paddingVertical: 12,
-  },
-  resumeBtnText: {
-    color: '#C2410C',
-    fontFamily: fonts.bold,
-    fontSize: 14,
-  },
-  hubActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  hubLink: {
-    paddingVertical: 8,
-    marginBottom: 8,
-    alignItems: 'center',
-  },
-  hubLinkText: {
-    color: '#EA4B14',
-    fontFamily: fonts.semiBold,
-    fontSize: 13,
-  },
-  gpsBanner: {
-    marginTop: 4,
-    marginBottom: 10,
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    color: '#C2410C',
-    lineHeight: 17,
-  },
-  actionError: {
-    marginBottom: 10,
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    color: '#FCA5A5',
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 0,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#F1EAE3',
-    overflow: 'hidden',
-  },
-  summaryCell: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 6,
-    alignItems: 'center',
-  },
-  summaryDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: '#C5CAD3',
-  },
-  summaryValue: {
-    color: '#EA4B14',
-    fontFamily: fonts.extraBold,
-    fontSize: 16,
-    letterSpacing: -0.3,
-  },
-  summaryLabel: {
-    marginTop: 3,
-    color: authTheme.textMuted,
-    fontFamily: fonts.medium,
-    fontSize: 11,
-  },
-  summaryError: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    paddingVertical: 4,
-  },
-  summaryErrorText: {
-    flex: 1,
-    color: '#FCA5A5',
-    fontFamily: fonts.medium,
-    fontSize: 12,
-  },
-  summaryRetry: {
-    color: '#EA4B14',
-    fontFamily: fonts.semiBold,
-    fontSize: 12,
-  },
-});
