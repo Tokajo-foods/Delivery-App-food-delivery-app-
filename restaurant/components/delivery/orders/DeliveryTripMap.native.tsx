@@ -452,49 +452,68 @@ export function DeliveryTripMap({
         ) : null}
       </MapView>
 
-      <View
-        style={[
-          styles.etaChip,
-          fill && styles.etaChipFill,
-          fill && { top: Math.max(insets.top, 12) + 8 },
-        ]}
-      >
-        {nextInstruction ? (
-          <Text style={styles.turnText} numberOfLines={2}>
-            {nextInstruction}
+      {fill ? (
+        <View
+          style={[
+            styles.etaChip,
+            styles.etaChipFill,
+            { top: Math.max(insets.top, 12) + 8 },
+          ]}
+        >
+          {nextInstruction ? (
+            <Text style={styles.turnText} numberOfLines={2}>
+              {nextInstruction}
+            </Text>
+          ) : null}
+          <Text style={styles.etaHint} numberOfLines={1}>
+            {hint && !/head to destination/i.test(hint)
+              ? hint
+              : returning
+                ? `Return to ${pickupLabel}`
+                : headingToDrop
+                  ? `Heading to ${dropLabel}`
+                  : `Heading to ${pickupLabel}`}
           </Text>
-        ) : null}
-        <Text style={styles.etaHint} numberOfLines={1}>
-          {hint && !/head to destination/i.test(hint)
-            ? hint
-            : navRoute?.leg === 'return'
-              ? `Return to ${pickupLabel}`
-              : navRoute?.leg === 'drop' ||
-                  status === 'picked_up' ||
-                  status === 'out_for_delivery' ||
-                  status === 'at_customer'
-                ? `Heading to ${dropLabel}`
-                : `Heading to ${pickupLabel}`}
-        </Text>
-        <Text style={styles.etaValue}>
-          {formatEtaSeconds(etaSeconds)}
-          {distanceMeters != null
-            ? ` · ${formatDistanceMeters(distanceMeters)}`
-            : ''}
-        </Text>
-        <Text style={styles.etaProvider}>
-          {etaLabel({ provider, durationInTraffic })}
-        </Text>
-      </View>
+          <Text style={styles.etaValue}>
+            {formatEtaSeconds(etaSeconds)}
+            {distanceMeters != null
+              ? ` · ${formatDistanceMeters(distanceMeters)}`
+              : ''}
+          </Text>
+          <Text style={styles.etaProvider}>
+            {etaLabel({ provider, durationInTraffic })}
+          </Text>
+        </View>
+      ) : null}
 
-      {navTarget ? (
+      {navTarget && !fill ? (
         <Pressable
           onPress={() => openExternalNav(navTarget.point, navTarget.label)}
-          style={[styles.navBtn, fill && styles.navBtnFill]}
+          style={styles.sheetHead}
         >
-          <View style={styles.navIcon}>
-            <Navigation color="#EA4B14" size={16} />
+          <View style={styles.navCopy}>
+            <Text style={styles.sheetKicker}>
+              {returning ? 'Return to' : 'Navigate to'}
+            </Text>
+            <Text style={styles.sheetTitle} numberOfLines={1}>
+              {navPlace}
+            </Text>
+            <Text style={styles.sheetEta} numberOfLines={1}>
+              {formatEtaSeconds(etaSeconds)}
+              {distanceMeters != null
+                ? `  ·  ${formatDistanceMeters(distanceMeters)}`
+                : ''}
+            </Text>
           </View>
+          <View style={styles.navGo}>
+            <Navigation color="#FFFFFF" size={16} />
+          </View>
+        </Pressable>
+      ) : navTarget ? (
+        <Pressable
+          onPress={() => openExternalNav(navTarget.point, navTarget.label)}
+          style={[styles.navBtn, styles.navBtnFill]}
+        >
           <View style={styles.navCopy}>
             <Text style={styles.navKicker}>
               {returning ? 'Return' : 'Navigate'}
@@ -515,7 +534,7 @@ export function DeliveryTripMap({
 const styles = StyleSheet.create({
   wrap: {
     overflow: 'hidden',
-    backgroundColor: '#F8F1EC',
+    backgroundColor: '#FFFFFF',
   },
   fillWrap: {
     flex: 1,
@@ -553,6 +572,10 @@ const styles = StyleSheet.create({
     right: 12,
     bottom: 16,
     margin: 0,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   etaHint: {
     fontFamily: fonts.medium,
@@ -576,6 +599,34 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semiBold,
     fontSize: 11,
     color: '#EA4B14',
+  },
+  sheetHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 2,
+    backgroundColor: '#FFFFFF',
+  },
+  sheetKicker: {
+    fontFamily: fonts.semiBold,
+    fontSize: 11,
+    letterSpacing: 0.4,
+    color: '#EA4B14',
+  },
+  sheetTitle: {
+    marginTop: 1,
+    fontFamily: fonts.bold,
+    fontSize: 20,
+    lineHeight: 26,
+    color: '#1E293B',
+  },
+  sheetEta: {
+    marginTop: 2,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: '#64748B',
   },
   navBtn: {
     marginHorizontal: 0,

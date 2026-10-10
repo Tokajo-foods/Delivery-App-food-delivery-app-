@@ -888,11 +888,6 @@ function DeliveryCard({
     stops.customerName.trim() !== dropLabel.trim()
       ? stops.customerName.trim()
       : '');
-  const headingToCustomer =
-    status === 'picked_up' ||
-    status === 'out_for_delivery' ||
-    status === 'at_customer';
-
   return (
     <View style={styles.jobCard}>
       <DeliveryTripMap
@@ -923,11 +918,6 @@ function DeliveryCard({
       />
 
       <View style={styles.jobBody}>
-      <Text style={styles.placeTitle} numberOfLines={2}>
-        {headingToCustomer
-          ? stops.customerName || 'Customer'
-          : stops.restaurantName}
-      </Text>
       <View style={styles.jobTop}>
         <View style={styles.statusPill}>
           <Text style={styles.statusPillText} numberOfLines={1}>
@@ -1012,7 +1002,7 @@ function DeliveryCard({
           </View>
         </View>
 
-        <View style={[styles.stop, { marginTop: 24 }]}>
+        <View style={[styles.stop, { marginTop: 18 }]}>
           <View style={[styles.timelineDot, styles.timelineDotDrop]} />
           <View style={styles.stopBody}>
             <Text style={styles.stopLabel}>DROP-OFF</Text>
@@ -1369,9 +1359,9 @@ const styles = StyleSheet.create({
   },
   jobBody: {
     paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 16,
-    gap: 12,
+    paddingTop: 10,
+    paddingBottom: 14,
+    gap: 10,
   },
   placeTitle: {
     fontFamily: fonts.bold,
@@ -1646,7 +1636,11 @@ const styles = StyleSheet.create({
     color: '#C2410C',
   },
   liveActions: {
-    gap: 6,
+    gap: 4,
+    marginTop: 2,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#F1EAE3',
   },
   actionRow: {
     flexDirection: 'row',
