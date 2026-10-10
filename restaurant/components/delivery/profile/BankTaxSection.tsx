@@ -849,9 +849,9 @@ function Field({
 const styles = StyleSheet.create({
   section: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#F3F4F6',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
     overflow: 'hidden',
     padding: 14,
   },

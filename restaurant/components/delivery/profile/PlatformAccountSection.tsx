@@ -1,6 +1,6 @@
 export { ContactChangeModal } from '@/components/account/ContactChangeModal';
 
-import { Bell, Globe, Mail, Phone } from 'lucide-react-native';
+import { Bell, Mail, Phone } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -64,10 +64,7 @@ export function PlatformAccountSection() {
 
   return (
     <View style={styles.section}>
-      <View style={styles.sectionTitleRow}>
-        <Globe color="#EA4B14" size={16} />
-        <Text style={styles.sectionTitle}>Notification preferences</Text>
-      </View>
+      <Text style={styles.sectionTitle}>Notifications</Text>
 
       {prefs.isLoading && !prefs.data ? (
         <ActivityIndicator color="#EA4B14" style={{ marginVertical: 12 }} />
@@ -163,21 +160,17 @@ function PrefToggle({
 const styles = StyleSheet.create({
   section: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#F3F4F6',
-    padding: 14,
-  },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
   sectionTitle: {
     fontFamily: fonts.bold,
     fontSize: 15,
-    color: '#111827',
+    color: '#0F172A',
+    marginBottom: 4,
   },
   prefRow: {
     flexDirection: 'row',
