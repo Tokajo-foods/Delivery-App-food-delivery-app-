@@ -103,8 +103,8 @@ export function DeliveryTabBar() {
 const styles = StyleSheet.create({
   wrap: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    left: 28,
+    right: 28,
     bottom: 0,
     zIndex: 50,
   },
