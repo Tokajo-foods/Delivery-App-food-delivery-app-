@@ -94,19 +94,7 @@ export function PartnerAnalyticsManager() {
     perf?.currentStreak
   );
 
-  const stats = [
-    {
-      id: 'deliveries',
-      value: String(perf?.totalDeliveries ?? trips),
-      label: 'Deliveries',
-      hint: 'Completed trips',
-    },
-    {
-      id: 'rating',
-      value: formatRating(perf?.avgRating ?? 0),
-      label: 'Rating',
-      hint: 'From customers',
-    },
+  const quality = [
     {
       id: 'ontime',
       value: formatPercent(perf?.onTimeRate ?? 0),
@@ -126,22 +114,10 @@ export function PartnerAnalyticsManager() {
       hint: 'Offers you took',
     },
     {
-      id: 'hours',
-      value: formatHours(period.onlineHours),
-      label: 'Online',
-      hint: days === 7 ? 'Hours this week' : 'Hours this month',
-    },
-    {
       id: 'streak',
-      value: String(streak),
+      value: `${streak} days`,
       label: 'Streak',
       hint: 'Days in a row',
-    },
-    {
-      id: 'score',
-      value: score,
-      label: 'Score',
-      hint: perf?.scoreLabel ?? 'Out of 100',
     },
   ];
 
@@ -150,22 +126,6 @@ export function PartnerAnalyticsManager() {
       <View style={styles.header}>
         <Text style={styles.title}>Analytics</Text>
         <Text style={styles.sub}>Earnings and how your trips are going.</Text>
-        <View style={styles.period}>
-          {PERIODS.map((item) => {
-            const on = days === item.days;
-            return (
-              <Pressable
-                key={item.days}
-                onPress={() => setDays(item.days)}
-                style={[styles.periodBtn, on && styles.periodBtnOn]}
-              >
-                <Text style={[styles.periodText, on && styles.periodTextOn]}>
-                  {item.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
       </View>
 
       <ScrollView
@@ -196,53 +156,87 @@ export function PartnerAnalyticsManager() {
         ) : (
           <>
             <View style={styles.hero}>
-              <View>
-                <Text style={styles.heroKicker}>
-                  {days === 7 ? 'THIS WEEK' : 'THIS MONTH'}
-                </Text>
+              <View style={styles.band}>
+                <Text style={styles.bandLabel}>EARNINGS</Text>
+                <View style={styles.period}>
+                  {PERIODS.map((item) => {
+                    const on = days === item.days;
+                    return (
+                      <Pressable
+                        key={item.days}
+                        onPress={() => setDays(item.days)}
+                        style={[styles.periodBtn, on && styles.periodBtnOn]}
+                      >
+                        <Text style={[styles.periodText, on && styles.periodTextOn]}>
+                          {item.days === 7 ? 'Week' : 'Month'}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+              <View style={styles.heroBody}>
                 <Text style={styles.heroAmount}>
                   {formatCurrency(period.totalEarnings, currency)}
                 </Text>
                 <Text style={styles.heroMeta}>
-                  {trips} {trips === 1 ? 'delivery' : 'deliveries'} ·{' '}
-                  {formatHours(period.onlineHours)} online
+                  {showSplit
+                    ? `Base ${formatCurrency(period.baseEarnings, currency)} · Tips ${formatCurrency(period.tips, currency)}`
+                    : days === 7
+                      ? 'Paid this week'
+                      : 'Paid this month'}
                 </Text>
               </View>
-              {showSplit ? (
-                <View style={styles.split}>
-                  <View style={styles.splitCol}>
-                    <Text style={styles.splitLabel}>Base pay</Text>
-                    <Text style={styles.splitValue}>
-                      {formatCurrency(period.baseEarnings, currency)}
-                    </Text>
-                  </View>
-                  <View style={styles.splitRule} />
-                  <View style={styles.splitCol}>
-                    <Text style={styles.splitLabel}>Tips</Text>
-                    <Text style={styles.splitValue}>
-                      {formatCurrency(period.tips, currency)}
-                    </Text>
-                  </View>
+              <View style={styles.footer}>
+                <View style={styles.footerCell}>
+                  <Text style={styles.footerValue}>{trips}</Text>
+                  <Text style={styles.footerLabel}>Deliveries</Text>
                 </View>
-              ) : null}
+                <View style={styles.footerRule} />
+                <View style={styles.footerCell}>
+                  <Text style={styles.footerValue}>
+                    {formatHours(period.onlineHours)}
+                  </Text>
+                  <Text style={styles.footerLabel}>Online</Text>
+                </View>
+                <View style={styles.footerRule} />
+                <View style={styles.footerCell}>
+                  <Text style={styles.footerValue}>
+                    {formatRating(perf?.avgRating ?? 0)}
+                  </Text>
+                  <Text style={styles.footerLabel}>Rating</Text>
+                </View>
+              </View>
             </View>
 
-            <Text style={styles.sectionLabel}>Your stats</Text>
-            <View style={styles.grid}>
-              {stats.map((item) => (
-                <View key={item.id} style={styles.stat}>
-                  <Text style={styles.statValue}>{item.value}</Text>
-                  <Text style={styles.statLabel}>{item.label}</Text>
-                  <Text style={styles.statHint}>{item.hint}</Text>
-                </View>
-              ))}
-            </View>
-
-            <Text style={styles.sectionLabel}>Last 7 days</Text>
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Earnings</Text>
-              <Text style={styles.cardHint}>Taller bars mean more pay that day.</Text>
-              <AnalyticsTrendChart points={last7} />
+              <View style={styles.cardHead}>
+                <Text style={styles.cardTitle}>How you are doing</Text>
+                {score !== '—' ? (
+                  <Text style={styles.cardAside}>Score {score}</Text>
+                ) : null}
+              </View>
+              <View style={styles.grid}>
+                {quality.map((item, index) => (
+                  <View
+                    key={item.id}
+                    style={[styles.cell, index % 2 === 1 && styles.cellRight]}
+                  >
+                    <Text style={styles.cellValue}>{item.value}</Text>
+                    <Text style={styles.cellLabel}>{item.label}</Text>
+                    <Text style={styles.cellHint}>{item.hint}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.card}>
+              <View style={styles.cardHead}>
+                <Text style={styles.cardTitle}>Last 7 days</Text>
+              </View>
+              <View style={styles.chartBody}>
+                <AnalyticsTrendChart points={last7} />
+              </View>
             </View>
           </>
         )}
