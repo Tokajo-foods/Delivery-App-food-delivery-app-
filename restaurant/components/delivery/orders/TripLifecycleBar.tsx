@@ -1036,14 +1036,16 @@ export function TripLifecycleBar({
               <Text style={styles.moreDanger}>Cancel trip</Text>
             </Pressable>
           ) : status === 'accepted' && cancelUnlockAt ? (
-            <Text style={styles.moreText}>
-              Cancel unlocks after{' '}
-              {Math.max(
-                1,
-                Math.ceil((cancelUnlockAt - Date.now()) / 60_000)
-              )}{' '}
-              min if you still cannot reach the restaurant
-            </Text>
+            <View style={styles.unlockNote}>
+              <Text style={styles.unlockText}>
+                Cancel unlocks in{' '}
+                {Math.max(
+                  1,
+                  Math.ceil((cancelUnlockAt - Date.now()) / 60_000)
+                )}{' '}
+                min
+              </Text>
+            </View>
           ) : null}
         </View>
       ) : null}
@@ -1502,18 +1504,35 @@ const styles = StyleSheet.create({
   },
   moreBtn: {
     flex: 1,
-    minHeight: 40,
+    minHeight: 44,
     borderRadius: 12,
-    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 10,
   },
   moreText: {
+    fontFamily: fonts.semiBold,
+    fontSize: 13,
+    color: '#1E293B',
+  },
+  unlockNote: {
     flex: 1,
-    fontFamily: fonts.medium,
+    minHeight: 44,
+    borderRadius: 12,
+    backgroundColor: '#FFF7F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+  },
+  unlockText: {
+    fontFamily: fonts.semiBold,
     fontSize: 12,
     lineHeight: 16,
-    color: '#64748B',
+    color: '#9A3412',
+    textAlign: 'center',
   },
   moreDanger: {
     fontFamily: fonts.semiBold,
