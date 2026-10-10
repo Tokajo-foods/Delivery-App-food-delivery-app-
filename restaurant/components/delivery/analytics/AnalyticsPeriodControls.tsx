@@ -34,16 +34,16 @@ export function AnalyticsPeriodControls({
 }) {
   return (
     <View style={styles.controls}>
-      <View style={styles.chips}>
+      <View style={styles.segment}>
         {MODES.map((item) => {
           const on = mode === item.id;
           return (
             <Pressable
               key={item.id}
               onPress={() => onMode(item.id)}
-              style={[styles.chip, on && styles.chipOn]}
+              style={[styles.segmentBtn, on && styles.segmentOn]}
             >
-              <Text style={[styles.chipText, on && styles.chipTextOn]}>
+              <Text style={[styles.segmentText, on && styles.segmentTextOn]}>
                 {item.label}
               </Text>
             </Pressable>
@@ -53,6 +53,7 @@ export function AnalyticsPeriodControls({
       {mode === 'range' ? (
         <View style={styles.rangeRow}>
           <DateField label="From" value={from} maximum={to} onChange={onFrom} />
+          <View style={styles.rangeRule} />
           <DateField label="To" value={to} minimum={from} onChange={onTo} />
         </View>
       ) : null}

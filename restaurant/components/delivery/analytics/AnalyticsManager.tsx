@@ -117,10 +117,10 @@ export function PartnerAnalyticsManager() {
           : 'Paid in this range';
 
   const quality = [
-    { id: 'ontime', value: formatPercent(perf?.onTimeRate ?? 0), label: 'On time', hint: 'Arrived as expected' },
-    { id: 'done', value: formatPercent(perf?.completionRate ?? 0), label: 'Completed', hint: 'Trips you finished' },
-    { id: 'accept', value: formatPercent(perf?.acceptanceRate ?? 0), label: 'Accepted', hint: 'Offers you took' },
-    { id: 'streak', value: `${streak} days`, label: 'Streak', hint: 'Days in a row' },
+    { id: 'ontime', value: formatPercent(perf?.onTimeRate ?? 0), label: 'On time' },
+    { id: 'done', value: formatPercent(perf?.completionRate ?? 0), label: 'Completed' },
+    { id: 'accept', value: formatPercent(perf?.acceptanceRate ?? 0), label: 'Accepted' },
+    { id: 'streak', value: `${streak} days`, label: 'Streak' },
   ];
 
   return (
@@ -163,6 +163,7 @@ export function PartnerAnalyticsManager() {
           <>
             <View style={styles.hero}>
               <View style={styles.heroBody}>
+                <Text style={styles.heroKicker}>EARNINGS</Text>
                 <Text style={styles.heroAmount}>
                   {formatCurrency(period.totalEarnings, currency)}
                 </Text>
@@ -200,7 +201,6 @@ export function PartnerAnalyticsManager() {
                   <View key={item.id} style={[styles.cell, index % 2 === 1 && styles.cellRight]}>
                     <Text style={styles.cellValue}>{item.value}</Text>
                     <Text style={styles.cellLabel}>{item.label}</Text>
-                    <Text style={styles.cellHint}>{item.hint}</Text>
                   </View>
                 ))}
               </View>
@@ -208,7 +208,7 @@ export function PartnerAnalyticsManager() {
 
             <View style={styles.card}>
               <View style={styles.cardHead}>
-                <Text style={styles.cardTitle}>By day</Text>
+                <Text style={styles.cardTitle}>Daily earnings</Text>
                 {daily.isFetching ? <ActivityIndicator color="#EA4B14" size="small" /> : null}
               </View>
               <View style={styles.chartBody}>

@@ -18,7 +18,7 @@ export function AnalyticsTrendChart({
   const hasEarnings = peak > 0;
 
   if (!hasEarnings) {
-    return <Text style={styles.empty}>No earnings in the last 7 days.</Text>;
+    return <Text style={styles.empty}>No earnings in this period.</Text>;
   }
 
   return (
