@@ -3,16 +3,22 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 
+import type { MapPickResult } from '@/components/restaurant/location-map-types';
 import { useProfileEditor } from '@/components/delivery/profile/use-profile-editor';
 import { partnerBankKeys } from '@/lib/delivery-partner/bank-hooks';
 import {
   getDocumentProgress,
   getPartnerVerificationBadge,
 } from '@/lib/delivery-partner/go-online-guard';
-import { useDeliveryPartnerMe } from '@/lib/delivery-partner/hooks';
+import {
+  deliveryPartnerKeys,
+  useDeliveryPartnerMe,
+} from '@/lib/delivery-partner/hooks';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
 import { VEHICLE_TYPE_OPTIONS } from '@/lib/delivery-partner/types';
 import { getApiErrorMessage } from '@/lib/errors';
+import { formatLocationError } from '@/lib/delivery-partner/tracking-api';
+import { useSaveHomeLocation } from '@/lib/delivery-partner/tracking-hooks';
 import { platformAccountKeys, usePlatformMe } from '@/lib/user/account-hooks';
 import { displayPlatformName } from '@/lib/user/account-types';
 import { useAuthStore } from '@/store/auth-store';
@@ -48,6 +54,9 @@ export function usePartnerProfileScreen() {
   const [pullRefreshing, setPullRefreshing] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [contactKind, setContactKind] = useState<'phone' | 'email' | null>(null);
+  const [addressMapOpen, setAddressMapOpen] = useState(false);
+  const [savingAddress, setSavingAddress] = useState(false);
+  const saveHome = useSaveHomeLocation();
 
   const profile = me.data;
   const platform = platformMe.data;
@@ -154,9 +163,8 @@ export function usePartnerProfileScreen() {
       phone: dash(accountPhone),
       email: dash(accountEmail || profile?.email),
       birthday: dash(profile?.dateOfBirth),
-      address: dash(
-        [profile?.homeAddress, profile?.city].filter(Boolean).join(', ')
-      ),
+      address: dash(riderAddress(profile?.homeAddress, profile?.city)),
+      onEditAddress: () => setAddressMapOpen(true),
       onChangePhone: () => setContactKind('phone'),
       onChangeEmail: () => setContactKind('email'),
       vehicleTitle: vehicleLabel(vehicleTypeRaw),
@@ -174,5 +182,44 @@ export function usePartnerProfileScreen() {
     accountEmail,
     setContactKind,
     edit: editor.edit,
+    addressMap: {
+      visible: addressMapOpen,
+      confirming: savingAddress,
+      initial:
+        profile?.homeLat != null && profile?.homeLng != null
+          ? { lat: profile.homeLat, lng: profile.homeLng }
+          : null,
+      onClose: () => {
+        if (!savingAddress) setAddressMapOpen(false);
+      },
+      onConfirm: (result: MapPickResult) => {
+        if (savingAddress) return;
+        void (async () => {
+          setSavingAddress(true);
+          try {
+            await saveHome.mutateAsync({
+              latitude: result.lat,
+              longitude: result.lng,
+              address: result.formattedAddress || result.label,
+            });
+            await queryClient.invalidateQueries({ queryKey: deliveryPartnerKeys.me() });
+            setAddressMapOpen(false);
+          } catch (err) {
+            Alert.alert(
+              'Could not update address',
+              formatLocationError(err, getApiErrorMessage(err, 'Please try again.'))
+            );
+          } finally {
+            setSavingAddress(false);
+          }
+        })();
+      },
+    },
   };
+}
+
+function riderAddress(home?: string, city?: string) {
+  const line = home?.trim() ?? '';
+  if (line) return line;
+  return city?.trim() ?? '';
 }

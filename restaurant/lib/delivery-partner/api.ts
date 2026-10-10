@@ -896,6 +896,7 @@ function mapPartner(raw: unknown): DeliveryPartnerProfile {
       source.metrics ??
       source.statistics
   );
+  const homeCoords = coordsFromRecord(asRecord(source.homeLocation));
   const documents = mapPartnerDocuments(
     source.documents ?? source.kycDocuments ?? source.docs ?? record.documents
   );
@@ -977,6 +978,8 @@ function mapPartner(raw: unknown): DeliveryPartnerProfile {
     ]),
     homeAddress: pickString(source, ['homeAddress', 'address', 'fullAddress']),
     city: pickString(source, ['city']),
+    homeLat: homeCoords.lat,
+    homeLng: homeCoords.lng,
     photoUrl,
     vehicleType,
     vehicleNumber,

@@ -41,6 +41,7 @@ type Props = {
   email: string;
   birthday: string;
   address: string;
+  onEditAddress: () => void;
   onChangePhone: () => void;
   onChangeEmail: () => void;
   vehicleTitle: string;
@@ -196,7 +197,7 @@ export function ProfilePageView(props: Props) {
             <Row first label="Email" value={s.email} action="Change" onAction={s.onChangeEmail} />
             <Row label="Phone" value={s.phone} action="Change" onAction={s.onChangePhone} />
             <Row label="Birthday" value={s.birthday} />
-            <Row label="Address" value={s.address} lines={2} />
+            <Row label="Address" value={s.address} lines={2} action="Edit" onAction={s.onEditAddress} />
           </View>
 
           <Text style={styles.groupLabel}>Vehicle</Text>

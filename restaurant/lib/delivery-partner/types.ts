@@ -103,6 +103,8 @@ export type DeliveryPartnerProfile = {
   dateOfBirth?: string;
   homeAddress?: string;
   city?: string;
+  homeLat?: number;
+  homeLng?: number;
   photoUrl?: string;
   vehicleType?: string;
   vehicleNumber?: string;
