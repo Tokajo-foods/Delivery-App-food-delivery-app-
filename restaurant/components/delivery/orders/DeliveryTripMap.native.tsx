@@ -1,4 +1,4 @@
-import { Navigation } from 'lucide-react-native';
+import { ChevronRight, Navigation } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Linking,
@@ -221,6 +221,18 @@ export function DeliveryTripMap({
         : null;
   }, [status, pickup, drop, pickupLabel, dropLabel, navRoute]);
 
+  const headingToDrop =
+    status === 'picked_up' ||
+    status === 'out_for_delivery' ||
+    status === 'at_customer';
+  const returning =
+    navRoute?.leg === 'return' || status === 'returning_to_restaurant';
+  const navPlace = returning
+    ? delivery.restaurantName || 'Restaurant'
+    : headingToDrop
+      ? delivery.customerName || 'Customer'
+      : delivery.restaurantName || 'Restaurant';
+
   const etaSeconds =
     navRoute?.etaSeconds ??
     socketEta?.etaSeconds ??
@@ -351,8 +363,18 @@ export function DeliveryTripMap({
             onPress={() => openExternalNav(navTarget.point, navTarget.label)}
             style={styles.navBtn}
           >
-            <Navigation color="#fff" size={14} />
-            <Text style={styles.navBtnText}>Open in Google Maps</Text>
+            <View style={styles.navIcon}>
+              <Navigation color="#EA4B14" size={16} />
+            </View>
+            <View style={styles.navCopy}>
+              <Text style={styles.navKicker}>Navigate</Text>
+              <Text style={styles.navBtnText} numberOfLines={1}>
+                {navPlace}
+              </Text>
+            </View>
+            <View style={styles.navGo}>
+              <ChevronRight color="#FFFFFF" size={16} />
+            </View>
           </Pressable>
         ) : null}
       </View>
@@ -471,17 +493,19 @@ export function DeliveryTripMap({
           style={[styles.navBtn, fill && styles.navBtnFill]}
         >
           <View style={styles.navIcon}>
-            <Navigation color="#FFFFFF" size={16} />
+            <Navigation color="#EA4B14" size={16} />
           </View>
-          <Text style={styles.navBtnText} numberOfLines={1}>
-            {navRoute?.leg === 'return' || status === 'returning_to_restaurant'
-              ? 'Navigate back to restaurant'
-              : status === 'picked_up' ||
-                  status === 'out_for_delivery' ||
-                  status === 'at_customer'
-                ? `Navigate to ${delivery.customerName || 'customer'}`
-                : `Navigate to ${delivery.restaurantName || 'restaurant'}`}
-          </Text>
+          <View style={styles.navCopy}>
+            <Text style={styles.navKicker}>
+              {returning ? 'Return' : 'Navigate'}
+            </Text>
+            <Text style={styles.navBtnText} numberOfLines={1}>
+              {navPlace}
+            </Text>
+          </View>
+          <View style={styles.navGo}>
+            <ChevronRight color="#FFFFFF" size={16} />
+          </View>
         </Pressable>
       ) : null}
     </View>
@@ -524,17 +548,10 @@ const styles = StyleSheet.create({
   },
   navBtnFill: {
     position: 'absolute',
+    left: 12,
     right: 12,
     bottom: 16,
     margin: 0,
-    minWidth: 168,
-    paddingHorizontal: 16,
-    borderRadius: 999,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
   },
   etaHint: {
     fontFamily: fonts.medium,
@@ -561,30 +578,52 @@ const styles = StyleSheet.create({
   },
   navBtn: {
     marginHorizontal: 12,
-    marginTop: 4,
+    marginTop: 2,
     marginBottom: 12,
-    minHeight: 48,
-    borderRadius: 14,
-    backgroundColor: '#EA4B14',
+    minHeight: 58,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 10,
-    paddingHorizontal: 14,
+    paddingLeft: 8,
+    paddingRight: 8,
+    paddingVertical: 8,
   },
   navIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#FFF1E8',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  navCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  navKicker: {
+    fontFamily: fonts.semiBold,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: '#EA4B14',
+  },
   navBtnText: {
-    flexShrink: 1,
+    marginTop: 1,
     fontFamily: fonts.bold,
     fontSize: 15,
-    color: '#FFFFFF',
+    color: '#1E293B',
+  },
+  navGo: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#EA4B14',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   fallback: {
     minHeight: 120,
