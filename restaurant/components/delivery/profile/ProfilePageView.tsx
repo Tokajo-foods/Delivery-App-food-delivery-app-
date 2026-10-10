@@ -171,6 +171,7 @@ export function ProfilePageView(props: Props) {
                 </View>
               </View>
             </View>
+            <View style={styles.performanceDivider} />
             <View style={styles.stats}>
               <Stat value={String(s.deliveries)} label="Trips" />
               <Stat value={Number.isFinite(s.rating) ? s.rating.toFixed(1) : '0.0'} label="Rating" />
