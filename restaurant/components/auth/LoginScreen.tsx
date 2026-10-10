@@ -171,7 +171,7 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
         <ScrollView
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          style={{ maxHeight: Math.round(screenH * 0.69) }}
+          style={{ maxHeight: Math.round(screenH * 0.703) }}
         >
             <View className="bg-white rounded-t-[40px] px-6 pt-6 pb-12">
               <View className="mb-5">
