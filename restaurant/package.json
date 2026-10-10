@@ -76,6 +76,8 @@
     "start": "expo start --offline",
     "start:online": "expo start",
     "start:dev-client": "expo start --dev-client",
+    "start:restaurant": "set EXPO_PUBLIC_APP_VARIANT=restaurant&& expo start --dev-client --offline --port 8083",
+    "start:delivery": "set EXPO_PUBLIC_APP_VARIANT=delivery&& expo start --dev-client --offline --port 8084",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",

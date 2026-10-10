@@ -27,10 +27,33 @@ module.exports = ({ config }) => {
   const firebaseStorageBucket =
     process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET?.trim() || '';
 
+  const variant = process.env.EXPO_PUBLIC_APP_VARIANT?.trim().toLowerCase();
+  const restaurantApp = variant === 'restaurant';
+  const deliveryApp = variant === 'delivery';
+  const appName = deliveryApp
+    ? 'TOKAJO Delivery'
+    : restaurantApp
+      ? 'TOKAJO Restaurant'
+      : config.name;
+  const appScheme = deliveryApp
+    ? 'tokajodelivery'
+    : restaurantApp
+      ? 'tokajorestaurant'
+      : config.scheme;
+  const androidPackage = deliveryApp
+    ? 'com.tokajofoods.delivery'
+    : config.android?.package;
+  const iosBundle = deliveryApp
+    ? 'com.tokajofoods.delivery'
+    : config.ios?.bundleIdentifier;
+
   return {
     ...config,
+    name: appName,
+    scheme: appScheme,
     ios: {
       ...config.ios,
+      bundleIdentifier: iosBundle,
       config: {
         ...(config.ios?.config || {}),
         googleMapsApiKey: mapsKey,
@@ -44,6 +67,7 @@ module.exports = ({ config }) => {
     },
     android: {
       ...config.android,
+      package: androidPackage,
       usesCleartextTraffic: true,
       config: {
         ...(config.android?.config || {}),
@@ -55,6 +79,7 @@ module.exports = ({ config }) => {
     extra: {
       ...(config.extra || {}),
       apiUrl,
+      appVariant: deliveryApp ? 'delivery' : restaurantApp ? 'restaurant' : 'combined',
       googleMapsApiKey: mapsKey,
       googleWebClientId,
       googleIosClientId,

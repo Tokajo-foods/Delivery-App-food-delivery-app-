@@ -25,6 +25,7 @@ import type {
   RegisterPayload,
   ResetPasswordPayload,
 } from '@/lib/auth/types';
+import { lockedPartnerRole, wrongAppMessage } from '@/lib/app-variant';
 import { clearRestaurantSetupFlag, clearDeliveryPartnerSetupFlag } from '@/lib/navigation/post-auth';
 import { getApiErrorCode, PartnerApiError } from '@/lib/errors';
 import { getStoredSessionCookies } from '@/lib/session-cookies';
@@ -108,7 +109,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           set({
             token: null,
             user: null,
-            role: storedRole ?? 'restaurant',
+            role: lockedPartnerRole() ?? storedRole ?? 'restaurant',
             isHydrated: true,
           });
           return;
@@ -119,7 +120,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({
           token: null,
           user: null,
-          role: storedRole ?? 'restaurant',
+          role: lockedPartnerRole() ?? storedRole ?? 'restaurant',
+          isHydrated: true,
+        });
+        return;
+      }
+
+      const locked = lockedPartnerRole();
+      if (locked && user.role !== locked) {
+        await clearAuthStorage();
+        set({
+          token: null,
+          user: null,
+          role: locked,
           isHydrated: true,
         });
         return;
@@ -196,9 +209,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true });
     try {
       const response = await authApi.login(payload);
+      const locked = lockedPartnerRole();
+      if (locked && response.user.role !== locked) {
+        try {
+          await authApi.logout();
+        } catch {
+          // Cookie may already be missing.
+        }
+        await clearApiSession();
+        throw new Error(wrongAppMessage(locked));
+      }
       await get().setSession(
         response.token,
-        withPortalRole(response.user, payload.role)
+        withPortalRole(response.user, locked ?? payload.role)
       );
     } catch (error) {
       throwAuth(error, 'Login failed');

@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { fonts } from '@/constants/typography';
+import { lockedPartnerRole } from '@/lib/app-variant';
 import { PARTNER_ROLES, type PartnerRole } from '@/lib/auth/types';
 
 type RoleSelectorProps = {
@@ -10,9 +12,18 @@ type RoleSelectorProps = {
 };
 
 export function RoleSelector({ value, onChange, disabled }: RoleSelectorProps) {
+  const locked = lockedPartnerRole();
+  const roles = locked
+    ? PARTNER_ROLES.filter((role) => role.value === locked)
+    : PARTNER_ROLES;
+
+  useEffect(() => {
+    if (locked && value !== locked) onChange(locked);
+  }, [locked, onChange, value]);
+
   return (
     <View className="mb-5 flex-row overflow-hidden rounded-2xl bg-[#F3F4F6] p-1">
-      {PARTNER_ROLES.map((role) => {
+      {roles.map((role) => {
         const active = value === role.value;
         return (
           <Pressable
