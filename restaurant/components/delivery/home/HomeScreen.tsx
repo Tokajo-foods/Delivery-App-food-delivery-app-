@@ -29,8 +29,6 @@ import { useAuthStore } from '@/store/auth-store';
 import { DutyControlCard } from '@/components/delivery/home/DutyControlCard';
 import { MORE_FEATURES } from '@/components/delivery/home/home-features';
 import { styles } from '@/components/delivery/home/home-screen-styles';
-import { TripLifecycleWithGeo } from '@/components/delivery/orders/TripLifecycleBar';
-import { TripDetailSheet } from '@/components/delivery/orders/TripDetailSheet';
 import {
   LocationMapPicker,
   type MapPickResult,
@@ -50,7 +48,6 @@ import {
 import {
   deliveryPartnerApi,
   deliveryStatusLabel,
-  normalizeDeliveryStatus,
 } from '@/lib/delivery-partner/api';
 import {
   formatDutyError,
@@ -78,16 +75,12 @@ import {
   getGoOnlineBlocker,
 } from '@/lib/delivery-partner/go-online-guard';
 import {
-  useActiveDeliveries,
-  useActiveDelivery,
   useDeliveryHistory,
   useDeliveryOrderMutations,
   useDeliveryPartnerMe,
-  useDeliveryTimeline,
 } from '@/lib/delivery-partner/hooks';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
 import { formatTripError } from '@/lib/delivery-partner/rider-ack';
-import type { PartnerDelivery } from '@/lib/delivery-partner/types';
 import { askToEnableLocation } from '@/lib/delivery-partner/live-place';
 import { useLivePlaceSnapshot } from '@/lib/delivery-partner/live-place-store';
 import { getApiErrorCode, getApiErrorMessage } from '@/lib/errors';
@@ -111,10 +104,6 @@ export function DeliveryHomeScreen() {
   const [liveLocation, setLiveLocation] = useState<SavedLiveLocation | null>(
     null
   );
-  const [detailDelivery, setDetailDelivery] = useState<PartnerDelivery | null>(
-    null
-  );
-
   const me = useDeliveryPartnerMe();
   const duty = usePartnerDutyStatus();
   const dutySummary = usePartnerDutySummary();
@@ -132,8 +121,6 @@ export function DeliveryHomeScreen() {
     [authUser?.firstName, authUser?.lastName].filter(Boolean).join(' ') ||
     'Partner';
   const unread = useUnreadNotificationCount();
-  const active = useActiveDelivery();
-  const actives = useActiveDeliveries();
   const history = useDeliveryHistory(5);
   const performance = usePartnerPerformance();
   const attendanceStreak = usePartnerAttendanceStreak();
@@ -150,18 +137,6 @@ export function DeliveryHomeScreen() {
   const acceptingOrders = canAcceptOffers(dutyStatus);
   const breakBusy =
     startBreak.isPending || endBreak.isPending || extendBreak.isPending;
-  const delivery = active.data ?? actives.data?.[0] ?? null;
-  const activeCount = actives.data?.length ?? (delivery ? 1 : 0);
-  const tripTimeline = useDeliveryTimeline(delivery?.id, {
-    enabled: Boolean(delivery?.id),
-    live: true,
-  });
-  const tripProgress = (() => {
-    const steps = tripTimeline.data?.steps ?? [];
-    if (!steps.length) return 12;
-    const done = steps.filter((step) => step.completed).length;
-    return Math.max(8, Math.round((done / steps.length) * 100));
-  })();
   const goOnlineBlocker = getGoOnlineBlocker(me.data);
 
   const todayEarnings = earnings.data?.today.totalEarnings ?? 0;
@@ -212,8 +187,6 @@ export function DeliveryHomeScreen() {
         duty.refetch(),
         dutySummary.refetch(),
         breakPolicy.refetch(),
-        active.refetch(),
-        actives.refetch(),
         history.refetch(),
         performance.refetch(),
         attendanceStreak.refetch(),
@@ -708,86 +681,7 @@ export function DeliveryHomeScreen() {
             </View>
           </Pressable>
 
-        {delivery ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              {activeCount > 1 ? `Active trips (${activeCount})` : 'Active trip'}
-            </Text>
-            <View style={styles.activeCard}>
-              <Pressable
-                onPress={() => setDetailDelivery(delivery)}
-                style={styles.activeSummary}
-              >
-                <View style={styles.activeTop}>
-                  <View>
-                    <Text style={styles.activeCardLabel}>Order</Text>
-                    <Text style={styles.activeCardValue}>
-                      #{delivery.orderNumber || delivery.orderId || delivery.id.slice(-6)}
-                    </Text>
-                  </View>
-                  <View style={styles.activeBadge}>
-                    <Text style={styles.activeBadgeText}>
-                      {deliveryStatusLabel(delivery.status)}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.progressTrack}>
-                  <View style={[styles.progressFill, { width: `${tripProgress}%` }]} />
-                </View>
-
-                <View style={styles.activeBottom}>
-                  <View style={{ flex: 1.2 }}>
-                    <Text style={styles.activeCardLabel}>From</Text>
-                    <Text style={styles.activeCardValue} numberOfLines={1}>
-                      {delivery.restaurantName || 'Restaurant'}
-                    </Text>
-                  </View>
-                  <View style={{ flex: 1.2 }}>
-                    <Text style={styles.activeCardLabel}>To</Text>
-                    <Text style={styles.activeCardValue} numberOfLines={1}>
-                      {delivery.customerName || 'Customer'}
-                    </Text>
-                  </View>
-                  <View style={{ flex: 1.6 }}>
-                    <Text style={styles.activeCardLabel}>ETA</Text>
-                    <Text style={styles.activeCardValue} numberOfLines={1}>
-                      {delivery.etaMinutes != null
-                        ? `${delivery.etaMinutes} min`
-                        : 'Open map'}
-                    </Text>
-                  </View>
-                </View>
-              </Pressable>
-            </View>
-            {normalizeDeliveryStatus(delivery.status) !== 'assigned' ? (
-              <View style={styles.tripActionsCard}>
-                <TripLifecycleWithGeo delivery={delivery} />
-              </View>
-            ) : null}
-          </View>
-        ) : (active.isError || actives.isError) && !delivery ? (
-          <View style={styles.section}>
-            <Pressable
-              onPress={() => {
-                void active.refetch();
-                void actives.refetch();
-              }}
-              style={styles.demandCta}
-            >
-              <Package color={authTheme.brand} size={18} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.demandCtaTitle}>Couldn't load active trip</Text>
-                <Text style={styles.demandCtaHint}>
-                  {formatTripError(
-                    active.error ?? actives.error,
-                    'Tap to retry.'
-                  )}
-                </Text>
-              </View>
-            </Pressable>
-          </View>
-        ) : acceptingOrders ? (
+        {acceptingOrders ? (
           <View style={styles.section}>
             <Pressable
               onPress={() => router.push(DELIVERY_ROUTES.heatmap as never)}
@@ -997,18 +891,6 @@ export function DeliveryHomeScreen() {
         onConfirm={(result) => {
           void onConfirmLiveLocation(result);
         }}
-      />
-      <TripDetailSheet
-        visible={Boolean(detailDelivery)}
-        deliveryId={detailDelivery?.id ?? null}
-        fallback={detailDelivery}
-        live={Boolean(
-          detailDelivery &&
-            ['assigned', 'accepted', 'arrived', 'picked_up', 'out_for_delivery', 'at_customer', 'returning_to_restaurant'].includes(
-              normalizeDeliveryStatus(detailDelivery.status)
-            )
-        )}
-        onClose={() => setDetailDelivery(null)}
       />
     </View>
   );
