@@ -52,6 +52,29 @@ function formatWhen(iso?: string | null) {
   });
 }
 
+type PayLine = { key: string; label: string; amount: number; sign: 'add' | 'subtract' };
+
+function isIncentiveLine(line: PayLine) {
+  return /incentive/i.test(`${line.key} ${line.label}`);
+}
+
+function isDeliveryFeeLine(line: PayLine) {
+  return line.key === 'deliveryFee' || /delivery\s*fee/i.test(line.label);
+}
+
+function linesWithIncentive(lines: PayLine[], incentive: number): PayLine[] {
+  if (incentive <= 0 || lines.some(isIncentiveLine)) return lines;
+  const row: PayLine = {
+    key: 'incentive',
+    label: 'Incentive',
+    amount: incentive,
+    sign: 'add',
+  };
+  const feeAt = lines.findIndex(isDeliveryFeeLine);
+  if (feeAt < 0) return [row, ...lines];
+  return [...lines.slice(0, feeAt + 1), row, ...lines.slice(feeAt + 1)];
+}
+
 const KIND_LABEL: Record<string, string> = {
   timeline: 'Trip',
   issue: 'Issue',
@@ -163,11 +186,6 @@ export function TripDetailSheet({
                       {money(delivery.earning, delivery.currency)}
                     </Text>
                   ) : null}
-                  {incentiveAmount > 0 ? (
-                    <Text style={styles.incentive}>
-                      Incentive {money(incentiveAmount, delivery.currency)}
-                    </Text>
-                  ) : null}
                 </View>
               ) : null}
 
@@ -245,55 +263,58 @@ export function TripDetailSheet({
                     </Text>
                   ) : null}
                   <View style={styles.fareDivider} />
-                  {(orderCtx.data.bill?.partner.lines?.length
-                    ? orderCtx.data.bill.partner.lines
-                    : [
-                        {
-                          key: 'deliveryFee',
-                          label: 'Delivery fee',
-                          amount: orderCtx.data.deliveryFee,
-                          sign: 'add' as const,
-                        },
-                        ...(orderCtx.data.tipAmount > 0
-                          ? [
-                              {
-                                key: 'tip',
-                                label: 'Customer tip',
-                                amount: orderCtx.data.tipAmount,
-                                sign: 'add' as const,
-                              },
-                            ]
-                          : []),
-                      ]
-                  ).map((line) => (
-                    <View key={line.key} style={styles.billRow}>
-                      <Text style={styles.billLabel}>{line.label}</Text>
-                      <Text style={styles.billValue}>
-                        {line.sign === 'subtract' ? '−' : ''}
-                        {money(line.amount, 'INR')}
-                      </Text>
-                    </View>
-                  ))}
-                  {incentiveAmount > 0 &&
-                  !tripEarn.data?.breakdown.incentive &&
-                  !(orderCtx.data.bill?.partner.lines ?? []).some((line) =>
-                    /incentive/i.test(`${line.key} ${line.label}`)
-                  ) ? (
-                    <View style={styles.billRow}>
-                      <Text style={styles.billLabel}>Incentive</Text>
-                      <Text style={styles.billValue}>
-                        {money(incentiveAmount, 'INR')}
-                      </Text>
-                    </View>
-                  ) : null}
-                  {orderCtx.data.bill?.partner?.netEarnings != null ? (
-                    <View style={styles.earnHero}>
-                      <Text style={styles.earnHeroLabel}>Your payout</Text>
-                      <Text style={styles.earnHeroValue}>
-                        {money(orderCtx.data.bill.partner.netEarnings, 'INR')}
-                      </Text>
-                    </View>
-                  ) : null}
+                  {(() => {
+                    const source = orderCtx.data.bill?.partner.lines?.length
+                      ? orderCtx.data.bill.partner.lines
+                      : [
+                          {
+                            key: 'deliveryFee',
+                            label: 'Delivery fee',
+                            amount: orderCtx.data.deliveryFee,
+                            sign: 'add' as const,
+                          },
+                          ...(orderCtx.data.tipAmount > 0
+                            ? [
+                                {
+                                  key: 'tip',
+                                  label: 'Customer tip',
+                                  amount: orderCtx.data.tipAmount,
+                                  sign: 'add' as const,
+                                },
+                              ]
+                            : []),
+                        ];
+                    const alreadyListed = source.some(isIncentiveLine);
+                    const lines = linesWithIncentive(source, incentiveAmount);
+                    const net = orderCtx.data.bill?.partner?.netEarnings;
+                    const payout =
+                      net != null
+                        ? net + (alreadyListed ? 0 : incentiveAmount)
+                        : lines.reduce(
+                            (sum, line) =>
+                              sum + (line.sign === 'subtract' ? -line.amount : line.amount),
+                            0
+                          );
+                    return (
+                      <>
+                        {lines.map((line) => (
+                          <View key={line.key} style={styles.billRow}>
+                            <Text style={styles.billLabel}>{line.label}</Text>
+                            <Text style={styles.billValue}>
+                              {line.sign === 'subtract' ? '−' : ''}
+                              {money(line.amount, 'INR')}
+                            </Text>
+                          </View>
+                        ))}
+                        <View style={styles.earnHero}>
+                          <Text style={styles.earnHeroLabel}>Your payout</Text>
+                          <Text style={styles.earnHeroValue}>
+                            {money(payout, 'INR')}
+                          </Text>
+                        </View>
+                      </>
+                    );
+                  })()}
                   <Text style={styles.mutedLeft}>
                     Payment{' '}
                     {orderCtx.data.paymentMethod === 'cod'
@@ -488,12 +509,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.extraBold,
     fontSize: 16,
     color: '#111827',
-    marginTop: 4,
-  },
-  incentive: {
-    fontFamily: fonts.bold,
-    fontSize: 14,
-    color: '#EA4B14',
     marginTop: 4,
   },
   earnHero: {
