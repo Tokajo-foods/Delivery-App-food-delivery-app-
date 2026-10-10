@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Camera, ChevronRight } from 'lucide-react-native';
+import { Camera, ChevronRight, LogOut } from 'lucide-react-native';
 import {
   ActivityIndicator,
   Pressable,
@@ -212,9 +212,12 @@ export function ProfilePageView(props: Props) {
 
           <Pressable onPress={s.onLogout} disabled={s.loggingOut} style={styles.logout}>
             {s.loggingOut ? (
-              <ActivityIndicator color="#EF4444" />
+              <ActivityIndicator color="#B91C1C" />
             ) : (
-              <Text style={styles.logoutText}>Log out</Text>
+              <>
+                <LogOut color="#B91C1C" size={16} />
+                <Text style={styles.logoutText}>Log out</Text>
+              </>
             )}
           </Pressable>
         </>
