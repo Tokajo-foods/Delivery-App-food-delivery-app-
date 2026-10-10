@@ -1214,7 +1214,7 @@ const styles = StyleSheet.create({
   periodBar: {
     flexDirection: 'row',
     marginHorizontal: 16,
-    marginTop: 4,
+    marginTop: 18,
     marginBottom: 12,
     padding: 4,
     borderRadius: 14,
