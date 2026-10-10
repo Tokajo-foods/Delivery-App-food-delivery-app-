@@ -20,7 +20,7 @@ export const profilePageStyles = StyleSheet.create({
     letterSpacing: -0.4,
   },
   pageSub: {
-    marginTop: -6,
+    marginTop: 6,
     marginBottom: 16,
     fontFamily: fonts.medium,
     fontSize: 13,
