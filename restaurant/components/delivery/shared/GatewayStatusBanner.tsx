@@ -50,15 +50,17 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 20,
-    marginBottom: 10,
+    marginHorizontal: 16,
+    marginBottom: 8,
     paddingHorizontal: 12,
     paddingVertical: 9,
     borderRadius: 12,
     gap: 8,
   },
   barConnecting: {
-    backgroundColor: '#FFF7ED',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
   },
   barOffline: {
     backgroundColor: '#FEF2F2',
@@ -69,7 +71,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   dotConnecting: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#EA4B14',
   },
   dotOffline: {
     backgroundColor: '#EF4444',
@@ -77,7 +79,7 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
     fontSize: 12,
-    fontFamily: fonts.semiBold,
+    fontFamily: fonts.medium,
     color: '#1F2937',
   },
   retry: {

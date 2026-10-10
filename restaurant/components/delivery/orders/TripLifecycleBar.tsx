@@ -1471,7 +1471,7 @@ const styles = StyleSheet.create({
   primary: {
     minHeight: 52,
     borderRadius: 14,
-    backgroundColor: '#16A34A',
+    backgroundColor: '#EA4B14',
     alignItems: 'center',
     justifyContent: 'center',
   },

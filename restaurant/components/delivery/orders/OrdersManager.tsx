@@ -1033,7 +1033,7 @@ function DeliveryCard({
                 }
                 style={styles.miniBtn}
               >
-                <Navigation color={'#000000'} size={14} />
+                <Navigation color={'#C2410C'} size={14} />
                 <Text style={styles.miniBtnText}>Map</Text>
               </Pressable>
             </View>
@@ -1066,7 +1066,7 @@ function DeliveryCard({
                 }
                 style={styles.miniBtn}
               >
-                <Navigation color={'#000000'} size={14} />
+                <Navigation color={'#C2410C'} size={14} />
                 <Text style={styles.miniBtnText}>Map</Text>
               </Pressable>
             </View>
@@ -1101,27 +1101,29 @@ function DeliveryCard({
           </Pressable>
         </View>
       ) : live ? (
-        <View style={{ gap: 8 }}>
+        <View style={{ gap: 10 }}>
           <TripLifecycleBar
             delivery={delivery}
             geoBlocked={geoBlocked}
             geoHint={geoHint}
           />
-          <Pressable
-            onPress={onChat}
-            disabled={busy}
-            style={styles.chatBtn}
-          >
-            <MessageCircle color="#EA4B14" size={16} />
-            <Text style={styles.chatBtnText}>Chat</Text>
-          </Pressable>
-          <Pressable
-            onPress={onDetails}
-            disabled={busy}
-            style={styles.chatBtn}
-          >
-            <Text style={styles.chatBtnText}>Details</Text>
-          </Pressable>
+          <View style={styles.actionRow}>
+            <Pressable
+              onPress={onChat}
+              disabled={busy}
+              style={styles.chatBtn}
+            >
+              <MessageCircle color="#EA4B14" size={16} />
+              <Text style={styles.chatBtnText}>Chat</Text>
+            </Pressable>
+            <Pressable
+              onPress={onDetails}
+              disabled={busy}
+              style={styles.chatBtn}
+            >
+              <Text style={styles.chatBtnText}>Details</Text>
+            </Pressable>
+          </View>
         </View>
       ) : null}
     </View>
@@ -1238,11 +1240,13 @@ const styles = StyleSheet.create({
   periodBar: {
     flexDirection: 'row',
     marginHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: 4,
+    marginBottom: 12,
     padding: 4,
     borderRadius: 14,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
     gap: 2,
   },
   periodHit: {
@@ -1266,8 +1270,8 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   periodTextActive: {
-    color: '#000000',
-    fontFamily: fonts.semiBold,
+    color: '#EA4B14',
+    fontFamily: fonts.bold,
   },
   scroll: {
     paddingHorizontal: 16,
@@ -1282,7 +1286,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: '#F1EAE3',
   },
   onlineLeft: {
     flex: 1,
@@ -1364,18 +1368,17 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: fonts.bold,
-    fontSize: 18,
-    color: '#000000',
-    marginBottom: 4,
-    letterSpacing: -0.3,
+    fontSize: 15,
+    color: '#0F172A',
+    marginBottom: 2,
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 20,
     paddingHorizontal: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.02)',
+    borderColor: '#F1EAE3',
   },
   cardPad: {
     backgroundColor: '#FFFFFF',
@@ -1396,13 +1399,13 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    paddingVertical: 48,
+    borderRadius: 20,
+    paddingVertical: 36,
     paddingHorizontal: 24,
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.02)',
+    borderColor: '#F1EAE3',
   },
   emptyTitle: {
     marginTop: 8,
@@ -1570,7 +1573,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   historyChipActive: {
-    backgroundColor: '#111827',
+    backgroundColor: '#EA4B14',
   },
   historyChipText: {
     fontFamily: fonts.semiBold,
@@ -1620,22 +1623,22 @@ const styles = StyleSheet.create({
   },
   timelineLine: {
     position: 'absolute',
-    top: 24,
-    bottom: 24,
-    left: 11,
+    top: 16,
+    bottom: 16,
+    left: 12,
     width: 2,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#F3E8DE',
   },
   timelineDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#D1D5DB',
-    marginTop: 6,
-    marginRight: 16,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#EA4B14',
+    marginTop: 4,
+    marginRight: 12,
   },
   timelineDotDrop: {
-    backgroundColor: '#000000',
+    backgroundColor: '#0F172A',
   },
   stop: {
     flexDirection: 'row',
@@ -1678,9 +1681,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    backgroundColor: '#FFF7F2',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -1688,7 +1689,7 @@ const styles = StyleSheet.create({
   miniBtnText: {
     fontFamily: fonts.semiBold,
     fontSize: 13,
-    color: '#374151',
+    color: '#C2410C',
   },
   actionRow: {
     flexDirection: 'row',
@@ -1716,7 +1717,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#000000', // Sleek black primary action
+    backgroundColor: '#EA4B14',
   },
   acceptBtnText: {
     fontFamily: fonts.semiBold,
@@ -1740,15 +1741,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   chatBtn: {
+    flex: 1,
     minHeight: 44,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 8,
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#FED7AA',
+    backgroundColor: '#FFF7F2',
   },
   chatBtnText: {
     fontFamily: fonts.bold,
@@ -1793,7 +1793,7 @@ const styles = StyleSheet.create({
   historyAmount: {
     fontFamily: fonts.bold,
     fontSize: 15,
-    color: '#000000',
+    color: '#EA4B14',
   },
   loadMore: {
     alignItems: 'center',
