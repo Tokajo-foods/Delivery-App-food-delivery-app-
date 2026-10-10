@@ -203,15 +203,15 @@ export function PlatformAccountDeleteRow() {
 const styles = StyleSheet.create({
   deleteRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   deleteIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     backgroundColor: '#FEF2F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  deleteLabel: { fontFamily: fonts.semiBold, fontSize: 14, color: '#B91C1C' },
-  deleteHint: { fontFamily: fonts.medium, fontSize: 12, color: '#9CA3AF' },
+  deleteLabel: { fontFamily: fonts.semiBold, fontSize: 15, color: '#B91C1C' },
+  deleteHint: { marginTop: 2, fontFamily: fonts.medium, fontSize: 12, color: '#94A3B8' },
   modalRoot: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: '#00000066' },
   sheet: {

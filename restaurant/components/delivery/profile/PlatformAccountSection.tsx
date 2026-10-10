@@ -64,25 +64,21 @@ export function PlatformAccountSection() {
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Notifications</Text>
-
       {prefs.isLoading && !prefs.data ? (
-        <ActivityIndicator color="#EA4B14" style={{ marginVertical: 12 }} />
+        <ActivityIndicator color="#EA4B14" style={{ marginVertical: 18 }} />
       ) : prefs.isError && !prefs.data ? (
         <Pressable onPress={() => void prefs.refetch()} style={styles.retry}>
           <Text style={styles.retryText}>
-            {formatAccountError(
-              prefs.error,
-              'Could not load preferences. Retry'
-            )}
+            {formatAccountError(prefs.error, 'Could not load alerts. Retry')}
           </Text>
         </Pressable>
       ) : (
         <>
           <PrefToggle
+            first
             icon={Bell}
             label="Push"
-            hint="Order offers and duty alerts"
+            hint="New orders and duty alerts"
             value={local.push}
             busy={savingKey === 'push'}
             onChange={(push) => void patchNotifications('push', push)}
@@ -90,7 +86,7 @@ export function PlatformAccountSection() {
           <PrefToggle
             icon={Phone}
             label="SMS"
-            hint="OTP and important account texts"
+            hint="Codes and account messages"
             value={local.sms}
             busy={savingKey === 'sms'}
             onChange={(sms) => void patchNotifications('sms', sms)}
@@ -98,7 +94,7 @@ export function PlatformAccountSection() {
           <PrefToggle
             icon={Mail}
             label="Email"
-            hint="Receipts and verification mail"
+            hint="Receipts and account mail"
             value={local.email}
             busy={savingKey === 'email'}
             onChange={(email) => void patchNotifications('email', email)}
@@ -106,9 +102,9 @@ export function PlatformAccountSection() {
         </>
       )}
       {prefsError ? <Text style={styles.error}>{prefsError}</Text> : null}
-
-      <View style={styles.divider} />
-      <PlatformAccountDeleteRow />
+      <View style={styles.deleteWrap}>
+        <PlatformAccountDeleteRow />
+      </View>
     </View>
   );
 }
@@ -119,6 +115,7 @@ function PrefToggle({
   hint,
   value,
   busy,
+  first,
   onChange,
 }: {
   icon: typeof Bell;
@@ -126,33 +123,31 @@ function PrefToggle({
   hint: string;
   value: boolean;
   busy?: boolean;
+  first?: boolean;
   onChange: (next: boolean) => void;
 }) {
   return (
-    <View style={styles.prefRow}>
-      <Icon color="#64748B" size={16} />
-      <View style={{ flex: 1 }}>
+    <View style={[styles.prefRow, !first && styles.prefBorder]}>
+      <View style={[styles.iconWrap, value && styles.iconWrapOn]}>
+        <Icon color={value ? '#EA4B14' : '#94A3B8'} size={16} />
+      </View>
+      <View style={styles.copy}>
         <Text style={styles.prefLabel}>{label}</Text>
         <Text style={styles.prefHint}>{hint}</Text>
       </View>
-      {busy ? <ActivityIndicator color="#EA4B14" size="small" /> : null}
-      <Switch
-        value={value}
-        onValueChange={onChange}
-        disabled={busy}
-        style={Platform.OS === 'android' ? styles.androidSwitch : undefined}
-        trackColor={{ false: '#E5E7EB', true: '#FDBA74' }}
-        thumbColor={
-          Platform.OS === 'android'
-            ? value
-              ? '#EA4B14'
-              : '#F9FAFB'
-            : value
-              ? '#FFFFFF'
-              : '#F9FAFB'
-        }
-        ios_backgroundColor="#E5E7EB"
-      />
+      {busy ? (
+        <ActivityIndicator color="#EA4B14" size="small" />
+      ) : (
+        <Switch
+          value={value}
+          onValueChange={onChange}
+          trackColor={{ false: '#E2E8F0', true: '#FDBA74' }}
+          thumbColor={
+            Platform.OS === 'android' ? (value ? '#EA4B14' : '#FFFFFF') : '#FFFFFF'
+          }
+          ios_backgroundColor="#E2E8F0"
+        />
+      )}
     </View>
   );
 }
@@ -163,38 +158,45 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     borderColor: '#F1EAE3',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  sectionTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 15,
-    color: '#0F172A',
-    marginBottom: 4,
+    overflow: 'hidden',
   },
   prefRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 8,
-    minHeight: 52,
+    gap: 12,
+    minHeight: 68,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  prefLabel: { fontFamily: fonts.semiBold, fontSize: 14, color: '#111827' },
-  prefHint: { fontFamily: fonts.medium, fontSize: 11, color: '#6B7280' },
+  prefBorder: {
+    borderTopWidth: 1,
+    borderTopColor: '#F4EEE8',
+  },
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F8FAFC',
+  },
+  iconWrapOn: { backgroundColor: '#FFF1E8' },
+  copy: { flex: 1, minWidth: 0 },
+  prefLabel: { fontFamily: fonts.semiBold, fontSize: 15, color: '#0F172A' },
+  prefHint: { marginTop: 2, fontFamily: fonts.medium, fontSize: 12, color: '#94A3B8' },
   error: {
-    marginTop: 8,
+    marginHorizontal: 14,
+    marginBottom: 10,
     fontFamily: fonts.medium,
     fontSize: 12,
     color: '#B91C1C',
   },
-  retry: { paddingVertical: 8 },
+  retry: { paddingVertical: 16, paddingHorizontal: 14 },
   retryText: { fontFamily: fonts.semiBold, fontSize: 13, color: '#EA4B14' },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: '#F3F4F6',
-    marginVertical: 14,
-  },
-  androidSwitch: {
-    transform: [{ scaleX: 1.05 }, { scaleY: 1.05 }],
+  deleteWrap: {
+    borderTopWidth: 1,
+    borderTopColor: '#F4EEE8',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
 });
