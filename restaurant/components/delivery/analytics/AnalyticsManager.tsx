@@ -58,9 +58,13 @@ export function PartnerAnalyticsManager() {
 
   const summary = earnings.data;
   const preset =
-    mode === 'range' || !summary
-      ? undefined
-      : summary[PERIOD_KEY[mode]];
+    mode === 'day'
+      ? summary?.today
+      : mode === 'week'
+        ? summary?.week
+        : mode === 'month'
+          ? summary?.month
+          : undefined;
   const from = mode === 'range' ? customFrom : preset?.from;
   const to = mode === 'range' ? customTo : preset?.to;
   const daily = usePartnerEarningsRange(from, to);
