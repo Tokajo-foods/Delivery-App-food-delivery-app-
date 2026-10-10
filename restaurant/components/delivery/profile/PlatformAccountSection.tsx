@@ -1,9 +1,10 @@
 export { ContactChangeModal } from '@/components/account/ContactChangeModal';
 
 import { Bell, Mail, Phone } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   Pressable,
   StyleSheet,
@@ -14,6 +15,10 @@ import {
 
 import { PlatformAccountDeleteRow } from '@/components/delivery/profile/PlatformAccountDeleteRow';
 import { fonts } from '@/constants/typography';
+import {
+  getRiderAlertPrefs,
+  saveRiderAlertPrefs,
+} from '@/lib/delivery-partner/rider-alert-prefs';
 import {
   formatAccountError,
   usePlatformAccountMutations,
@@ -35,8 +40,24 @@ export function PlatformAccountSection() {
   const [savingKey, setSavingKey] = useState<keyof NotificationPrefs | null>(
     null
   );
+  const riderLoaded = useRef(false);
 
   useEffect(() => {
+    let live = true;
+    void getRiderAlertPrefs()
+      .then((rider) => {
+        if (!live || !rider) return;
+        riderLoaded.current = true;
+        setLocal(rider);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (riderLoaded.current) return;
     if (prefs.data?.notifications) setLocal(prefs.data.notifications);
   }, [prefs.data?.notifications]);
 
@@ -50,6 +71,8 @@ export function PlatformAccountSection() {
     setPrefsError(null);
     setSavingKey(key);
     try {
+      await saveRiderAlertPrefs(next);
+      riderLoaded.current = true;
       const saved = await updateNotifications.mutateAsync(next);
       setLocal(saved.notifications);
     } catch (err) {
@@ -60,6 +83,36 @@ export function PlatformAccountSection() {
     } finally {
       setSavingKey(null);
     }
+  };
+
+  const requestChange = (key: keyof NotificationPrefs, value: boolean) => {
+    if (value) {
+      void patchNotifications(key, true);
+      return;
+    }
+    const copy =
+      key === 'push'
+        ? {
+            title: 'Turn off push alerts?',
+            body: 'Order and duty alerts will not show on this phone.',
+          }
+        : key === 'sms'
+          ? {
+              title: 'Turn off SMS?',
+              body: 'Text messages will not be sent to you.',
+            }
+          : {
+              title: 'Turn off email?',
+              body: 'Email alerts will not be sent to you.',
+            };
+    Alert.alert(copy.title, copy.body, [
+      { text: 'Keep on', style: 'cancel' },
+      {
+        text: 'Turn off',
+        style: 'destructive',
+        onPress: () => void patchNotifications(key, false),
+      },
+    ]);
   };
 
   return (
@@ -81,7 +134,7 @@ export function PlatformAccountSection() {
             hint="New orders and duty alerts"
             value={local.push}
             busy={savingKey === 'push'}
-            onChange={(push) => void patchNotifications('push', push)}
+            onChange={(push) => requestChange('push', push)}
           />
           <PrefToggle
             icon={Phone}
@@ -89,7 +142,7 @@ export function PlatformAccountSection() {
             hint="Codes and account messages"
             value={local.sms}
             busy={savingKey === 'sms'}
-            onChange={(sms) => void patchNotifications('sms', sms)}
+            onChange={(sms) => requestChange('sms', sms)}
           />
           <PrefToggle
             icon={Mail}
@@ -97,7 +150,7 @@ export function PlatformAccountSection() {
             hint="Receipts and account mail"
             value={local.email}
             busy={savingKey === 'email'}
-            onChange={(email) => void patchNotifications('email', email)}
+            onChange={(email) => requestChange('email', email)}
           />
         </>
       )}
