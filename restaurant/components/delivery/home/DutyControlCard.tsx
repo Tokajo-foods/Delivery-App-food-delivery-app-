@@ -241,10 +241,6 @@ export function DutyControlCard({
             <Text style={styles.hubLinkText}>View hubs</Text>
           </Pressable>
         </View>
-      ) : accepting && !onDelivery ? (
-        <Pressable onPress={onOpenHubs} style={styles.hubLink}>
-          <Text style={styles.hubLinkText}>Nearby hubs & cash drop</Text>
-        </Pressable>
       ) : null}
 
       {gpsBanner ? <Text style={styles.gpsBanner}>{gpsBanner}</Text> : null}
