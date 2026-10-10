@@ -14,6 +14,8 @@ export const partnerAnalyticsKeys = {
   earnings: () => [...partnerAnalyticsKeys.all, 'earnings'] as const,
   dailyEarnings: (days: number) =>
     [...partnerAnalyticsKeys.all, 'daily-earnings', days] as const,
+  dailyRange: (from: string, to: string) =>
+    [...partnerAnalyticsKeys.all, 'daily-range', from, to] as const,
   incentives: () => [...partnerAnalyticsKeys.all, 'incentives'] as const,
 };
 
@@ -69,6 +71,31 @@ export function usePartnerDailyEarnings(days = 30, enabled = true) {
     refetchInterval: liveRefetchInterval(
       LIVE_INTERVALS.deliveryEarnings,
       isActive
+    ),
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    placeholderData: (previous) => previous,
+  });
+}
+
+/** GET /partners/me/earnings/daily?from=&to= */
+export function usePartnerEarningsRange(
+  from?: string,
+  to?: string,
+  enabled = true
+) {
+  const isActive = useAppIsActive();
+  const ready = enabled && Boolean(from && to);
+
+  return useQuery({
+    queryKey: partnerAnalyticsKeys.dailyRange(from ?? '', to ?? ''),
+    queryFn: () => partnerAnalyticsApi.getDailyEarningsRange(from!, to!),
+    enabled: ready,
+    staleTime: LIVE_INTERVALS.deliveryEarnings / 2,
+    refetchInterval: liveRefetchInterval(
+      LIVE_INTERVALS.deliveryEarnings,
+      isActive && ready
     ),
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,

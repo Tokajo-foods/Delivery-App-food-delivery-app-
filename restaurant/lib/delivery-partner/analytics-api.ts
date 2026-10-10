@@ -315,6 +315,7 @@ function mapDailyPoint(raw: unknown): PartnerDailyEarning | null {
     baseEarnings: baseEarnings ?? undefined,
     incentives: incentives ?? undefined,
     tips: tips ?? undefined,
+    onlineHours: pickNumber(record, ['onlineHours', 'hoursOnline', 'activeHours']),
   };
 }
 
@@ -564,6 +565,14 @@ function extractIncentiveList(data: unknown): unknown[] {
   return [];
 }
 
+function mapDailyResult(raw: unknown, days: number): PartnerDailyEarningsResult {
+  const root = unwrap(raw);
+  const points = extractDailyList(root)
+    .map(mapDailyPoint)
+    .filter(Boolean) as PartnerDailyEarning[];
+  return { days, points };
+}
+
 function mapIncentives(raw: unknown): PartnerIncentivesResult {
   const root = unwrap(raw);
   const list = extractIncentiveList(root)
@@ -590,11 +599,16 @@ export const partnerAnalyticsApi = {
     days = 30
   ): Promise<PartnerDailyEarningsResult> => {
     const res = await getJson<unknown>(`${ME_BASE}/earnings/daily`, { days });
-    const root = unwrap(res.data ?? res);
-    const points = extractDailyList(root)
-      .map(mapDailyPoint)
-      .filter(Boolean) as PartnerDailyEarning[];
-    return { days, points };
+    return mapDailyResult(res.data ?? res, days);
+  },
+
+  /** GET /partners/me/earnings/daily?from=&to= */
+  getDailyEarningsRange: async (
+    from: string,
+    to: string
+  ): Promise<PartnerDailyEarningsResult> => {
+    const res = await getJson<unknown>(`${ME_BASE}/earnings/daily`, { from, to });
+    return mapDailyResult(res.data ?? res, 0);
   },
 
   /** GET /partners/me/incentives */

@@ -41,6 +41,7 @@ export type PartnerDailyEarning = {
   baseEarnings?: number;
   incentives?: number;
   tips?: number;
+  onlineHours?: number;
 };
 
 export type PartnerPayoutAccount = {
