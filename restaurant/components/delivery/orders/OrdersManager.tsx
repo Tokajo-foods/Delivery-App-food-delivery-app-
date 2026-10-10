@@ -1291,7 +1291,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EA4B14',
   },
   onlineBtnQuiet: {
-    backgroundColor: '#C2410C',
+    backgroundColor: authTheme.brand,
   },
   onlineBtnText: {
     color: '#FFFFFF',
