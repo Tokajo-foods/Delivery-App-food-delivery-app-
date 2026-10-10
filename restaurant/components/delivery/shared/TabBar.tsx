@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     backgroundColor: '#FFFFFF',
     borderRadius: 32,
-    paddingHorizontal: 6,
+    paddingHorizontal: 18,
     paddingTop: 8,
     paddingBottom: 8,
     borderWidth: StyleSheet.hairlineWidth,
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   iconSlot: {
-    width: 46,
+    width: 40,
     height: 30,
     borderRadius: 15,
     alignItems: 'center',
