@@ -44,6 +44,7 @@ type Props = {
   deliveryId: string;
   orderId?: string;
   returning?: boolean;
+  peer?: 'customer' | 'restaurant';
   onClose: () => void;
 };
 
@@ -55,6 +56,7 @@ export function TripChatSheet({
   deliveryId,
   orderId,
   returning = false,
+  peer,
   onClose,
 }: Props) {
   const insets = useSafeAreaInsets();
@@ -73,8 +75,10 @@ export function TripChatSheet({
   const closed = Boolean(thread.data?.closed);
 
   useEffect(() => {
-    if (returning) setTo('restaurant');
-  }, [returning]);
+    if (!visible) return;
+    if (peer) setTo(peer);
+    else if (returning) setTo('restaurant');
+  }, [visible, peer, returning]);
 
   useEffect(() => {
     if (!visible) return;

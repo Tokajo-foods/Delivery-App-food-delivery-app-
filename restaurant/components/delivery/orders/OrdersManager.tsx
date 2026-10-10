@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import {
   Package,
   Power,
-  MessageCircle,
   X,
 } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
@@ -25,6 +24,9 @@ import { DeliveryTripMap } from '@/components/delivery/orders/DeliveryTripMap';
 import { TripDetailSheet } from '@/components/delivery/orders/TripDetailSheet';
 import { BatchSequenceSheet } from '@/components/delivery/orders/BatchSequenceSheet';
 import { TripLifecycleBar, tripGeofenceState } from '@/components/delivery/orders/TripLifecycleBar';
+import { StopCallSheet } from '@/components/delivery/orders/stop-call-sheet';
+import { StopContactIcons } from '@/components/delivery/orders/stop-contact-icons';
+import { useOrderCalls } from '@/lib/call/use-order-calls';
 import { authTheme, PARTNER_BOTTOM_NAV_INSET } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
 import { usePartnerDutyStatus } from '@/lib/delivery-partner/availability-hooks';
@@ -151,6 +153,7 @@ export function PartnerOrdersManager() {
   const [rejectTargetId, setRejectTargetId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [chatDelivery, setChatDelivery] = useState<PartnerDelivery | null>(null);
+  const [chatPeer, setChatPeer] = useState<'customer' | 'restaurant'>('customer');
   const [detailDelivery, setDetailDelivery] = useState<PartnerDelivery | null>(
     null
   );
@@ -525,7 +528,10 @@ export function PartnerOrdersManager() {
                     setRejectReason('');
                     setRejectTargetId(delivery.id);
                   }}
-                  onChat={() => setChatDelivery(delivery)}
+                  onChat={(peer) => {
+                    setChatPeer(peer);
+                    setChatDelivery(delivery);
+                  }}
                   onDetails={() => setDetailDelivery(delivery)}
                 />
               ))}
@@ -697,6 +703,7 @@ export function PartnerOrdersManager() {
           visible
           deliveryId={chatDelivery.id}
           orderId={chatDelivery.orderId}
+          peer={chatPeer}
           returning={
             normalizeDeliveryStatus(chatDelivery.status) ===
             'returning_to_restaurant'
@@ -739,7 +746,7 @@ function DeliveryCard({
   busy: boolean;
   onAccept: () => void;
   onDecline: () => void;
-  onChat: () => void;
+  onChat: (peer: 'customer' | 'restaurant') => void;
   onDetails: () => void;
 }) {
   const status = normalizeDeliveryStatus(delivery.status);
@@ -880,6 +887,8 @@ function DeliveryCard({
   const offerProgress =
     offerLeft == null ? 1 : Math.min(1, Math.max(0, offerLeft / offerTotal));
 
+  const calls = useOrderCalls(live && delivery.orderId ? delivery.orderId : '', 'rider');
+  const [callPeer, setCallPeer] = useState<'restaurant' | 'customer' | null>(null);
   const orderCtx = useTripOrderContext(delivery.id, live || isNew);
   const namedCustomer =
     orderCtx.data?.customerName?.trim() ||
@@ -987,9 +996,17 @@ function DeliveryCard({
           <View style={styles.timelineDot} />
           <View style={styles.stopBody}>
             <Text style={styles.stopLabel}>PICKUP</Text>
-            <Text style={styles.stopTitle}>
-              {stops.restaurantName}
-            </Text>
+            <View style={styles.stopNameRow}>
+              {live ? (
+                <StopContactIcons
+                  onChat={() => onChat('restaurant')}
+                  onCall={() => setCallPeer('restaurant')}
+                />
+              ) : null}
+              <Text style={styles.stopTitle} numberOfLines={1}>
+                {stops.restaurantName}
+              </Text>
+            </View>
             {pickupLabel ? (
               <Text style={styles.stopAddr} numberOfLines={2}>
                 {pickupLabel}
@@ -1006,9 +1023,17 @@ function DeliveryCard({
           <View style={[styles.timelineDot, styles.timelineDotDrop]} />
           <View style={styles.stopBody}>
             <Text style={styles.stopLabel}>DROP-OFF</Text>
-            <Text style={styles.stopTitle}>
-              {namedCustomer || 'Customer'}
-            </Text>
+            <View style={styles.stopNameRow}>
+              {live ? (
+                <StopContactIcons
+                  onChat={() => onChat('customer')}
+                  onCall={() => setCallPeer('customer')}
+                />
+              ) : null}
+              <Text style={styles.stopTitle} numberOfLines={1}>
+                {namedCustomer || 'Customer'}
+              </Text>
+            </View>
             {stops.dropKmLabel ? (
               <Text style={styles.stopKm}>{stops.dropKmLabel}</Text>
             ) : null}
@@ -1053,27 +1078,37 @@ function DeliveryCard({
             delivery={delivery}
             geoBlocked={geoBlocked}
             geoHint={geoHint}
+            hideCallActions
           />
-          <View style={styles.actionRow}>
-            <Pressable
-              onPress={onChat}
-              disabled={busy}
-              style={styles.chatBtn}
-            >
-              <MessageCircle color="#EA4B14" size={16} />
-              <Text style={styles.chatBtnText}>Chat</Text>
-            </Pressable>
-            <Pressable
-              onPress={onDetails}
-              disabled={busy}
-              style={styles.chatBtn}
-            >
-              <Text style={styles.chatBtnText}>Details</Text>
-            </Pressable>
-          </View>
+          <Pressable
+            onPress={onDetails}
+            disabled={busy}
+            style={styles.chatBtn}
+          >
+            <Text style={styles.chatBtnText}>Details</Text>
+          </Pressable>
         </View>
       ) : null}
       </View>
+      <StopCallSheet
+        visible={callPeer != null}
+        title={
+          callPeer === 'restaurant'
+            ? stops.restaurantName
+            : namedCustomer || 'Customer'
+        }
+        notice={calls.notice}
+        onClose={() => setCallPeer(null)}
+        onNormal={() => {
+          if (!callPeer) return;
+          void calls.dial(callPeer);
+        }}
+        onInternet={() => {
+          if (!callPeer) return;
+          void calls.startInternet(callPeer);
+          setCallPeer(null);
+        }}
+      />
     </View>
   );
 }
@@ -1604,7 +1639,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
+  stopNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   stopTitle: {
+    flex: 1,
     fontFamily: fonts.bold,
     fontSize: 15,
     color: '#334155',
