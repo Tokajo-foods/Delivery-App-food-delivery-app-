@@ -2,7 +2,12 @@
 # Why C:\p? Long Desktop paths break CMake (260-char limit).
 # First time: project must already exist at C:\p (copy once).
 # Usage:
-#   powershell -ExecutionPolicy Bypass -File .\scripts\build-from-short-path.ps1
+#   powershell -ExecutionPolicy Bypass -File .\scripts\build-from-short-path.ps1 -Variant restaurant
+#   powershell -ExecutionPolicy Bypass -File .\scripts\build-from-short-path.ps1 -Variant delivery
+param(
+  [ValidateSet('restaurant', 'delivery')]
+  [string]$Variant = 'restaurant'
+)
 
 $ErrorActionPreference = "Stop"
 $src = Split-Path -Parent $PSScriptRoot
@@ -47,11 +52,14 @@ if (Test-Path C:\p\.env) {
   }
 }
 
-Write-Host "API=$env:EXPO_PUBLIC_API_URL maps=$(if ($env:EXPO_PUBLIC_GOOGLE_MAPS_API_KEY) {'set'} else {'MISSING'})" -ForegroundColor Cyan
+# Variant must win over anything loaded from .env. It selects the app name,
+# Android package, and which role the bundled screens allow.
+$env:EXPO_PUBLIC_APP_VARIANT = $Variant
+Write-Host "API=$env:EXPO_PUBLIC_API_URL maps=$(if ($env:EXPO_PUBLIC_GOOGLE_MAPS_API_KEY) {'set'} else {'MISSING'}) variant=$Variant" -ForegroundColor Cyan
 
-if (-not (Test-Path C:\p\android\gradle.properties)) {
-  npx expo prebuild --platform android --clean
-}
+# Package name is baked at prebuild. Always regenerate so restaurant and delivery do not share one native project.
+npx expo prebuild --platform android --clean
+if ($LASTEXITCODE -ne 0) { throw "expo prebuild failed $LASTEXITCODE" }
 
 $gp = "C:\p\android\gradle.properties"
 $props = Get-Content $gp -Raw
@@ -69,9 +77,10 @@ Set-Location C:\p\android
 if ($LASTEXITCODE -ne 0) { throw "Gradle failed $LASTEXITCODE" }
 
 $apk = "C:\p\android\app\build\outputs\apk\release\app-release.apk"
-$dest = "$src\TOKAJO-FOODS-release.apk"
+$label = if ($Variant -eq 'delivery') { 'TOKAJO-Delivery-release.apk' } else { 'TOKAJO-Restaurant-release.apk' }
+$dest = Join-Path $src $label
 Copy-Item $apk $dest -Force
-Copy-Item $apk "C:\p\TOKAJO-FOODS-release.apk" -Force
+Copy-Item $apk (Join-Path 'C:\p' $label) -Force
 
 Write-Host ""
 Write-Host "APK READY:" -ForegroundColor Green

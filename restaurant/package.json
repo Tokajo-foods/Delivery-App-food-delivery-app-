@@ -84,7 +84,9 @@
     "prebuild:android": "expo prebuild --platform android",
     "build:dev": "eas build -p android --profile development",
     "build:apk": "eas build -p android --profile preview",
-    "build:apk:local": "powershell -ExecutionPolicy Bypass -File ./scripts/build-from-short-path.ps1"
+    "build:apk:local": "powershell -ExecutionPolicy Bypass -File ./scripts/build-from-short-path.ps1",
+    "build:restaurant": "powershell -ExecutionPolicy Bypass -File ./scripts/build-from-short-path.ps1 -Variant restaurant",
+    "build:delivery": "powershell -ExecutionPolicy Bypass -File ./scripts/build-from-short-path.ps1 -Variant delivery"
   },
   "private": true,
   "expo": {
