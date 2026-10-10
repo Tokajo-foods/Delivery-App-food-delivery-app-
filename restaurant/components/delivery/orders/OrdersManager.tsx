@@ -1,6 +1,5 @@
 import { useRouter } from 'expo-router';
 import {
-  Navigation,
   Package,
   Power,
   MessageCircle,
@@ -10,7 +9,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Linking,
   Modal,
   Pressable,
   RefreshControl,
@@ -112,20 +110,6 @@ function formatWhen(iso?: string) {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
-
-function openMaps(lat?: number, lng?: number, label?: string) {
-  if (lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng)) {
-    void Linking.openURL(
-      `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
-    );
-    return;
-  }
-  if (label?.trim()) {
-    void Linking.openURL(
-      `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(label.trim())}`
-    );
-  }
 }
 
 function isLiveDelivery(status: string) {
@@ -524,13 +508,6 @@ export function PartnerOrdersManager() {
                   </Text>
                 </Pressable>
               ) : null}
-              <Text style={styles.sectionTitle}>
-                {liveOrders.some((d) => isAssignableStatus(d.status))
-                  ? 'Incoming requests'
-                  : liveOrders.length > 1
-                    ? 'Current deliveries'
-                    : 'Current delivery'}
-              </Text>
               {liveOrders.map((delivery) => (
                 <DeliveryCard
                   key={delivery.id}
@@ -902,8 +879,46 @@ function DeliveryCard({
   const offerProgress =
     offerLeft == null ? 1 : Math.min(1, Math.max(0, offerLeft / offerTotal));
 
+  const headingToCustomer =
+    status === 'picked_up' ||
+    status === 'out_for_delivery' ||
+    status === 'at_customer';
+
   return (
     <View style={styles.jobCard}>
+      <DeliveryTripMap
+        delivery={{
+          ...delivery,
+          restaurantName: stops.restaurantName,
+          customerName: stops.customerName,
+          restaurantAddress: {
+            ...delivery.restaurantAddress,
+            line1: pickupLabel || delivery.restaurantAddress?.line1,
+          },
+          deliveryAddress: {
+            ...delivery.deliveryAddress,
+            line1: dropLabel || delivery.deliveryAddress?.line1,
+          },
+        }}
+        tracking={tracking}
+        eta={etaQuery.data}
+        liveLocation={liveLocationQuery.data}
+        routePolyline={tripRouteQuery.data?.polyline ?? routeQuery.data?.polyline}
+        routePoints={routePoints}
+        historyPolyline={historyQuery.data?.polyline}
+        historyPoints={historyPoints}
+        navRoute={tripRouteQuery.data}
+        onTrackingPatch={(patch: Partial<OrderTracking>) =>
+          setTrackingPatch((prev) => ({ ...prev, ...patch }))
+        }
+      />
+
+      <View style={styles.jobBody}>
+      <Text style={styles.placeTitle} numberOfLines={2}>
+        {headingToCustomer
+          ? stops.customerName || 'Customer'
+          : stops.restaurantName}
+      </Text>
       <View style={styles.jobTop}>
         <View style={styles.statusPill}>
           <Text style={styles.statusPillText} numberOfLines={1}>
@@ -921,23 +936,13 @@ function DeliveryCard({
       </View>
 
       {(earning || tripKm || delivery.etaMinutes != null) && (
-        <View style={styles.metaRow}>
-          {earning && !isUnpaidTripStatus(status) ? (
-            <Text style={styles.metaEarn}>
-              {isAssignableStatus(status) ? 'Estimated ' : 'You earn '}
-              {earning}
-            </Text>
-          ) : amount ? (
-            <Text style={styles.metaEarn}>{amount}</Text>
-          ) : (
-            <View />
-          )}
-          <Text style={styles.metaMuted}>
-            {[tripKm, delivery.etaMinutes != null ? `${delivery.etaMinutes} min` : null]
-              .filter(Boolean)
-              .join(' · ')}
-          </Text>
-        </View>
+        <Text style={styles.earnLine}>
+          {earning && !isUnpaidTripStatus(status)
+            ? `${isAssignableStatus(status) ? 'Estimated ' : ''}${earning}`
+            : amount || 'Earnings on this trip'}
+          {tripKm ? `  ·  ${tripKm}` : ''}
+          {delivery.etaMinutes != null ? `  ·  ${delivery.etaMinutes} min` : ''}
+        </Text>
       )}
 
       {isNew && offerLeft != null ? (
@@ -966,42 +971,15 @@ function DeliveryCard({
       {live && trackingBusy ? (
         <View style={styles.trackBanner}>
           <ActivityIndicator color={authTheme.brand} size="small" />
-          <Text style={styles.trackBannerText}>Getting live route & ETA…</Text>
+          <Text style={styles.trackBannerText}>Getting the route…</Text>
         </View>
       ) : live && trackingError && !tracking ? (
         <Pressable onPress={onRetryTracking} style={styles.trackBanner}>
           <Text style={styles.trackBannerText}>
-            {formatLocationError(trackingError, 'Could not load live tracking. Retry')}
+            {formatLocationError(trackingError, 'Could not load the route. Tap to retry')}
           </Text>
         </Pressable>
       ) : null}
-
-      <DeliveryTripMap
-        delivery={{
-          ...delivery,
-          restaurantName: stops.restaurantName,
-          customerName: stops.customerName,
-          restaurantAddress: {
-            ...delivery.restaurantAddress,
-            line1: pickupLabel || delivery.restaurantAddress?.line1,
-          },
-          deliveryAddress: {
-            ...delivery.deliveryAddress,
-            line1: dropLabel || delivery.deliveryAddress?.line1,
-          },
-        }}
-        tracking={tracking}
-        eta={etaQuery.data}
-        liveLocation={liveLocationQuery.data}
-        routePolyline={tripRouteQuery.data?.polyline ?? routeQuery.data?.polyline}
-        routePoints={routePoints}
-        historyPolyline={historyQuery.data?.polyline}
-        historyPoints={historyPoints}
-        navRoute={tripRouteQuery.data}
-        onTrackingPatch={(patch: Partial<OrderTracking>) =>
-          setTrackingPatch((prev) => ({ ...prev, ...patch }))
-        }
-      />
 
       <View style={styles.timelineContainer}>
         <View style={styles.timelineLine} />
@@ -1022,21 +1000,6 @@ function DeliveryCard({
                 Looking up restaurant address…
               </Text>
             )}
-            <View style={styles.stopActions}>
-              <Pressable
-                onPress={() =>
-                  openMaps(
-                    delivery.restaurantAddress?.lat,
-                    delivery.restaurantAddress?.lng,
-                    pickupLabel || delivery.restaurantName
-                  )
-                }
-                style={styles.miniBtn}
-              >
-                <Navigation color={'#C2410C'} size={14} />
-                <Text style={styles.miniBtnText}>Map</Text>
-              </Pressable>
-            </View>
           </View>
         </View>
 
@@ -1055,21 +1018,6 @@ function DeliveryCard({
                 {dropLabel}
               </Text>
             ) : null}
-            <View style={styles.stopActions}>
-              <Pressable
-                onPress={() =>
-                  openMaps(
-                    delivery.deliveryAddress?.lat,
-                    delivery.deliveryAddress?.lng,
-                    dropLabel
-                  )
-                }
-                style={styles.miniBtn}
-              >
-                <Navigation color={'#C2410C'} size={14} />
-                <Text style={styles.miniBtnText}>Map</Text>
-              </Pressable>
-            </View>
           </View>
         </View>
       </View>
@@ -1126,6 +1074,7 @@ function DeliveryCard({
           </View>
         </View>
       ) : null}
+      </View>
     </View>
   );
 }
@@ -1162,26 +1111,14 @@ function ApiTimelineStrip({
     );
   }
   const steps = timeline.data?.steps ?? [];
-  if (!steps.length) return null;
+  const next = steps.find((step) => !step.completed);
+  const lastDone = [...steps].reverse().find((step) => step.completed);
+  const line = next?.label || lastDone?.label;
+  if (!line) return null;
   return (
-    <View style={styles.apiSteps}>
-      {steps.map((step) => (
-        <View key={`${step.key}-${step.label}`} style={styles.apiStep}>
-          <View
-            style={[styles.apiStepDot, step.completed && styles.apiStepDotDone]}
-          />
-          <Text
-            style={[
-              styles.apiStepLabel,
-              !step.completed && styles.apiStepPending,
-            ]}
-            numberOfLines={2}
-          >
-            {step.label}
-          </Text>
-        </View>
-      ))}
-    </View>
+    <Text style={styles.stepLine} numberOfLines={1}>
+      {next ? `Next · ${next.label}` : line}
+    </Text>
   );
 }
 
@@ -1257,12 +1194,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   periodHitActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    backgroundColor: '#FFF1E8',
   },
   periodText: {
     fontFamily: fonts.medium,
@@ -1425,11 +1357,32 @@ const styles = StyleSheet.create({
   jobCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 16,
-    gap: 14,
     borderWidth: 1,
     borderColor: '#F1EAE3',
     overflow: 'hidden',
+  },
+  jobBody: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 16,
+    gap: 12,
+  },
+  placeTitle: {
+    fontFamily: fonts.extraBold,
+    fontSize: 22,
+    lineHeight: 28,
+    color: '#0F172A',
+    letterSpacing: -0.3,
+  },
+  earnLine: {
+    fontFamily: fonts.bold,
+    fontSize: 16,
+    color: '#EA4B14',
+  },
+  stepLine: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: '#64748B',
   },
   trackBanner: {
     flexDirection: 'row',

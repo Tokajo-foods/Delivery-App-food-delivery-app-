@@ -485,11 +485,8 @@ export function DeliveryTripMap({
 
 const styles = StyleSheet.create({
   wrap: {
-    borderRadius: 14,
     overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: authTheme.cardBorder,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8F1EC',
   },
   fillWrap: {
     flex: 1,
@@ -498,7 +495,7 @@ const styles = StyleSheet.create({
   },
   map: {
     width: '100%',
-    height: 180,
+    height: 210,
   },
   fillMap: {
     ...StyleSheet.absoluteFillObject,
@@ -507,7 +504,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     marginTop: -36,
     marginBottom: 6,
-    backgroundColor: '#111827',
+    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -542,20 +539,20 @@ const styles = StyleSheet.create({
   turnText: {
     fontFamily: fonts.bold,
     fontSize: 13,
-    color: '#FFFFFF',
+    color: '#0F172A',
     marginBottom: 4,
   },
   etaValue: {
     marginTop: 2,
     fontFamily: fonts.bold,
     fontSize: 18,
-    color: '#FFFFFF',
+    color: '#0F172A',
   },
   etaProvider: {
     marginTop: 2,
     fontFamily: fonts.semiBold,
     fontSize: 11,
-    color: '#FDBA74',
+    color: '#EA4B14',
   },
   navBtn: {
     margin: 10,
