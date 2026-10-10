@@ -4,7 +4,7 @@ import { PartnerOrdersManager } from '@/components/delivery/orders/OrdersManager
 /** /delivery/orders */
 export default function DeliveryOrdersRoute() {
   return (
-    <DeliveryScreenShell title="Orders" flush>
+    <DeliveryScreenShell title="Orders" flush hideProfile>
       <PartnerOrdersManager />
     </DeliveryScreenShell>
   );

@@ -38,6 +38,8 @@ type Props = {
   brandHeader?: boolean;
   /** Optional right-side header control (merged after bell/profile). */
   headerRight?: ReactNode;
+  /** Hide the profile avatar in the page header. */
+  hideProfile?: boolean;
 };
 
 const PAGE_COPY: Record<string, string> = {
@@ -164,10 +166,12 @@ function PageHeader({
   title,
   subtitle,
   headerRight,
+  hideProfile,
 }: {
   title: string;
   subtitle: string;
   headerRight?: ReactNode;
+  hideProfile?: boolean;
 }) {
   return (
     <View style={styles.pageHero}>
@@ -180,7 +184,7 @@ function PageHeader({
             {subtitle}
           </Text>
         </View>
-        <DeliveryHeaderActions onBrand />
+        <DeliveryHeaderActions onBrand hideProfile={hideProfile} />
         {headerRight ? (
           <View style={styles.headerRight}>{headerRight}</View>
         ) : null}
@@ -199,6 +203,7 @@ function DeliveryScreenShellInner({
   hideHeader,
   brandHeader,
   headerRight,
+  hideProfile,
 }: Props) {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
@@ -227,6 +232,7 @@ function DeliveryScreenShellInner({
               title={headerTitle}
               subtitle={headerSubtitle}
               headerRight={headerRight}
+              hideProfile={hideProfile}
             />
           )}
         </View>
