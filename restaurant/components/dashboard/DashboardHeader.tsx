@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   wrap: {
     paddingHorizontal: 16,
     paddingBottom: 10,
-    gap: 12,
+    gap: 18,
   },
   logoRow: {
     height: 40,
