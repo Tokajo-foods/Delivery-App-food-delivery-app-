@@ -1,17 +1,8 @@
 import { CloudRain, PauseCircle, Store, WifiOff } from 'lucide-react-native';
-import { useMemo, useState, type ReactNode } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
+import { useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, Switch, Text, View } from 'react-native';
 
 import { authTheme } from '@/constants/auth-theme';
-import { fonts } from '@/constants/typography';
 import { getApiErrorMessage } from '@/lib/errors';
 import {
   useKitchenDuty,
@@ -21,83 +12,19 @@ import {
 import { isListingLive } from '@/lib/restaurant/listing-status';
 import type { PauseReasonCode } from '@/lib/restaurant/types';
 
-const PAUSE_MINUTES = [15, 30, 45, 60] as const;
-
-const PAUSE_REASONS: { code: PauseReasonCode; label: string }[] = [
-  { code: 'too_busy', label: 'Too busy' },
-  { code: 'staffing', label: 'Short staff' },
-  { code: 'packaging', label: 'Packing delay' },
-  { code: 'closing_soon', label: 'Closing soon' },
-  { code: 'other', label: 'Other' },
-];
-
-function pauseReasonLabel(code?: string | null) {
-  return PAUSE_REASONS.find((row) => row.code === code)?.label ?? code ?? 'Busy';
-}
-
-function remainingPause(iso?: string | null) {
-  if (!iso) return null;
-  const ms = new Date(iso).getTime() - Date.now();
-  if (!Number.isFinite(ms) || ms <= 0) return 'ending now';
-  const mins = Math.max(1, Math.ceil(ms / 60_000));
-  if (mins >= 60) {
-    const hours = Math.floor(mins / 60);
-    const rest = mins % 60;
-    return rest ? `${hours}h ${rest}m left` : `${hours}h left`;
-  }
-  return `${mins} min left`;
-}
+import {
+  KitchenDutyPauseBody,
+  PAUSE_MINUTES,
+  pauseReasonLabel,
+  remainingPause,
+} from './KitchenDutyPause';
+import { styles } from './kitchen-duty-card-styles';
 
 type Props = {
   restaurantId: string;
   onHoursPress?: () => void;
   compact?: boolean;
 };
-
-function DutyButton({
-  label,
-  onPress,
-  disabled,
-  icon,
-  variant = 'primary',
-  compact = false,
-}: {
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-  icon?: ReactNode;
-  variant?: 'primary' | 'secondary';
-  compact?: boolean;
-}) {
-  const isPrimary = variant === 'primary';
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-    >
-      <View
-        style={[
-          isPrimary ? styles.primaryBtn : styles.secondaryBtn,
-          compact && isPrimary ? styles.primaryBtnCompact : null,
-          compact && !isPrimary ? styles.secondaryBtnCompact : null,
-          disabled ? styles.disabled : null,
-        ]}
-      >
-        {icon}
-        <Text
-          style={[
-            isPrimary ? styles.primaryBtnText : styles.secondaryBtnText,
-            compact ? styles.btnTextCompact : null,
-          ]}
-        >
-          {label}
-        </Text>
-      </View>
-    </Pressable>
-  );
-}
 
 export function KitchenDutyCard({
   restaurantId,
@@ -158,7 +85,7 @@ export function KitchenDutyCard({
         : 'You are online, but weekly hours say closed. Update hours if you want orders.';
     }
     return compact
-      ? 'New orders are paused. In-kitchen orders continue.'
+      ? 'New orders are paused.'
       : 'New orders are stopped. In-flight orders still continue.';
   }, [compact, duty, listingLive, online, paused, adminForcedOffline]);
 
@@ -231,6 +158,8 @@ export function KitchenDutyCard({
   const surge = surgeQuery.data;
   const showSurgeChip = Boolean(surge?.assigned && surge.surgeActive);
   const showSurgeDown = surge?.unavailable === true;
+  const showHoursChip =
+    !compact && Boolean(duty?.openNow && listingLive && !online);
 
   return (
     <View
@@ -286,101 +215,46 @@ export function KitchenDutyCard({
 
       <Text style={styles.subtitle}>{subtitle}</Text>
 
-      {(showSurgeChip || showSurgeDown || (duty?.openNow && listingLive && !online)) ? (
-      <View style={styles.chipRow}>
-        {showSurgeChip ? (
-          <View style={styles.surgeChip}>
-            <CloudRain color="#EA4B14" size={13} />
-            <Text style={styles.surgeText}>
-              {surge?.reason === 'zone_surge' ? 'Rain / surge' : 'Zone surge'} ·{' '}
-              {Number(surge?.surgeMultiplier ?? 1).toFixed(1)}x
-              {surge?.name ? ` · ${surge.name}` : ''}
-            </Text>
-          </View>
-        ) : null}
-        {showSurgeDown ? (
-          <View style={styles.mutedChip}>
-            <Text style={styles.mutedChipText}>Surge unavailable</Text>
-          </View>
-        ) : null}
-        {duty?.openNow && listingLive && !online ? (
-          <View style={styles.openChip}>
-            <Store color="#EA4B14" size={13} />
-            <Text style={styles.openChipText}>Within hours</Text>
-          </View>
-        ) : null}
-      </View>
+      {showSurgeChip || showSurgeDown || showHoursChip ? (
+        <View style={styles.chipRow}>
+          {showSurgeChip ? (
+            <View style={styles.surgeChip}>
+              <CloudRain color="#EA4B14" size={13} />
+              <Text style={styles.surgeText}>
+                {surge?.reason === 'zone_surge' ? 'Rain / surge' : 'Zone surge'} ·{' '}
+                {Number(surge?.surgeMultiplier ?? 1).toFixed(1)}x
+                {surge?.name ? ` · ${surge.name}` : ''}
+              </Text>
+            </View>
+          ) : null}
+          {showSurgeDown ? (
+            <View style={styles.mutedChip}>
+              <Text style={styles.mutedChipText}>Surge unavailable</Text>
+            </View>
+          ) : null}
+          {showHoursChip ? (
+            <View style={styles.openChip}>
+              <Store color="#EA4B14" size={13} />
+              <Text style={styles.openChipText}>Within hours</Text>
+            </View>
+          ) : null}
+        </View>
       ) : null}
 
-      {listingLive && storeOn ? (
-        paused ? (
-          <DutyButton
-            label="Resume orders"
-            compact={compact}
-            disabled={busy}
-            onPress={() => void runDuty(() => mutations.goOnline.mutateAsync())}
-          />
-        ) : (
-          <>
-            {pauseOpen ? (
-              <View style={styles.pauseBox}>
-                <Text style={styles.pauseLabel}>Pause for</Text>
-                <View style={styles.choiceRow}>
-                  {PAUSE_MINUTES.map((value) => {
-                    const active = minutes === value;
-                    return (
-                      <Pressable
-                        key={value}
-                        onPress={() => setMinutes(value)}
-                      >
-                        <View style={[styles.choice, active && styles.choiceOn]}>
-                          <Text
-                            style={[
-                              styles.choiceText,
-                              active && styles.choiceTextOn,
-                            ]}
-                          >
-                            {value}m
-                          </Text>
-                        </View>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-                <Text style={styles.pauseLabel}>Reason</Text>
-                <View style={styles.choiceRow}>
-                  {PAUSE_REASONS.map((row) => {
-                    const active = reason === row.code;
-                    return (
-                      <Pressable
-                        key={row.code}
-                        onPress={() => setReason(row.code)}
-                      >
-                        <View style={[styles.choice, active && styles.choiceOn]}>
-                          <Text
-                            style={[
-                              styles.choiceText,
-                              active && styles.choiceTextOn,
-                            ]}
-                          >
-                            {row.label}
-                          </Text>
-                        </View>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-                <DutyButton
-                  label={`Pause for ${minutes} min`}
-                  compact={compact}
-                  disabled={busy}
-                  onPress={onPause}
-                />
-              </View>
-            ) : null}
-          </>
-        )
-      ) : null}
+      <KitchenDutyPauseBody
+        listingLive={listingLive}
+        storeOn={storeOn}
+        paused={paused}
+        pauseOpen={pauseOpen}
+        minutes={minutes}
+        reason={reason}
+        compact={compact}
+        busy={busy}
+        onMinutes={setMinutes}
+        onReason={setReason}
+        onPause={onPause}
+        onResume={() => void runDuty(() => mutations.goOnline.mutateAsync())}
+      />
 
       <View style={styles.footer}>
         {listingLive && storeOn && !paused ? (
@@ -419,210 +293,3 @@ export function KitchenDutyCard({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#F1EAE3',
-    padding: 16,
-    gap: 10,
-    shadowColor: '#1F1300',
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
-  },
-  cardOpen: {
-    borderColor: '#F1EAE3',
-    backgroundColor: '#FFFFFF',
-  },
-  cardPaused: {
-    borderColor: '#F6E4D6',
-    backgroundColor: '#FFF8F4',
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  iconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  titleCol: { flex: 1, gap: 2 },
-  kicker: {
-    color: authTheme.textMuted,
-    fontSize: 11,
-    fontFamily: fonts.bold,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-  },
-  headline: {
-    color: authTheme.text,
-    fontSize: 17,
-    fontFamily: fonts.extraBold,
-    letterSpacing: -0.3,
-  },
-  subtitle: {
-    color: authTheme.textMuted,
-    fontSize: 13,
-    fontFamily: fonts.medium,
-    lineHeight: 18,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  surgeChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#FFF1E8',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  surgeText: {
-    color: '#EA4B14',
-    fontSize: 12,
-    fontFamily: fonts.bold,
-  },
-  mutedChip: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  mutedChipText: {
-    color: authTheme.textMuted,
-    fontSize: 12,
-    fontFamily: fonts.bold,
-  },
-  openChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#FFF1E8',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  openChipText: {
-    color: '#EA4B14',
-    fontSize: 12,
-    fontFamily: fonts.bold,
-  },
-  primaryBtn: {
-    backgroundColor: '#EA4B14',
-    borderRadius: 10,
-    minHeight: 44,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  primaryBtnCompact: {
-    minHeight: 36,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  primaryBtnText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontFamily: fonts.bold,
-  },
-  secondaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    borderRadius: 10,
-    minHeight: 40,
-    borderWidth: 1,
-    borderColor: '#EA4B14',
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  secondaryBtnCompact: {
-    alignSelf: 'flex-start',
-    minHeight: 32,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-  },
-  secondaryBtnText: {
-    color: '#EA4B14',
-    fontSize: 13,
-    fontFamily: fonts.bold,
-  },
-  btnTextCompact: {
-    fontSize: 12,
-  },
-  pauseBox: { gap: 10 },
-  pauseLabel: {
-    color: authTheme.textMuted,
-    fontSize: 12,
-    fontFamily: fonts.bold,
-  },
-  choiceRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  choice: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  choiceOn: {
-    backgroundColor: authTheme.brandSoft,
-    borderColor: authTheme.brand,
-  },
-  choiceText: {
-    color: authTheme.textMuted,
-    fontSize: 12,
-    fontFamily: fonts.bold,
-  },
-  choiceTextOn: { color: authTheme.brand },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 2,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#F1EAE3',
-  },
-  footerBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 2,
-  },
-  linkBtn: { alignSelf: 'flex-start', paddingVertical: 2 },
-  linkText: {
-    color: authTheme.brand,
-    fontSize: 13,
-    fontFamily: fonts.bold,
-  },
-  errorText: {
-    color: authTheme.error,
-    fontSize: 12,
-    fontFamily: fonts.medium,
-  },
-  pressed: { opacity: 0.85 },
-  disabled: { opacity: 0.55 },
-});
