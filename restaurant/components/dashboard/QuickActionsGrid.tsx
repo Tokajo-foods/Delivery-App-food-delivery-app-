@@ -163,11 +163,11 @@ const styles = StyleSheet.create({
   },
   cellBorderRight: {
     borderRightWidth: StyleSheet.hairlineWidth,
-    borderRightColor: authTheme.cardBorder,
+    borderRightColor: '#D6D3D1',
   },
   cellBorderBottom: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: authTheme.cardBorder,
+    borderBottomColor: '#D6D3D1',
   },
   iconWrap: {
     width: 40,

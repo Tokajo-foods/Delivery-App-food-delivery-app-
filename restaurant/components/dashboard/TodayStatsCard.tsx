@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   },
   rule: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: '#F1EAE3',
+    backgroundColor: '#D6D3D1',
     marginTop: 14,
     marginBottom: 12,
   },
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 28,
-    backgroundColor: '#E7E5E4',
+    backgroundColor: '#D6D3D1',
   },
   value: {
     color: authTheme.text,
