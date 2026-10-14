@@ -1,5 +1,5 @@
 import { Star } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
@@ -51,10 +51,20 @@ export function TodayStatsCard({ restaurantId, metrics, onRatingPress }: Props) 
 
   return (
     <View style={styles.card}>
-      <Text style={styles.kicker}>Today's sales</Text>
-      <Text style={styles.sales} numberOfLines={1} adjustsFontSizeToFit>
-        {sales}
-      </Text>
+      <View style={styles.hero}>
+        <View style={styles.heroText}>
+          <Text style={styles.kicker}>Today's sales</Text>
+          <Text style={styles.sales} numberOfLines={1} adjustsFontSizeToFit>
+            {sales}
+          </Text>
+        </View>
+        <Image
+          source={require('../../assets/today-sales-art.png')}
+          style={styles.art}
+          resizeMode="contain"
+          accessibilityIgnoresInvertColors
+        />
+      </View>
       <View style={styles.rule} />
       <View style={styles.row}>
         <View style={styles.stat}>
@@ -99,6 +109,21 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 2,
+    overflow: 'hidden',
+  },
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  heroText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  art: {
+    width: 128,
+    height: 84,
   },
   kicker: {
     color: '#1C1917',
@@ -115,7 +140,7 @@ const styles = StyleSheet.create({
   rule: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: '#D6D3D1',
-    marginTop: 14,
+    marginTop: 8,
     marginBottom: 12,
   },
   row: {
