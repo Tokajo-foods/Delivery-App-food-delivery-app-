@@ -19,7 +19,7 @@ function DashboardFallback() {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#F6F3F0',
       }}
     >
       <ActivityIndicator color={authTheme.brand} size="large" />

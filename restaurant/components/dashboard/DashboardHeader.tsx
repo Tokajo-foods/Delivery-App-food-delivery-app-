@@ -1,11 +1,6 @@
-import { Bell, MapPin } from 'lucide-react-native';
-import {
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BadgeCheck, Bell, Store } from 'lucide-react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { authTheme } from '@/constants/auth-theme';
@@ -35,6 +30,7 @@ function initialsFrom(name: string) {
   return (parts[0]?.[0] ?? 'R').toUpperCase();
 }
 
+/** Warm gradient header mirroring the delivery partner home (wordmark + greeting + bell). */
 export function DashboardHeader({
   name,
   restaurantName,
@@ -50,62 +46,67 @@ export function DashboardHeader({
   onProfilePress,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const hour = new Date().getHours();
-  const partOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
   const firstName = name.split(' ')[0] || name;
   const initials = initialsFrom(restaurantName || name);
   const unread = Math.max(0, unreadNotifications);
-  const badgeLabel = unread > 99 ? '99+' : String(unread);
   const live = dutyOnline === true;
+  const placeLabel =
+    [restaurantName || 'Your restaurant', restaurantCity]
+      .filter(Boolean)
+      .join(' · ');
 
   return (
-    <View style={[styles.wrap, { paddingTop: insets.top + 8 }]}>
-      <View style={styles.topRow}>
+    <LinearGradient
+      colors={['#FFE9D6', '#FFF4EB', '#F6F3F0']}
+      locations={[0, 0.62, 1]}
+      style={[styles.wrap, { paddingTop: insets.top + 8 }]}
+    >
+      <View style={styles.logoRow}>
+        <Image
+          source={require('../../assets/tokajo-wordmark.webp')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
+
+      <View style={styles.headerRow}>
         <Pressable
           onPress={onProfilePress}
-          style={styles.profileBtn}
+          style={styles.identityBtn}
           accessibilityRole="button"
-          accessibilityLabel="Profile"
+          accessibilityLabel="Restaurant profile"
         >
-          {logoUrl ? (
-            <Image source={{ uri: logoUrl }} style={styles.logo} />
-          ) : (
-            <Text style={styles.profileInitials}>{initials}</Text>
-          )}
-        </Pressable>
-
-        <View style={styles.titleStack}>
-          <Text style={styles.greeting} numberOfLines={1}>
-            Good {partOfDay}, {firstName}
-          </Text>
-          <Text style={styles.outletName} numberOfLines={1}>
-            {restaurantName || 'Your restaurant'}
-          </Text>
-          {restaurantCity ? (
-            <View style={styles.cityRow}>
-              <MapPin color={authTheme.textMuted} size={12} />
-              <Text style={styles.city} numberOfLines={1}>
-                {restaurantCity}
+          <View style={styles.avatar}>
+            {logoUrl ? (
+              <Image source={{ uri: logoUrl }} style={styles.avatarImg} />
+            ) : (
+              <Text style={styles.avatarText}>{initials}</Text>
+            )}
+          </View>
+          <View style={styles.identityStack}>
+            <Text style={styles.greeting} numberOfLines={1}>
+              Hi, {firstName}
+            </Text>
+            <View style={styles.locInline}>
+              <Store color="#EA4B14" size={13} strokeWidth={2.4} />
+              <Text style={styles.locTitle} numberOfLines={1}>
+                {placeLabel}
               </Text>
             </View>
-          ) : null}
-        </View>
+          </View>
+        </Pressable>
 
         <Pressable
           onPress={onNotificationsPress}
-          style={styles.iconBtn}
+          style={styles.bellBtn}
           accessibilityRole="button"
           accessibilityLabel={
             unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'
           }
           hitSlop={6}
         >
-          <Bell color={authTheme.text} size={20} strokeWidth={2.1} />
-          {unread > 0 ? (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{badgeLabel}</Text>
-            </View>
-          ) : null}
+          <Bell color="#EA4B14" size={20} strokeWidth={2.2} />
+          {unread > 0 ? <View style={styles.bellDot} /> : null}
         </Pressable>
       </View>
 
@@ -122,10 +123,8 @@ export function DashboardHeader({
               { backgroundColor: live ? '#16A34A' : authTheme.textDim },
             ]}
           />
-          <Text
-            style={[styles.liveText, live ? styles.liveTextOn : undefined]}
-          >
-            {dutyLabel || (live ? 'Open' : 'Offline')}
+          <Text style={[styles.liveText, live ? styles.liveTextOn : undefined]}>
+            {dutyLabel || (live ? 'Open now' : 'Offline')}
           </Text>
         </View>
 
@@ -133,9 +132,14 @@ export function DashboardHeader({
           <View
             style={[
               styles.verifyPill,
-              { backgroundColor: verificationSoft ?? authTheme.brandSoft },
+              { backgroundColor: verificationSoft ?? '#FFFFFF' },
             ]}
           >
+            <BadgeCheck
+              color={verificationColor ?? authTheme.brand}
+              size={13}
+              strokeWidth={2.3}
+            />
             <Text
               style={[
                 styles.verifyText,
@@ -147,121 +151,124 @@ export function DashboardHeader({
           </View>
         ) : null}
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
     paddingHorizontal: 16,
-    paddingBottom: 14,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: authTheme.cardBorder,
+    paddingBottom: 16,
+    gap: 14,
   },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  profileBtn: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    overflow: 'hidden',
-    backgroundColor: authTheme.brandSoft,
+  logoRow: {
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: authTheme.cardBorder,
   },
   logo: {
-    width: 46,
-    height: 46,
+    width: 156,
+    height: 40,
   },
-  profileInitials: {
-    color: authTheme.brand,
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  identityBtn: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    overflow: 'hidden',
+    backgroundColor: '#FFF1E8',
+    borderWidth: 1,
+    borderColor: '#F3E7DE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarImg: {
+    width: 44,
+    height: 44,
+  },
+  avatarText: {
+    color: '#EA4B14',
     fontFamily: fonts.bold,
     fontSize: 16,
   },
-  titleStack: {
+  identityStack: {
     flex: 1,
     minWidth: 0,
-    justifyContent: 'center',
-    paddingRight: 8,
+    gap: 3,
   },
   greeting: {
-    color: authTheme.textMuted,
-    fontSize: 12,
-    fontFamily: fonts.medium,
-  },
-  outletName: {
-    color: authTheme.text,
-    fontSize: 17,
     fontFamily: fonts.extraBold,
+    fontSize: 18,
     letterSpacing: -0.3,
-    marginTop: 1,
+    color: authTheme.text,
   },
-  cityRow: {
+  locInline: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop: 2,
   },
-  city: {
-    color: authTheme.textMuted,
-    fontSize: 12,
-    fontFamily: fonts.medium,
+  locTitle: {
     flex: 1,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#4B5563',
   },
-  iconBtn: {
+  bellBtn: {
     width: 42,
     height: 42,
     borderRadius: 21,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#F3E7DE',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: authTheme.bgSoft,
   },
-  badge: {
+  bellDot: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    paddingHorizontal: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: authTheme.brand,
+    top: 9,
+    right: 10,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: '#EA4B14',
     borderWidth: 1.5,
     borderColor: '#FFFFFF',
-  },
-  badgeText: {
-    color: '#FFFFFF',
-    fontFamily: fonts.bold,
-    fontSize: 9,
-    lineHeight: 11,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 12,
+    marginTop: -2,
   },
   livePill: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
     gap: 6,
+    borderWidth: 1,
   },
   livePillOn: {
     backgroundColor: '#ECFDF3',
+    borderColor: '#BBF7D0',
   },
   livePillOff: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#EADFD5',
   },
   liveDot: {
     width: 7,
@@ -277,9 +284,14 @@ const styles = StyleSheet.create({
     color: '#15803D',
   },
   verifyPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#F3E7DE',
   },
   verifyText: {
     fontSize: 11,

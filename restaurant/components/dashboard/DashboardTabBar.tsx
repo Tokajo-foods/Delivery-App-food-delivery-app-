@@ -5,11 +5,14 @@ import {
   Settings,
   UtensilsCrossed,
 } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
+
+const ORANGE = '#F97316';
+const IDLE = '#9CA3AF';
 
 export type DashboardTab = 'stats' | 'orders' | 'menu' | 'admin';
 
@@ -61,7 +64,7 @@ function pathMatchesTab(pathname: string, tab: TabItem) {
   return path === tab.href;
 }
 
-/** Same floating 4-tab chrome as the delivery partner tab bar. */
+/** Floating pill navbar, matching the delivery partner tab bar. */
 export function DashboardTabBar({
   active,
   onNavigate,
@@ -70,6 +73,26 @@ export function DashboardTabBar({
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const pathname = usePathname();
+  const glow = useRef(new Animated.Value(0.45)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glow, {
+          toValue: 0.95,
+          duration: 1400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(glow, {
+          toValue: 0.45,
+          duration: 1400,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [glow]);
 
   const go = (href: TabItem['href']) => {
     if (onNavigate) onNavigate(href);
@@ -78,43 +101,45 @@ export function DashboardTabBar({
 
   return (
     <View
-      style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 10) }]}
+      pointerEvents="box-none"
+      style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 10) + 8 }]}
     >
-      <View style={styles.bar}>
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive =
-            pathMatchesTab(pathname, tab) ||
-            // Fallback only when pathname is unavailable / mismatched screens.
-            (!pathname && active === tab.key);
-          const showBadge = tab.key === 'orders' && centerBadge > 0;
+      <View>
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.glow, { opacity: glow }]}
+        />
+        <View style={styles.bar}>
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive =
+              pathMatchesTab(pathname, tab) ||
+              (!pathname && active === tab.key);
+            const showBadge = tab.key === 'orders' && centerBadge > 0;
 
-          return (
-            <Pressable
-              key={tab.key}
-              onPress={() => {
-                // Always navigate Home/other tabs when not already on that route.
-                // (Fixes secondary screens that incorrectly passed active="stats".)
-                if (!pathMatchesTab(pathname, tab)) {
-                  go(tab.href);
-                }
-              }}
-              style={({ pressed }) => [styles.tab, pressed && styles.pressed]}
-              accessibilityRole="button"
-              accessibilityState={{ selected: isActive }}
-              accessibilityLabel={tab.label}
-            >
-              <View style={styles.tabInner}>
+            return (
+              <Pressable
+                key={tab.key}
+                onPress={() => {
+                  if (!pathMatchesTab(pathname, tab)) {
+                    go(tab.href);
+                  }
+                }}
+                style={({ pressed }) => [styles.tab, pressed && styles.pressed]}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isActive }}
+                accessibilityLabel={tab.label}
+              >
                 <View
-                  style={[
-                    styles.iconWrap,
-                    isActive ? styles.iconWrapActive : null,
-                  ]}
+                  style={[styles.iconSlot, isActive && styles.iconSlotActive]}
                 >
                   <Icon
-                    color={isActive ? authTheme.brand : authTheme.textDim}
+                    color={isActive ? ORANGE : IDLE}
                     size={22}
-                    strokeWidth={isActive ? 2.4 : 1.9}
+                    strokeWidth={isActive ? 2.5 : 1.9}
+                    fill={
+                      isActive && tab.key === 'stats' ? ORANGE : 'transparent'
+                    }
                   />
                   {showBadge ? (
                     <View style={styles.badge}>
@@ -125,15 +150,15 @@ export function DashboardTabBar({
                   ) : null}
                 </View>
                 <Text
-                  style={[styles.label, isActive ? styles.labelActive : null]}
+                  style={[styles.label, isActive && styles.labelActive]}
                   numberOfLines={1}
                 >
                   {tab.label}
                 </Text>
-              </View>
-            </Pressable>
-          );
-        })}
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
     </View>
   );
@@ -142,61 +167,72 @@ export function DashboardTabBar({
 const styles = StyleSheet.create({
   wrap: {
     position: 'absolute',
-    left: 0,
-    right: 0,
+    left: 28,
+    right: 28,
     bottom: 0,
-    zIndex: 40,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: authTheme.cardBorder,
-    paddingTop: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: -2 },
-    elevation: 12,
+    zIndex: 50,
+  },
+  glow: {
+    position: 'absolute',
+    left: -1,
+    right: -1,
+    top: -1,
+    bottom: -1,
+    borderRadius: 33,
+    backgroundColor: 'rgba(249, 115, 22, 0.16)',
   },
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    paddingHorizontal: 18,
+    paddingTop: 8,
+    paddingBottom: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#F6E4D6',
+    shadowColor: '#F97316',
+    shadowOpacity: 0.18,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 16,
   },
   tab: {
     flex: 1,
-  },
-  tabInner: {
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
     paddingVertical: 2,
-    gap: 4,
   },
-  iconWrap: {
-    width: 44,
-    height: 32,
-    borderRadius: 16,
+  iconSlot: {
+    width: 40,
+    height: 30,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconWrapActive: {
-    backgroundColor: authTheme.brandSoft,
+  iconSlotActive: {
+    backgroundColor: '#FFF1E6',
   },
   label: {
+    fontFamily: fonts.medium,
     fontSize: 11,
-    fontFamily: fonts.semiBold,
-    color: authTheme.textDim,
+    color: IDLE,
+    textAlign: 'center',
   },
   labelActive: {
-    color: authTheme.brand,
     fontFamily: fonts.bold,
+    color: ORANGE,
   },
   badge: {
     position: 'absolute',
-    top: -2,
-    right: 2,
+    top: -4,
+    right: 0,
     minWidth: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: authTheme.brand,
+    backgroundColor: '#EA4B14',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 3,

@@ -109,11 +109,16 @@ export function TodayStatsCard({ restaurantId, metrics, onRatingPress }: Props) 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: authTheme.cardBorder,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
     paddingVertical: 14,
     paddingHorizontal: 4,
+    shadowColor: '#1F1300',
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   head: {
     paddingHorizontal: 12,
