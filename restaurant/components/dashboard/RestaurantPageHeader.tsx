@@ -22,6 +22,8 @@ type Props = {
   hideActions?: boolean;
   /** Hide just the profile icon. */
   hideProfile?: boolean;
+  /** Nudge the bell and trailing controls down. Orders only. */
+  dropActions?: boolean;
 };
 
 /**
@@ -35,6 +37,7 @@ export function RestaurantPageHeader({
   children,
   hideActions,
   hideProfile,
+  dropActions,
 }: Props) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -69,8 +72,16 @@ export function RestaurantPageHeader({
           ) : null}
         </View>
 
-        {!hideActions ? <RestaurantHeaderActions hideProfile={hideProfile} /> : null}
-        {headerRight ? <View style={styles.extra}>{headerRight}</View> : null}
+        {!hideActions ? (
+          <View style={dropActions ? styles.dropped : undefined}>
+            <RestaurantHeaderActions hideProfile={hideProfile} />
+          </View>
+        ) : null}
+        {headerRight ? (
+          <View style={[styles.extra, dropActions ? styles.dropped : undefined]}>
+            {headerRight}
+          </View>
+        ) : null}
       </View>
 
       {children ? <View style={styles.below}>{children}</View> : null}
@@ -115,6 +126,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  dropped: {
+    marginTop: 10,
   },
   below: {
     marginTop: 18,

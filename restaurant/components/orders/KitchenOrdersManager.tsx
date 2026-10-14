@@ -367,6 +367,7 @@ export function KitchenOrdersManager() {
       <RestaurantPageHeader
         title="Orders"
         subtitle={restaurantQuery.data?.name || 'Kitchen board'}
+        dropActions
         headerRight={
           <Pressable
             accessibilityLabel="Refresh orders"
