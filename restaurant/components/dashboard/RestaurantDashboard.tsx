@@ -54,7 +54,7 @@ function dutyHeadline(duty?: KitchenDutySnapshot) {
     return reason ? `Paused · ${reason}` : 'Kitchen paused';
   }
   if (duty.duty === 'online') {
-    return duty.openNow ? 'Open now' : 'Online · closed hours';
+    return duty.openNow ? 'Open now' : 'Online · outside hours';
   }
   return 'Kitchen offline';
 }
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   },
   body: {
     paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingTop: 4,
     gap: 12,
   },
 });

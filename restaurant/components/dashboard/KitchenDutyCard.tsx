@@ -1,4 +1,4 @@
-import { CloudRain, PauseCircle, Store, Wifi, WifiOff } from 'lucide-react-native';
+import { CloudRain, PauseCircle, Store, WifiOff } from 'lucide-react-native';
 import { useMemo, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -127,8 +127,8 @@ export function KitchenDutyCard({
     if (!listingLive) return 'Listing not live';
     if (adminForcedOffline) return 'Admin forced offline';
     if (paused) return 'Temporarily paused';
-    if (online) return duty.openNow ? 'Restaurant is open' : 'Online · closed hours';
-    return 'Restaurant is closed';
+    if (online) return duty.openNow ? 'Store is open' : 'Online · outside hours';
+    return 'Store is closed';
   }, [duty, listingLive, online, paused, adminForcedOffline]);
 
   const subtitle = useMemo(() => {
@@ -151,9 +151,7 @@ export function KitchenDutyCard({
     }
     if (online) {
       if (duty.openNow) {
-        return compact
-          ? 'Accepting new orders'
-          : 'Customers can order now. In-flight orders always continue.';
+        return 'Customers can place orders right now.';
       }
       return compact
         ? 'Online, but outside weekly hours'
@@ -258,7 +256,7 @@ export function KitchenDutyCard({
           {paused ? (
             <PauseCircle color="#EA4B14" size={20} />
           ) : storeOn ? (
-            <Wifi color="#EA4B14" size={20} />
+            <Store color="#EA4B14" size={20} />
           ) : (
             <WifiOff color={authTheme.textMuted} size={20} />
           )}
@@ -282,6 +280,7 @@ export function KitchenDutyCard({
 
       <Text style={styles.subtitle}>{subtitle}</Text>
 
+      {(showSurgeChip || showSurgeDown || (duty?.openNow && listingLive && !online)) ? (
       <View style={styles.chipRow}>
         {showSurgeChip ? (
           <View style={styles.surgeChip}>
@@ -298,13 +297,14 @@ export function KitchenDutyCard({
             <Text style={styles.mutedChipText}>Surge unavailable</Text>
           </View>
         ) : null}
-        {duty?.openNow && listingLive ? (
+        {duty?.openNow && listingLive && !online ? (
           <View style={styles.openChip}>
             <Store color="#EA4B14" size={13} />
-            <Text style={styles.openChipText}>Open now</Text>
+            <Text style={styles.openChipText}>Within hours</Text>
           </View>
         ) : null}
       </View>
+      ) : null}
 
       {listingLive && storeOn ? (
         paused ? (
@@ -429,8 +429,10 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cardOpen: {
-    borderColor: '#F1EAE3',
-    backgroundColor: '#FFFFFF',
+    borderColor: '#F6E4D6',
+    backgroundColor: '#FFFCF9',
+    borderLeftWidth: 3,
+    borderLeftColor: '#EA4B14',
   },
   cardPaused: {
     borderColor: '#F6E4D6',
@@ -458,7 +460,7 @@ const styles = StyleSheet.create({
   },
   headline: {
     color: authTheme.text,
-    fontSize: 18,
+    fontSize: 17,
     fontFamily: fonts.extraBold,
     letterSpacing: -0.3,
   },
