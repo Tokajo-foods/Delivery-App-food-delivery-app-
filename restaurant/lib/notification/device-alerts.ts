@@ -45,12 +45,18 @@ function loadNotificationsModule(): NotificationsModule | null {
     notificationsModule = mod;
     if (!handlerReady) {
       mod.setNotificationHandler({
-        handleNotification: async () => ({
-          shouldShowBanner: true,
-          shouldShowList: true,
-          shouldPlaySound: true,
-          shouldSetBadge: true,
-        }),
+        handleNotification: async (notification) => {
+          const data = notification.request.content.data ?? {};
+          const kind = String(
+            (data as { kind?: unknown }).kind ?? ''
+          );
+          return {
+            shouldShowBanner: true,
+            shouldShowList: true,
+            shouldPlaySound: kind !== 'kitchen_new_order',
+            shouldSetBadge: true,
+          };
+        },
       });
       handlerReady = true;
     }

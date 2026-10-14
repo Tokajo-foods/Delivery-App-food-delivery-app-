@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import {
@@ -56,6 +56,7 @@ export function KitchenNewOrderAlerts() {
     return subscribeKitchenEvents((event: KitchenInboundEvent, payload) => {
       if (event !== 'kitchen:order-new') return;
       if (!onlineRef.current) return;
+      if (AppState.currentState !== 'active') return;
 
       const record = asRecord(payload);
       const orderId = String(record.orderId ?? record.id ?? '').trim();
