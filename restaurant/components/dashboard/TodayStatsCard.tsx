@@ -34,72 +34,66 @@ export function TodayStatsCard({ restaurantId, metrics, onRatingPress }: Props) 
       ? metrics.totalRatings
       : null);
 
+  const sales = hasRevenue
+    ? formatCurrency(metrics.grossRevenue as number)
+    : '—';
+  const orders = hasOrders ? String(Math.round(metrics.totalOrders as number)) : '—';
+  const ratingLabel =
+    rating != null && rating > 0 ? rating.toFixed(1) : '—';
+  const hygieneLabel = hygieneData?.available
+    ? hygieneData.hygieneScore.toFixed(1)
+    : hygiene.isLoading
+      ? '…'
+      : '—';
+  const ratingHint = ratingCount
+    ? `${ratingCount} review${ratingCount === 1 ? '' : 's'}`
+    : 'Reviews';
+
   return (
     <View style={styles.card}>
-      <View style={styles.head}>
-        <Text style={styles.kicker}>Today</Text>
-        <Text style={styles.title}>Business snapshot</Text>
-      </View>
-
-      <View style={styles.row}>
-        <View style={styles.stat}>
-          <Text style={styles.label}>Sales</Text>
-          <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit>
-            {hasRevenue ? formatCurrency(metrics.grossRevenue as number) : '—'}
-          </Text>
-          <Text style={styles.meta} numberOfLines={1}>
-            Your earnings
-          </Text>
-        </View>
-        <View style={styles.divider} />
-        <View style={styles.stat}>
-          <Text style={styles.label}>Completed</Text>
-          <Text style={styles.value}>
-            {hasOrders ? Math.round(metrics.totalOrders as number) : '—'}
-          </Text>
-          <Text style={styles.meta} numberOfLines={1}>
-            Delivered today
-          </Text>
-        </View>
-        <View style={styles.divider} />
-        <Pressable
-          onPress={onRatingPress}
-          disabled={!onRatingPress}
-          style={styles.stat}
-        >
-          <Text style={styles.label}>Rating</Text>
-          <View style={styles.valueRow}>
-            <Star color="#EA4B14" size={13} fill="#EA4B14" />
-            <Text style={styles.value}>
-              {rating != null && rating > 0 ? rating.toFixed(1) : '—'}
+      <Text style={styles.title}>Today</Text>
+      <View style={styles.rows}>
+        <View style={styles.row}>
+          <View style={styles.tile}>
+            <Text style={styles.label}>Sales</Text>
+            <Text style={styles.valueAccent} numberOfLines={1} adjustsFontSizeToFit>
+              {sales}
             </Text>
           </View>
-          <Text style={styles.meta} numberOfLines={1}>
-            {ratingCount
-              ? `${ratingCount} review${ratingCount === 1 ? '' : 's'}`
-              : hygieneData && !hygieneData.available
-                ? 'After listing is live'
-                : 'Tap to view'}
-          </Text>
-        </Pressable>
-        <View style={styles.divider} />
-        <View style={styles.stat}>
-          <Text style={styles.label}>Hygiene</Text>
-          <View style={styles.valueRow}>
-            <ShieldCheck color="#EA4B14" size={13} />
-            <Text style={styles.value}>
+          <View style={styles.tile}>
+            <Text style={styles.label}>Orders</Text>
+            <Text style={styles.value} numberOfLines={1}>
+              {orders}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.row}>
+          <Pressable
+            onPress={onRatingPress}
+            disabled={!onRatingPress}
+            style={styles.tile}
+          >
+            <Text style={styles.label}>Rating</Text>
+            <View style={styles.valueRow}>
+              <Star color="#EA4B14" size={14} fill="#EA4B14" />
+              <Text style={styles.value}>{ratingLabel}</Text>
+            </View>
+            <Text style={styles.hint} numberOfLines={1}>
+              {ratingHint}
+            </Text>
+          </Pressable>
+          <View style={styles.tile}>
+            <Text style={styles.label}>Hygiene</Text>
+            <View style={styles.valueRow}>
+              <ShieldCheck color="#EA4B14" size={14} />
+              <Text style={styles.value}>{hygieneLabel}</Text>
+            </View>
+            <Text style={styles.hint} numberOfLines={1}>
               {hygieneData?.available
-                ? hygieneData.hygieneScore.toFixed(1)
-                : hygiene.isLoading
-                  ? '…'
-                  : '—'}
+                ? hygieneData.fssaiMasked || 'FSSAI'
+                : 'FSSAI'}
             </Text>
           </View>
-          <Text style={styles.meta} numberOfLines={1}>
-            {hygieneData?.available
-              ? hygieneData.fssaiMasked || 'FSSAI'
-              : 'After go-live'}
-          </Text>
         </View>
       </View>
     </View>
@@ -109,68 +103,64 @@ export function TodayStatsCard({ restaurantId, metrics, onRatingPress }: Props) 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: '#F1EAE3',
-    paddingVertical: 14,
-    paddingHorizontal: 4,
+    padding: 14,
+    gap: 12,
     shadowColor: '#1F1300',
     shadowOpacity: 0.05,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 2,
   },
-  head: {
-    paddingHorizontal: 12,
-    marginBottom: 12,
-  },
-  kicker: {
-    color: authTheme.textMuted,
-    fontSize: 11,
-    fontFamily: fonts.bold,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
   title: {
     color: authTheme.text,
     fontSize: 17,
     fontFamily: fonts.extraBold,
     letterSpacing: -0.3,
-    marginTop: 2,
+    paddingHorizontal: 4,
+  },
+  rows: {
+    gap: 10,
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'stretch',
+    gap: 10,
   },
-  stat: {
+  tile: {
     flex: 1,
-    paddingHorizontal: 8,
+    backgroundColor: '#FFF8F4',
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     gap: 4,
-  },
-  divider: {
-    width: StyleSheet.hairlineWidth,
-    backgroundColor: authTheme.cardBorder,
-    marginVertical: 4,
   },
   label: {
     color: authTheme.textMuted,
-    fontSize: 11,
-    fontFamily: fonts.semiBold,
+    fontSize: 12,
+    fontFamily: fonts.medium,
   },
   value: {
-    color: '#EA4B14',
-    fontSize: 18,
+    color: authTheme.text,
+    fontSize: 22,
     fontFamily: fonts.extraBold,
-    letterSpacing: -0.4,
+    letterSpacing: -0.6,
+  },
+  valueAccent: {
+    color: '#EA4B14',
+    fontSize: 22,
+    fontFamily: fonts.extraBold,
+    letterSpacing: -0.6,
   },
   valueRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
-  meta: {
-    color: authTheme.textDim,
-    fontSize: 10,
+  hint: {
+    color: authTheme.textMuted,
+    fontSize: 11,
     fontFamily: fonts.medium,
   },
 });
