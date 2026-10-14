@@ -385,7 +385,6 @@ export function KitchenOrdersManager() {
         <View style={styles.tabs}>
           {TABS.map((item) => {
             const active = tab === item.key;
-            const Icon = item.Icon;
             const count =
               item.key === 'board'
                 ? board.new.length
@@ -401,26 +400,17 @@ export function KitchenOrdersManager() {
                 onPress={() => setTab(item.key)}
                 style={[styles.tab, active && styles.tabActive]}
               >
-                <Icon
-                  color={active ? authTheme.brand : authTheme.textMuted}
-                  size={14}
-                  strokeWidth={2.2}
-                />
-                <Text style={[styles.tabText, active && styles.tabTextActive]}>
+                <Text
+                  style={[styles.tabText, active && styles.tabTextActive]}
+                  numberOfLines={1}
+                >
                   {item.label}
                 </Text>
-                {typeof count === 'number' && count > 0 ? (
-                  <View style={[styles.tabBadge, active && styles.tabBadgeActive]}>
-                    <Text
-                      style={[
-                        styles.tabCount,
-                        active && styles.tabCountActive,
-                      ]}
-                    >
-                      {count}
-                    </Text>
-                  </View>
-                ) : null}
+                <Text
+                  style={[styles.tabCount, active && styles.tabCountActive]}
+                >
+                  {typeof count === 'number' ? count : '–'}
+                </Text>
               </Pressable>
             );
           })}
@@ -985,52 +975,40 @@ const styles = StyleSheet.create({
   },
   tabs: {
     flexDirection: 'row',
-    gap: 4,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: '#F1EAE3',
+    gap: 8,
   },
   tab: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    borderRadius: 12,
-    paddingVertical: 9,
+    gap: 2,
+    borderRadius: 16,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
   },
   tabActive: {
     backgroundColor: '#FFF1E8',
+    borderColor: '#F6E4D6',
   },
   tabText: {
     fontFamily: fonts.semiBold,
-    fontSize: 12,
-    color: authTheme.textMuted,
+    fontSize: 11,
+    color: '#57534E',
   },
   tabTextActive: {
-    color: authTheme.brand,
-  },
-  tabBadge: {
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    paddingHorizontal: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F1EAE3',
-  },
-  tabBadgeActive: {
-    backgroundColor: authTheme.brandSoft,
+    color: '#1C1917',
+    fontFamily: fonts.bold,
   },
   tabCount: {
-    fontFamily: fonts.bold,
-    fontSize: 10,
-    color: authTheme.textMuted,
+    fontFamily: fonts.extraBold,
+    fontSize: 16,
+    letterSpacing: -0.3,
+    color: '#A8A29E',
   },
   tabCountActive: {
-    color: authTheme.brand,
+    color: '#EA4B14',
   },
   listFlex: {
     flex: 1,
