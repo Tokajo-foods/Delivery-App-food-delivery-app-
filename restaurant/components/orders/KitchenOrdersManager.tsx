@@ -475,56 +475,94 @@ export function KitchenOrdersManager() {
         >
           {tab === 'board' ? (
             <>
+              <View style={styles.boardSummary}>
+                {(
+                  [
+                    { key: 'new', label: 'New', count: board.new.length },
+                    { key: 'prep', label: 'Preparing', count: board.preparing.length },
+                    { key: 'ready', label: 'Ready', count: board.ready.length },
+                    { key: 'late', label: 'Delayed', count: board.delayed.length },
+                  ] as const
+                ).map((item, index, all) => (
+                  <View key={item.key} style={styles.summarySlot}>
+                    <Text
+                      style={[
+                        styles.summaryValue,
+                        item.key === 'late' && item.count > 0
+                          ? styles.summaryLate
+                          : null,
+                      ]}
+                    >
+                      {item.count}
+                    </Text>
+                    <Text style={styles.summaryLabel}>{item.label}</Text>
+                    {index < all.length - 1 ? (
+                      <View style={styles.summaryDivider} />
+                    ) : null}
+                  </View>
+                ))}
+              </View>
               {boardCount === 0 && board.delayed.length === 0 ? (
                 <EmptyState
                   title="Kitchen is clear"
-                  body="New orders land in New. Preparing and Ready update live."
+                  body="New orders show up here. Preparing and Ready update as you cook."
                 />
-              ) : null}
-              <Lane
-                title="New"
-                tone="new"
-                count={board.new.length}
-                empty="No new orders"
-                orders={board.new}
-                busy={laneBusy}
-                onOpen={openOrder}
-                onAction={handleTicketAction}
-                onReject={openReject}
-              />
-              <Lane
-                title="Preparing"
-                tone="prep"
-                count={board.preparing.length}
-                empty="Nothing cooking"
-                orders={board.preparing}
-                busy={laneBusy}
-                onOpen={openOrder}
-                onAction={handleTicketAction}
-                onReject={openReject}
-              />
-              <Lane
-                title="Ready"
-                tone="ready"
-                count={board.ready.length}
-                empty="No packed orders"
-                orders={board.ready}
-                busy={laneBusy}
-                onOpen={openOrder}
-                onAction={handleTicketAction}
-                onReject={openReject}
-              />
-              <Lane
-                title="Delayed"
-                tone="late"
-                count={board.delayed.length}
-                empty="No late orders"
-                orders={board.delayed}
-                busy={laneBusy}
-                onOpen={openOrder}
-                onAction={handleTicketAction}
-                onReject={openReject}
-              />
+              ) : (
+                <>
+                  {board.new.length > 0 ? (
+                    <Lane
+                      title="New"
+                      tone="new"
+                      count={board.new.length}
+                      empty=""
+                      orders={board.new}
+                      busy={laneBusy}
+                      onOpen={openOrder}
+                      onAction={handleTicketAction}
+                      onReject={openReject}
+                    />
+                  ) : null}
+                  {board.preparing.length > 0 ? (
+                    <Lane
+                      title="Preparing"
+                      tone="prep"
+                      count={board.preparing.length}
+                      empty=""
+                      orders={board.preparing}
+                      busy={laneBusy}
+                      onOpen={openOrder}
+                      onAction={handleTicketAction}
+                      onReject={openReject}
+                    />
+                  ) : null}
+                  {board.ready.length > 0 ? (
+                    <Lane
+                      title="Ready"
+                      tone="ready"
+                      count={board.ready.length}
+                      empty=""
+                      orders={board.ready}
+                      busy={laneBusy}
+                      onOpen={openOrder}
+                      onAction={handleTicketAction}
+                      onReject={openReject}
+                    />
+                  ) : null}
+                  {board.delayed.length > 0 ? (
+                    <Lane
+                      title="Delayed"
+                      tone="late"
+                      count={board.delayed.length}
+                      empty=""
+                      orders={board.delayed}
+                      busy={laneBusy}
+                      onOpen={openOrder}
+                      onAction={handleTicketAction}
+                      onReject={openReject}
+                    />
+                  ) : null}
+                </>
+              )}
             </>
           ) : null}
 
@@ -1042,6 +1080,44 @@ const styles = StyleSheet.create({
   lane: {
     gap: 10,
     marginBottom: 6,
+  },
+  boardSummary: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
+    paddingVertical: 14,
+  },
+  summarySlot: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    position: 'relative',
+  },
+  summaryValue: {
+    fontFamily: fonts.extraBold,
+    fontSize: 20,
+    letterSpacing: -0.4,
+    color: authTheme.text,
+  },
+  summaryLate: {
+    color: '#DC2626',
+  },
+  summaryLabel: {
+    fontFamily: fonts.medium,
+    fontSize: 11,
+    color: authTheme.textMuted,
+  },
+  summaryDivider: {
+    position: 'absolute',
+    right: 0,
+    top: 6,
+    width: 1,
+    height: 28,
+    backgroundColor: '#D6D3D1',
   },
   laneHead: {
     flexDirection: 'row',
