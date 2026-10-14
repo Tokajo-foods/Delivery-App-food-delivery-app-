@@ -309,14 +309,26 @@ function mapAddress(raw: unknown): OwnerOrderAddress | undefined {
   return {
     formattedAddress:
       String(
-        address.formattedAddress ?? address.fullAddress ?? address.address ?? ''
+        address.formattedAddress ??
+          address.fullAddress ??
+          address.addressLine ??
+          address.address ??
+          ''
       ).trim() || undefined,
-    street: String(address.street ?? '').trim() || undefined,
-    area: String(address.area ?? address.locality ?? '').trim() || undefined,
+    flatNo:
+      String(address.flatNo ?? address.flat ?? address.houseNo ?? '').trim() ||
+      undefined,
+    building: String(address.building ?? address.apartment ?? '').trim() || undefined,
+    street: String(address.street ?? address.line1 ?? '').trim() || undefined,
+    landmark: String(address.landmark ?? '').trim() || undefined,
+    area: String(address.area ?? address.locality ?? address.line2 ?? '').trim() || undefined,
     city: String(address.city ?? '').trim() || undefined,
     state: String(address.state ?? '').trim() || undefined,
     pincode:
       String(address.pincode ?? address.pinCode ?? address.zip ?? '').trim() ||
+      undefined,
+    instructions:
+      String(address.instructions ?? address.deliveryInstructions ?? '').trim() ||
       undefined,
     contactName:
       String(address.contactName ?? address.name ?? '').trim() || undefined,

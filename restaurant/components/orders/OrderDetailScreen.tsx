@@ -23,7 +23,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { OrderCallPanel } from '@/components/call/OrderCallPanel';
 import { RestaurantPageHeader } from '@/components/dashboard/RestaurantPageHeader';
 import {
   AcceptPrepSheet,
@@ -37,6 +36,7 @@ import {
   RatePartnerSheet,
   RiderHandoverCard,
 } from '@/components/orders/KitchenTicketSheets';
+import { KitchenCustomerCard } from '@/components/orders/KitchenCustomerCard';
 import { KitchenOrderBillCard } from '@/components/orders/KitchenOrderBillCard';
 import { KitchenOrderChat } from '@/components/orders/KitchenOrderChat';
 import { KitchenRiderCard } from '@/components/orders/KitchenRiderCard';
@@ -459,58 +459,27 @@ export function OrderDetailScreen({ orderId }: Props) {
               </View>
             ) : null}
 
-            {/* Customer Details */}
-            <View style={styles.card}>
-              <Text style={styles.customerNameCustom}>
-                {order.customerName?.trim() || 'Guest'}
-              </Text>
-              
-              <View style={styles.kvRowCustom}>
-                <Text style={styles.kvLabelCustom}>Delivery Address</Text>
-                <Text style={styles.kvValueCustom}>
-                  {address ||
-                    (order.fulfillmentTone === 'pickup'
-                      ? 'Pickup order'
-                      : order.fulfillmentTone === 'table'
-                        ? order.fulfillmentLabel
-                        : '—')}
-                </Text>
-              </View>
-              
-              <View style={styles.kvRowCustom}>
-                <Text style={styles.kvLabelCustom}>Order Type</Text>
-                <Text style={styles.kvValueCustom}>{order.fulfillmentLabel}</Text>
-              </View>
-
-              <View style={styles.kvRowCustom}>
-                <Text style={styles.kvLabelCustom}>Placed</Text>
-                <Text style={styles.kvValueCustom}>
-                  {orderPlacedLabel(order.createdAt)}
-                </Text>
-              </View>
-              <View style={styles.kvRowCustom}>
-                <Text style={styles.kvLabelCustom}>Status</Text>
-                <Text style={[styles.kvValueCustom, { color: tone.color }]}>
-                  {displayStatus(order.status)}
-                </Text>
-              </View>
-              {order.prepMinutes ? (
-                <View style={styles.kvRowCustom}>
-                  <Text style={styles.kvLabelCustom}>Prep time</Text>
-                  <Text style={styles.kvValueCustom}>{order.prepMinutes} min</Text>
-                </View>
-              ) : null}
-            </View>
-            {order.fulfillmentTone !== 'table' ? (
-              <OrderCallPanel
-                orderId={orderId}
-                viewer="restaurant"
-                names={{
-                  customer: order.customerName?.trim() || 'Customer',
-                  rider: rider?.name || 'Delivery partner',
-                }}
-              />
-            ) : null}
+            <KitchenCustomerCard
+              orderId={orderId}
+              customerName={order.customerName?.trim() || 'Guest'}
+              address={address}
+              addressNote={order.deliveryAddress?.instructions}
+              fulfillmentLabel={order.fulfillmentLabel}
+              fulfillmentTone={order.fulfillmentTone}
+              placedLabel={orderPlacedLabel(order.createdAt)}
+              statusLabel={displayStatus(order.status)}
+              statusColor={tone.color}
+              prepMinutes={order.prepMinutes}
+              onChat={() =>
+                router.push({
+                  pathname: '/order/chat/[orderId]',
+                  params: {
+                    orderId: order.id,
+                    customerName: order.customerName?.trim() || 'Customer',
+                  },
+                })
+              }
+            />
 
             {(cooking || canDelay || canPrint || canKitchenCancel) ? (
               <View style={styles.card}>
@@ -695,25 +664,6 @@ export function OrderDetailScreen({ orderId }: Props) {
                   />
                 ) : null}
               </>
-            ) : null}
-
-            {order.fulfillmentTone === 'delivery' ? (
-              <Pressable
-                onPress={() =>
-                  router.push({
-                    pathname: '/order/chat/[orderId]',
-                    params: {
-                      orderId: order.id,
-                      customerName: order.customerName?.trim() || 'Customer',
-                    },
-                  })
-                }
-                style={styles.backToOrders}
-              >
-                <Text style={styles.backToOrdersText}>
-                  Message {order.customerName?.trim() || 'customer'}
-                </Text>
-              </Pressable>
             ) : null}
 
             <KitchenOrderChat

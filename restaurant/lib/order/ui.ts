@@ -164,12 +164,18 @@ export function shortOrderId(order: OwnerOrder) {
 export function addressText(order: OwnerOrder) {
   const address = order.deliveryAddress;
   if (!address) return '';
-  return (
-    address.formattedAddress ||
-    [address.street, address.area, address.city, address.state, address.pincode]
-      .filter(Boolean)
-      .join(', ')
-  );
+  const parts = [
+    address.flatNo,
+    address.building,
+    address.street,
+    address.landmark,
+    address.area,
+    address.city,
+    address.state,
+    address.pincode,
+  ].filter(Boolean);
+  const composed = parts.join(', ');
+  return address.formattedAddress || composed;
 }
 
 /** Kitchen list total = food − discount (never customer GMV / delivery). */

@@ -10,11 +10,15 @@ export type OwnerOrderItem = {
 
 export type OwnerOrderAddress = {
   formattedAddress?: string;
+  flatNo?: string;
+  building?: string;
   street?: string;
+  landmark?: string;
   area?: string;
   city?: string;
   state?: string;
   pincode?: string;
+  instructions?: string;
   contactName?: string;
   contactPhone?: string;
 };
