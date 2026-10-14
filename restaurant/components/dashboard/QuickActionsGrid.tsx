@@ -1,11 +1,4 @@
-import {
-  BarChart3,
-  Bike,
-  ClipboardList,
-  MessageSquareQuote,
-  Tag,
-  UtensilsCrossed,
-} from 'lucide-react-native';
+import { BarChart3, MessageSquareQuote, Tag } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { authTheme } from '@/constants/auth-theme';
@@ -14,12 +7,9 @@ import type { DashboardQuickActions } from '@/lib/dashboard/types';
 
 type Props = {
   actions: DashboardQuickActions;
-  onOrdersPress?: () => void;
-  onMenuPress?: () => void;
   onPromosPress?: () => void;
   onAnalyticsPress?: () => void;
   onReviewsPress?: () => void;
-  onPartnersPress?: () => void;
 };
 
 const ICON = '#EA4B14';
@@ -27,33 +17,11 @@ const WELL = '#FFF1E8';
 
 const ACTIONS = [
   {
-    key: 'orders',
-    label: 'Orders',
-    hint: (a: DashboardQuickActions) => {
-      if (a.activeOrders <= 0) return undefined;
-      return a.activeOrders > 99 ? '99+' : String(a.activeOrders);
-    },
-    icon: ClipboardList,
-  },
-  {
-    key: 'menu',
-    label: 'Menu',
-    hint: (a: DashboardQuickActions) =>
-      a.menuItems > 0 ? String(a.menuItems) : undefined,
-    icon: UtensilsCrossed,
-  },
-  {
     key: 'promos',
     label: 'Offers',
     hint: (a: DashboardQuickActions) =>
       a.activePromos > 0 ? String(a.activePromos) : undefined,
     icon: Tag,
-  },
-  {
-    key: 'analytics',
-    label: 'Insights',
-    hint: () => undefined,
-    icon: BarChart3,
   },
   {
     key: 'reviews',
@@ -63,29 +31,23 @@ const ACTIONS = [
     icon: MessageSquareQuote,
   },
   {
-    key: 'partners',
-    label: 'Riders',
+    key: 'analytics',
+    label: 'Insights',
     hint: () => undefined,
-    icon: Bike,
+    icon: BarChart3,
   },
 ] as const;
 
 export function QuickActionsGrid({
   actions,
-  onOrdersPress,
-  onMenuPress,
   onPromosPress,
   onAnalyticsPress,
   onReviewsPress,
-  onPartnersPress,
 }: Props) {
   const handlers: Record<string, (() => void) | undefined> = {
-    orders: onOrdersPress,
-    menu: onMenuPress,
     promos: onPromosPress,
     analytics: onAnalyticsPress,
     reviews: onReviewsPress,
-    partners: onPartnersPress,
   };
 
   return (
@@ -95,8 +57,7 @@ export function QuickActionsGrid({
         {ACTIONS.map((item, index) => {
           const Icon = item.icon;
           const hint = item.hint(actions);
-          const endCol = (index + 1) % 3 === 0;
-          const lastRow = index >= 3;
+          const endCol = index === ACTIONS.length - 1;
           return (
             <Pressable
               key={item.key}
@@ -107,7 +68,6 @@ export function QuickActionsGrid({
                 style={[
                   styles.cell,
                   !endCol && styles.cellBorderRight,
-                  !lastRow && styles.cellBorderBottom,
                 ]}
               >
                 <View style={styles.iconWrap}>
@@ -158,16 +118,12 @@ const styles = StyleSheet.create({
   cell: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    gap: 6,
+    paddingVertical: 16,
+    gap: 8,
   },
   cellBorderRight: {
     borderRightWidth: StyleSheet.hairlineWidth,
     borderRightColor: '#D6D3D1',
-  },
-  cellBorderBottom: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#D6D3D1',
   },
   iconWrap: {
     width: 40,

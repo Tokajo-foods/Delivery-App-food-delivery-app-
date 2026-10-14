@@ -232,12 +232,9 @@ export function RestaurantDashboard() {
           />
           <QuickActionsGrid
             actions={dashboard.quickActions}
-            onOrdersPress={() => router.replace('/orders')}
-            onMenuPress={() => router.replace('/menu')}
             onPromosPress={() => router.replace('/offers')}
-            onAnalyticsPress={() => router.push('/analytics')}
             onReviewsPress={() => router.push('/reviews')}
-            onPartnersPress={() => router.push('/partners')}
+            onAnalyticsPress={() => router.push('/analytics')}
           />
           <PendingOrdersSection
             orders={dashboard.pendingOrders}
