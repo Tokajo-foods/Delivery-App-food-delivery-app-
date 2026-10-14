@@ -101,9 +101,9 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   kicker: {
-    color: authTheme.textMuted,
+    color: '#1C1917',
     fontSize: 13,
-    fontFamily: fonts.medium,
+    fontFamily: fonts.semiBold,
   },
   sales: {
     marginTop: 2,
