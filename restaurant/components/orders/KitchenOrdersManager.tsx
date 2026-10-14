@@ -403,13 +403,15 @@ export function KitchenOrdersManager() {
                 <Text
                   style={[styles.tabText, active && styles.tabTextActive]}
                   numberOfLines={1}
+                  adjustsFontSizeToFit
                 >
                   {item.label}
-                </Text>
-                <Text
-                  style={[styles.tabCount, active && styles.tabCountActive]}
-                >
-                  {typeof count === 'number' ? count : '–'}
+                  {typeof count === 'number' && count > 0 ? (
+                    <Text style={active ? styles.tabCountActive : styles.tabCount}>
+                      {' '}
+                      {count}
+                    </Text>
+                  ) : null}
                 </Text>
               </Pressable>
             );
@@ -975,39 +977,41 @@ const styles = StyleSheet.create({
   },
   tabs: {
     flexDirection: 'row',
-    gap: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
-    borderRadius: 16,
+    borderRadius: 12,
     paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#F1EAE3',
+    paddingHorizontal: 2,
   },
   tabActive: {
     backgroundColor: '#FFF1E8',
-    borderColor: '#F6E4D6',
   },
   tabText: {
     fontFamily: fonts.semiBold,
-    fontSize: 11,
-    color: '#57534E',
+    fontSize: 12,
+    color: '#78716C',
+    textAlign: 'center',
   },
   tabTextActive: {
     color: '#1C1917',
     fontFamily: fonts.bold,
   },
   tabCount: {
-    fontFamily: fonts.extraBold,
-    fontSize: 16,
-    letterSpacing: -0.3,
+    fontFamily: fonts.bold,
+    fontSize: 12,
     color: '#A8A29E',
   },
   tabCountActive: {
+    fontFamily: fonts.bold,
+    fontSize: 12,
     color: '#EA4B14',
   },
   listFlex: {
