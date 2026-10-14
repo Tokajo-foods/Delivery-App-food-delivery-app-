@@ -1,4 +1,4 @@
-import { ShieldCheck, Star } from 'lucide-react-native';
+import { Star } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { authTheme } from '@/constants/auth-theme';
@@ -47,53 +47,38 @@ export function TodayStatsCard({ restaurantId, metrics, onRatingPress }: Props) 
       : '—';
   const ratingHint = ratingCount
     ? `${ratingCount} review${ratingCount === 1 ? '' : 's'}`
-    : 'Reviews';
+    : 'No reviews yet';
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Today</Text>
-      <View style={styles.rows}>
-        <View style={styles.row}>
-          <View style={styles.tile}>
-            <Text style={styles.label}>Sales</Text>
-            <Text style={styles.valueAccent} numberOfLines={1} adjustsFontSizeToFit>
-              {sales}
-            </Text>
-          </View>
-          <View style={styles.tile}>
-            <Text style={styles.label}>Orders</Text>
-            <Text style={styles.value} numberOfLines={1}>
-              {orders}
-            </Text>
-          </View>
+      <Text style={styles.kicker}>Today's sales</Text>
+      <Text style={styles.sales} numberOfLines={1} adjustsFontSizeToFit>
+        {sales}
+      </Text>
+      <View style={styles.rule} />
+      <View style={styles.row}>
+        <View style={styles.stat}>
+          <Text style={styles.value}>{orders}</Text>
+          <Text style={styles.label}>Orders</Text>
         </View>
-        <View style={styles.row}>
-          <Pressable
-            onPress={onRatingPress}
-            disabled={!onRatingPress}
-            style={styles.tile}
-          >
-            <Text style={styles.label}>Rating</Text>
-            <View style={styles.valueRow}>
-              <Star color="#EA4B14" size={14} fill="#EA4B14" />
-              <Text style={styles.value}>{ratingLabel}</Text>
-            </View>
-            <Text style={styles.hint} numberOfLines={1}>
-              {ratingHint}
-            </Text>
-          </Pressable>
-          <View style={styles.tile}>
-            <Text style={styles.label}>Hygiene</Text>
-            <View style={styles.valueRow}>
-              <ShieldCheck color="#EA4B14" size={14} />
-              <Text style={styles.value}>{hygieneLabel}</Text>
-            </View>
-            <Text style={styles.hint} numberOfLines={1}>
-              {hygieneData?.available
-                ? hygieneData.fssaiMasked || 'FSSAI'
-                : 'FSSAI'}
-            </Text>
+        <View style={styles.divider} />
+        <Pressable
+          onPress={onRatingPress}
+          disabled={!onRatingPress}
+          style={styles.stat}
+        >
+          <View style={styles.valueRow}>
+            <Star color="#EA4B14" size={13} fill="#EA4B14" />
+            <Text style={styles.value}>{ratingLabel}</Text>
           </View>
+          <Text style={styles.label} numberOfLines={1}>
+            {ratingHint}
+          </Text>
+        </Pressable>
+        <View style={styles.divider} />
+        <View style={styles.stat}>
+          <Text style={styles.value}>{hygieneLabel}</Text>
+          <Text style={styles.label}>Hygiene</Text>
         </View>
       </View>
     </View>
@@ -106,61 +91,62 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderWidth: 1,
     borderColor: '#F1EAE3',
-    padding: 14,
-    gap: 12,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 14,
     shadowColor: '#1F1300',
     shadowOpacity: 0.05,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 2,
   },
-  title: {
-    color: authTheme.text,
-    fontSize: 17,
-    fontFamily: fonts.extraBold,
-    letterSpacing: -0.3,
-    paddingHorizontal: 4,
+  kicker: {
+    color: authTheme.textMuted,
+    fontSize: 13,
+    fontFamily: fonts.medium,
   },
-  rows: {
-    gap: 10,
+  sales: {
+    marginTop: 2,
+    color: '#EA4B14',
+    fontSize: 32,
+    fontFamily: fonts.extraBold,
+    letterSpacing: -0.8,
+  },
+  rule: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#F1EAE3',
+    marginTop: 14,
+    marginBottom: 12,
   },
   row: {
     flexDirection: 'row',
-    gap: 10,
+    alignItems: 'center',
   },
-  tile: {
+  stat: {
     flex: 1,
-    backgroundColor: '#FFF8F4',
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    alignItems: 'center',
+    gap: 2,
+  },
+  divider: {
+    width: 1,
+    height: 28,
+    backgroundColor: '#E7E5E4',
+  },
+  value: {
+    color: authTheme.text,
+    fontSize: 18,
+    fontFamily: fonts.extraBold,
+    letterSpacing: -0.4,
+  },
+  valueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
   },
   label: {
     color: authTheme.textMuted,
     fontSize: 12,
     fontFamily: fonts.medium,
-  },
-  value: {
-    color: authTheme.text,
-    fontSize: 22,
-    fontFamily: fonts.extraBold,
-    letterSpacing: -0.6,
-  },
-  valueAccent: {
-    color: '#EA4B14',
-    fontSize: 22,
-    fontFamily: fonts.extraBold,
-    letterSpacing: -0.6,
-  },
-  valueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  hint: {
-    color: authTheme.textMuted,
-    fontSize: 11,
-    fontFamily: fonts.medium,
+    textAlign: 'center',
   },
 });
