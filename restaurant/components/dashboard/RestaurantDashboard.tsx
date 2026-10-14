@@ -230,13 +230,6 @@ export function RestaurantDashboard() {
             metrics={dashboard.metrics}
             onRatingPress={() => router.push('/reviews')}
           />
-          <PendingOrdersSection
-            orders={dashboard.pendingOrders}
-            onQueuePress={() => router.replace('/orders')}
-            onOrderPress={(order) => {
-              router.push(`/order/${encodeURIComponent(order.id)}`);
-            }}
-          />
           <QuickActionsGrid
             actions={dashboard.quickActions}
             onOrdersPress={() => router.replace('/orders')}
@@ -245,6 +238,13 @@ export function RestaurantDashboard() {
             onAnalyticsPress={() => router.push('/analytics')}
             onReviewsPress={() => router.push('/reviews')}
             onPartnersPress={() => router.push('/partners')}
+          />
+          <PendingOrdersSection
+            orders={dashboard.pendingOrders}
+            onQueuePress={() => router.replace('/orders')}
+            onOrderPress={(order) => {
+              router.push(`/order/${encodeURIComponent(order.id)}`);
+            }}
           />
         </View>
       </ScrollView>
