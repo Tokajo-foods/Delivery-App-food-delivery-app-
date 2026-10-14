@@ -412,6 +412,7 @@ function mapSettings(raw: unknown): RestaurantSettings {
       'onlinePayment',
     ]),
     sellsAlcohol: pickBool(nested, ['sellsAlcohol', 'alcohol']),
+    orderBellEnabled: pickBool(nested, ['orderBellEnabled', 'orderBell']),
   };
 }
 
@@ -455,6 +456,9 @@ function toApiSettingsBody(payload: UpdateSettingsPayload): Record<string, unkno
   }
   if (payload.sellsAlcohol !== undefined) {
     body.sellsAlcohol = payload.sellsAlcohol;
+  }
+  if (payload.orderBellEnabled !== undefined) {
+    body.orderBellEnabled = payload.orderBellEnabled;
   }
 
   return body;

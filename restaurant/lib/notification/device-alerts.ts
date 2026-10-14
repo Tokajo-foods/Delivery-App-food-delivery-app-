@@ -8,6 +8,8 @@ const SEEN_IDS_KEY = 'delivery.notification.seenIds.v1';
 const CHANNEL_ID = 'tokajo-delivery-alerts';
 export const RIDER_OFFER_CHANNEL_ID = 'tokajo-rider-offers';
 const KITCHEN_ORDERS_CHANNEL_ID = 'tokajo-kitchen-orders';
+export const KITCHEN_ORDER_BELL_CHANNEL_ID = 'tokajo-kitchen-order-bell';
+export const KITCHEN_ORDER_QUIET_CHANNEL_ID = 'tokajo-kitchen-order-quiet';
 
 type NotificationsModule = typeof import('expo-notifications');
 
@@ -87,6 +89,22 @@ export async function ensureDeviceNotificationReady(): Promise<boolean> {
           lightColor: '#7A0E22',
           sound: 'default',
         });
+        await Notifications.setNotificationChannelAsync(KITCHEN_ORDER_BELL_CHANNEL_ID, {
+          name: 'Kitchen order bell',
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 500, 200, 500],
+          lightColor: '#EA4B14',
+          sound: 'order_bell',
+          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        });
+        await Notifications.setNotificationChannelAsync(KITCHEN_ORDER_QUIET_CHANNEL_ID, {
+          name: 'Kitchen orders (silent)',
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 200],
+          lightColor: '#EA4B14',
+          sound: null,
+          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        });
       }
       configured = true;
     }
@@ -121,7 +139,7 @@ async function saveSeenIds(ids: Set<string>): Promise<void> {
 
 export async function presentDeviceNotification(
   item: AppNotification,
-  options?: { channelId?: string }
+  options?: { channelId?: string; sound?: boolean | string }
 ): Promise<void> {
   const Notifications = loadNotificationsModule();
   if (!Notifications) return;
@@ -143,7 +161,12 @@ export async function presentDeviceNotification(
           type: item.type,
           ...(item.data ?? {}),
         },
-        sound: true,
+        sound:
+          options?.sound === false
+            ? false
+            : typeof options?.sound === 'string'
+              ? options.sound
+              : true,
         ...(channelId ? { channelId } : null),
       },
       trigger: null,

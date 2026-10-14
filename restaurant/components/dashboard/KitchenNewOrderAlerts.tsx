@@ -1,14 +1,19 @@
 import { useEffect, useRef } from 'react';
-import { AppState, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import {
+  KITCHEN_ORDER_BELL_CHANNEL_ID,
+  KITCHEN_ORDER_QUIET_CHANNEL_ID,
   addNotificationOpenListener,
   ensureDeviceNotificationReady,
   presentDeviceNotification,
 } from '@/lib/notification/device-alerts';
 import { subscribeKitchenEvents } from '@/lib/gateway/kitchen-client';
 import type { KitchenInboundEvent } from '@/lib/gateway/kitchen-events';
+import { useMyRestaurantId } from '@/lib/order/hooks';
+import { useKitchenDuty } from '@/lib/restaurant/hooks';
+import { useRestaurantDetail } from '@/lib/restaurant/settings-hooks';
 import { useAuthStore } from '@/store/auth-store';
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -18,10 +23,10 @@ function asRecord(value: unknown): Record<string, unknown> {
 }
 
 /**
- * While the kitchen process is alive (foreground or background):
- * show a local tray alert on `kitchen:order-new` when not focused.
- * Closed/killed app alerts come from FCM via notification-service.
- * Tapping a push/local alert opens the order ticket.
+ * Rings the kitchen doorbell for `kitchen:order-new` while the outlet is online.
+ * The sound file is two doorbells back to back, so one alert plays it twice.
+ * A killed app still rings from the push, including on the lock screen.
+ * Tapping the alert opens the order ticket.
  */
 export function KitchenNewOrderAlerts() {
   const token = useAuthStore((s) => s.token);
@@ -29,6 +34,17 @@ export function KitchenNewOrderAlerts() {
   const router = useRouter();
   const seenRef = useRef(new Set<string>());
   const enabled = Boolean(token) && role === 'restaurant';
+  const restaurant = useMyRestaurantId();
+  const restaurantId = restaurant.data?.id;
+  const duty = useKitchenDuty(restaurantId, enabled && Boolean(restaurantId));
+  const detail = useRestaurantDetail(enabled);
+  const online =
+    duty.data?.duty === 'online' && duty.data?.isOnline === true;
+  const bellOn = detail.data?.settings?.orderBellEnabled !== false;
+  const onlineRef = useRef(online);
+  const bellRef = useRef(bellOn);
+  onlineRef.current = online;
+  bellRef.current = bellOn;
 
   useEffect(() => {
     if (!enabled || Platform.OS === 'web') return;
@@ -39,7 +55,7 @@ export function KitchenNewOrderAlerts() {
     if (!enabled) return;
     return subscribeKitchenEvents((event: KitchenInboundEvent, payload) => {
       if (event !== 'kitchen:order-new') return;
-      if (AppState.currentState === 'active') return;
+      if (!onlineRef.current) return;
 
       const record = asRecord(payload);
       const orderId = String(record.orderId ?? record.id ?? '').trim();
@@ -50,6 +66,7 @@ export function KitchenNewOrderAlerts() {
       }
 
       const orderNumber = String(record.orderNumber ?? '').trim();
+      const bell = bellRef.current;
       void presentDeviceNotification(
         {
           id: `kitchen-new-${orderId}`,
@@ -66,7 +83,12 @@ export function KitchenNewOrderAlerts() {
             screen: 'order',
           },
         },
-        { channelId: 'tokajo-kitchen-orders' }
+        {
+          channelId: bell
+            ? KITCHEN_ORDER_BELL_CHANNEL_ID
+            : KITCHEN_ORDER_QUIET_CHANNEL_ID,
+          sound: bell ? 'order_bell.wav' : false,
+        }
       );
     });
   }, [enabled]);

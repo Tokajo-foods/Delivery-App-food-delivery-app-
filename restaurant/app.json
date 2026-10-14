@@ -36,7 +36,8 @@
         {
           "icon": "./assets/tokajo-logo.png",
           "color": "#7A0E22",
-          "defaultChannel": "tokajo-delivery-alerts"
+          "defaultChannel": "tokajo-delivery-alerts",
+          "sounds": ["./assets/sounds/order_bell.wav"]
         }
       ],
       [

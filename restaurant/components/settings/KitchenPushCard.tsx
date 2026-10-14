@@ -1,14 +1,19 @@
 import { Bell, BellOff } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
+import { getApiErrorMessage } from '@/lib/errors';
 import {
   useKitchenDeviceMutations,
   useStoredKitchenDevice,
 } from '@/lib/restaurant/inbox-hooks';
 import { resolveKitchenPushToken } from '@/lib/restaurant/inbox-api';
+import {
+  useRestaurantDetail,
+  useRestaurantSettingsMutations,
+} from '@/lib/restaurant/settings-hooks';
 
 export function KitchenPushCard({ restaurantId }: { restaurantId: string }) {
   const stored = useStoredKitchenDevice();
@@ -16,6 +21,25 @@ export function KitchenPushCard({ restaurantId }: { restaurantId: string }) {
   const [busy, setBusy] = useState(false);
   const device =
     stored.data?.restaurantId === restaurantId ? stored.data : null;
+  const detail = useRestaurantDetail(Boolean(restaurantId));
+  const settingsMutations = useRestaurantSettingsMutations(restaurantId);
+  const bellOn = detail.data?.settings?.orderBellEnabled !== false;
+
+  const setBell = async (next: boolean) => {
+    setBusy(true);
+    try {
+      await settingsMutations.updateSettings.mutateAsync({
+        orderBellEnabled: next,
+      });
+    } catch (error) {
+      Alert.alert(
+        'Could not update the bell',
+        getApiErrorMessage(error, 'Try again')
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const enable = async () => {
     setBusy(true);
@@ -89,6 +113,23 @@ export function KitchenPushCard({ restaurantId }: { restaurantId: string }) {
           </Text>
         )}
       </Pressable>
+      <View style={styles.bellRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.title}>Order bell</Text>
+          <Text style={styles.hint}>
+            {bellOn
+              ? 'Doorbell plays twice when a new order arrives, including on the lock screen.'
+              : 'The doorbell is off. New orders still show, without the sound.'}
+          </Text>
+        </View>
+        <Switch
+          value={bellOn}
+          onValueChange={(next) => void setBell(next)}
+          disabled={busy || detail.isLoading}
+          trackColor={{ false: '#E7E5E4', true: 'rgba(234, 75, 20, 0.45)' }}
+          thumbColor={bellOn ? '#EA4B14' : '#F8FAFC'}
+        />
+      </View>
     </View>
   );
 }
@@ -123,4 +164,10 @@ const styles = StyleSheet.create({
   btnText: { fontSize: 14, fontFamily: fonts.bold },
   btnTextOn: { color: '#FFFFFF' },
   btnTextOff: { color: authTheme.text },
+  bellRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingTop: 4,
+  },
 });

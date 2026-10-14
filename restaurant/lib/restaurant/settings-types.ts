@@ -45,6 +45,8 @@ export type RestaurantSettings = {
   cashOnDelivery?: boolean;
   onlinePayments?: boolean;
   sellsAlcohol?: boolean;
+  /** Doorbell when a new order arrives. On unless the kitchen turns it off. */
+  orderBellEnabled?: boolean;
   [key: string]: unknown;
 };
 
