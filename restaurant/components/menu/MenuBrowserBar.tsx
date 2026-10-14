@@ -92,7 +92,7 @@ export function MenuBrowserBar({
     <View style={styles.wrap}>
       <View style={styles.searchRow}>
         <View style={styles.search}>
-          <Search color="#A8A29E" size={16} />
+          <Search color="#EA4B14" size={16} />
           <TextInput
             value={search}
             onChangeText={onSearch}
@@ -144,9 +144,9 @@ export function MenuBrowserBar({
             onPress={() => onSelectCategory(null)}
             style={[styles.chip, viewingAll && styles.chipOn]}
           >
-            <UtensilsCrossed color={viewingAll ? '#FFFFFF' : '#78716C'} size={13} />
+            <UtensilsCrossed color={viewingAll ? '#EA4B14' : '#78716C'} size={13} />
             <Text style={[styles.chipText, viewingAll && styles.chipTextOn]}>All</Text>
-            <Text style={[styles.chipCount, viewingAll && styles.chipTextOn]}>{allCount}</Text>
+            <Text style={[styles.chipCount, viewingAll && styles.chipCountOn]}>{allCount}</Text>
           </Pressable>
           {categories.map((category) => {
             const active = category.id === selectedCategoryId;
@@ -162,21 +162,21 @@ export function MenuBrowserBar({
                 <Text style={[styles.chipText, active && styles.chipTextOn]} numberOfLines={1}>
                   {category.name}
                 </Text>
-                <Text style={[styles.chipCount, active && styles.chipTextOn]}>
+                <Text style={[styles.chipCount, active && styles.chipCountOn]}>
                   {itemCountByCategory.get(category.id) ?? 0}
                 </Text>
                 {scheduled ? (
-                  <Clock3 color={active ? '#FFFFFF' : '#78716C'} size={12} />
+                  <Clock3 color={active ? '#EA4B14' : '#78716C'} size={12} />
                 ) : null}
                 {hidden ? (
-                  <Text style={[styles.chipCount, active && styles.chipTextOn]}>Off</Text>
+                  <Text style={[styles.chipCount, active && styles.chipCountOn]}>Off</Text>
                 ) : null}
                 <Pressable
                   hitSlop={8}
                   onPress={() => onCategoryMenu(category.id)}
                   accessibilityLabel={`${category.name} actions`}
                 >
-                  <MoreVertical color={active ? '#FFFFFF' : '#A8A29E'} size={14} />
+                  <MoreVertical color={active ? '#EA4B14' : '#A8A29E'} size={14} />
                 </Pressable>
               </Pressable>
             );
@@ -190,8 +190,8 @@ export function MenuBrowserBar({
 const styles = StyleSheet.create({
   wrap: {
     paddingHorizontal: 16,
-    paddingBottom: 8,
-    gap: 8,
+    paddingBottom: 12,
+    gap: 10,
   },
   searchRow: {
     flexDirection: 'row',
@@ -205,11 +205,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E7E5E4',
+    borderColor: '#F1EAE3',
     paddingHorizontal: 12,
-    height: 40,
+    height: 44,
   },
   searchInput: {
     flex: 1,
@@ -219,14 +219,14 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E7E5E4',
+    borderColor: '#F1EAE3',
   },
   iconBtnPrimary: {
     backgroundColor: authTheme.brand,
@@ -252,29 +252,32 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#E7E5E4',
-    paddingHorizontal: 10,
-    height: 34,
-    maxWidth: 200,
+    borderColor: '#F1EAE3',
+    paddingHorizontal: 12,
+    height: 38,
+    maxWidth: 220,
   },
   chipOn: {
-    backgroundColor: '#1C1917',
-    borderColor: '#1C1917',
+    backgroundColor: '#FFF1E8',
+    borderColor: '#F6E4D6',
   },
   chipText: {
     color: '#57534E',
     fontSize: 13,
     fontFamily: fonts.semiBold,
-    maxWidth: 110,
+    maxWidth: 120,
   },
   chipTextOn: {
-    color: '#FFFFFF',
+    color: '#1C1917',
     fontFamily: fonts.bold,
   },
   chipCount: {
     color: '#A8A29E',
     fontSize: 12,
     fontFamily: fonts.bold,
+  },
+  chipCountOn: {
+    color: '#EA4B14',
   },
   soldOn: {
     backgroundColor: '#B91C1C',

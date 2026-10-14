@@ -126,6 +126,7 @@ export function MenuManager() {
     isRefetching,
     refetch,
     restaurantId,
+    restaurantName,
     error: categoriesError,
   } = useMenuCategories();
 
@@ -587,11 +588,11 @@ export function MenuManager() {
   return (
     <View style={styles.screen}>
       <RestaurantPageHeader
-        dense
         title="Menu"
+        subtitle={restaurantName || 'Categories and dishes'}
         headerRight={
           <Pressable style={styles.headerIconBtn} onPress={() => setAddOnsOpen(true)}>
-            <Layers color="#44403C" size={16} />
+            <Layers color="#EA4B14" size={16} />
             <Text style={styles.headerIconBtnText}>Add-ons</Text>
           </Pressable>
         }
@@ -2224,7 +2225,7 @@ function ImageUploadModal({
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F6F3F0',
+    backgroundColor: '#FFF7F2',
   },
   headerIconBtn: {
     flexDirection: 'row',
@@ -2232,13 +2233,13 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E7E5E4',
+    borderColor: '#F3E7DE',
     borderRadius: 21,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   headerIconBtnText: {
-    color: '#1C1917',
+    color: '#EA4B14',
     fontSize: 12,
     fontFamily: fonts.bold,
   },
