@@ -25,8 +25,7 @@ type Props = {
 };
 
 /**
- * Shared brand header for restaurant portal pages
- * (everything except Home + Admin).
+ * Shared header for every restaurant screen except Home.
  */
 export function RestaurantPageHeader({
   title,
@@ -42,7 +41,7 @@ export function RestaurantPageHeader({
 
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + 10 }]}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <View style={styles.row}>
         {showBack ? (
           <Pressable
@@ -82,8 +81,8 @@ export function RestaurantPageHeader({
 const styles = StyleSheet.create({
   wrap: {
     backgroundColor: 'transparent',
-    paddingHorizontal: 14,
-    paddingBottom: 14,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   row: {
     flexDirection: 'row',
@@ -107,7 +106,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   subtitle: {
-    marginTop: 2,
+    marginTop: 4,
     color: authTheme.textMuted,
     fontSize: 12,
     fontFamily: fonts.medium,
@@ -118,6 +117,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   below: {
-    marginTop: 12,
+    marginTop: 18,
   },
 });

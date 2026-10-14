@@ -1,8 +1,6 @@
 import { usePathname, useRouter } from 'expo-router';
 import { Bell } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { authTheme } from '@/constants/auth-theme';
-import { fonts } from '@/constants/typography';
+import { Pressable, StyleSheet, View } from 'react-native';
 import {
   LIVE_INTERVALS,
   liveRefetchInterval,
@@ -11,19 +9,14 @@ import {
 import { useUnreadNotificationCount } from '@/lib/notification/hooks';
 import { useAuthStore } from '@/store/auth-store';
 
-function initialsFrom(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-  }
-  return (parts[0]?.[0] ?? 'R').toUpperCase();
-}
-
-/** Shared notification bell + profile avatar for restaurant portal headers. */
-export function RestaurantHeaderActions({ hideProfile }: { hideProfile?: boolean }) {
+/** Shared notification bell for restaurant screens other than Home. */
+export function RestaurantHeaderActions({
+  hideProfile: _hideProfile,
+}: {
+  hideProfile?: boolean;
+}) {
   const router = useRouter();
   const pathname = usePathname();
-  const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token);
   const isActive = useAppIsActive();
   const unreadQuery = useUnreadNotificationCount({
@@ -32,15 +25,7 @@ export function RestaurantHeaderActions({ hideProfile }: { hideProfile?: boolean
   });
 
   const unread = Math.max(0, unreadQuery.data ?? 0);
-  const badgeLabel = unread > 99 ? '99+' : String(unread);
-  const displayName =
-    [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
-    user?.email?.split('@')[0] ||
-    'R';
-  const initials = initialsFrom(displayName);
-
   const notifActive = pathname === '/notifications';
-  const profileActive = pathname === '/admin';
 
   return (
     <View style={styles.row}>
@@ -55,14 +40,9 @@ export function RestaurantHeaderActions({ hideProfile }: { hideProfile?: boolean
         }
         hitSlop={6}
       >
-        <Bell color={authTheme.text} size={18} strokeWidth={2.2} />
-        {unread > 0 ? (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{badgeLabel}</Text>
-          </View>
-        ) : null}
+        <Bell color="#EA4B14" size={18} strokeWidth={2.2} />
+        {unread > 0 ? <View style={styles.dot} /> : null}
       </Pressable>
-
     </View>
   );
 }
@@ -74,51 +54,27 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   btn: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#F3E7DE',
   },
   btnActive: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#FFF1E8',
   },
-  badge: {
+  dot: {
     position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    paddingHorizontal: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#EF4444',
+    top: 9,
+    right: 10,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: '#EA4B14',
     borderWidth: 1.5,
     borderColor: '#FFFFFF',
-  },
-  badgeText: {
-    color: '#FFFFFF',
-    fontFamily: fonts.bold,
-    fontSize: 9,
-    lineHeight: 11,
-  },
-  profileBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  profileActive: {
-    borderColor: authTheme.brand,
-  },
-  initials: {
-    color: authTheme.brand,
-    fontFamily: fonts.bold,
-    fontSize: 13,
   },
 });
