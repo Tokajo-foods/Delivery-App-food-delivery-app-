@@ -583,7 +583,6 @@ export function MenuManager() {
       <RestaurantPageHeader
         title="Menu"
         subtitle={restaurantName || 'Categories, items & 86'}
-        hideActions
         headerRight={
           <Pressable style={styles.headerIconBtn} onPress={() => setAddOnsOpen(true)}>
             <Layers color={authTheme.brand} size={18} />
@@ -687,7 +686,7 @@ export function MenuManager() {
           <ActivityIndicator color={authTheme.brand} style={{ marginVertical: 20 }} />
         ) : categories.length === 0 ? (
           <View style={styles.emptyCard}>
-            <FolderOpen color={authTheme.textDim} size={28} />
+            <FolderOpen color="#EA4B14" size={26} />
             <Text style={styles.emptyTitle}>No categories yet</Text>
             <Text style={styles.emptyText}>
               Create your first category to start adding menu items.
@@ -714,7 +713,7 @@ export function MenuManager() {
               style={[styles.catPill, viewingAll && styles.catPillOn]}
             >
               <UtensilsCrossed
-                color={viewingAll ? '#FFFFFF' : authTheme.brand}
+                color={authTheme.brand}
                 size={14}
               />
               <Text
@@ -767,7 +766,7 @@ export function MenuManager() {
                     </Text>
                     {scheduled ? (
                       <Clock3
-                        color={active ? '#FFFFFF' : authTheme.textMuted}
+                        color={active ? '#EA4B14' : authTheme.textMuted}
                         size={12}
                       />
                     ) : null}
@@ -786,7 +785,7 @@ export function MenuManager() {
                       }}
                     >
                       <MoreVertical
-                        color={active ? '#FFFFFF' : authTheme.textDim}
+                        color={active ? '#EA4B14' : authTheme.textDim}
                         size={14}
                       />
                     </Pressable>
@@ -833,7 +832,7 @@ export function MenuManager() {
                     setItemModal({ mode: 'create', categoryId });
                   }}
                 >
-                  <Plus color="#15803D" size={16} />
+                  <Plus color="#EA4B14" size={16} />
                   <Text style={styles.greenBtnText}>Add Item</Text>
                 </Pressable>
               </View>
@@ -915,7 +914,7 @@ export function MenuManager() {
               <ActivityIndicator color={authTheme.brand} style={{ marginVertical: 24 }} />
             ) : displayedItems.length === 0 ? (
               <View style={styles.emptyCard}>
-                <UtensilsCrossed color={authTheme.textDim} size={28} />
+                <UtensilsCrossed color="#EA4B14" size={26} />
                 <Text style={styles.emptyTitle}>
                   {searching
                     ? 'No dishes match'
@@ -2361,17 +2360,17 @@ function ImageUploadModal({
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F6F3F0',
   },
   headerIconBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: authTheme.surface,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-    borderRadius: 10,
-    paddingHorizontal: 10,
+    borderColor: '#F3E7DE',
+    borderRadius: 21,
+    paddingHorizontal: 12,
     paddingVertical: 8,
   },
   headerIconBtnText: {
@@ -2384,11 +2383,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderColor: '#F1EAE3',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   searchInput: {
     flex: 1,
@@ -2423,30 +2422,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(122,14,34,0.12)',
+    borderColor: '#F1EAE3',
     paddingHorizontal: 12,
     paddingVertical: 8,
     maxWidth: 220,
   },
   catPillOn: {
-    backgroundColor: authTheme.brand,
-    borderColor: authTheme.brand,
+    backgroundColor: '#FFF1E8',
+    borderColor: '#F6E4D6',
   },
   catPillText: {
-    color: authTheme.text,
+    color: '#57534E',
     fontSize: 13,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.semiBold,
     maxWidth: 120,
   },
   catPillTextOn: {
-    color: '#FFFFFF',
+    color: '#1C1917',
+    fontFamily: fonts.bold,
   },
   catPillCount: {
-    color: authTheme.textMuted,
+    color: '#A8A29E',
     fontSize: 12,
-    fontFamily: fonts.semiBold,
+    fontFamily: fonts.bold,
   },
   topHeaderCustom: {
     backgroundColor: '#FFFFFF',
@@ -2473,14 +2473,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F6F3F0',
   },
   toolbar: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-    gap: 12,
+    paddingTop: 4,
+    paddingBottom: 4,
+    gap: 8,
   },
   outlineBtn: {
     flex: 1,
@@ -2488,10 +2488,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: authTheme.surface,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-    borderRadius: 10,
+    borderColor: '#F1EAE3',
+    borderRadius: 14,
     paddingVertical: 12,
   },
   outlineBtnText: {
@@ -2506,7 +2506,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     backgroundColor: authTheme.brand,
-    borderRadius: 10,
+    borderRadius: 14,
     paddingVertical: 12,
   },
   primaryBtnText: {
@@ -2519,22 +2519,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     borderWidth: 1,
-    borderColor: '#86EFAC',
-    backgroundColor: '#F0FDF4',
-    borderRadius: 10,
-    paddingHorizontal: 10,
+    borderColor: '#F6E4D6',
+    backgroundColor: '#FFF1E8',
+    borderRadius: 999,
+    paddingHorizontal: 12,
     paddingVertical: 8,
   },
   greenBtnText: {
-    color: '#15803D',
+    color: '#EA4B14',
     fontSize: 12,
     fontFamily: fonts.bold,
   },
   scroll: { flex: 1 },
   content: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
     paddingBottom: PARTNER_BOTTOM_NAV_INSET + 16,
-    gap: 12,
+    gap: 14,
   },
   sectionHead: {
     flexDirection: 'row',
@@ -2562,6 +2563,7 @@ const styles = StyleSheet.create({
     color: authTheme.text,
     fontSize: 17,
     fontFamily: fonts.extraBold,
+    letterSpacing: -0.3,
     flex: 1,
     marginRight: 8,
   },
@@ -2676,9 +2678,9 @@ const styles = StyleSheet.create({
 
   emptyCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(122,14,34,0.08)',
+    borderColor: '#F1EAE3',
     padding: 24,
     alignItems: 'center',
     gap: 6,
@@ -2708,11 +2710,11 @@ const styles = StyleSheet.create({
   bulkBar: {
     gap: 8,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderWidth: 1,
-    borderColor: 'rgba(122,14,34,0.08)',
+    borderColor: '#F1EAE3',
   },
   bulkBarTop: {
     flexDirection: 'row',
@@ -2732,7 +2734,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
   },
   bulkAction: {
-    color: '#15803D',
+    color: '#EA4B14',
     fontSize: 12,
     fontFamily: fonts.bold,
   },
@@ -2741,7 +2743,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: fonts.bold,
   },
-  itemList: { gap: 8 },
+  itemList: { gap: 12 },
   itemCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,

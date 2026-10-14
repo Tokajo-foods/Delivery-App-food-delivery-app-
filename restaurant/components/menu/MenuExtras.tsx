@@ -126,7 +126,7 @@ export function MenuItemRow({
         {item.imageUrl ? (
           <Image source={{ uri: item.imageUrl }} style={styles.thumbImg} contentFit="cover" />
         ) : (
-          <UtensilsCrossed color={authTheme.textDim} size={22} />
+          <UtensilsCrossed color="#EA4B14" size={20} />
         )}
       </Pressable>
       <View style={styles.itemBody}>
@@ -205,8 +205,8 @@ export function MenuItemRow({
         <Switch
           value={inStock}
           onValueChange={onToggleStock}
-          trackColor={{ false: '#FECACA', true: '#BBF7D0' }}
-          thumbColor={inStock ? '#15803D' : '#B91C1C'}
+          trackColor={{ false: '#E7E5E4', true: 'rgba(234, 75, 20, 0.45)' }}
+          thumbColor={inStock ? '#EA4B14' : '#F8FAFC'}
         />
       </View>
     </View>
@@ -1097,10 +1097,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 20,
     padding: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: authTheme.cardBorder,
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
   },
   itemRowOff: { opacity: 0.72 },
   check: {
@@ -1117,8 +1117,8 @@ const styles = StyleSheet.create({
   thumb: {
     width: 64,
     height: 64,
-    borderRadius: 12,
-    backgroundColor: authTheme.surface,
+    borderRadius: 14,
+    backgroundColor: '#FFF1E8',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -1126,8 +1126,14 @@ const styles = StyleSheet.create({
   thumbImg: { width: 64, height: 64 },
   itemBody: { flex: 1, minWidth: 0, gap: 4 },
   itemTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  itemName: { flex: 1, color: authTheme.text, fontFamily: fonts.bold, fontSize: 15 },
-  itemPrice: { color: authTheme.text, fontFamily: fonts.bold, fontSize: 14 },
+  itemName: {
+    flex: 1,
+    color: authTheme.text,
+    fontFamily: fonts.extraBold,
+    fontSize: 15,
+    letterSpacing: -0.2,
+  },
+  itemPrice: { color: '#EA4B14', fontFamily: fonts.extraBold, fontSize: 14 },
   strike: {
     color: authTheme.textDim,
     textDecorationLine: 'line-through',
