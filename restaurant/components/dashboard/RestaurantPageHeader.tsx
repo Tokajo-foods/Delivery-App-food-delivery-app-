@@ -24,6 +24,8 @@ type Props = {
   hideProfile?: boolean;
   /** Nudge the bell and trailing controls down. Orders only. */
   dropActions?: boolean;
+  /** Shorter title row for screens that pin their own filters underneath. */
+  dense?: boolean;
 };
 
 /**
@@ -38,12 +40,19 @@ export function RestaurantPageHeader({
   hideActions,
   hideProfile,
   dropActions,
+  dense,
 }: Props) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
   return (
-    <View style={[styles.wrap, { paddingTop: insets.top + 10 }]}>
+    <View
+      style={[
+        styles.wrap,
+        dense && styles.wrapDense,
+        { paddingTop: insets.top + (dense ? 4 : 10) },
+      ]}
+    >
       <StatusBar style="dark" />
       <View style={styles.row}>
         {showBack ? (
@@ -62,7 +71,7 @@ export function RestaurantPageHeader({
         ) : null}
 
         <View style={styles.copy}>
-          <Text style={styles.title} numberOfLines={1}>
+          <Text style={[styles.title, dense && styles.titleDense]} numberOfLines={1}>
             {title}
           </Text>
           {subtitle ? (
@@ -84,7 +93,9 @@ export function RestaurantPageHeader({
         ) : null}
       </View>
 
-      {children ? <View style={styles.below}>{children}</View> : null}
+      {children ? (
+        <View style={[styles.below, dense && styles.belowDense]}>{children}</View>
+      ) : null}
     </View>
   );
 }
@@ -94,6 +105,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     paddingHorizontal: 16,
     paddingBottom: 16,
+  },
+  wrapDense: {
+    paddingBottom: 6,
+  },
+  titleDense: {
+    fontSize: 18,
+  },
+  belowDense: {
+    marginTop: 8,
   },
   row: {
     flexDirection: 'row',

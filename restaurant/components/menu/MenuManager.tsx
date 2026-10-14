@@ -6,13 +6,9 @@ import {
   ChevronDown,
   Clock3,
   Copy,
-  FileUp,
   FolderOpen,
   Layers,
-  MoreVertical,
   Plus,
-  Search,
-  Store,
   Trash2,
   UtensilsCrossed,
   X,
@@ -21,6 +17,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   Modal,
   Pressable,
   RefreshControl,
@@ -34,7 +31,7 @@ import {
 
 
 import { RestaurantPageHeader } from '@/components/dashboard/RestaurantPageHeader';
-import { CategoryAddOnsManager } from '@/components/menu/CategoryAddOnsManager';
+import { MenuBrowserBar } from '@/components/menu/MenuBrowserBar';
 import { CatalogStatusBadge } from '@/components/menu/CatalogStatusBadge';
 import {
   CategoryActionsSheet,
@@ -128,7 +125,6 @@ export function MenuManager() {
     isRefetching,
     refetch,
     restaurantId,
-    restaurantName,
     error: categoriesError,
   } = useMenuCategories();
 
@@ -578,65 +574,59 @@ export function MenuManager() {
     );
   }
 
+  const allCount = viewingAll
+    ? items.length
+    : categories.reduce((sum, category) => sum + (category.itemCount ?? 0), 0);
+  const itemsLoading = searching
+    ? searchQuery.isFetching && displayedItems.length === 0
+    : selectedCategoryId
+      ? categoryItemsQuery.isLoading && !categoryItemsQuery.data
+      : itemsQuery.isLoading;
+
   return (
     <View style={styles.screen}>
       <RestaurantPageHeader
+        dense
         title="Menu"
-        subtitle={restaurantName || 'Categories, items & 86'}
         headerRight={
           <Pressable style={styles.headerIconBtn} onPress={() => setAddOnsOpen(true)}>
-            <Layers color="#44403C" size={18} />
+            <Layers color="#44403C" size={16} />
             <Text style={styles.headerIconBtnText}>Add-ons</Text>
           </Pressable>
         }
-      >
-        <View style={styles.searchWrap}>
-          <Search color={authTheme.textMuted} size={16} />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Search dishes to 86…"
-            placeholderTextColor={authTheme.textDim}
-            style={styles.searchInput}
-            autoCorrect={false}
-            returnKeyType="search"
-          />
-          {search ? (
-            <Pressable onPress={() => setSearch('')} hitSlop={8}>
-              <X color={authTheme.textMuted} size={16} />
-            </Pressable>
-          ) : null}
-        </View>
-      </RestaurantPageHeader>
+      />
+      <MenuBrowserBar
+        search={search}
+        onSearch={setSearch}
+        onOutlets={() => router.push('/chain')}
+        onImport={() => setBulkOpen(true)}
+        onAddCategory={() => setCategoryModal({ mode: 'create' })}
+        importDisabled={!categories.length}
+        categoriesLoading={categoriesLoading}
+        categories={categories}
+        selectedCategoryId={selectedCategoryId}
+        allCount={allCount}
+        itemCountByCategory={itemCountByCategory}
+        onSelectCategory={(categoryId) => {
+          setCategoryMenuId(null);
+          setSelectedCategoryId(categoryId);
+        }}
+        onCategoryMenu={setCategoryMenuId}
+        soldOutCount={unavailableQuery.data?.itemIds?.length ?? 0}
+        soldOutOnly={soldOutOnly}
+        onToggleSoldOut={() => setSoldOutOnly((value) => !value)}
+      />
 
-      <View style={styles.toolbar}>
-        <Pressable
-          style={styles.outlineBtn}
-          onPress={() => router.push('/chain')}
-        >
-          <Store color="#57534E" size={16} />
-          <Text style={styles.outlineBtnText}>Outlets</Text>
-        </Pressable>
-        <Pressable
-          style={styles.outlineBtn}
-          onPress={() => setBulkOpen(true)}
-          disabled={!categories.length}
-        >
-          <FileUp color="#57534E" size={16} />
-          <Text style={styles.outlineBtnText}>Import</Text>
-        </Pressable>
-        <Pressable
-          style={styles.primaryBtn}
-          onPress={() => setCategoryModal({ mode: 'create' })}
-        >
-          <Plus color="#FFFFFF" size={16} />
-          <Text style={styles.primaryBtnText}>Category</Text>
-        </Pressable>
-      </View>
-
-      <ScrollView
+      <FlatList
         style={styles.scroll}
+        data={categories.length > 0 ? displayedItems : []}
+        keyExtractor={(item) => item.id}
+        extraData={selectedItemIds}
         contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        initialNumToRender={12}
+        maxToRenderPerBatch={16}
+        windowSize={7}
         refreshControl={
           <RefreshControl
             refreshing={
@@ -656,322 +646,195 @@ export function MenuManager() {
             colors={[authTheme.brand]}
           />
         }
-      >
-        {categoriesError ? (
-          <View style={styles.errorCard}>
-            <Text style={styles.errorText}>
-              {getApiErrorMessage(categoriesError, 'Failed to load menu')}
-            </Text>
-          </View>
-        ) : null}
-
-        {unavailableQuery.data?.itemIds?.length ? (
-          <Pressable
-            style={[styles.soldStrip, soldOutOnly && styles.soldStripOn]}
-            onPress={() => setSoldOutOnly((value) => !value)}
-          >
-            <Text style={[styles.soldStripText, soldOutOnly && { color: '#FFFFFF' }]}>
-              {unavailableQuery.data.itemIds.length} sold out
-              {soldOutOnly ? ' · showing 86’d only' : ' · tap to filter'}
-            </Text>
-          </Pressable>
-        ) : null}
-
-        <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>Categories</Text>
-          <Text style={styles.sectionMeta}>{categories.length} total</Text>
-        </View>
-
-        {categoriesLoading ? (
-          <ActivityIndicator color={authTheme.brand} style={{ marginVertical: 20 }} />
-        ) : categories.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <FolderOpen color="#A8A29E" size={26} />
-            <Text style={styles.emptyTitle}>No categories yet</Text>
-            <Text style={styles.emptyText}>
-              Create your first category to start adding menu items.
-            </Text>
-            <Pressable
-              style={[styles.primaryBtn, { alignSelf: 'center', marginTop: 12 }]}
-              onPress={() => setCategoryModal({ mode: 'create' })}
-            >
-              <Plus color="#FFFFFF" size={16} />
-              <Text style={styles.primaryBtnText}>Add Category</Text>
-            </Pressable>
-          </View>
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoryList}
-          >
-            <Pressable
-              onPress={() => {
-                setCategoryMenuId(null);
-                setSelectedCategoryId(null);
-              }}
-              style={[styles.catPill, viewingAll && styles.catPillOn]}
-            >
-              <UtensilsCrossed
-                color={viewingAll ? '#FFFFFF' : '#78716C'}
-                size={14}
-              />
-              <Text
-                style={[styles.catPillText, viewingAll && styles.catPillTextOn]}
-              >
-                All
-              </Text>
-              <Text
-                style={[styles.catPillCount, viewingAll && styles.catPillTextOn]}
-              >
-                {viewingAll
-                  ? items.length
-                  : categories.reduce(
-                      (sum, category) => sum + (category.itemCount ?? 0),
-                      0
-                    )}
-              </Text>
-            </Pressable>
-
-            {categories.map((category) => {
-              const active = category.id === selectedCategoryId;
-              const count = itemCountByCategory.get(category.id);
-              const scheduled = Boolean(category.schedule?.periods?.length);
-              const hidden = category.isActive === false;
-
-              return (
-                <View key={category.id} style={styles.catPillWrap}>
-                  <Pressable
-                    onPress={() => {
-                      setCategoryMenuId(null);
-                      setSelectedCategoryId(category.id);
-                    }}
-                    onLongPress={() => setCategoryMenuId(category.id)}
-                    style={[
-                      styles.catPill,
-                      active && styles.catPillOn,
-                      hidden && !active && { opacity: 0.55 },
-                    ]}
-                  >
-                    <Text
-                      style={[styles.catPillText, active && styles.catPillTextOn]}
-                      numberOfLines={1}
-                    >
-                      {category.name}
-                    </Text>
-                    <Text
-                      style={[styles.catPillCount, active && styles.catPillTextOn]}
-                    >
-                      {count ?? 0}
-                    </Text>
-                    {scheduled ? (
-                      <Clock3
-                        color={active ? '#FFFFFF' : '#78716C'}
-                        size={12}
-                      />
-                    ) : null}
-                    {hidden ? (
-                      <Text
-                        style={[styles.catPillCount, active && styles.catPillTextOn]}
-                      >
-                        Off
-                      </Text>
-                    ) : null}
-                    <Pressable
-                      hitSlop={8}
-                      onPress={(event) => {
-                        event.stopPropagation?.();
-                        setCategoryMenuId(category.id);
-                      }}
-                    >
-                      <MoreVertical
-                        color={active ? '#FFFFFF' : '#A8A29E'}
-                        size={14}
-                      />
-                    </Pressable>
-                  </Pressable>
-                </View>
-              );
-            })}
-          </ScrollView>
-        )}
-
-        {categories.length > 0 ? (
-          <>
-            <View style={[styles.sectionHead, { marginTop: 8 }]}>
-              <Text style={styles.sectionTitle}>
-                {searching
-                  ? `Search (${displayedItems.length})`
-                  : soldOutOnly
-                    ? `Sold out (${displayedItems.length})`
-                    : viewingAll
-                      ? `All items (${displayedItems.length})`
-                      : `${selectedCategory?.name ?? 'Items'} (${displayedItems.length})`}
-              </Text>
-              <View style={styles.sectionHeadActions}>
-                {displayedItems.length > 0 ? (
-                  <Pressable
-                    onPress={() =>
-                      setSelectedItemIds(displayedItems.map((item) => item.id))
-                    }
-                  >
-                    <Text style={styles.selectAllText}>Select</Text>
-                  </Pressable>
-                ) : null}
+        ListHeaderComponent={
+          <View style={styles.listHead}>
+            {categoriesError ? (
+              <View style={styles.errorCard}>
+                <Text style={styles.errorText}>
+                  {getApiErrorMessage(categoriesError, 'Failed to load menu')}
+                </Text>
+              </View>
+            ) : null}
+            {categories.length === 0 && !categoriesLoading ? (
+              <View style={styles.emptyCard}>
+                <FolderOpen color="#A8A29E" size={26} />
+                <Text style={styles.emptyTitle}>No categories yet</Text>
+                <Text style={styles.emptyText}>
+                  Create your first category to start adding menu items.
+                </Text>
                 <Pressable
-                  style={styles.greenBtn}
-                  onPress={() => {
-                    const categoryId = selectedCategory?.id ?? categories[0]?.id;
-                    if (!categoryId) {
-                      Alert.alert(
-                        'Add a category first',
-                        'Create a category before adding items.'
-                      );
-                      return;
-                    }
-                    setItemModal({ mode: 'create', categoryId });
-                  }}
+                  style={[styles.primaryBtn, { alignSelf: 'center', marginTop: 12 }]}
+                  onPress={() => setCategoryModal({ mode: 'create' })}
                 >
-                  <Plus color="#1C1917" size={16} />
-                  <Text style={styles.greenBtnText}>Add Item</Text>
+                  <Plus color="#FFFFFF" size={16} />
+                  <Text style={styles.primaryBtnText}>Add Category</Text>
                 </Pressable>
               </View>
-            </View>
-
-            {searchQuery.isError ? (
-              <View style={styles.errorCard}>
-                <Text style={styles.errorText}>
-                  {getApiErrorMessage(searchQuery.error, 'Search failed')}
-                </Text>
-              </View>
             ) : null}
-
-            {categoryItemsQuery.isError ? (
-              <View style={styles.errorCard}>
-                <Text style={styles.errorText}>
-                  {getApiErrorMessage(
-                    categoryItemsQuery.error,
-                    'Could not load dishes for this category'
-                  )}
-                </Text>
-              </View>
-            ) : null}
-
-            {selectedItemIds.length > 0 ? (
-              <View style={styles.bulkBar}>
-                <View style={styles.bulkBarTop}>
-                  <Text style={styles.bulkBarText}>
-                    {selectedItemIds.length} selected
+            {categories.length > 0 ? (
+              <>
+                <View style={styles.sectionHead}>
+                  <Text style={styles.sectionTitle} numberOfLines={1}>
+                    {searching
+                      ? `Search · ${displayedItems.length}`
+                      : soldOutOnly
+                        ? `Sold out · ${displayedItems.length}`
+                        : viewingAll
+                          ? `All dishes · ${displayedItems.length}`
+                          : `${selectedCategory?.name ?? 'Dishes'} · ${displayedItems.length}`}
                   </Text>
-                  <Pressable
-                    onPress={() =>
-                      setSelectedItemIds(displayedItems.map((item) => item.id))
-                    }
-                  >
-                    <Text style={styles.bulkAction}>All</Text>
-                  </Pressable>
-                  <Pressable onPress={() => setSelectedItemIds([])}>
-                    <Text style={styles.bulkAction}>Clear</Text>
-                  </Pressable>
-                </View>
-                <View style={styles.bulkBarActions}>
-                  <Pressable onPress={() => runBulkAvailability(true)}>
-                    <Text style={styles.bulkAction}>In stock</Text>
-                  </Pressable>
-                  <Pressable onPress={() => runBulkAvailability(false)}>
-                    <Text style={styles.bulkActionDanger}>Sold out</Text>
-                  </Pressable>
-                  <Pressable onPress={() => setBulkPriceOpen(true)}>
-                    <Text style={styles.bulkAction}>Price</Text>
-                  </Pressable>
-                  {selectedItemIds.length === 1 ? (
+                  <View style={styles.sectionHeadActions}>
+                    {displayedItems.length > 0 ? (
+                      <Pressable
+                        onPress={() =>
+                          setSelectedItemIds(displayedItems.map((item) => item.id))
+                        }
+                      >
+                        <Text style={styles.selectAllText}>Select</Text>
+                      </Pressable>
+                    ) : null}
                     <Pressable
+                      style={styles.greenBtn}
                       onPress={() => {
-                        const item =
-                          displayedItems.find((row) => row.id === selectedItemIds[0]) ??
-                          items.find((row) => row.id === selectedItemIds[0]);
-                        if (item) duplicateSku(item);
+                        const categoryId = selectedCategory?.id ?? categories[0]?.id;
+                        if (!categoryId) {
+                          Alert.alert(
+                            'Add a category first',
+                            'Create a category before adding items.'
+                          );
+                          return;
+                        }
+                        setItemModal({ mode: 'create', categoryId });
                       }}
                     >
-                      <Text style={styles.bulkAction}>Copy</Text>
+                      <Plus color="#1C1917" size={16} />
+                      <Text style={styles.greenBtnText}>Add item</Text>
                     </Pressable>
-                  ) : null}
+                  </View>
                 </View>
-              </View>
+                {searchQuery.isError ? (
+                  <View style={styles.errorCard}>
+                    <Text style={styles.errorText}>
+                      {getApiErrorMessage(searchQuery.error, 'Search failed')}
+                    </Text>
+                  </View>
+                ) : null}
+                {categoryItemsQuery.isError ? (
+                  <View style={styles.errorCard}>
+                    <Text style={styles.errorText}>
+                      {getApiErrorMessage(
+                        categoryItemsQuery.error,
+                        'Could not load dishes for this category'
+                      )}
+                    </Text>
+                  </View>
+                ) : null}
+                {selectedItemIds.length > 0 ? (
+                  <View style={styles.bulkBar}>
+                    <View style={styles.bulkBarTop}>
+                      <Text style={styles.bulkBarText}>
+                        {selectedItemIds.length} selected
+                      </Text>
+                      <Pressable
+                        onPress={() =>
+                          setSelectedItemIds(displayedItems.map((item) => item.id))
+                        }
+                      >
+                        <Text style={styles.bulkAction}>All</Text>
+                      </Pressable>
+                      <Pressable onPress={() => setSelectedItemIds([])}>
+                        <Text style={styles.bulkAction}>Clear</Text>
+                      </Pressable>
+                    </View>
+                    <View style={styles.bulkBarActions}>
+                      <Pressable onPress={() => runBulkAvailability(true)}>
+                        <Text style={styles.bulkAction}>In stock</Text>
+                      </Pressable>
+                      <Pressable onPress={() => runBulkAvailability(false)}>
+                        <Text style={styles.bulkActionDanger}>Sold out</Text>
+                      </Pressable>
+                      <Pressable onPress={() => setBulkPriceOpen(true)}>
+                        <Text style={styles.bulkAction}>Price</Text>
+                      </Pressable>
+                      {selectedItemIds.length === 1 ? (
+                        <Pressable
+                          onPress={() => {
+                            const item =
+                              displayedItems.find((row) => row.id === selectedItemIds[0]) ??
+                              items.find((row) => row.id === selectedItemIds[0]);
+                            if (item) duplicateSku(item);
+                          }}
+                        >
+                          <Text style={styles.bulkAction}>Copy</Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  </View>
+                ) : null}
+                {canReorder ? (
+                  <Text style={styles.reorderHint}>
+                    Use the arrows on a dish to change the order customers see.
+                  </Text>
+                ) : null}
+              </>
             ) : null}
-
-            {canReorder ? (
-              <Text style={styles.reorderHint}>
-                Use the arrows on a dish to change the order customers see.
-              </Text>
-            ) : null}
-
-            {(searching
-              ? searchQuery.isFetching
-              : selectedCategoryId
-                ? categoryItemsQuery.isLoading && !categoryItemsQuery.data
-                : itemsQuery.isLoading) ? (
-              <ActivityIndicator color={authTheme.brand} style={{ marginVertical: 24 }} />
-            ) : displayedItems.length === 0 ? (
-              <View style={styles.emptyCard}>
-                <UtensilsCrossed color="#A8A29E" size={26} />
-                <Text style={styles.emptyTitle}>
-                  {searching
-                    ? 'No dishes match'
-                    : soldOutOnly
-                      ? 'Nothing is 86’d'
-                      : 'No items in this category'}
-                </Text>
-                <Text style={styles.emptyText}>
-                  {searching
-                    ? 'Try another SKU name.'
-                    : 'Add your first dish or import from CSV.'}
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.itemList}>
-                {displayedItems.map((item) => {
-                  const orderIndex = canReorder
-                    ? items.findIndex((row) => row.id === item.id)
-                    : -1;
-                  return (
-                    <MenuItemRow
-                      key={item.id}
-                      item={item}
-                      selected={selectedItemIds.includes(item.id)}
-                      soldOut={soldOutIds.has(item.id)}
-                      canMoveUp={orderIndex > 0}
-                      canMoveDown={orderIndex >= 0 && orderIndex < items.length - 1}
-                      submitBusy={mutations.submitItemVerification.isPending}
-                      onSelect={() => toggleSelect(item.id)}
-                      onToggleStock={() => toggleStock(item)}
-                      onEdit={() => setItemModal({ mode: 'edit', item })}
-                      onPhoto={() => setImageItem(item)}
-                      onDuplicate={() => duplicateSku(item)}
-                      onCustomisations={() => openModifiers(item)}
-                      onTimed86={() => setTimed86Item(item)}
-                      onDelete={() => confirmDeleteItem(item)}
-                      onSubmitVerification={() => submitItemForVerification(item)}
-                      onMoveUp={
-                        canReorder ? () => moveItem(item.id, 'up') : undefined
-                      }
-                      onMoveDown={
-                        canReorder ? () => moveItem(item.id, 'down') : undefined
-                      }
-                    />
-                  );
-                })}
-              </View>
-            )}
-          </>
-        ) : null}
-
-        {busy ? (
-          <View style={styles.busyOverlay}>
-            <ActivityIndicator color={authTheme.brand} />
           </View>
-        ) : null}
-      </ScrollView>
+        }
+        ListEmptyComponent={
+          categories.length === 0 || categoriesLoading ? null : itemsLoading ? (
+            <ActivityIndicator color={authTheme.brand} style={{ marginVertical: 24 }} />
+          ) : (
+            <View style={styles.emptyCard}>
+              <UtensilsCrossed color="#A8A29E" size={26} />
+              <Text style={styles.emptyTitle}>
+                {searching
+                  ? 'No dishes match'
+                  : soldOutOnly
+                    ? 'Nothing is 86’d'
+                    : 'No items in this category'}
+              </Text>
+              <Text style={styles.emptyText}>
+                {searching
+                  ? 'Try another dish name.'
+                  : 'Add a dish, or import a CSV if you have a long menu.'}
+              </Text>
+            </View>
+          )
+        }
+        renderItem={({ item }) => {
+          const orderIndex = canReorder
+            ? items.findIndex((row) => row.id === item.id)
+            : -1;
+          return (
+            <MenuItemRow
+              item={item}
+              selected={selectedItemIds.includes(item.id)}
+              soldOut={soldOutIds.has(item.id)}
+              canMoveUp={orderIndex > 0}
+              canMoveDown={orderIndex >= 0 && orderIndex < items.length - 1}
+              submitBusy={mutations.submitItemVerification.isPending}
+              onSelect={() => toggleSelect(item.id)}
+              onToggleStock={() => toggleStock(item)}
+              onEdit={() => setItemModal({ mode: 'edit', item })}
+              onPhoto={() => setImageItem(item)}
+              onDuplicate={() => duplicateSku(item)}
+              onCustomisations={() => openModifiers(item)}
+              onTimed86={() => setTimed86Item(item)}
+              onDelete={() => confirmDeleteItem(item)}
+              onSubmitVerification={() => submitItemForVerification(item)}
+              onMoveUp={canReorder ? () => moveItem(item.id, 'up') : undefined}
+              onMoveDown={canReorder ? () => moveItem(item.id, 'down') : undefined}
+            />
+          );
+        }}
+        ItemSeparatorComponent={() => <View style={styles.itemGap} />}
+      />
+
+      {busy ? (
+        <View style={styles.busyOverlay}>
+          <ActivityIndicator color={authTheme.brand} />
+        </View>
+      ) : null}
 
       <CategoryFormModal
         state={categoryModal}
@@ -2370,8 +2233,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E7E5E4',
     borderRadius: 21,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   headerIconBtnText: {
     color: '#1C1917',
@@ -2533,9 +2396,15 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: {
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 4,
     paddingBottom: PARTNER_BOTTOM_NAV_INSET + 16,
-    gap: 14,
+  },
+  listHead: {
+    gap: 10,
+    marginBottom: 10,
+  },
+  itemGap: {
+    height: 10,
   },
   sectionHead: {
     flexDirection: 'row',
