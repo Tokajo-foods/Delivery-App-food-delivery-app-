@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   },
   body: {
     paddingHorizontal: 16,
-    paddingTop: 4,
-    gap: 12,
+    paddingTop: 12,
+    gap: 18,
   },
 });

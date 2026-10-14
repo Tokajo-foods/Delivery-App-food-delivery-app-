@@ -262,7 +262,13 @@ export function KitchenDutyCard({
           )}
         </View>
         <View style={styles.titleCol}>
-          <Text style={styles.kicker}>{compact ? 'Store' : 'Kitchen duty'}</Text>
+          <Text style={styles.kicker}>
+            {online && duty?.openNow
+              ? 'Accepting orders'
+              : paused
+                ? 'Paused'
+                : 'Not accepting'}
+          </Text>
           <Text style={styles.headline}>{headline}</Text>
         </View>
         {dutyQuery.isLoading && !duty ? (
@@ -316,20 +322,6 @@ export function KitchenDutyCard({
           />
         ) : (
           <>
-            <DutyButton
-              variant="secondary"
-              compact={compact}
-              disabled={busy}
-              onPress={() => setPauseOpen((open) => !open)}
-              icon={<PauseCircle color="#EA4B14" size={compact ? 14 : 16} />}
-              label={
-                pauseOpen
-                  ? 'Hide pause'
-                  : compact
-                    ? 'Pause orders'
-                    : 'Busy? Pause new orders'
-              }
-            />
             {pauseOpen ? (
               <View style={styles.pauseBox}>
                 <Text style={styles.pauseLabel}>Pause for</Text>
@@ -390,16 +382,30 @@ export function KitchenDutyCard({
         )
       ) : null}
 
-      {onHoursPress ? (
-        <Pressable
-          onPress={onHoursPress}
-          style={({ pressed }) => [styles.linkBtn, pressed && styles.pressed]}
-        >
-          <Text style={styles.linkText}>
-            {compact ? 'Opening hours' : 'Edit weekly hours'}
-          </Text>
-        </Pressable>
-      ) : null}
+      <View style={styles.footer}>
+        {listingLive && storeOn && !paused ? (
+          <Pressable
+            onPress={() => setPauseOpen((open) => !open)}
+            disabled={busy}
+            style={({ pressed }) => [styles.footerBtn, pressed && styles.pressed]}
+          >
+            <PauseCircle color="#EA4B14" size={15} />
+            <Text style={styles.linkText}>
+              {pauseOpen ? 'Hide pause' : 'Pause orders'}
+            </Text>
+          </Pressable>
+        ) : (
+          <View />
+        )}
+        {onHoursPress ? (
+          <Pressable
+            onPress={onHoursPress}
+            style={({ pressed }) => [styles.footerBtn, pressed && styles.pressed]}
+          >
+            <Text style={styles.linkText}>Opening hours</Text>
+          </Pressable>
+        ) : null}
+      </View>
 
       {dutyQuery.isError && !duty ? (
         <Pressable onPress={() => void dutyQuery.refetch()} style={styles.linkBtn}>
@@ -429,10 +435,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cardOpen: {
-    borderColor: '#F6E4D6',
-    backgroundColor: '#FFFCF9',
-    borderLeftWidth: 3,
-    borderLeftColor: '#EA4B14',
+    borderColor: '#F1EAE3',
+    backgroundColor: '#FFFFFF',
   },
   cardPaused: {
     borderColor: '#F6E4D6',
@@ -593,6 +597,21 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
   },
   choiceTextOn: { color: authTheme.brand },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 2,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#F1EAE3',
+  },
+  footerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 2,
+  },
   linkBtn: { alignSelf: 'flex-start', paddingVertical: 2 },
   linkText: {
     color: authTheme.brand,

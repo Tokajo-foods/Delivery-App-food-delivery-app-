@@ -158,7 +158,7 @@ export function DashboardHeader({
 const styles = StyleSheet.create({
   wrap: {
     paddingHorizontal: 16,
-    paddingBottom: 6,
+    paddingBottom: 10,
     gap: 12,
   },
   logoRow: {
