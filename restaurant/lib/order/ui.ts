@@ -153,6 +153,18 @@ export function orderPlacedLabel(value?: string) {
   return `Placed on ${day} at ${time}`;
 }
 
+/** Matches order-service `KITCHEN_CANCEL_WINDOW_MS`. */
+export const KITCHEN_CANCEL_WINDOW_MS = 5 * 60 * 1000;
+
+export function kitchenCancelStillOpen(
+  createdAt: string | undefined,
+  now = Date.now(),
+) {
+  const placed = createdAt ? new Date(createdAt).getTime() : NaN;
+  if (!Number.isFinite(placed)) return false;
+  return now - placed < KITCHEN_CANCEL_WINDOW_MS;
+}
+
 export function shortOrderId(order: OwnerOrder) {
   const raw = (order.orderNumber || order.id || '').trim();
   if (!raw) return '—';

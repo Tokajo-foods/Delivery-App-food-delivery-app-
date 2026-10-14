@@ -10,7 +10,7 @@ import {
   UtensilsCrossed,
   X,
 } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -63,6 +63,7 @@ import {
   kitchenTimeline,
   money,
   nextKitchenAction,
+  kitchenCancelStillOpen,
   kitchenHandoverCopy,
   kitchenHandoverErrorCopy,
   orderPlacedLabel,
@@ -255,6 +256,12 @@ export function OrderDetailScreen({ orderId }: Props) {
   const address = order ? addressText(order) : '';
   const cooking =
     order?.status === 'accepted' || order?.status === 'preparing';
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!cooking) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [cooking]);
   const tripStatus = `${order?.deliveryTripStatus ?? rider?.status ?? ''}`.toLowerCase();
   const riderEnRoute =
     Boolean(rider?.assigned) &&
@@ -269,7 +276,9 @@ export function OrderDetailScreen({ orderId }: Props) {
     riderEnRoute &&
     riderSinceMs > 0 &&
     Date.now() - riderSinceMs >= riderNoShowWaitMs;
-  const canKitchenCancel = cooking || riderNoShowReady;
+  const cancelWindowOpen = kitchenCancelStillOpen(order?.createdAt, now);
+  const canKitchenCancel = (cooking && cancelWindowOpen) || riderNoShowReady;
+  const cancelClosed = cooking && !cancelWindowOpen;
   const canDelay =
     cooking || order?.status === 'ready';
   const canPrint = Boolean(order) && statusRank(order?.status ?? 'pending') >= 0;
@@ -520,18 +529,32 @@ export function OrderDetailScreen({ orderId }: Props) {
                       <Text style={styles.toolText}>Item 86</Text>
                     </Pressable>
                   ) : null}
-                  {canKitchenCancel ? (
+                  {cooking || riderNoShowReady ? (
                     <Pressable
-                      onPress={() => setCancelOpen(true)}
-                      style={styles.tool}
+                      disabled={cancelClosed}
+                      onPress={() => {
+                        if (cancelClosed) return;
+                        setCancelOpen(true);
+                      }}
+                      style={[styles.tool, cancelClosed && styles.toolDisabled]}
                     >
-                      <Ban color={authTheme.error} size={16} />
-                      <Text style={[styles.toolText, { color: authTheme.error }]}>
+                      <Ban color={cancelClosed ? '#A8A29E' : authTheme.error} size={16} />
+                      <Text
+                        style={[
+                          styles.toolText,
+                          { color: cancelClosed ? '#A8A29E' : authTheme.error },
+                        ]}
+                      >
                         Cancel
                       </Text>
                     </Pressable>
                   ) : null}
                 </View>
+                {cancelClosed ? (
+                  <Text style={styles.muted}>
+                    Cancel is closed. It stays available for 5 minutes after the order is placed.
+                  </Text>
+                ) : null}
                 {order?.status === 'ready' &&
                 rider?.assigned &&
                 !riderNoShowReady &&
@@ -1008,6 +1031,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 12,
     backgroundColor: authTheme.surface,
+  },
+  toolDisabled: {
+    opacity: 0.45,
   },
   toolText: {
     fontFamily: fonts.semiBold,
