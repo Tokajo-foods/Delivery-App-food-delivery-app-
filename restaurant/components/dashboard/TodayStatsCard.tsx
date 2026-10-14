@@ -122,8 +122,8 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   art: {
-    width: 128,
-    height: 84,
+    width: 134,
+    height: 88,
   },
   kicker: {
     color: '#1C1917',
