@@ -1,6 +1,5 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
 import {
   Camera,
   ChevronDown,
@@ -119,7 +118,6 @@ function Field({
 }
 
 export function MenuManager() {
-  const router = useRouter();
   const {
     data: categories = [],
     isLoading: categoriesLoading,
@@ -600,7 +598,6 @@ export function MenuManager() {
       <MenuBrowserBar
         search={search}
         onSearch={setSearch}
-        onOutlets={() => router.push('/chain')}
         onImport={() => setBulkOpen(true)}
         onAddCategory={() => setCategoryModal({ mode: 'create' })}
         importDisabled={!categories.length}

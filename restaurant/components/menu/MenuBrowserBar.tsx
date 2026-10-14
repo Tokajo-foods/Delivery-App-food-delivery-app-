@@ -4,7 +4,6 @@ import {
   MoreVertical,
   Plus,
   Search,
-  Store,
   UtensilsCrossed,
   X,
 } from 'lucide-react-native';
@@ -26,7 +25,6 @@ import type { MenuCategory } from '@/lib/restaurant/types';
 type Props = {
   search: string;
   onSearch: (value: string) => void;
-  onOutlets: () => void;
   onImport: () => void;
   onAddCategory: () => void;
   importDisabled?: boolean;
@@ -71,7 +69,6 @@ function IconButton({
 export function MenuBrowserBar({
   search,
   onSearch,
-  onOutlets,
   onImport,
   onAddCategory,
   importDisabled,
@@ -108,9 +105,6 @@ export function MenuBrowserBar({
             </Pressable>
           ) : null}
         </View>
-        <IconButton label="Outlets" onPress={onOutlets}>
-          <Store color="#44403C" size={16} />
-        </IconButton>
         <IconButton label="Import" onPress={onImport} disabled={importDisabled}>
           <FileUp color="#44403C" size={16} />
         </IconButton>
