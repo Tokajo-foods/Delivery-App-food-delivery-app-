@@ -552,7 +552,7 @@ export function OrderDetailScreen({ orderId }: Props) {
                 </View>
                 {cancelClosed ? (
                   <Text style={styles.muted}>
-                    Cancel is closed. It stays available for 5 minutes after the order is placed.
+                    Cancel is closed. It stays available for 3 minutes after the order is placed.
                   </Text>
                 ) : null}
                 {order?.status === 'ready' &&

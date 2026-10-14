@@ -154,7 +154,7 @@ export function orderPlacedLabel(value?: string) {
 }
 
 /** Matches order-service `KITCHEN_CANCEL_WINDOW_MS`. */
-export const KITCHEN_CANCEL_WINDOW_MS = 5 * 60 * 1000;
+export const KITCHEN_CANCEL_WINDOW_MS = 3 * 60 * 1000;
 
 export function kitchenCancelStillOpen(
   createdAt: string | undefined,
