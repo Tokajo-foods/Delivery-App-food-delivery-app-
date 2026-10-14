@@ -585,7 +585,7 @@ export function MenuManager() {
         subtitle={restaurantName || 'Categories, items & 86'}
         headerRight={
           <Pressable style={styles.headerIconBtn} onPress={() => setAddOnsOpen(true)}>
-            <Layers color={authTheme.brand} size={18} />
+            <Layers color="#44403C" size={18} />
             <Text style={styles.headerIconBtnText}>Add-ons</Text>
           </Pressable>
         }
@@ -614,7 +614,7 @@ export function MenuManager() {
           style={styles.outlineBtn}
           onPress={() => router.push('/chain')}
         >
-          <Store color={authTheme.brand} size={16} />
+          <Store color="#57534E" size={16} />
           <Text style={styles.outlineBtnText}>Outlets</Text>
         </Pressable>
         <Pressable
@@ -622,7 +622,7 @@ export function MenuManager() {
           onPress={() => setBulkOpen(true)}
           disabled={!categories.length}
         >
-          <FileUp color={authTheme.brand} size={16} />
+          <FileUp color="#57534E" size={16} />
           <Text style={styles.outlineBtnText}>Import</Text>
         </Pressable>
         <Pressable
@@ -686,7 +686,7 @@ export function MenuManager() {
           <ActivityIndicator color={authTheme.brand} style={{ marginVertical: 20 }} />
         ) : categories.length === 0 ? (
           <View style={styles.emptyCard}>
-            <FolderOpen color="#EA4B14" size={26} />
+            <FolderOpen color="#A8A29E" size={26} />
             <Text style={styles.emptyTitle}>No categories yet</Text>
             <Text style={styles.emptyText}>
               Create your first category to start adding menu items.
@@ -713,7 +713,7 @@ export function MenuManager() {
               style={[styles.catPill, viewingAll && styles.catPillOn]}
             >
               <UtensilsCrossed
-                color={authTheme.brand}
+                color={viewingAll ? '#FFFFFF' : '#78716C'}
                 size={14}
               />
               <Text
@@ -766,7 +766,7 @@ export function MenuManager() {
                     </Text>
                     {scheduled ? (
                       <Clock3
-                        color={active ? '#EA4B14' : authTheme.textMuted}
+                        color={active ? '#FFFFFF' : '#78716C'}
                         size={12}
                       />
                     ) : null}
@@ -785,7 +785,7 @@ export function MenuManager() {
                       }}
                     >
                       <MoreVertical
-                        color={active ? '#EA4B14' : authTheme.textDim}
+                        color={active ? '#FFFFFF' : '#A8A29E'}
                         size={14}
                       />
                     </Pressable>
@@ -832,7 +832,7 @@ export function MenuManager() {
                     setItemModal({ mode: 'create', categoryId });
                   }}
                 >
-                  <Plus color="#EA4B14" size={16} />
+                  <Plus color="#1C1917" size={16} />
                   <Text style={styles.greenBtnText}>Add Item</Text>
                 </Pressable>
               </View>
@@ -914,7 +914,7 @@ export function MenuManager() {
               <ActivityIndicator color={authTheme.brand} style={{ marginVertical: 24 }} />
             ) : displayedItems.length === 0 ? (
               <View style={styles.emptyCard}>
-                <UtensilsCrossed color="#EA4B14" size={26} />
+                <UtensilsCrossed color="#A8A29E" size={26} />
                 <Text style={styles.emptyTitle}>
                   {searching
                     ? 'No dishes match'
@@ -2368,13 +2368,13 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#F3E7DE',
+    borderColor: '#E7E5E4',
     borderRadius: 21,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   headerIconBtnText: {
-    color: authTheme.brand,
+    color: '#1C1917',
     fontSize: 12,
     fontFamily: fonts.bold,
   },
@@ -2385,7 +2385,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#F1EAE3',
+    borderColor: '#E7E5E4',
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
@@ -2424,14 +2424,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#F1EAE3',
+    borderColor: '#E7E5E4',
     paddingHorizontal: 12,
     paddingVertical: 8,
     maxWidth: 220,
   },
   catPillOn: {
-    backgroundColor: '#FFF1E8',
-    borderColor: '#F6E4D6',
+    backgroundColor: '#1C1917',
+    borderColor: '#1C1917',
   },
   catPillText: {
     color: '#57534E',
@@ -2440,7 +2440,7 @@ const styles = StyleSheet.create({
     maxWidth: 120,
   },
   catPillTextOn: {
-    color: '#1C1917',
+    color: '#FFFFFF',
     fontFamily: fonts.bold,
   },
   catPillCount: {
@@ -2490,7 +2490,7 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#F1EAE3',
+    borderColor: '#E7E5E4',
     borderRadius: 14,
     paddingVertical: 12,
   },
@@ -2519,14 +2519,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     borderWidth: 1,
-    borderColor: '#F6E4D6',
-    backgroundColor: '#FFF1E8',
-    borderRadius: 999,
+    borderColor: '#E7E5E4',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   greenBtnText: {
-    color: '#EA4B14',
+    color: '#1C1917',
     fontSize: 12,
     fontFamily: fonts.bold,
   },
@@ -2549,7 +2549,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   selectAllText: {
-    color: authTheme.brand,
+    color: '#44403C',
     fontSize: 12,
     fontFamily: fonts.bold,
   },
@@ -2734,7 +2734,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
   },
   bulkAction: {
-    color: '#EA4B14',
+    color: '#1C1917',
     fontSize: 12,
     fontFamily: fonts.bold,
   },

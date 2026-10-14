@@ -126,7 +126,7 @@ export function MenuItemRow({
         {item.imageUrl ? (
           <Image source={{ uri: item.imageUrl }} style={styles.thumbImg} contentFit="cover" />
         ) : (
-          <UtensilsCrossed color="#EA4B14" size={20} />
+          <UtensilsCrossed color="#A8A29E" size={20} />
         )}
       </Pressable>
       <View style={styles.itemBody}>
@@ -205,8 +205,8 @@ export function MenuItemRow({
         <Switch
           value={inStock}
           onValueChange={onToggleStock}
-          trackColor={{ false: '#E7E5E4', true: 'rgba(234, 75, 20, 0.45)' }}
-          thumbColor={inStock ? '#EA4B14' : '#F8FAFC'}
+          trackColor={{ false: '#E7E5E4', true: 'rgba(28, 25, 23, 0.28)' }}
+          thumbColor={inStock ? '#1C1917' : '#F8FAFC'}
         />
       </View>
     </View>
@@ -1100,7 +1100,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#F1EAE3',
+    borderColor: '#E7E5E4',
   },
   itemRowOff: { opacity: 0.72 },
   check: {
@@ -1112,13 +1112,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkOn: { backgroundColor: authTheme.brand, borderColor: authTheme.brand },
+  checkOn: { backgroundColor: '#1C1917', borderColor: '#1C1917' },
   checkMark: { color: '#FFFFFF', fontSize: 12, fontFamily: fonts.bold },
   thumb: {
     width: 64,
     height: 64,
     borderRadius: 14,
-    backgroundColor: '#FFF1E8',
+    backgroundColor: '#F5F5F4',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -1133,7 +1133,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     letterSpacing: -0.2,
   },
-  itemPrice: { color: '#EA4B14', fontFamily: fonts.extraBold, fontSize: 14 },
+  itemPrice: { color: '#1C1917', fontFamily: fonts.extraBold, fontSize: 14 },
   strike: {
     color: authTheme.textDim,
     textDecorationLine: 'line-through',
