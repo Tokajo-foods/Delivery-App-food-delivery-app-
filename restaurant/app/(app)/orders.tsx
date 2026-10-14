@@ -10,7 +10,7 @@ export default function OrdersScreen() {
   const { data } = useDashboardStats(false);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
+    <View style={{ flex: 1, backgroundColor: '#F6F3F0' }}>
       <View style={{ flex: 1 }}>
         <KitchenOrdersManager />
       </View>

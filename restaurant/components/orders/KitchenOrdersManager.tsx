@@ -377,7 +377,7 @@ export function KitchenOrdersManager() {
             {refreshing ? (
               <ActivityIndicator color={authTheme.text} size="small" />
             ) : (
-              <RefreshCw color={authTheme.text} size={18} strokeWidth={2.4} />
+              <RefreshCw color="#EA4B14" size={18} strokeWidth={2.2} />
             )}
           </Pressable>
         }
@@ -696,7 +696,7 @@ function EmptyState({ title, body }: { title: string; body: string }) {
   return (
     <View style={styles.empty}>
       <View style={styles.emptyIcon}>
-        <ClipboardList color={authTheme.textDim} size={26} />
+            <ClipboardList color="#EA4B14" size={24} />
       </View>
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.muted}>{body}</Text>
@@ -814,11 +814,11 @@ function OrderTicket({
       <View style={styles.ticketTop}>
         <View style={styles.iconBox}>
           {scheduled ? (
-            <CalendarClock color="#64748B" size={20} strokeWidth={2} />
+            <CalendarClock color="#EA4B14" size={20} strokeWidth={2} />
           ) : order.isDelayed ? (
             <Timer color="#DC2626" size={20} strokeWidth={2} />
           ) : (
-            <Package color="#64748B" size={20} strokeWidth={2} />
+            <Package color="#EA4B14" size={20} strokeWidth={2} />
           )}
         </View>
         <View style={styles.ticketMid}>
@@ -854,7 +854,14 @@ function OrderTicket({
             <Text
               style={[
                 styles.statusText,
-                { color: order.isDelayed ? '#DC2626' : tone.color },
+                {
+                  color:
+                    order.isDelayed ||
+                    order.status === 'cancelled' ||
+                    order.status === 'rejected'
+                      ? '#DC2626'
+                      : '#EA4B14',
+                },
               ]}
             >
               {order.deliveryTripStatus === 'returning_to_restaurant'
@@ -917,41 +924,47 @@ function OrderTicket({
 }
 
 const LANE_DOT: Record<'new' | 'prep' | 'ready' | 'late', { backgroundColor: string }> = {
-  new: { backgroundColor: authTheme.brand },
-  prep: { backgroundColor: '#EA580C' },
-  ready: { backgroundColor: '#059669' },
+  new: { backgroundColor: '#EA4B14' },
+  prep: { backgroundColor: '#F97316' },
+  ready: { backgroundColor: '#C2410C' },
   late: { backgroundColor: '#DC2626' },
 };
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F6F3F0',
   },
   refreshBtn: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#F3E7DE',
   },
   tabs: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
   },
   tab: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 4,
     borderRadius: 12,
-    paddingVertical: 10,
-    backgroundColor: '#F8FAFC',
+    paddingVertical: 9,
   },
   tabActive: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: authTheme.brand,
+    backgroundColor: '#FFF1E8',
   },
   tabText: {
     fontFamily: fonts.semiBold,
@@ -964,11 +977,11 @@ const styles = StyleSheet.create({
   tabBadge: {
     minWidth: 18,
     height: 18,
-    borderRadius: 6,
+    borderRadius: 9,
     paddingHorizontal: 5,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#F1EAE3',
   },
   tabBadgeActive: {
     backgroundColor: authTheme.brandSoft,
@@ -985,9 +998,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   list: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 4,
     paddingBottom: PARTNER_BOTTOM_NAV_INSET + 16,
-    gap: 10,
+    gap: 12,
   },
   filterRow: {
     flexDirection: 'row',
@@ -998,16 +1012,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    borderRadius: 12,
+    borderRadius: 999,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 8,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: authTheme.cardBorder,
+    borderColor: '#F1EAE3',
   },
   chipActive: {
-    borderColor: authTheme.brand,
-    backgroundColor: '#FFFFFF',
+    borderColor: '#F6E4D6',
+    backgroundColor: '#FFF1E8',
   },
   chipText: {
     fontFamily: fonts.semiBold,
@@ -1026,8 +1040,8 @@ const styles = StyleSheet.create({
     color: authTheme.brand,
   },
   lane: {
-    gap: 8,
-    marginBottom: 8,
+    gap: 10,
+    marginBottom: 6,
   },
   laneHead: {
     flexDirection: 'row',
@@ -1041,24 +1055,25 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   laneTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 13,
+    fontFamily: fonts.extraBold,
+    fontSize: 16,
+    letterSpacing: -0.3,
     color: authTheme.text,
     flex: 1,
   },
   laneCount: {
     minWidth: 22,
     height: 22,
-    borderRadius: 8,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#FFF1E8',
     paddingHorizontal: 6,
   },
   laneCountText: {
     fontFamily: fonts.bold,
     fontSize: 11,
-    color: authTheme.textMuted,
+    color: '#EA4B14',
   },
   laneEmpty: {
     fontFamily: fonts.medium,
@@ -1069,9 +1084,15 @@ const styles = StyleSheet.create({
   },
   ticket: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: authTheme.cardBorder,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
+    overflow: 'hidden',
+    shadowColor: '#1F1300',
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   ticketTop: {
     padding: 16,
@@ -1079,20 +1100,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#FFF1E8',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    marginRight: 12,
   },
   ticketMid: {
     flex: 1,
   },
   ticketId: {
-    fontFamily: fonts.bold,
-    fontSize: 15,
+    fontFamily: fonts.extraBold,
+    fontSize: 16,
+    letterSpacing: -0.3,
     color: authTheme.text,
   },
   ticketMeta: {
@@ -1117,8 +1139,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   amount: {
-    fontFamily: fonts.bold,
-    fontSize: 14,
+    fontFamily: fonts.extraBold,
+    fontSize: 15,
+    letterSpacing: -0.3,
     color: authTheme.text,
   },
   statusRow: {
@@ -1134,8 +1157,8 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: authTheme.cardBorder,
+    borderTopWidth: 1,
+    borderTopColor: '#F1EAE3',
   },
   actionBtn: {
     flex: 1,
@@ -1143,11 +1166,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 14,
+    paddingVertical: 13,
   },
   rejectBtn: {
-    borderRightWidth: StyleSheet.hairlineWidth,
-    borderRightColor: authTheme.cardBorder,
+    borderRightWidth: 1,
+    borderRightColor: '#F1EAE3',
   },
   rejectText: {
     fontFamily: fonts.semiBold,
@@ -1175,10 +1198,10 @@ const styles = StyleSheet.create({
   emptyIcon: {
     width: 52,
     height: 52,
-    borderRadius: 14,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFF1E8',
     marginBottom: 6,
   },
   emptyTitle: {
