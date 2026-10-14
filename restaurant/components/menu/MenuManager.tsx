@@ -31,6 +31,7 @@ import {
 
 
 import { RestaurantPageHeader } from '@/components/dashboard/RestaurantPageHeader';
+import { CategoryAddOnsManager } from '@/components/menu/CategoryAddOnsManager';
 import { MenuBrowserBar } from '@/components/menu/MenuBrowserBar';
 import { CatalogStatusBadge } from '@/components/menu/CatalogStatusBadge';
 import {
