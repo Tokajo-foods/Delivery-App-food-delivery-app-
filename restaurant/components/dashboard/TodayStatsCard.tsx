@@ -69,7 +69,7 @@ export function TodayStatsCard({ restaurantId, metrics, onRatingPress }: Props) 
         >
           <Text style={styles.label}>Rating</Text>
           <View style={styles.valueRow}>
-            <Star color="#D97706" size={13} fill="#FBBF24" />
+            <Star color="#EA4B14" size={13} fill="#EA4B14" />
             <Text style={styles.value}>
               {rating != null && rating > 0 ? rating.toFixed(1) : '—'}
             </Text>
@@ -86,7 +86,7 @@ export function TodayStatsCard({ restaurantId, metrics, onRatingPress }: Props) 
         <View style={styles.stat}>
           <Text style={styles.label}>Hygiene</Text>
           <View style={styles.valueRow}>
-            <ShieldCheck color="#15803D" size={13} />
+            <ShieldCheck color="#EA4B14" size={13} />
             <Text style={styles.value}>
               {hygieneData?.available
                 ? hygieneData.hygieneScore.toFixed(1)
@@ -133,8 +133,9 @@ const styles = StyleSheet.create({
   },
   title: {
     color: authTheme.text,
-    fontSize: 16,
-    fontFamily: fonts.bold,
+    fontSize: 17,
+    fontFamily: fonts.extraBold,
+    letterSpacing: -0.3,
     marginTop: 2,
   },
   row: {
@@ -157,10 +158,10 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semiBold,
   },
   value: {
-    color: authTheme.text,
-    fontSize: 16,
+    color: '#EA4B14',
+    fontSize: 18,
     fontFamily: fonts.extraBold,
-    letterSpacing: -0.3,
+    letterSpacing: -0.4,
   },
   valueRow: {
     flexDirection: 'row',

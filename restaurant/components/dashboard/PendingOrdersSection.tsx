@@ -59,6 +59,8 @@ export function PendingOrdersSection({
         ) : (
           orders.map((order, index) => {
             const tone = statusTone(order.status);
+            const alertStatus =
+              order.status === 'cancelled' || order.status === 'rejected';
             const amount = resolveOrderTotal(order);
             const hasTotal = Number.isFinite(amount) && amount > 0;
 
@@ -99,13 +101,20 @@ export function PendingOrdersSection({
                     <View
                       style={[
                         styles.statusPill,
-                        {
-                          backgroundColor: tone.backgroundColor,
-                          borderColor: tone.border,
-                        },
+                        alertStatus
+                          ? {
+                              backgroundColor: tone.backgroundColor,
+                              borderColor: tone.border,
+                            }
+                          : styles.statusPillWarm,
                       ]}
                     >
-                      <Text style={[styles.listStatusText, { color: tone.color }]}>
+                      <Text
+                        style={[
+                          styles.listStatusText,
+                          { color: alertStatus ? tone.color : '#EA4B14' },
+                        ]}
+                      >
                         {displayStatus(order.status)}
                       </Text>
                     </View>
@@ -251,6 +260,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  statusPillWarm: {
+    backgroundColor: '#FFF1E8',
+    borderColor: '#F6E4D6',
   },
   listStatusText: {
     fontFamily: fonts.bold,

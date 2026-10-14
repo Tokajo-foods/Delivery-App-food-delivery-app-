@@ -248,17 +248,17 @@ export function KitchenDutyCard({
             styles.iconWrap,
             {
               backgroundColor: paused
-                ? 'rgba(234, 179, 8, 0.14)'
+                ? '#FFF1E8'
                 : storeOn
-                  ? 'rgba(34, 197, 94, 0.12)'
-                  : authTheme.brandSoft,
+                  ? '#FFF1E8'
+                  : '#F6F3F0',
             },
           ]}
         >
           {paused ? (
-            <PauseCircle color="#CA8A04" size={20} />
+            <PauseCircle color="#EA4B14" size={20} />
           ) : storeOn ? (
-            <Wifi color={authTheme.success} size={20} />
+            <Wifi color="#EA4B14" size={20} />
           ) : (
             <WifiOff color={authTheme.textMuted} size={20} />
           )}
@@ -274,8 +274,8 @@ export function KitchenDutyCard({
             value={storeOn}
             onValueChange={onToggle}
             disabled={busy || !listingLive || adminForcedOffline}
-            trackColor={{ false: '#E2E8F0', true: 'rgba(34, 197, 94, 0.55)' }}
-            thumbColor={storeOn ? authTheme.success : '#F8FAFC'}
+            trackColor={{ false: '#E7E5E4', true: 'rgba(234, 75, 20, 0.45)' }}
+            thumbColor={storeOn ? '#EA4B14' : '#F8FAFC'}
           />
         )}
       </View>
@@ -285,7 +285,7 @@ export function KitchenDutyCard({
       <View style={styles.chipRow}>
         {showSurgeChip ? (
           <View style={styles.surgeChip}>
-            <CloudRain color="#1D4ED8" size={13} />
+            <CloudRain color="#EA4B14" size={13} />
             <Text style={styles.surgeText}>
               {surge?.reason === 'zone_surge' ? 'Rain / surge' : 'Zone surge'} ·{' '}
               {Number(surge?.surgeMultiplier ?? 1).toFixed(1)}x
@@ -300,7 +300,7 @@ export function KitchenDutyCard({
         ) : null}
         {duty?.openNow && listingLive ? (
           <View style={styles.openChip}>
-            <Store color="#15803D" size={13} />
+            <Store color="#EA4B14" size={13} />
             <Text style={styles.openChipText}>Open now</Text>
           </View>
         ) : null}
@@ -417,19 +417,24 @@ export function KitchenDutyCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: authTheme.cardBorder,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
     padding: 16,
     gap: 10,
+    shadowColor: '#1F1300',
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   cardOpen: {
-    borderColor: 'rgba(22, 163, 74, 0.28)',
-    backgroundColor: '#F7FEF9',
+    borderColor: '#F1EAE3',
+    backgroundColor: '#FFFFFF',
   },
   cardPaused: {
-    borderColor: 'rgba(202, 138, 4, 0.32)',
-    backgroundColor: '#FFFBEB',
+    borderColor: '#F6E4D6',
+    backgroundColor: '#FFF8F4',
   },
   topRow: {
     flexDirection: 'row',
@@ -472,13 +477,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#DBEAFE',
+    backgroundColor: '#FFF1E8',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
   surgeText: {
-    color: '#1D4ED8',
+    color: '#EA4B14',
     fontSize: 12,
     fontFamily: fonts.bold,
   },
@@ -497,13 +502,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: '#FFF1E8',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
   openChipText: {
-    color: '#15803D',
+    color: '#EA4B14',
     fontSize: 12,
     fontFamily: fonts.bold,
   },

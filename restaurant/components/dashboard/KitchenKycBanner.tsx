@@ -30,7 +30,7 @@ export function KitchenKycBanner({ restaurantId, onPress }: Props) {
       >
         <View style={styles.icon}>
           <ShieldCheck
-            color={rejected ? '#B91C1C' : waiting ? '#B45309' : authTheme.brand}
+            color={rejected ? '#B91C1C' : authTheme.brand}
             size={18}
           />
         </View>
@@ -66,12 +66,12 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   draft: {
-    backgroundColor: '#FFF7ED',
-    borderColor: '#FED7AA',
+    backgroundColor: '#FFF8F4',
+    borderColor: '#F6E4D6',
   },
   waiting: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
+    backgroundColor: '#FFF8F4',
+    borderColor: '#F6E4D6',
   },
   rejected: {
     backgroundColor: '#FEF2F2',

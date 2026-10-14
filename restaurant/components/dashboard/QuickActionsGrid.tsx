@@ -22,6 +22,9 @@ type Props = {
   onPartnersPress?: () => void;
 };
 
+const ICON = '#EA4B14';
+const WELL = '#FFF1E8';
+
 const ACTIONS = [
   {
     key: 'orders',
@@ -31,8 +34,6 @@ const ACTIONS = [
       return a.activeOrders > 99 ? '99+' : String(a.activeOrders);
     },
     icon: ClipboardList,
-    color: '#EA4B14',
-    well: '#FFE8DC',
   },
   {
     key: 'menu',
@@ -40,8 +41,6 @@ const ACTIONS = [
     hint: (a: DashboardQuickActions) =>
       a.menuItems > 0 ? String(a.menuItems) : undefined,
     icon: UtensilsCrossed,
-    color: '#F97316',
-    well: '#FFF1E6',
   },
   {
     key: 'promos',
@@ -49,16 +48,12 @@ const ACTIONS = [
     hint: (a: DashboardQuickActions) =>
       a.activePromos > 0 ? String(a.activePromos) : undefined,
     icon: Tag,
-    color: '#7C3AED',
-    well: '#EDE9FE',
   },
   {
     key: 'analytics',
     label: 'Insights',
     hint: () => undefined,
     icon: BarChart3,
-    color: '#2563EB',
-    well: '#DBEAFE',
   },
   {
     key: 'reviews',
@@ -66,16 +61,12 @@ const ACTIONS = [
     hint: (a: DashboardQuickActions) =>
       a.totalReviews > 0 ? String(a.totalReviews) : undefined,
     icon: MessageSquareQuote,
-    color: '#D97706',
-    well: '#FEF3C7',
   },
   {
     key: 'partners',
     label: 'Riders',
     hint: () => undefined,
     icon: Bike,
-    color: '#0D9488',
-    well: '#CCFBF1',
   },
 ] as const;
 
@@ -119,8 +110,8 @@ export function QuickActionsGrid({
                   !lastRow && styles.cellBorderBottom,
                 ]}
               >
-                <View style={[styles.iconWrap, { backgroundColor: item.well }]}>
-                  <Icon color={item.color} size={19} strokeWidth={2.1} />
+                <View style={styles.iconWrap}>
+                  <Icon color={ICON} size={20} strokeWidth={1.8} />
                   {hint ? (
                     <View style={styles.badge}>
                       <Text style={styles.badgeText}>{hint}</Text>
@@ -142,10 +133,10 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   sectionTitle: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
+    fontFamily: fonts.extraBold,
+    fontSize: 17,
     color: authTheme.text,
-    letterSpacing: -0.2,
+    letterSpacing: -0.3,
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -179,16 +170,17 @@ const styles = StyleSheet.create({
     borderBottomColor: authTheme.cardBorder,
   },
   iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: WELL,
   },
   tileLabel: {
-    fontFamily: fonts.medium,
+    fontFamily: fonts.semiBold,
     fontSize: 12,
-    color: authTheme.textMuted,
+    color: authTheme.text,
   },
   badge: {
     position: 'absolute',
@@ -198,7 +190,7 @@ const styles = StyleSheet.create({
     height: 15,
     borderRadius: 8,
     paddingHorizontal: 3,
-    backgroundColor: '#334155',
+    backgroundColor: '#EA4B14',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,

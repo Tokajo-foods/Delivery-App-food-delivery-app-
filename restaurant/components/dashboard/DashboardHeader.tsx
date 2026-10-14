@@ -120,7 +120,7 @@ export function DashboardHeader({
           <View
             style={[
               styles.liveDot,
-              { backgroundColor: live ? '#16A34A' : authTheme.textDim },
+              { backgroundColor: live ? '#EA4B14' : authTheme.textDim },
             ]}
           />
           <Text style={[styles.liveText, live ? styles.liveTextOn : undefined]}>
@@ -263,8 +263,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   livePillOn: {
-    backgroundColor: '#ECFDF3',
-    borderColor: '#BBF7D0',
+    backgroundColor: '#FFF1E8',
+    borderColor: '#F6E4D6',
   },
   livePillOff: {
     backgroundColor: '#FFFFFF',
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
   },
   liveTextOn: {
-    color: '#15803D',
+    color: '#EA4B14',
   },
   verifyPill: {
     flexDirection: 'row',
