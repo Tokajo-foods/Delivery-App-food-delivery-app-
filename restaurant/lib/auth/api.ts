@@ -1,296 +1,35 @@
-import axios from 'axios';
-
-import { API_BASE_URL, api, assertApiBaseUrl } from '@/lib/api';
 import { authClientSource, getAuthDeviceId } from '@/lib/auth/device';
+import { AUTH_BASE, authRequest } from '@/lib/auth/http';
+import {
+  normalizeAuthResponse,
+  normalizeMessageResponse,
+  normalizeOtpSendResponse,
+  unwrapData,
+} from '@/lib/auth/auth-normalize';
 import type {
   AppleLoginPayload,
-  AuthResponse,
-  AuthUser,
   ChangePasswordPayload,
-  ConfirmFirebasePhonePayload,
-  ConfirmRegisterOtpPayload,
+  ConfirmForgotPasswordOtpPayload,
   ConfirmRegisterOtpResult,
   ForgotPasswordPayload,
-  ConfirmForgotPasswordOtpPayload,
   GoogleLoginPayload,
   LoginPayload,
-  MessageResponse,
   OtpSendPayload,
-  OtpSendResult,
   OtpVerifyPayload,
-  PartnerRole,
-  RegisterOtpPolicy,
   RegisterPayload,
   ResetPasswordPayload,
   ResetPasswordWithOtpPayload,
 } from '@/lib/auth/types';
-import { fromApiRole, toApiRole } from '@/lib/auth/types';
-import {
-  getApiErrorCode,
-  getApiErrorMessage,
-  PartnerApiError,
-} from '@/lib/errors';
+import { toApiRole } from '@/lib/auth/types';
 
-/** Live API mounts auth under user-service (not /auth at root). */
-const AUTH_BASE = '/api/v1/user-service/auth';
-
-/** Cookie session auth — no JWT in response body. */
-export const SESSION_AUTH_TOKEN = 'session';
-
-function mapApiUser(
-  data: Record<string, unknown>,
-  fallbackRole: PartnerRole
-): AuthUser {
-  return {
-    id: String(data._id ?? data.id ?? ''),
-    email: String(data.email ?? ''),
-    firstName: (data.firstName as string) || undefined,
-    lastName: (data.lastName as string) || undefined,
-    phone: (data.phone as string) || undefined,
-    role: fromApiRole(data.role ?? data.userType ?? data.type, fallbackRole),
-    emailVerified: Boolean(data.isEmailVerified ?? data.emailVerified ?? false),
-    photoUrl:
-      (data.photoUrl as string) ||
-      (data.avatarUrl as string) ||
-      (data.picture as string) ||
-      undefined,
-  };
-}
-
-function normalizeAuthResponse(
-  data: unknown,
-  fallbackRole: PartnerRole
-): AuthResponse {
-  const payload = data as Record<string, unknown>;
-  const nested = payload.data as Record<string, unknown> | undefined;
-
-  const token =
-    (payload.token as string) ||
-    (payload.accessToken as string) ||
-    (payload.access_token as string) ||
-    (payload.jwt as string) ||
-    (nested?.token as string) ||
-    (nested?.accessToken as string) ||
-    ((nested?.tokens as Record<string, unknown> | undefined)?.accessToken as string) ||
-    SESSION_AUTH_TOKEN;
-
-  const userSource = (nested?.user ??
-    nested ??
-    payload.user ??
-    payload) as Record<string, unknown>;
-  const user = mapApiUser(userSource, fallbackRole);
-
-  if (!user.id) {
-    throw new PartnerApiError(
-      'Invalid authentication response from server',
-      'INVALID_AUTH_RESPONSE'
-    );
-  }
-  if (!user.email) {
-    user.email = user.phone || `${user.id}@tokajo.local`;
-  }
-
-  return { token, user, message: payload.message as string | undefined };
-}
-
-function normalizeMessageResponse(data: unknown): MessageResponse {
-  const payload = data as { message?: string; data?: { message?: string } };
-  return {
-    message: payload.data?.message ?? payload.message ?? 'Success',
-  };
-}
-
-function pickCooldownSeconds(data: unknown, fallback = 30): number {
-  const payload =
-    data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
-  const nested =
-    payload.data && typeof payload.data === 'object'
-      ? (payload.data as Record<string, unknown>)
-      : {};
-  const raw = Number(nested.cooldownSeconds ?? payload.cooldownSeconds);
-  if (Number.isFinite(raw) && raw > 0) return Math.round(raw);
-  return fallback;
-}
-
-function pickExpiresInSeconds(data: unknown, fallback = 600): number {
-  const payload =
-    data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
-  const nested =
-    payload.data && typeof payload.data === 'object'
-      ? (payload.data as Record<string, unknown>)
-      : {};
-  const raw = Number(nested.expiresInSeconds ?? payload.expiresInSeconds);
-  if (Number.isFinite(raw) && raw > 0) return Math.round(raw);
-  return fallback;
-}
-
-function normalizeOtpSendResponse(data: unknown): OtpSendResult {
-  return {
-    message: normalizeMessageResponse(data).message || 'OTP sent',
-    cooldownSeconds: pickCooldownSeconds(data, 30),
-    expiresInSeconds: pickExpiresInSeconds(data, 600),
-  };
-}
-
-export const AUTH_ERROR_COPY: Record<string, string> = {
-  OTP_COOLDOWN: 'Wait a few seconds before requesting another code.',
-  OTP_RATE_LIMITED: 'Too many OTP requests. Try again in 15 minutes.',
-  OTP_EXPIRED: 'That code expired. Request a new one.',
-  SMS_UNAVAILABLE:
-    'SMS is temporarily unavailable. Use email OTP or password sign-in.',
-  EMAIL_NOT_VERIFIED: 'Verify your email OTP before creating an account.',
-  PHONE_NOT_VERIFIED: 'Verify your phone OTP before creating an account.',
-  OTP_CHANNEL_DISABLED:
-    'This signup OTP channel is disabled on the server right now.',
-  USE_FIREBASE_PHONE:
-    'Phone verification uses Firebase. Enter the SMS code from Firebase, then verify.',
-  EMAIL_UNAVAILABLE:
-    'Email OTP could not be sent. Ask ops to configure SENDER_EMAIL / SENDER_PASSWORD.',
-  FIREBASE_UNAVAILABLE:
-    'Phone verification is temporarily unavailable. Try again later.',
-  INVALID_FIREBASE_TOKEN: 'Firebase phone verification failed. Request a new SMS code.',
-  PHONE_NOT_IN_TOKEN:
-    'Firebase did not return a verified phone number. Try the SMS flow again.',
-  CONTACT_REQUIRED: 'Email and phone are required for partner signup.',
-  REGISTER_OTP_USE_CONFIRM:
-    'Confirm the signup OTP first, then create your account.',
-  SOCIAL_TOKEN_INVALID: 'Social sign-in failed. Try again.',
-  SOCIAL_ACCOUNT_CONFLICT:
-    'This Google/Apple account is already linked to another user.',
-  SOCIAL_AUTH_UNAVAILABLE: 'Social sign-in is temporarily unavailable.',
-  ACCOUNT_SUSPENDED: 'Your account is suspended. Contact support.',
-  ACCOUNT_BLOCKED: 'Your account is blocked. Contact support.',
-  INVALID_CREDENTIALS: 'Email or password is incorrect.',
-  INVALID_OTP: 'That code is wrong or expired. Request a new one.',
-  EMAIL_NOT_FOUND: 'No account found for that email.',
-  USER_NOT_FOUND: 'No account found. Create one first.',
-  ACCOUNT_NOT_FOUND:
-    'This account does not exist in our system. Check the email or phone and try again.',
-  EMAIL_ALREADY_EXISTS:
-    'An account already exists with this email. Please sign in.',
-  PHONE_ALREADY_EXISTS:
-    'This phone number is already registered to another account. Use a different phone number.',
-  ACCOUNT_EXISTS:
-    'This email already has a Tokajo account. Use that account’s password to add restaurant access, or sign in / reset password.',
-  RESET_OTP_REQUIRED:
-    'Verify the password-reset OTP before setting a new password.',
-  FORGOT_OTP_USE_CONFIRM:
-    'Confirm the reset OTP first, then set your new password.',
-  CONTACT_CONFLICT:
-    'This email and phone belong to two different accounts. Use one account’s email or phone.',
-  ROLE_NOT_ON_ACCOUNT:
-    'This login does not have restaurant/rider access yet. Complete signup for that role first.',
-  TOKEN_EXPIRED: 'This link expired. Request a new one.',
-  TOKEN_INVALID: 'This link is invalid. Request a new one.',
-  CURRENT_PASSWORD_INVALID: 'Current password is incorrect.',
-  EMAIL_ALREADY_VERIFIED: 'Your email is already verified.',
-};
-
-export function formatAuthError(error: unknown, fallback: string): string {
-  const code = getApiErrorCode(error);
-  if (code && AUTH_ERROR_COPY[code]) return AUTH_ERROR_COPY[code];
-  return getApiErrorMessage(error, fallback);
-}
-
-function extractErrorMessage(data: unknown, fallback: string): string {
-  const payload = data as {
-    message?: string;
-    error?: string;
-    code?: string;
-    errors?: Record<string, string[]> | string[];
-  } | null;
-
-  if (payload?.errors) {
-    const details = Array.isArray(payload.errors)
-      ? payload.errors.filter(Boolean)
-      : Object.values(payload.errors).flat().filter(Boolean);
-    if (details.length > 0) {
-      return details.join('\n');
-    }
-  }
-
-  const code =
-    typeof payload?.code === 'string' ? payload.code.trim().toUpperCase() : '';
-  if (code && AUTH_ERROR_COPY[code]) return AUTH_ERROR_COPY[code];
-
-  return payload?.message || payload?.error || fallback;
-}
-
-function extractErrorCode(data: unknown): string | undefined {
-  const payload = data as { code?: unknown } | null;
-  if (typeof payload?.code === 'string' && payload.code.trim()) {
-    return payload.code.trim().toUpperCase().replace(/[\s-]+/g, '_');
-  }
-  return undefined;
-}
-
-async function apiRequest<T>(
-  path: string,
-  options: {
-    method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-    body?: unknown;
-  } = {}
-): Promise<T> {
-  const { method = 'GET', body } = options;
-
-  assertApiBaseUrl();
-
-  try {
-    const response = await api.request<T>({
-      url: path,
-      method,
-      data: method === 'GET' || method === 'DELETE' ? undefined : body,
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (!error.response) {
-        throw new PartnerApiError(
-          `Network request failed. Cannot reach ${API_BASE_URL}. Same Wi‑Fi as PC, Expo Go only, then reload.`,
-          'NETWORK_ERROR'
-        );
-      }
-
-      const message = extractErrorMessage(
-        error.response.data,
-        `Request failed (${error.response.status})`
-      );
-      const code = extractErrorCode(error.response.data);
-
-      if (message.toLowerCase().includes('csrf')) {
-        throw new PartnerApiError(
-          'Security token expired. Close and reopen the app, then try again.',
-          'CSRF_FAILED'
-        );
-      }
-
-      if (message.includes('generatePasswordResetToken')) {
-        throw new PartnerApiError(
-          'Password reset is broken on the server. Backend must define User.generatePasswordResetToken (and not use .lean() when calling it).',
-          'SERVER_MISCONFIGURED'
-        );
-      }
-
-      if (
-        message.toLowerCase().includes('generateemailverificationtoken') ||
-        message.toLowerCase().includes('generate email verification token')
-      ) {
-        throw new PartnerApiError(
-          'Email verification is broken on the server. Backend must define User.generateEmailVerificationToken on the User model (and call it on a Mongoose document, not a .lean() plain object).',
-          'SERVER_MISCONFIGURED'
-        );
-      }
-
-      throw new PartnerApiError(message, code);
-    }
-
-    throw error;
-  }
-}
+export { AUTH_ERROR_COPY, formatAuthError } from '@/lib/auth/auth-error-copy';
+export { SESSION_AUTH_TOKEN } from '@/lib/auth/auth-normalize';
+export { AuthApiError, isAuthApiError } from '@/lib/auth/http';
+export { phoneAuthApi } from '@/lib/auth/phone-auth-api';
 
 export const authApi = {
   register: async (payload: RegisterPayload) => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/register`, {
+    const data = await authRequest<unknown>(`${AUTH_BASE}/register`, {
       method: 'POST',
       body: {
         firstName: payload.firstName,
@@ -308,7 +47,7 @@ export const authApi = {
   },
 
   login: async (payload: LoginPayload) => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/login`, {
+    const data = await authRequest<unknown>(`${AUTH_BASE}/login`, {
       method: 'POST',
       body: {
         email: payload.email,
@@ -322,7 +61,7 @@ export const authApi = {
   },
 
   sendOtp: async (payload: OtpSendPayload) => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/otp/send`, {
+    const data = await authRequest<unknown>(`${AUTH_BASE}/otp/send`, {
       method: 'POST',
       body: {
         identifier: payload.emailOrPhone,
@@ -334,7 +73,7 @@ export const authApi = {
   },
 
   resendOtp: async (payload: OtpSendPayload) => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/otp/resend`, {
+    const data = await authRequest<unknown>(`${AUTH_BASE}/otp/resend`, {
       method: 'POST',
       body: {
         identifier: payload.emailOrPhone,
@@ -346,7 +85,7 @@ export const authApi = {
   },
 
   verifyOtp: async (payload: OtpVerifyPayload) => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/otp/verify`, {
+    const data = await authRequest<unknown>(`${AUTH_BASE}/otp/verify`, {
       method: 'POST',
       body: {
         identifier: payload.emailOrPhone,
@@ -359,80 +98,8 @@ export const authApi = {
     return normalizeAuthResponse(data, payload.role);
   },
 
-  /** Public: which partner-signup OTPs are required (env-driven). */
-  getRegisterPolicy: async (): Promise<RegisterOtpPolicy> => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/register-policy`);
-    const payload =
-      data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
-    const nested =
-      payload.data && typeof payload.data === 'object'
-        ? (payload.data as Record<string, unknown>)
-        : payload;
-    return {
-      requireEmailOtp: Boolean(nested.requireEmailOtp),
-      requirePhoneOtp: Boolean(nested.requirePhoneOtp),
-      phoneProvider: nested.phoneProvider === 'sms' ? 'sms' : 'firebase',
-      resendCooldownSeconds: Number(nested.resendCooldownSeconds) || 30,
-      resendMax: Number(nested.resendMax) || 5,
-    };
-  },
-
-  /** Confirm signup OTP without creating a session (email or SMS channel). */
-  confirmRegisterOtp: async (
-    payload: ConfirmRegisterOtpPayload
-  ): Promise<ConfirmRegisterOtpResult> => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/otp/confirm-register`, {
-      method: 'POST',
-      body: {
-        identifier: payload.emailOrPhone,
-        otp: payload.otp,
-      },
-    });
-    const payloadObj =
-      data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
-    const nested =
-      payloadObj.data && typeof payloadObj.data === 'object'
-        ? (payloadObj.data as Record<string, unknown>)
-        : payloadObj;
-    const channel = nested.channel === 'phone' ? 'phone' : 'email';
-    return {
-      channel,
-      identifier: String(nested.identifier ?? payload.emailOrPhone),
-      verified: true,
-      message: normalizeMessageResponse(data).message,
-    };
-  },
-
-  /** Confirm Firebase Phone Auth ID token for partner signup. */
-  confirmFirebasePhone: async (
-    payload: ConfirmFirebasePhonePayload
-  ): Promise<ConfirmRegisterOtpResult> => {
-    const data = await apiRequest<unknown>(
-      `${AUTH_BASE}/otp/confirm-firebase-phone`,
-      {
-        method: 'POST',
-        body: {
-          idToken: payload.idToken,
-          role: toApiRole(payload.role),
-        },
-      }
-    );
-    const payloadObj =
-      data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
-    const nested =
-      payloadObj.data && typeof payloadObj.data === 'object'
-        ? (payloadObj.data as Record<string, unknown>)
-        : payloadObj;
-    return {
-      channel: 'phone',
-      identifier: String(nested.identifier ?? ''),
-      verified: true,
-      message: normalizeMessageResponse(data).message,
-    };
-  },
-
   loginGoogle: async (payload: GoogleLoginPayload) => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/social/google`, {
+    const data = await authRequest<unknown>(`${AUTH_BASE}/social/google`, {
       method: 'POST',
       body: {
         idToken: payload.idToken,
@@ -445,7 +112,7 @@ export const authApi = {
   },
 
   loginApple: async (payload: AppleLoginPayload) => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/social/apple`, {
+    const data = await authRequest<unknown>(`${AUTH_BASE}/social/apple`, {
       method: 'POST',
       body: {
         identityToken: payload.identityToken,
@@ -462,35 +129,27 @@ export const authApi = {
   },
 
   forgotPassword: async (payload: ForgotPasswordPayload) => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/forgot-password`, {
+    const data = await authRequest<unknown>(`${AUTH_BASE}/forgot-password`, {
       method: 'POST',
       body: payload,
     });
     return normalizeMessageResponse(data);
   },
 
+  /** Email-OTP password reset fallback (phone uses `phoneAuthApi`). */
   confirmForgotPasswordOtp: async (
     payload: ConfirmForgotPasswordOtpPayload
   ): Promise<ConfirmRegisterOtpResult> => {
-    const data = await apiRequest<unknown>(
+    const data = await authRequest<unknown>(
       `${AUTH_BASE}/otp/confirm-forgot-password`,
       {
         method: 'POST',
-        body: {
-          identifier: payload.emailOrPhone,
-          otp: payload.otp,
-        },
+        body: { identifier: payload.emailOrPhone, otp: payload.otp },
       }
     );
-    const payloadObj =
-      data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
-    const nested =
-      payloadObj.data && typeof payloadObj.data === 'object'
-        ? (payloadObj.data as Record<string, unknown>)
-        : payloadObj;
-    const channel = nested.channel === 'phone' ? 'phone' : 'email';
+    const nested = unwrapData(data);
     return {
-      channel,
+      channel: nested.channel === 'phone' ? 'phone' : 'email',
       identifier: String(nested.identifier ?? payload.emailOrPhone),
       verified: true,
       message: normalizeMessageResponse(data).message,
@@ -498,46 +157,38 @@ export const authApi = {
   },
 
   resetPassword: async (payload: ResetPasswordPayload) => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/reset-password`, {
+    const data = await authRequest<unknown>(`${AUTH_BASE}/reset-password`, {
       method: 'POST',
-      body: {
-        token: payload.token,
-        newPassword: payload.password,
-      },
+      body: { token: payload.token, newPassword: payload.password },
     });
     return normalizeMessageResponse(data);
   },
 
   resetPasswordWithOtp: async (payload: ResetPasswordWithOtpPayload) => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/reset-password`, {
+    const data = await authRequest<unknown>(`${AUTH_BASE}/reset-password`, {
       method: 'POST',
-      body: {
-        identifier: payload.identifier,
-        newPassword: payload.password,
-      },
+      body: { identifier: payload.identifier, newPassword: payload.password },
     });
     return normalizeMessageResponse(data);
   },
 
   verifyEmail: async (token: string) => {
-    const data = await apiRequest<unknown>(
-      `${AUTH_BASE}/email/verify/${token}`
-    );
+    const data = await authRequest<unknown>(`${AUTH_BASE}/email/verify/${token}`);
     return normalizeMessageResponse(data);
   },
 
   logout: async () => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/logout`, {
+    // Empty JSON body so Content-Type: application/json is sent
+    // (gateway rejects POSTs without JSON media type).
+    const data = await authRequest<unknown>(`${AUTH_BASE}/logout`, {
       method: 'POST',
-      // Empty JSON body so Content-Type: application/json is sent
-      // (gateway rejects POSTs without JSON media type).
       body: {},
     });
     return normalizeMessageResponse(data);
   },
 
   logoutAll: async () => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/logout-all`, {
+    const data = await authRequest<unknown>(`${AUTH_BASE}/logout-all`, {
       method: 'POST',
       body: {},
     });
@@ -545,7 +196,7 @@ export const authApi = {
   },
 
   changePassword: async (payload: ChangePasswordPayload) => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/change-password`, {
+    const data = await authRequest<unknown>(`${AUTH_BASE}/change-password`, {
       method: 'POST',
       body: {
         currentPassword: payload.oldPassword,
@@ -557,7 +208,7 @@ export const authApi = {
   },
 
   resendEmailVerification: async () => {
-    const data = await apiRequest<unknown>(`${AUTH_BASE}/email/send-verify`, {
+    const data = await authRequest<unknown>(`${AUTH_BASE}/email/send-verify`, {
       method: 'POST',
       body: {},
     });
@@ -566,7 +217,7 @@ export const authApi = {
 
   /** GET /api/v1/user-service/health — user-service liveness. */
   health: async () => {
-    const data = await apiRequest<unknown>('/api/v1/user-service/health');
+    const data = await authRequest<unknown>('/api/v1/user-service/health');
     const payload =
       data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
     const status = String(payload.status ?? payload.state ?? 'ok');

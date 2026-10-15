@@ -4,8 +4,11 @@ import {
   getAuth,
   PhoneAuthProvider,
   signInWithCredential,
+  signOut,
   type Auth,
 } from 'firebase/auth';
+
+import { PartnerApiError } from '@/lib/errors';
 
 type Extra = {
   firebaseApiKey?: string;
@@ -51,8 +54,9 @@ let auth: Auth | null = null;
 
 export function getFirebaseAuth(): Auth {
   if (!isFirebasePhoneConfigured()) {
-    throw new Error(
-      'Firebase Phone Auth is not configured. Add EXPO_PUBLIC_FIREBASE_API_KEY, AUTH_DOMAIN, PROJECT_ID, and APP_ID (Firebase Console → Project settings → Your apps → Web).'
+    throw new PartnerApiError(
+      'Phone OTP is not configured in this build.',
+      'PHONE_OTP_CLIENT_NOT_CONFIGURED'
     );
   }
   if (!app) {
@@ -75,7 +79,7 @@ export async function startFirebasePhoneOtp(
   return provider.verifyPhoneNumber(phoneE164, applicationVerifier as never);
 }
 
-/** Confirm SMS code → Firebase ID token for POST /auth/otp/confirm-firebase-phone. */
+/** Confirm SMS code → fresh Firebase ID token for `/auth/phone/*`. */
 export async function confirmFirebasePhoneOtp(
   verificationId: string,
   code: string
@@ -84,4 +88,28 @@ export async function confirmFirebasePhoneOtp(
   const credential = PhoneAuthProvider.credential(verificationId, code);
   const result = await signInWithCredential(authInstance, credential);
   return result.user.getIdToken(true);
+}
+
+/** E.164 number of the phone verified in this app session, if any. */
+export function getFirebaseVerifiedPhone(): string | null {
+  if (!isFirebasePhoneConfigured()) return null;
+  return getFirebaseAuth().currentUser?.phoneNumber ?? null;
+}
+
+/** Force-refreshed ID token for retries; null when the Firebase session ended. */
+export async function getFreshIdToken(): Promise<string | null> {
+  if (!isFirebasePhoneConfigured()) return null;
+  const user = getFirebaseAuth().currentUser;
+  if (!user) return null;
+  return user.getIdToken(true);
+}
+
+/** Drop the Firebase session once the backend issued its own `_sid`. */
+export async function signOutFirebase(): Promise<void> {
+  if (!isFirebasePhoneConfigured() || !app) return;
+  try {
+    await signOut(getFirebaseAuth());
+  } catch {
+    // Local Firebase state only; backend session is authoritative.
+  }
 }

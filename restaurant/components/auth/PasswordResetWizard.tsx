@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Lock, ShieldCheck } from 'lucide-react-native';
+import { ArrowLeft, ShieldCheck } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -7,6 +7,8 @@ import { AuthBanner } from '@/components/auth/AuthBanner';
 import { AuthField } from '@/components/auth/AuthField';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { PasswordResetContactStep } from '@/components/auth/PasswordResetContactStep';
+import { PhonePasswordResetFlow } from '@/components/auth/PhonePasswordResetFlow';
+import { PasswordResetPasswordFields } from '@/components/auth/PasswordResetPasswordFields';
 import { PasswordResetOtpSentModal } from '@/components/auth/PasswordResetOtpSentModal';
 import { PasswordResetSuccessModal } from '@/components/auth/PasswordResetSuccessModal';
 import { PasswordResetStepHeader } from '@/components/auth/PasswordResetStepHeader';
@@ -59,6 +61,7 @@ export function PasswordResetWizard() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [showOtpSent, setShowOtpSent] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [phoneFlow, setPhoneFlow] = useState(false);
 
   const identifier = useMemo(() => {
     return channel === 'email' ? email.trim().toLowerCase() : phone.trim();
@@ -93,9 +96,6 @@ export function PasswordResetWizard() {
     const nextErrors: Record<string, string> = {};
     if (channel === 'email' && !isValidSignupEmail(email)) {
       nextErrors.email = 'Enter a valid email address';
-    }
-    if (channel === 'phone' && !isValidSignupPhone(phone)) {
-      nextErrors.phone = 'Use E.164 format, e.g. +919876543210';
     }
     setFieldErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
@@ -167,6 +167,10 @@ export function PasswordResetWizard() {
     }
   };
 
+  if (phoneFlow) {
+    return <PhonePasswordResetFlow initialPhone={phone} onBack={() => setPhoneFlow(false)} />;
+  }
+
   return (
     <>
       <AuthShell
@@ -209,7 +213,19 @@ export function PasswordResetWizard() {
             }}
             onEmailChange={setEmail}
             onPhoneChange={setPhone}
-            onSend={() => void sendOtp()}
+            onSend={() => {
+              if (channel !== 'phone') {
+                void sendOtp();
+                return;
+              }
+              if (!isValidSignupPhone(phone)) {
+                setFieldErrors({ phone: 'Use E.164 format, e.g. +919876543210' });
+                return;
+              }
+              setFieldErrors({});
+              setError(null);
+              setPhoneFlow(true);
+            }}
           />
         ) : null}
 
@@ -247,35 +263,16 @@ export function PasswordResetWizard() {
         ) : null}
 
         {step === 'password' ? (
-          <View className="gap-3">
-            <AuthField
-              label="New password"
-              icon={Lock}
-              placeholder="8+ chars, mixed case, digit, symbol"
-              secure
-              autofill="newPassword"
-              value={password}
-              onChangeText={setPassword}
-              errorText={fieldErrors.password}
-            />
-            <AuthField
-              label="Confirm new password"
-              icon={Lock}
-              placeholder="Re-enter password"
-              secure
-              autofill="newPassword"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              errorText={fieldErrors.confirmPassword}
-            />
-            <PrimaryButton
-              label="Save new password"
-              icon={ShieldCheck}
-              onPress={() => void savePassword()}
-              loading={busy}
-              disabled={busy}
-            />
-          </View>
+          <PasswordResetPasswordFields
+            password={password}
+            confirmPassword={confirmPassword}
+            passwordError={fieldErrors.password}
+            confirmError={fieldErrors.confirmPassword}
+            busy={busy}
+            onPasswordChange={setPassword}
+            onConfirmChange={setConfirmPassword}
+            onSave={() => void savePassword()}
+          />
         ) : null}
       </AuthShell>
 

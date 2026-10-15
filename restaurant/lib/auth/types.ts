@@ -109,11 +109,6 @@ export type OtpVerifyPayload = {
   purpose?: OtpPurpose;
 };
 
-export type ConfirmRegisterOtpPayload = {
-  emailOrPhone: string;
-  otp: string;
-};
-
 export type ConfirmRegisterOtpResult = {
   channel: 'email' | 'phone';
   identifier: string;
@@ -121,18 +116,41 @@ export type ConfirmRegisterOtpResult = {
   message?: string;
 };
 
-export type ConfirmFirebasePhonePayload = {
-  idToken: string;
-  role: PartnerRole;
+/** GET /auth/phone/status */
+export type PhoneAuthStatus = {
+  firebaseConfigured: boolean;
+  provider: 'firebase';
+  otpLength: number;
+  resendCooldownSeconds: number;
+  tokenMaxAgeSeconds: number;
 };
 
-/** From GET /auth/register-policy — which signup OTPs the backend requires. */
-export type RegisterOtpPolicy = {
-  requireEmailOtp: boolean;
-  requirePhoneOtp: boolean;
-  phoneProvider: 'firebase' | 'sms';
-  resendCooldownSeconds: number;
-  resendMax: number;
+export type PhoneRegisterPayload = {
+  idToken: string;
+  role: PartnerRole;
+  firstName: string;
+  lastName?: string;
+  email?: string;
+  password?: string;
+  phone?: string;
+};
+
+export type PhoneLoginPayload = {
+  idToken: string;
+  role: PartnerRole;
+  phone?: string;
+};
+
+/** POST /auth/phone/register|login — session user plus account-link flags. */
+export type PhoneAuthResult = AuthResponse & {
+  linkedExistingAccount: boolean;
+  passwordSet: boolean;
+};
+
+export type PhoneForgotPasswordResult = {
+  resetToken: string;
+  expiresInSeconds: number;
+  maskedPhone: string;
 };
 
 export type GoogleLoginPayload = {

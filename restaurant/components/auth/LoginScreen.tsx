@@ -1,11 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronsRight, Lock, Mail } from 'lucide-react-native';
-import { useEffect, useRef, useState } from 'react';
+import { Lock, Mail, MessageSquareCode } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Animated,
   KeyboardAvoidingView,
-  PanResponder,
   Platform,
   Pressable,
   ScrollView,
@@ -19,6 +16,7 @@ import { AuthBanner } from '@/components/auth/AuthBanner';
 import { AuthLoadingScreen } from '@/components/auth/AuthLoadingScreen';
 import { CheckboxRow, LegalFooter } from '@/components/auth/AuthExtras';
 import { AuthField } from '@/components/auth/AuthField';
+import { SwipeToLogin } from '@/components/auth/SwipeToLogin';
 import { fonts } from '@/constants/typography';
 import { lockedPartnerRole } from '@/lib/app-variant';
 import { resolvePostAuthRoute } from '@/lib/navigation/post-auth';
@@ -63,55 +61,6 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
   }>({});
 
   const busy = isLoading || isRedirecting;
-  const busyRef = useRef(busy);
-  busyRef.current = busy;
-  const sliderWidthRef = useRef(0);
-  const pan = useRef(new Animated.ValueXY()).current;
-
-  // We need to store the latest handleLogin in a ref so the PanResponder
-  // doesn't close over the initial empty email and password strings.
-  const handleLoginRef = useRef<() => void>(() => { });
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => !busyRef.current,
-      onMoveShouldSetPanResponder: () => !busyRef.current,
-      onPanResponderMove: (e, gesture) => {
-        if (busyRef.current) return;
-        let newX = gesture.dx;
-        const maxScroll = Math.max(0, sliderWidthRef.current - 56);
-        if (newX < 0) newX = 0;
-        if (newX > maxScroll) newX = maxScroll;
-        pan.setValue({ x: newX, y: 0 });
-      },
-      onPanResponderRelease: (e, gesture) => {
-        if (busyRef.current) return;
-        const threshold = sliderWidthRef.current * 0.65;
-        if (gesture.dx > threshold) {
-          const maxScroll = Math.max(0, sliderWidthRef.current - 56);
-          Animated.timing(pan, {
-            toValue: { x: maxScroll, y: 0 },
-            duration: 150,
-            useNativeDriver: true,
-          }).start(() => {
-            handleLoginRef.current();
-            setTimeout(() => {
-              Animated.timing(pan, {
-                toValue: { x: 0, y: 0 },
-                duration: 300,
-                useNativeDriver: true,
-              }).start();
-            }, 1000);
-          });
-        } else {
-          Animated.spring(pan, {
-            toValue: { x: 0, y: 0 },
-            useNativeDriver: true,
-          }).start();
-        }
-      },
-    })
-  ).current;
 
   useEffect(() => {
     if (registered === '1') {
@@ -153,11 +102,6 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
       setError(err instanceof Error ? err.message : 'Login failed');
     }
   };
-
-  handleLoginRef.current = handleLogin;
-
-  const formBusy = busy;
-  busyRef.current = formBusy;
 
   if (isRedirecting) {
     return <AuthLoadingScreen message="Signing you in…" />;
@@ -256,43 +200,21 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
               </View>
 
               <View className="mt-2 gap-5">
-                <View
-                  onLayout={(e) => {
-                    sliderWidthRef.current = e.nativeEvent.layout.width;
-                  }}
-                  className="bg-[#EA4B14] h-[56px] rounded-full justify-center px-[6px] overflow-hidden relative"
-                >
-                  <View
-                    className="absolute inset-0 items-center justify-center"
-                    pointerEvents="none"
-                  >
-                    <Text className="text-white text-[16px] font-bold text-center tracking-wide">
-                      {formBusy ? 'Signing in…' : 'Swipe to Login'}
-                    </Text>
-                  </View>
+                <SwipeToLogin busy={busy} onConfirm={() => void handleLogin()} />
 
-                  <Animated.View
-                    {...panResponder.panHandlers}
-                    style={[
-                      { transform: [{ translateX: pan.x }] },
-                      {
-                        width: 44,
-                        height: 44,
-                        backgroundColor: 'white',
-                        borderRadius: 22,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 10,
-                      },
-                    ]}
-                  >
-                    {formBusy ? (
-                      <ActivityIndicator color="#EA4B14" />
-                    ) : (
-                      <ChevronsRight color="#EA4B14" size={24} />
-                    )}
-                  </Animated.View>
-                </View>
+                <Pressable
+                  onPress={() =>
+                    router.push({ pathname: '/verify-otp', params: { role } })
+                  }
+                  disabled={busy}
+                  hitSlop={8}
+                  className="h-12 flex-row items-center justify-center gap-2 rounded-full border border-[#FDBA74] bg-[#FFF7ED]"
+                >
+                  <MessageSquareCode color="#EA4B14" size={18} />
+                  <Text className="text-center text-[15px] font-semibold text-[#EA4B14]">
+                    Login with OTP
+                  </Text>
+                </Pressable>
 
                 <View className="flex-row items-center justify-center py-1">
                   <Text className="text-[15px] text-secondary">
@@ -307,18 +229,6 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
                     </Text>
                   </Pressable>
                 </View>
-
-                <Pressable
-                  onPress={() => router.push('/verify-otp')}
-                  hitSlop={8}
-                  className="h-12 items-center justify-center rounded-full border border-[#FDBA74] bg-[#FFF7ED]"
-                >
-                  <Text className="text-center text-[15px] font-semibold text-[#EA4B14]">
-                    {role === 'delivery'
-                      ? 'Continue with phone OTP'
-                      : 'Sign in with OTP instead'}
-                  </Text>
-                </Pressable>
               </View>
 
               <LegalFooter />
