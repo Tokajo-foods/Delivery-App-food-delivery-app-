@@ -5,6 +5,7 @@ import { Alert, AppState } from 'react-native';
 import { useDeliveryOrderMutations } from '@/lib/delivery-partner/hooks';
 import {
   labelForCoords,
+  metersBetween,
   readAccurateGps,
 } from '@/lib/delivery-partner/live-place';
 import {
@@ -19,7 +20,8 @@ import {
 import { pushLiveToast } from '@/lib/delivery-partner/live-toast-store';
 import { getApiErrorCode } from '@/lib/errors';
 
-const SERVICE_WATCH_MS = 4000;
+const LIVE_TICK_MS = 3_000;
+const RELABEL_METERS = 20;
 
 function confirmGoOffline(): Promise<boolean> {
   return new Promise((resolve) => {
@@ -59,17 +61,58 @@ export function useAutoLivePlace(enabled: boolean, isOnline: boolean, onTrip: bo
     let applying = false;
     let refreshing = false;
 
-    const applyCoords = async (latitude: number, longitude: number) => {
+    const applyCoords = async (
+      latitude: number,
+      longitude: number,
+      forceLabel = false
+    ) => {
       if (applying) return;
       applying = true;
       try {
+        const prev = getLivePlaceSnapshot();
+        const moved = metersBetween(
+          prev.latitude,
+          prev.longitude,
+          latitude,
+          longitude
+        );
+        const needLabel =
+          forceLabel || !prev.label || moved >= RELABEL_METERS;
+        if (!needLabel) {
+          if (!alive) return;
+          patchLivePlace({
+            latitude,
+            longitude,
+            locating: false,
+            servicesOn: true,
+          });
+          return;
+        }
         const label = await labelForCoords(latitude, longitude);
         if (!alive) return;
-        patchLivePlace({ label, latitude, longitude, locating: false, servicesOn: true });
-        // Server GPS is owned by partnerLocationTracker. This hook only labels the header.
+        patchLivePlace({
+          label,
+          latitude,
+          longitude,
+          locating: false,
+          servicesOn: true,
+        });
       } finally {
         applying = false;
       }
+    };
+
+    const tickGps = async (forceLabel = false) => {
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+        mayShowUserSettingsDialog: false,
+      }).catch(() => null);
+      if (!alive || !pos) return;
+      await applyCoords(
+        pos.coords.latitude,
+        pos.coords.longitude,
+        forceLabel
+      );
     };
 
     const refreshPlace = async () => {
@@ -82,17 +125,20 @@ export function useAutoLivePlace(enabled: boolean, isOnline: boolean, onTrip: bo
         if (!read.ok) {
           patchLivePlace({
             locating: false,
-            servicesOn: read.reason !== 'fix' ? false : getLivePlaceSnapshot().servicesOn,
+            servicesOn:
+              read.reason !== 'fix'
+                ? false
+                : getLivePlaceSnapshot().servicesOn,
           });
           return;
         }
-        await applyCoords(read.latitude, read.longitude);
+        await applyCoords(read.latitude, read.longitude, true);
         if (!alive || watch) return;
         watch = await Location.watchPositionAsync(
           {
-            accuracy: Location.Accuracy.Balanced,
-            distanceInterval: 40,
-            timeInterval: 15000,
+            accuracy: Location.Accuracy.High,
+            distanceInterval: 8,
+            timeInterval: LIVE_TICK_MS,
             mayShowUserSettingsDialog: false,
           },
           (pos) => {
@@ -198,7 +244,12 @@ export function useAutoLivePlace(enabled: boolean, isOnline: boolean, onTrip: bo
     void checkServices(true);
     const timer = setInterval(() => {
       void checkServices(false);
-    }, SERVICE_WATCH_MS);
+    }, LIVE_TICK_MS);
+    const liveTimer = setInterval(() => {
+      if (!alive) return;
+      if (getLivePlaceSnapshot().servicesOn === false) return;
+      void tickGps(false);
+    }, LIVE_TICK_MS);
     const appSub = AppState.addEventListener('change', (state) => {
       if (state === 'active') void checkServices(true);
     });
@@ -206,6 +257,7 @@ export function useAutoLivePlace(enabled: boolean, isOnline: boolean, onTrip: bo
     return () => {
       alive = false;
       clearInterval(timer);
+      clearInterval(liveTimer);
       appSub.remove();
       watch?.remove();
     };

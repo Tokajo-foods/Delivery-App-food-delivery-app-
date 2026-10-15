@@ -1,13 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
   BadgeCheck,
-  Bell,
   ChevronRight,
   CircleCheck,
   Flame,
-  MapPin,
   Star,
   Timer,
 } from 'lucide-react-native';
@@ -29,6 +26,10 @@ import { HomeDeliveryHistory } from '@/components/delivery/home/HomeDeliveryHist
 import { TripDetailSheet } from '@/components/delivery/orders/TripDetailSheet';
 import { DutyControlCard } from '@/components/delivery/home/DutyControlCard';
 import { MORE_FEATURES } from '@/components/delivery/home/home-features';
+import {
+  HomeHeader,
+  type SavedLiveLocation,
+} from '@/components/delivery/home/HomeHeader';
 import { styles } from '@/components/delivery/home/home-screen-styles';
 import {
   LocationMapPicker,
@@ -82,17 +83,9 @@ import {
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
 import type { PartnerDelivery } from '@/lib/delivery-partner/types';
 import { askToEnableLocation } from '@/lib/delivery-partner/live-place';
-import { useLivePlaceSnapshot } from '@/lib/delivery-partner/live-place-store';
 import { getApiErrorCode, getApiErrorMessage } from '@/lib/errors';
 
 const LIVE_LOCATION_STORAGE_KEY = '@tokajo/partner-live-location';
-const LIVE_LOCATION_FALLBACK = 'Tap to set your live location';
-
-type SavedLiveLocation = {
-  label: string;
-  lat: number;
-  lng: number;
-};
 
 /** Delivery Home â€” clean API-fed dashboard. */
 export function DeliveryHomeScreen() {
@@ -112,7 +105,6 @@ export function DeliveryHomeScreen() {
   const { startBreak, endBreak, extendBreak, setDutyStatus, checkOutHub } =
     usePartnerDutyMutations();
   const gpsSnap = useLocationSyncSnapshot();
-  const livePlace = useLivePlaceSnapshot();
   const saveHome = useSaveHomeLocation();
   const lastLocation = useLastLocation(true);
   const authUser = useAuthStore((s) => s.user);
@@ -419,13 +411,22 @@ export function DeliveryHomeScreen() {
     }
   };
 
-  const locationChip =
-    livePlace.label ??
-    (livePlace.servicesOn === false
-      ? 'Turn on location'
-      : livePlace.locating
-        ? 'Finding your location…'
-        : LIVE_LOCATION_FALLBACK);
+  const persistLiveLocation = async (saved: SavedLiveLocation) => {
+    setLiveLocation(saved);
+    await AsyncStorage.setItem(
+      LIVE_LOCATION_STORAGE_KEY,
+      JSON.stringify(saved)
+    );
+    try {
+      await deliveryPartnerApi.pushLocation({
+        latitude: saved.lat,
+        longitude: saved.lng,
+        timestamp: Date.now(),
+      });
+    } catch {
+      // ping may require being online
+    }
+  };
 
   const gpsBanner = (() => {
     if (!isOnline || !gpsSnap) return null;
@@ -567,51 +568,14 @@ export function DeliveryHomeScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <LinearGradient
-          colors={['#FFE9D6', '#FFF4EB', '#F6F3F0']}
-          locations={[0, 0.62, 1]}
-          style={[styles.header, { paddingTop: insets.top + 8 }]}
-        >
-          <View style={styles.logoRow}>
-            <Image
-              source={require('../../../assets/tokajo-wordmark.webp')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-          </View>
-          <View style={styles.headerRow}>
-            <Pressable
-              onPress={() => {
-                if (livePlace.servicesOn === false) {
-                  void askToEnableLocation();
-                  return;
-                }
-                setMapOpen(true);
-              }}
-              style={styles.locationBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Set live location"
-            >
-              <Text style={styles.greeting} numberOfLines={1}>
-                Hi, {displayName.split(' ')[0] || 'Partner'}
-              </Text>
-              <View style={styles.dhLocInline}>
-                <MapPin color="#EA4B14" size={14} strokeWidth={2.4} />
-                <Text style={styles.locTitle}>
-                  {locationChip}
-                </Text>
-              </View>
-            </Pressable>
-            <Pressable
-              style={[styles.iconBtn, styles.bellBtn]}
-              onPress={() => router.push(DELIVERY_ROUTES.notifications)}
-              accessibilityLabel="Notifications"
-            >
-              <Bell color="#EA4B14" size={20} strokeWidth={2.2} />
-              {(unread.data ?? 0) > 0 ? <View style={styles.dhBellDot} /> : null}
-            </Pressable>
-          </View>
-        </LinearGradient>
+        <HomeHeader
+          displayName={displayName}
+          unreadCount={unread.data ?? 0}
+          onOpenMap={() => setMapOpen(true)}
+          onLiveLocation={(saved) => {
+            void persistLiveLocation(saved);
+          }}
+        />
 
         {goOnlineBlocker?.title === 'Account suspended' ? (
           <View style={styles.section}>

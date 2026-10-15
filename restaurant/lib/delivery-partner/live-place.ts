@@ -2,6 +2,10 @@ import * as Location from 'expo-location';
 import { Alert, Linking, Platform } from 'react-native';
 
 import { reverseGeocodeAddress } from '@/lib/address/search';
+import {
+  getLivePlaceSnapshot,
+  patchLivePlace,
+} from '@/lib/delivery-partner/live-place-store';
 import { stripPlusCodes } from '@/lib/location/parse-address';
 
 export type GpsRead =
@@ -43,6 +47,64 @@ export async function labelForCoords(latitude: number, longitude: number) {
   const formatted = stripPlusCodes(geo?.formattedAddress?.trim() ?? '');
   if (!formatted) return 'Current location';
   return formatted;
+}
+
+export function metersBetween(
+  lat1?: number | null,
+  lng1?: number | null,
+  lat2?: number | null,
+  lng2?: number | null
+) {
+  if (
+    lat1 == null ||
+    lng1 == null ||
+    lat2 == null ||
+    lng2 == null ||
+    !Number.isFinite(lat1) ||
+    !Number.isFinite(lng1) ||
+    !Number.isFinite(lat2) ||
+    !Number.isFinite(lng2)
+  ) {
+    return Number.POSITIVE_INFINITY;
+  }
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 6_371_000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/** One-shot GPS + address for the header Update button. */
+export async function refreshLivePlaceNow(): Promise<
+  | { ok: true; latitude: number; longitude: number; label: string }
+  | { ok: false; reason: 'permission' | 'services' | 'fix' }
+> {
+  patchLivePlace({ locating: true });
+  const read = await readAccurateGps();
+  if (!read.ok) {
+    patchLivePlace({
+      locating: false,
+      servicesOn: read.reason !== 'fix',
+    });
+    return read;
+  }
+  const prev = getLivePlaceSnapshot();
+  const label = await labelForCoords(read.latitude, read.longitude);
+  patchLivePlace({
+    label: label || prev.label,
+    latitude: read.latitude,
+    longitude: read.longitude,
+    locating: false,
+    servicesOn: true,
+  });
+  return {
+    ok: true,
+    latitude: read.latitude,
+    longitude: read.longitude,
+    label: label || prev.label || 'Current location',
+  };
 }
 
 /** System location dialog on Android, settings alert on iOS. */

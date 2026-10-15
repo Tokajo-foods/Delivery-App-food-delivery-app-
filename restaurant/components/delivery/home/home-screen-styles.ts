@@ -75,6 +75,17 @@ export const styles = StyleSheet.create({
     lineHeight: 18,
     color: '#4B5563',
   },
+  locUpdateHit: {
+    alignSelf: 'flex-start',
+    marginTop: 2,
+    paddingVertical: 2,
+    paddingHorizontal: 2,
+  },
+  locUpdate: {
+    fontFamily: fonts.bold,
+    fontSize: 13,
+    color: '#EA4B14',
+  },
   greeting: {
     fontFamily: fonts.extraBold,
     fontSize: 18,
