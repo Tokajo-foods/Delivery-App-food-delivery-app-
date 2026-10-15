@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native';
 
+import { RiderPayoutLines } from '@/components/delivery/orders/RiderPayoutLines';
 import { incomingOfferStyles as styles } from '@/components/delivery/orders/incoming-offer-styles';
 import {
   formatInr,
@@ -41,9 +42,19 @@ export function OfferPayoutHeader({
       <Text style={styles.payout}>
         {earnings ? formatInr(earnings.netTotal) : 'Earnings on accept'}
       </Text>
-      <Text style={styles.payoutSub}>
-        {parts.length ? parts.join(' · ') : 'You earn this trip'}
-      </Text>
+      {offer.payout ? (
+        <RiderPayoutLines
+          payout={offer.payout}
+          rowStyle={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}
+          labelStyle={styles.payoutSub}
+          valueStyle={styles.payoutSub}
+          strongStyle={{ color: '#111827', fontWeight: '700' }}
+        />
+      ) : (
+        <Text style={styles.payoutSub}>
+          {parts.length ? parts.join(' · ') : 'You earn this trip'}
+        </Text>
+      )}
     </View>
   );
 }

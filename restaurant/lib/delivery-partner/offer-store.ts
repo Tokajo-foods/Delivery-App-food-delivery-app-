@@ -26,6 +26,7 @@ export type IncomingOffer = {
   tipAmount?: number;
   /** Rounded rider pay after commission, plus tip. */
   netEarnings?: number;
+  payout?: import('@/lib/delivery-partner/types').RiderPayout;
   estimatedKm?: number;
   /** Rider GPS → restaurant (km). */
   pickupDistanceKm?: number;
@@ -71,6 +72,28 @@ function pickString(record: Record<string, unknown>, keys: string[]) {
     if (typeof value === 'string' && value.trim()) return value.trim();
   }
   return undefined;
+}
+
+function mapOfferPayout(value: unknown) {
+  const row = asRecord(value);
+  const finalAmount = pickNumber(row, ['finalAmount']);
+  const basePay = pickNumber(row, ['basePay']);
+  if (finalAmount == null || basePay == null) return undefined;
+  return {
+    basePay,
+    perKmRate: pickNumber(row, ['perKmRate']) ?? 0,
+    distanceKm: pickNumber(row, ['distanceKm']) ?? 0,
+    distanceCharge: pickNumber(row, ['distanceCharge']) ?? 0,
+    incentiveKm: pickNumber(row, ['incentiveKm']) ?? 0,
+    incentivePerKm: pickNumber(row, ['incentivePerKm']) ?? 0,
+    incentive: pickNumber(row, ['incentive']) ?? 0,
+    tip: pickNumber(row, ['tip']) ?? 0,
+    gross: pickNumber(row, ['gross']) ?? 0,
+    platformCommissionPct: pickNumber(row, ['platformCommissionPct']) ?? 0,
+    platformCommissionAmount: pickNumber(row, ['platformCommissionAmount']) ?? 0,
+    rounded: pickNumber(row, ['rounded']) ?? finalAmount,
+    finalAmount,
+  };
 }
 
 function pickNumber(record: Record<string, unknown>, keys: string[]) {
@@ -159,6 +182,7 @@ export function parseIncomingOffer(payload: unknown): IncomingOffer | null {
     platformCommissionPct: pickNumber(source, ['platformCommissionPct']),
     tipAmount: pickNumber(source, ['tipAmount', 'tip']),
     netEarnings: pickNumber(source, ['netEarnings', 'netPay', 'totalEarnings']),
+    payout: mapOfferPayout(source.payout),
     estimatedKm: pickNumber(source, ['estimatedKm', 'distanceKm', 'distance']),
     pickupDistanceKm: pickNumber(source, [
       'pickupDistanceKm',

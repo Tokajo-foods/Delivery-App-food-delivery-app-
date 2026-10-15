@@ -197,6 +197,22 @@ export type PartnerLivePoint = {
   accuracy?: number;
 };
 
+export type RiderPayout = {
+  basePay: number;
+  perKmRate: number;
+  distanceKm: number;
+  distanceCharge: number;
+  incentiveKm: number;
+  incentivePerKm: number;
+  incentive: number;
+  tip: number;
+  gross: number;
+  platformCommissionPct: number;
+  platformCommissionAmount: number;
+  rounded: number;
+  finalAmount: number;
+};
+
 export type PartnerDelivery = {
   id: string;
   orderId?: string;
@@ -222,6 +238,7 @@ export type PartnerDelivery = {
   etaMinutes?: number;
   partnerEarnings?: number;
   incentiveBonus?: number;
+  payout?: RiderPayout | null;
   earning?: number;
   notes?: string;
   assignedAt?: string;

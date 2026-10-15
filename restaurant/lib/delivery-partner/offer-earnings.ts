@@ -13,14 +13,15 @@ export function resolveOfferEarnings(offer: IncomingOffer): OfferEarnings | null
     incentiveBonus: offer.incentiveBonus,
   });
   if (!fromParts) return null;
-  if (offer.netEarnings != null && Number.isFinite(offer.netEarnings)) {
+  const finalAmount = offer.payout?.finalAmount ?? offer.netEarnings;
+  if (finalAmount != null && Number.isFinite(finalAmount)) {
     return {
       ...fromParts,
-      basePay: offer.partnerEarnings ?? fromParts.basePay,
-      incentive: Math.max(0, offer.incentiveBonus ?? 0),
-      tip: Math.max(0, offer.tipAmount ?? 0),
-      netTotal: offer.netEarnings,
-      showIncentive: (offer.incentiveBonus ?? 0) > 0,
+      basePay: offer.payout?.rounded ?? offer.partnerEarnings ?? fromParts.basePay,
+      incentive: Math.max(0, offer.payout?.incentive ?? offer.incentiveBonus ?? 0),
+      tip: Math.max(0, offer.payout?.tip ?? offer.tipAmount ?? 0),
+      netTotal: finalAmount,
+      showIncentive: (offer.payout?.incentive ?? offer.incentiveBonus ?? 0) > 0,
     };
   }
   return fromParts;

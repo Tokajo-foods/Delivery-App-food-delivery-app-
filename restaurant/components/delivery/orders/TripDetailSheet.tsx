@@ -10,6 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
 
+import { RiderPayoutLines } from '@/components/delivery/orders/RiderPayoutLines';
 import { fonts } from '@/constants/typography';
 import { deliveryStatusLabel, isUnpaidTripStatus, normalizeDeliveryStatus, tripCreditsEarnings } from '@/lib/delivery-partner/api';
 import {
@@ -163,18 +164,31 @@ export function TripDetailSheet({
                     <Text style={styles.muted}>
                       No payout — customer did not receive this order
                     </Text>
-                  ) : money(delivery.earning, delivery.currency) ? (
+                  ) : money(delivery.payout?.finalAmount ?? delivery.earning, delivery.currency) ? (
                     <Text style={styles.earn}>
                       {tripCreditsEarnings(delivery.status)
                         ? 'Earned '
-                        : 'Est. '}
-                      {money(delivery.earning, delivery.currency)}
+                        : 'You earn '}
+                      {money(delivery.payout?.finalAmount ?? delivery.earning, delivery.currency)}
                     </Text>
                   ) : null}
                 </View>
               ) : null}
 
-              {tripEarn.isLoading && !tripEarn.data ? (
+              {delivery?.payout ? (
+                <View style={styles.summary}>
+                  <Text style={styles.sectionTitle}>Pay breakdown</Text>
+                  <RiderPayoutLines
+                    payout={delivery.payout}
+                    rowStyle={styles.billRow}
+                    labelStyle={styles.billLabel}
+                    valueStyle={styles.billValue}
+                    strongStyle={styles.earn}
+                  />
+                </View>
+              ) : null}
+
+              {delivery?.payout ? null : tripEarn.isLoading && !tripEarn.data ? (
                 <ActivityIndicator color="#EA4B14" style={{ marginVertical: 8 }} />
               ) : tripEarn.data ? (
                 <View style={styles.summary}>

@@ -40,6 +40,7 @@ import type {
   PartnerBatchStop,
   DeliveryEventKind,
   PartnerDelivery,
+  RiderPayout,
   PartnerDeliveryAddress,
   PartnerDocument,
   PartnerDocumentsMap,
@@ -493,6 +494,28 @@ export function mapPartnerBatch(raw: unknown): PartnerBatch {
   };
 }
 
+function mapRiderPayout(value: unknown): RiderPayout | null {
+  const row = asRecord(value);
+  const finalAmount = pickNumber(row, ['finalAmount']);
+  const basePay = pickNumber(row, ['basePay']);
+  if (finalAmount == null || basePay == null) return null;
+  return {
+    basePay,
+    perKmRate: pickNumber(row, ['perKmRate']) ?? 0,
+    distanceKm: pickNumber(row, ['distanceKm']) ?? 0,
+    distanceCharge: pickNumber(row, ['distanceCharge']) ?? 0,
+    incentiveKm: pickNumber(row, ['incentiveKm']) ?? 0,
+    incentivePerKm: pickNumber(row, ['incentivePerKm']) ?? 0,
+    incentive: pickNumber(row, ['incentive']) ?? 0,
+    tip: pickNumber(row, ['tip']) ?? 0,
+    gross: pickNumber(row, ['gross']) ?? 0,
+    platformCommissionPct: pickNumber(row, ['platformCommissionPct']) ?? 0,
+    platformCommissionAmount: pickNumber(row, ['platformCommissionAmount']) ?? 0,
+    rounded: pickNumber(row, ['rounded']) ?? finalAmount,
+    finalAmount,
+  };
+}
+
 export function mapPartnerDelivery(raw: unknown): PartnerDelivery {
   const root = asRecord(raw);
   const dataLayer = asRecord(
@@ -656,7 +679,10 @@ export function mapPartnerDelivery(raw: unknown): PartnerDelivery {
       'incentive',
       'bonus',
     ]),
+    payout: mapRiderPayout(source.payout),
     earning: (() => {
+      const payoutFinal = mapRiderPayout(source.payout)?.finalAmount;
+      if (payoutFinal != null) return payoutFinal;
       const status = normalizeDeliveryStatus(
         pickString(source, ['status', 'deliveryStatus', 'state']) ?? 'assigned'
       );
