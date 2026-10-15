@@ -234,16 +234,6 @@ export function DeliveryTripMap({
       ? delivery.customerName || 'Customer'
       : delivery.restaurantName || 'Restaurant';
 
-  const serverEtaSeconds =
-    navRoute?.etaSeconds ??
-    socketEta?.etaSeconds ??
-    eta?.etaSeconds ??
-    tracking?.etaSeconds;
-  const serverDistanceMeters =
-    navRoute?.distanceMeters ??
-    socketEta?.distanceMeters ??
-    eta?.distanceMeters ??
-    tracking?.distanceMeters;
   const provider =
     navRoute?.provider ??
     socketEta?.provider ??
@@ -269,9 +259,18 @@ export function DeliveryTripMap({
       ? 'restaurant'
       : 'customer';
   const destination = destinationKind === 'restaurant' ? pickup : drop;
-  const drive = useGoogleDriveRoute(displayRider, destination);
-  const etaSeconds = drive?.etaSeconds ?? serverEtaSeconds;
-  const distanceMeters = drive?.distanceMeters ?? serverDistanceMeters;
+  const driveRoute = useGoogleDriveRoute(displayRider, destination);
+  const drive = driveRoute.leg;
+  const etaSeconds = drive?.etaSeconds ?? null;
+  const distanceMeters = drive?.distanceMeters ?? null;
+  const routeCaption =
+    driveRoute.status === 'ready' && etaSeconds != null
+      ? `${formatEtaSeconds(etaSeconds)}${
+          distanceMeters != null ? `  ·  ${formatDistanceMeters(distanceMeters)}` : ''
+        }`
+      : driveRoute.status === 'unavailable'
+        ? 'Google route unavailable'
+        : 'Getting Google route…';
   const routeProvider = drive ? 'google' : provider;
   const routeInTraffic = drive ? true : durationInTraffic;
   const driveLine = useMemo(
@@ -485,12 +484,7 @@ export function DeliveryTripMap({
                   ? `Heading to ${dropLabel}`
                   : `Heading to ${pickupLabel}`}
           </Text>
-          <Text style={styles.etaValue}>
-            {formatEtaSeconds(etaSeconds)}
-            {distanceMeters != null
-              ? ` · ${formatDistanceMeters(distanceMeters)}`
-              : ''}
-          </Text>
+          <Text style={styles.etaValue}>{routeCaption}</Text>
           <Text style={styles.etaProvider}>
             {etaLabel({ provider: routeProvider, durationInTraffic: routeInTraffic })}
           </Text>
@@ -510,10 +504,7 @@ export function DeliveryTripMap({
               {navPlace}
             </Text>
             <Text style={styles.sheetEta} numberOfLines={1}>
-              {formatEtaSeconds(etaSeconds)}
-              {distanceMeters != null
-                ? `  ·  ${formatDistanceMeters(distanceMeters)}`
-                : ''}
+              {routeCaption}
             </Text>
           </View>
           <View style={styles.navGo}>

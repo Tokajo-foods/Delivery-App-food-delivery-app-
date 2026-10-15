@@ -3,10 +3,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { reverseGeocodeAddress } from '@/lib/address/search';
 import { api } from '@/lib/api';
 import {
-  dropDistanceFromRestaurantKm,
   formatDeliveryAddress,
   formatKmFromRestaurant,
 } from '@/lib/delivery-partner/api';
+import { fetchGoogleRoadLegs } from '@/lib/delivery-partner/google-road-distance';
 import { getRememberedOffer } from '@/lib/delivery-partner/offer-store';
 import type { PartnerDelivery } from '@/lib/delivery-partner/types';
 import { shortAddressLabel } from '@/lib/location/format';
@@ -100,6 +100,8 @@ export function useResolvedTripStops(delivery: PartnerDelivery) {
   const [catalog, setCatalog] = useState<PublicStop | null>(null);
   const [pickupGeo, setPickupGeo] = useState<string | null>(null);
   const [dropGeo, setDropGeo] = useState<string | null>(null);
+  const [roadDropKm, setRoadDropKm] = useState<number | null>(null);
+  const [roadDropReady, setRoadDropReady] = useState(false);
 
   const pickupLat = delivery.restaurantAddress?.lat ?? offer?.restaurantLat;
   const pickupLng = delivery.restaurantAddress?.lng ?? offer?.restaurantLng;
@@ -133,6 +135,36 @@ export function useResolvedTripStops(delivery: PartnerDelivery) {
       alive = false;
     };
   }, [mappedPickup, pickupLat, pickupLng]);
+
+  useEffect(() => {
+    if (
+      pickupLat == null ||
+      pickupLng == null ||
+      dropLat == null ||
+      dropLng == null
+    ) {
+      setRoadDropKm(null);
+      setRoadDropReady(true);
+      return;
+    }
+    let alive = true;
+    setRoadDropReady(false);
+    void fetchGoogleRoadLegs([
+      {
+        id: 'drop',
+        origin: { latitude: pickupLat, longitude: pickupLng },
+        destination: { latitude: dropLat, longitude: dropLng },
+      },
+    ]).then((legs) => {
+      if (!alive) return;
+      const km = legs[0]?.distanceKm;
+      setRoadDropKm(km != null && km > 0 ? km : null);
+      setRoadDropReady(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [pickupLat, pickupLng, dropLat, dropLng]);
 
   useEffect(() => {
     if (mappedDrop || dropLat == null || dropLng == null) return;
@@ -174,22 +206,7 @@ export function useResolvedTripStops(delivery: PartnerDelivery) {
       : (!isGenericName(delivery.deliveryAddress?.label)
           ? delivery.deliveryAddress!.label!.trim()
           : '') || firstPlaceName(dropAddress);
-    const dropKm = dropDistanceFromRestaurantKm({
-      ...delivery,
-      restaurantAddress: {
-        ...delivery.restaurantAddress,
-        lat: pickupLat,
-        lng: pickupLng,
-        line1: pickupAddress || delivery.restaurantAddress?.line1,
-      },
-      deliveryAddress: {
-        ...delivery.deliveryAddress,
-        lat: dropLat,
-        lng: dropLng,
-        line1: dropAddress || delivery.deliveryAddress?.line1,
-      },
-      distanceKm: delivery.distanceKm ?? offer?.estimatedKm,
-    });
+    const dropKm = roadDropReady ? roadDropKm : null;
 
     return {
       restaurantName: restaurantName || 'Pickup',
@@ -197,7 +214,8 @@ export function useResolvedTripStops(delivery: PartnerDelivery) {
       customerName: customerName || 'Customer',
       dropAddress,
       dropKm,
-      dropKmLabel: dropKm != null ? formatKmFromRestaurant(dropKm) : null,
+      dropKmLabel:
+        dropKm != null ? formatKmFromRestaurant(dropKm) : null,
     };
   }, [
     delivery,
@@ -211,5 +229,7 @@ export function useResolvedTripStops(delivery: PartnerDelivery) {
     pickupLng,
     dropLat,
     dropLng,
+    roadDropKm,
+    roadDropReady,
   ]);
 }

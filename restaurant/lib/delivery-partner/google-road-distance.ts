@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+import { fetchLegacyDrivingLeg } from '@/lib/delivery-partner/google-road-legacy';
 import { GOOGLE_MAPS_API_KEY } from '@/lib/google-maps';
 
 export type GoogleRoadLeg = {
@@ -32,31 +33,6 @@ type RoutesResponse = {
   error?: { message?: string; status?: string };
 };
 
-type DirectionsResponse = {
-  status?: string;
-  error_message?: string;
-  routes?: Array<{
-    legs?: Array<{
-      distance?: { value?: number };
-      duration?: { value?: number };
-      duration_in_traffic?: { value?: number };
-    }>;
-  }>;
-};
-
-type MatrixResponse = {
-  status?: string;
-  error_message?: string;
-  rows?: Array<{
-    elements?: Array<{
-      status?: string;
-      distance?: { value?: number };
-      duration?: { value?: number };
-      duration_in_traffic?: { value?: number };
-    }>;
-  }>;
-};
-
 function validPoint(p?: RoadPoint | null): p is RoadPoint {
   return (
     !!p &&
@@ -81,7 +57,7 @@ function toLeg(
   source: GoogleRoadLeg['source']
 ): GoogleRoadLeg {
   const distanceKm = Math.round((meters / 1000) * 100) / 100;
-  const etaSeconds = Math.max(60, Math.round(seconds));
+  const etaSeconds = Math.max(1, Math.round(seconds));
   return {
     id,
     distanceMeters: Math.round(meters),
@@ -100,36 +76,46 @@ function warnRoad(msg: string, extra?: Record<string, unknown>) {
 }
 
 /** New Routes API — same X-Goog-Api-Key pattern as Places (works with Expo key). */
-async function fetchRoutesLeg(
+function routesBody(
   origin: RoadPoint,
   destination: RoadPoint,
-  id?: string
-): Promise<GoogleRoadLeg | null> {
+  withTraffic: boolean
+) {
+  return {
+    origin: {
+      location: {
+        latLng: { latitude: origin.latitude, longitude: origin.longitude },
+      },
+    },
+    destination: {
+      location: {
+        latLng: {
+          latitude: destination.latitude,
+          longitude: destination.longitude,
+        },
+      },
+    },
+    travelMode: 'DRIVE',
+    ...(withTraffic
+      ? {
+          routingPreference: 'TRAFFIC_AWARE',
+          departureTime: new Date().toISOString(),
+        }
+      : {}),
+    computeAlternativeRoutes: false,
+    languageCode: 'en-IN',
+    units: 'METRIC',
+  };
+}
+
+async function postRoutes(
+  origin: RoadPoint,
+  destination: RoadPoint,
+  withTraffic: boolean
+): Promise<RoutesResponse> {
   const { data } = await axios.post<RoutesResponse>(
     'https://routes.googleapis.com/directions/v2:computeRoutes',
-    {
-      origin: {
-        location: {
-          latLng: {
-            latitude: origin.latitude,
-            longitude: origin.longitude,
-          },
-        },
-      },
-      destination: {
-        location: {
-          latLng: {
-            latitude: destination.latitude,
-            longitude: destination.longitude,
-          },
-        },
-      },
-      travelMode: 'DRIVE',
-      routingPreference: 'TRAFFIC_AWARE',
-      computeAlternativeRoutes: false,
-      languageCode: 'en-IN',
-      units: 'METRIC',
-    },
+    routesBody(origin, destination, withTraffic),
     {
       headers: {
         'Content-Type': 'application/json',
@@ -140,100 +126,45 @@ async function fetchRoutesLeg(
       timeout: 12_000,
     }
   );
+  return data;
+}
 
+function legFromRoutes(
+  data: RoutesResponse,
+  id: string | undefined
+): GoogleRoadLeg | null {
   const route = data.routes?.[0];
   const meters = route?.distanceMeters ?? route?.legs?.[0]?.distanceMeters;
   const seconds =
     parseDurationSeconds(route?.duration) ??
     parseDurationSeconds(route?.legs?.[0]?.duration);
-  if (meters == null || !Number.isFinite(meters) || meters <= 0) {
-    warnRoad('Routes API empty', { id, error: data.error?.message });
-    return null;
-  }
-  const leg = toLeg(
-    id,
-    meters,
-    seconds ?? (meters / 1000 / 22) * 3600,
-    'routes'
-  );
+  if (meters == null || !Number.isFinite(meters) || meters <= 0) return null;
+  const leg = toLeg(id, meters, seconds ?? 0, 'routes');
   const encoded = route?.polyline?.encodedPolyline;
   if (encoded) leg.polyline = encoded;
   return leg;
 }
 
-async function fetchDirectionsLeg(
+async function fetchRoutesLeg(
   origin: RoadPoint,
   destination: RoadPoint,
   id?: string
 ): Promise<GoogleRoadLeg | null> {
-  const { data } = await axios.get<DirectionsResponse>(
-    'https://maps.googleapis.com/maps/api/directions/json',
-    {
-      params: {
-        origin: `${origin.latitude},${origin.longitude}`,
-        destination: `${destination.latitude},${destination.longitude}`,
-        mode: 'driving',
-        key: GOOGLE_MAPS_API_KEY,
-      },
-      timeout: 12_000,
-    }
-  );
-  const leg = data.routes?.[0]?.legs?.[0];
-  const meters = leg?.distance?.value;
-  const seconds =
-    leg?.duration_in_traffic?.value ?? leg?.duration?.value;
-  if (data.status !== 'OK' || meters == null) {
-    warnRoad('Directions failed', {
+  try {
+    const live = await postRoutes(origin, destination, true);
+    const leg = legFromRoutes(live, id);
+    if (leg) return leg;
+    warnRoad('Routes API empty', { id, error: live.error?.message });
+  } catch (err) {
+    warnRoad('Routes traffic request failed', {
       id,
-      status: data.status,
-      error: data.error_message,
+      message: err instanceof Error ? err.message : String(err),
     });
-    return null;
   }
-  return toLeg(
-    id,
-    meters,
-    seconds ?? (meters / 1000 / 22) * 3600,
-    'directions'
-  );
-}
-
-async function fetchMatrixLeg(
-  origin: RoadPoint,
-  destination: RoadPoint,
-  id?: string
-): Promise<GoogleRoadLeg | null> {
-  const { data } = await axios.get<MatrixResponse>(
-    'https://maps.googleapis.com/maps/api/distancematrix/json',
-    {
-      params: {
-        origins: `${origin.latitude},${origin.longitude}`,
-        destinations: `${destination.latitude},${destination.longitude}`,
-        mode: 'driving',
-        key: GOOGLE_MAPS_API_KEY,
-      },
-      timeout: 12_000,
-    }
-  );
-  const el = data.rows?.[0]?.elements?.[0];
-  const meters = el?.distance?.value;
-  const seconds =
-    el?.duration_in_traffic?.value ?? el?.duration?.value;
-  if (data.status !== 'OK' || el?.status !== 'OK' || meters == null) {
-    warnRoad('Distance Matrix failed', {
-      id,
-      status: data.status,
-      element: el?.status,
-      error: data.error_message,
-    });
-    return null;
-  }
-  return toLeg(
-    id,
-    meters,
-    seconds ?? (meters / 1000 / 22) * 3600,
-    'distance_matrix'
-  );
+  const plain = await postRoutes(origin, destination, false);
+  const leg = legFromRoutes(plain, id);
+  if (!leg) warnRoad('Routes API empty', { id, error: plain.error?.message });
+  return leg;
 }
 
 async function fetchOneRoadLeg(input: {
@@ -255,28 +186,7 @@ async function fetchOneRoadLeg(input: {
       message: err instanceof Error ? err.message : String(err),
     });
   }
-  try {
-    const viaDirections = await fetchDirectionsLeg(
-      input.origin,
-      input.destination,
-      input.id
-    );
-    if (viaDirections) return viaDirections;
-  } catch (err) {
-    warnRoad('Directions error', {
-      id: input.id,
-      message: err instanceof Error ? err.message : String(err),
-    });
-  }
-  try {
-    return await fetchMatrixLeg(input.origin, input.destination, input.id);
-  } catch (err) {
-    warnRoad('Matrix error', {
-      id: input.id,
-      message: err instanceof Error ? err.message : String(err),
-    });
-    return null;
-  }
+  return fetchLegacyDrivingLeg(input.origin, input.destination, input.id);
 }
 
 /**
