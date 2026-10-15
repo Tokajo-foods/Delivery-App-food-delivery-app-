@@ -56,12 +56,8 @@ export const DELIVERY_BOTTOM_TABS: DeliveryTabItem[] = [
 /** Quick links shown on the Home dashboard. */
 export const DELIVERY_HOME_SHORTCUTS: DeliveryTabItem[] = [
   { key: 'documents', label: 'Documents', href: DELIVERY_ROUTES.documents },
-  { key: 'restaurants', label: 'Restaurants', href: DELIVERY_ROUTES.restaurants },
   { key: 'shifts', label: 'Shifts', href: DELIVERY_ROUTES.shifts },
-  { key: 'hubs', label: 'Hubs', href: DELIVERY_ROUTES.hubs },
-  { key: 'heatmap', label: 'Demand', href: DELIVERY_ROUTES.heatmap },
   { key: 'incentives', label: 'Incentives', href: DELIVERY_ROUTES.incentives },
-  { key: 'performance', label: 'Performance', href: DELIVERY_ROUTES.performance },
   { key: 'support', label: 'Support', href: DELIVERY_ROUTES.support },
 ];
 

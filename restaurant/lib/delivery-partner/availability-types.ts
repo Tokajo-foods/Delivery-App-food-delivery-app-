@@ -112,6 +112,8 @@ export type PartnerDutySummary = {
   onlineHours: number;
   deliveries: number;
   km: number;
+  /** Same IST ledger total as GET /partners/me/earnings `today`. */
+  earnings: number;
   breakMinutes: number;
   stillOnDuty: boolean;
 };

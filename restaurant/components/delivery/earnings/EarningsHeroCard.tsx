@@ -4,12 +4,14 @@ import { Pressable, Text, View } from 'react-native';
 import { overviewStyles as styles } from '@/components/delivery/earnings/earnings-overview-styles';
 import { formatCurrency } from '@/lib/delivery-partner/analytics-api';
 import type { PartnerEarningsSummary } from '@/lib/delivery-partner/analytics-types';
+import type { PartnerTodayStats } from '@/lib/delivery-partner/today-stats';
 
 type Props = {
   currency: string;
   lifetime: number;
   lifetimeTrips: number;
   summary?: PartnerEarningsSummary;
+  today?: PartnerTodayStats;
   payable: number;
   onWithdraw: () => void;
 };
@@ -19,13 +21,26 @@ export function EarningsHeroCard({
   lifetime,
   lifetimeTrips,
   summary,
+  today,
   payable,
   onWithdraw,
 }: Props) {
   const stats = [
-    { label: 'Today', period: summary?.today },
-    { label: 'This week', period: summary?.week },
-    { label: 'This month', period: summary?.month },
+    {
+      label: 'Today',
+      amount: today?.earnings ?? summary?.today.totalEarnings ?? 0,
+      trips: today?.trips ?? summary?.today.totalDeliveries ?? 0,
+    },
+    {
+      label: 'This week',
+      amount: summary?.week.totalEarnings ?? 0,
+      trips: summary?.week.totalDeliveries ?? 0,
+    },
+    {
+      label: 'This month',
+      amount: summary?.month.totalEarnings ?? 0,
+      trips: summary?.month.totalDeliveries ?? 0,
+    },
   ];
 
   return (
@@ -50,10 +65,10 @@ export function EarningsHeroCard({
             <View style={styles.heroStat}>
               <Text style={styles.heroStatLabel}>{item.label}</Text>
               <Text style={styles.heroStatValue}>
-                {formatCurrency(item.period?.totalEarnings ?? 0, currency)}
+                {formatCurrency(item.amount, currency)}
               </Text>
               <Text style={styles.heroStatMeta}>
-                {item.period?.totalDeliveries ?? 0} trips
+                {item.trips} trips
               </Text>
             </View>
           </View>

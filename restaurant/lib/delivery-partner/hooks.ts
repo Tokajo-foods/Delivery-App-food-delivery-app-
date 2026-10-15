@@ -431,6 +431,15 @@ export function useDeliveryOrderMutations() {
       queryClient.invalidateQueries({
         queryKey: [...deliveryPartnerKeys.all, 'availability', 'status'],
       }),
+      queryClient.invalidateQueries({
+        queryKey: [...deliveryPartnerKeys.all, 'availability', 'duty-summary'],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: [...deliveryPartnerKeys.all, 'availability', 'streak'],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: [...deliveryPartnerKeys.all, 'analytics'],
+      }),
     ]);
   };
 

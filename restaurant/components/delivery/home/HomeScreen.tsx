@@ -1,18 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import {
-  BadgeCheck,
-  ChevronRight,
-  CircleCheck,
-  Flame,
-  Star,
-  Timer,
-} from 'lucide-react-native';
+import { Star } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -25,7 +17,9 @@ import { useAuthStore } from '@/store/auth-store';
 import { HomeDeliveryHistory } from '@/components/delivery/home/HomeDeliveryHistory';
 import { TripDetailSheet } from '@/components/delivery/orders/TripDetailSheet';
 import { DutyControlCard } from '@/components/delivery/home/DutyControlCard';
-import { MORE_FEATURES } from '@/components/delivery/home/home-features';
+import { HomeEarningsCard } from '@/components/delivery/home/HomeEarningsCard';
+import { HomePerformanceCard } from '@/components/delivery/home/HomePerformanceCard';
+import { HomeServicesGrid } from '@/components/delivery/home/HomeServicesGrid';
 import {
   HomeHeader,
   type SavedLiveLocation,
@@ -38,11 +32,7 @@ import {
 import { authTheme, PARTNER_BOTTOM_NAV_INSET } from '@/constants/auth-theme';
 import { useUnreadNotificationCount } from '@/lib/notification/hooks';
 import { fonts } from '@/constants/typography';
-import {
-  formatCurrency,
-  formatPercent,
-  formatRating,
-} from '@/lib/delivery-partner/analytics-api';
+import { formatPercent, formatRating } from '@/lib/delivery-partner/analytics-api';
 import {
   usePartnerEarnings,
   usePartnerPerformance,
@@ -81,6 +71,7 @@ import {
   useDeliveryPartnerMe,
 } from '@/lib/delivery-partner/hooks';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
+import { selectPartnerTodayStats } from '@/lib/delivery-partner/today-stats';
 import type { PartnerDelivery } from '@/lib/delivery-partner/types';
 import { askToEnableLocation } from '@/lib/delivery-partner/live-place';
 import { getApiErrorCode, getApiErrorMessage } from '@/lib/errors';
@@ -132,8 +123,16 @@ export function DeliveryHomeScreen() {
     startBreak.isPending || endBreak.isPending || extendBreak.isPending;
   const goOnlineBlocker = getGoOnlineBlocker(me.data);
 
-  const todayEarnings = earnings.data?.today.totalEarnings ?? 0;
-  const currency = earnings.data?.currency ?? 'INR';
+  const today = selectPartnerTodayStats(dutySummary.data, earnings.data);
+  const dutySummaryView = dutySummary.data
+    ? {
+        ...dutySummary.data,
+        deliveries: today.trips,
+        km: today.km,
+        onlineMinutes: today.onlineMinutes,
+        earnings: today.earnings,
+      }
+    : dutySummary.data;
 
   const totalDeliveries = performance.data?.totalDeliveries ?? 0;
   const avgRating = performance.data?.avgRating ?? 0;
@@ -591,7 +590,7 @@ export function DeliveryHomeScreen() {
             snapshot={duty.data}
             fallbackStatus={dutyStatus}
             isOnDuty={isOnline}
-            summary={dutySummary.data}
+            summary={dutySummaryView}
             policy={breakPolicy.data}
             statusLoading={duty.isLoading}
             statusError={
@@ -626,57 +625,15 @@ export function DeliveryHomeScreen() {
             onRetrySummary={() => void dutySummary.refetch()}
           />
 
-          <Pressable
+          <HomeEarningsCard
+            amount={today.earnings}
+            currency={today.currency}
+            isOnline={isOnline}
+            streak={streak}
             onPress={() => router.push(DELIVERY_ROUTES.earnings)}
-            style={styles.earnCard}
-          >
-            <LinearGradient
-              colors={['#FF8A4C', '#EA4B14', '#C9340C']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.earnWash}
-            />
-            <View style={styles.dhEarnCol}>
-              <Text style={styles.dhEarnLabel}>Today's earning</Text>
-              <Text style={styles.dhEarnAmount}>{formatCurrency(todayEarnings, currency)}</Text>
-              <Text style={styles.earnHook}>
-                {!isOnline
-                  ? 'Go online and grow today’s number'
-                  : streak > 0
-                    ? `${streak}-day streak — one more trip keeps it`
-                    : 'You are live. Each trip adds to this'}
-              </Text>
-            </View>
-            <View style={styles.scooterSlot}>
-              <Image
-                source={require('../../../public/scooter.png')}
-                style={styles.scooterImg}
-                resizeMode="contain"
-              />
-            </View>
-          </Pressable>
+          />
 
-        {acceptingOrders ? (
-          <View style={styles.section}>
-            <Pressable
-              onPress={() => router.push(DELIVERY_ROUTES.heatmap as never)}
-              style={styles.demandCta}
-            >
-              <Flame color={authTheme.brand} size={18} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.demandCtaTitle}>Find orders</Text>
-                <Text style={styles.demandCtaHint}>
-                  See nearby demand heatmap while you wait
-                </Text>
-              </View>
-              <ChevronRight color={authTheme.textMuted} size={18} />
-            </Pressable>
-          </View>
-        ) : null}
-
-
-
-        {/* Key stats â€” performance API */}
+        {/* Key stats — performance API */}
         <View style={styles.statsRow}>
           <View style={styles.stat}>
             <Text style={styles.statValue} numberOfLines={1}>
@@ -712,91 +669,14 @@ export function DeliveryHomeScreen() {
           </View>
         </View>
 
-        {/* Services */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Services</Text>
-          <View style={styles.serviceGrid}>
-            {MORE_FEATURES.map((item, index) => {
-              const Icon = item.icon;
-              const showDivider = index % 4 !== 3;
-              return (
-                <View key={item.key} style={styles.serviceSlot}>
-                  {showDivider ? <View style={styles.serviceDivider} /> : null}
-                  <Pressable
-                    onPress={() => router.push(item.href)}
-                    style={styles.moreCard}
-                  >
-                    <View style={styles.moreIcon}>
-                      <Icon color="#EA4B14" size={20} strokeWidth={1.8} />
-                    </View>
-                    <Text style={styles.moreLabel} numberOfLines={2}>
-                      {item.label}
-                    </Text>
-                  </Pressable>
-                </View>
-              );
-            })}
-          </View>
-        </View>
+        <HomeServicesGrid />
 
-        {/* Performance */}
-        <View style={styles.section}>
-          <Pressable
-            onPress={() => router.push(DELIVERY_ROUTES.performance)}
-            style={styles.sectionRow}
-          >
-            <View>
-              <Text style={[styles.sectionTitle, styles.perfTitle]}>Performance</Text>
-              <Text style={styles.sectionKicker}>
-                {streak > 0
-                  ? `${streak}-day streak · tap to climb`
-                  : 'Tap to see how you rank'}
-              </Text>
-            </View>
-            <ChevronRight color={authTheme.textMuted} size={18} />
-          </Pressable>
-          <Pressable
-            onPress={() => router.push(DELIVERY_ROUTES.performance)}
-            style={styles.card}
-          >
-            <View style={styles.perfGrid}>
-              <View style={styles.perfItem}>
-                <View style={styles.perfIcon}>
-                  <BadgeCheck color="#EA4B14" size={16} strokeWidth={2.2} />
-                </View>
-                <Text style={styles.perfValue}>
-                  {formatPercent(acceptanceRate)}
-                </Text>
-                <Text style={styles.perfLabel}>Acceptance</Text>
-              </View>
-              <View style={styles.perfItem}>
-                <View style={styles.perfIcon}>
-                  <CircleCheck color="#EA4B14" size={16} strokeWidth={2.2} />
-                </View>
-                <Text style={styles.perfValue}>
-                  {formatPercent(completionRate)}
-                </Text>
-                <Text style={styles.perfLabel}>Completion</Text>
-              </View>
-              <View style={styles.perfItem}>
-                <View style={styles.perfIcon}>
-                  <Timer color="#EA4B14" size={16} strokeWidth={2.2} />
-                </View>
-                <Text style={styles.perfValue}>
-                  {formatPercent(onTimeRate)}
-                </Text>
-                <Text style={styles.perfLabel}>On-time</Text>
-              </View>
-              <View style={styles.perfItem}>
-                <View style={styles.perfIcon}>
-                  <Flame color="#EA4B14" size={16} strokeWidth={2.2} />
-                </View>
-                <Text style={styles.perfValue}>{streak}d</Text>
-                <Text style={styles.perfLabel}>Streak</Text>
-              </View>
-            </View>
-          </Pressable>
-        </View>
+        <HomePerformanceCard
+          acceptanceRate={acceptanceRate}
+          completionRate={completionRate}
+          onTimeRate={onTimeRate}
+          streak={streak}
+        />
 
         <HomeDeliveryHistory
           items={recent}
@@ -823,7 +703,7 @@ export function DeliveryHomeScreen() {
         }
         autoDetectOnOpen
         locationTitle="HOME / LIVE LOCATION"
-        currentLocationHint="Saved as home base for heatmap if GPS is off"
+        currentLocationHint="Saved as home base if GPS is off"
         onClose={() => {
           if (!confirmingLocation) setMapOpen(false);
         }}

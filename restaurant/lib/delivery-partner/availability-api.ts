@@ -227,6 +227,7 @@ function mapDutySummary(raw: unknown): PartnerDutySummary {
     onlineHours,
     deliveries: pickNumber(record, ['deliveries', 'totalDeliveries']) ?? 0,
     km: pickNumber(record, ['km', 'distanceKm', 'actualDistance']) ?? 0,
+    earnings: pickNumber(record, ['earnings', 'totalEarnings', 'todayEarnings']) ?? 0,
     breakMinutes: pickNumber(record, ['breakMinutes']) ?? 0,
     stillOnDuty: pickBool(record, ['stillOnDuty', 'onDuty']) ?? false,
   };

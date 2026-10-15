@@ -41,7 +41,7 @@ export function PartnerEarningsManager() {
   const [showRemit, setShowRemit] = useState(false);
   const [payoutId, setPayoutId] = useState<string | null>(null);
   const data = useEarningsData(tab);
-  const { wallet, earnings, codPending, schedule, bank, passbook } = data;
+  const { wallet, earnings, today, codPending, schedule, bank, passbook } = data;
 
   const currency = wallet.data?.currency ?? earnings.data?.currency ?? 'INR';
   const cashInHand = codPending.data?.cashInHand ?? wallet.data?.cashInHand ?? 0;
@@ -114,6 +114,7 @@ export function PartnerEarningsManager() {
               lifetime={wallet.data?.lifetimeEarnings ?? earnings.data?.lifetime.totalEarnings ?? 0}
               lifetimeTrips={earnings.data?.lifetime.totalDeliveries ?? 0}
               summary={earnings.data}
+              today={today}
               payable={wallet.data?.earningsBalance ?? 0}
               onWithdraw={openInstant}
             />

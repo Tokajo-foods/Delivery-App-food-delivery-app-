@@ -240,6 +240,9 @@ export function usePartnerDutyMutations() {
       queryClient.invalidateQueries({
         queryKey: [...partnerAvailabilityKeys.all, 'hubs'],
       }),
+      queryClient.invalidateQueries({
+        queryKey: [...deliveryPartnerKeys.all, 'analytics'],
+      }),
     ]);
   };
 

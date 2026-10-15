@@ -7,6 +7,8 @@ import {
   usePartnerEarnings,
   usePartnerIncentives,
 } from '@/lib/delivery-partner/analytics-hooks';
+import { usePartnerDutySummary } from '@/lib/delivery-partner/availability-hooks';
+import { selectPartnerTodayStats } from '@/lib/delivery-partner/today-stats';
 import { usePartnerBank } from '@/lib/delivery-partner/bank-hooks';
 import {
   useCodPending,
@@ -27,6 +29,8 @@ export function useEarningsData(tab: EarningsTab) {
   const [passbookRange, setPassbookRange] = useState<PassbookRange>(30);
 
   const earnings = usePartnerEarnings();
+  const dutySummary = usePartnerDutySummary();
+  const today = selectPartnerTodayStats(dutySummary.data, earnings.data);
   const daily = usePartnerDailyEarnings(dailyRange);
   const incentives = usePartnerIncentives(tab === 'overview');
   const wallet = usePartnerWallet(true);
@@ -41,6 +45,7 @@ export function useEarningsData(tab: EarningsTab) {
   const refetchAll = () =>
     Promise.all([
       earnings.refetch(),
+      dutySummary.refetch(),
       daily.refetch(),
       wallet.refetch(),
       eligibility.refetch(),
@@ -55,6 +60,7 @@ export function useEarningsData(tab: EarningsTab) {
 
   return {
     earnings,
+    today,
     daily,
     dailyRange,
     setDailyRange,

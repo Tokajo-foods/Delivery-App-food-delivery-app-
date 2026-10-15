@@ -1,12 +1,8 @@
 import {
-  Award,
-  Building2,
   CalendarClock,
   FileText,
-  Flame,
   Gift,
   HelpCircle,
-  UtensilsCrossed,
   type LucideIcon,
 } from 'lucide-react-native';
 
@@ -20,7 +16,7 @@ export type HomeFeature = {
   icon: LucideIcon;
 };
 
-/** Quick-access services shown as a horizontal rail on the partner home. */
+/** Home Services quick actions — Documents, Shifts, Incentives, Support. */
 export const MORE_FEATURES: HomeFeature[] = [
   {
     key: 'documents',
@@ -30,13 +26,6 @@ export const MORE_FEATURES: HomeFeature[] = [
     icon: FileText,
   },
   {
-    key: 'restaurants',
-    label: 'Restaurants',
-    description: 'Partner outlets near you',
-    href: DELIVERY_ROUTES.restaurants,
-    icon: UtensilsCrossed,
-  },
-  {
     key: 'shifts',
     label: 'Shifts',
     description: 'Book slots & attendance',
@@ -44,32 +33,11 @@ export const MORE_FEATURES: HomeFeature[] = [
     icon: CalendarClock,
   },
   {
-    key: 'hubs',
-    label: 'Hubs',
-    description: 'Check-in & cash drop',
-    href: DELIVERY_ROUTES.hubs,
-    icon: Building2,
-  },
-  {
-    key: 'heatmap',
-    label: 'Demand',
-    description: 'Nearby order heatmap',
-    href: DELIVERY_ROUTES.heatmap,
-    icon: Flame,
-  },
-  {
     key: 'incentives',
     label: 'Incentives',
     description: 'Bonuses, points & leaderboard',
     href: DELIVERY_ROUTES.incentives,
     icon: Gift,
-  },
-  {
-    key: 'performance',
-    label: 'Performance',
-    description: 'Ratings, tier, warnings & referrals',
-    href: DELIVERY_ROUTES.performance,
-    icon: Award,
   },
   {
     key: 'support',
