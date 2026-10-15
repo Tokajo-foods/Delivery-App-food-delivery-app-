@@ -6,7 +6,9 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { usePartnerDutyStatus } from '@/lib/delivery-partner/availability-hooks';
 import { isDutySwitchOn } from '@/lib/delivery-partner/availability-types';
 import { normalizeDeliveryStatus } from '@/lib/delivery-partner/api';
+import { isBackgroundTripStatus } from '@/lib/delivery-partner/background-location-policy';
 import { syncTripBackgroundLocation } from '@/lib/delivery-partner/background-location-task';
+import { ensureBatteryExemption } from '@/lib/delivery-partner/battery-guard';
 import { setForegroundOwnsLocation } from '@/lib/delivery-partner/foreground-location-owner';
 import {
   deliveryPartnerKeys,
@@ -78,6 +80,7 @@ export function usePartnerLocationSync(enabled = true) {
 
   useEffect(() => {
     void syncTripBackgroundLocation(tripStatus, shouldTrack);
+    if (shouldTrack) void ensureBatteryExemption(isBackgroundTripStatus(tripStatus));
   }, [tripStatus, shouldTrack]);
 
   useEffect(() => {
