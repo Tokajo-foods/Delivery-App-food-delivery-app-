@@ -93,12 +93,6 @@ export function usePartnerLocationSync(enabled = true) {
   }, [shouldTrack]);
 
   useEffect(() => {
-    return () => {
-      void syncTripBackgroundLocation(null, false);
-    };
-  }, []);
-
-  useEffect(() => {
     if (!shouldTrack) return;
 
     return partnerLocationTracker.subscribeSnapshot((snap) => {

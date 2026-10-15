@@ -37,14 +37,14 @@ describe('background trip status', () => {
 });
 
 describe('background sampling', () => {
-  it('waits 12s while the rider is still and 4s after a move', () => {
+  it('sends a trip fix every 4s, stopped or moving', () => {
     const previous = { latitude: 28.61, longitude: 77.21, at: 1_000_000 };
     assert.equal(
       shouldSampleFix(previous, fix({ timestamp: 1_000_000 + 3_000 })),
       false,
     );
     assert.equal(
-      shouldSampleFix(previous, fix({ timestamp: 1_000_000 + 12_000 })),
+      shouldSampleFix(previous, fix({ timestamp: 1_000_000 + 4_000 })),
       true,
     );
     assert.equal(

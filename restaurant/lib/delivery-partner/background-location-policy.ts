@@ -67,9 +67,8 @@ export function shouldSampleFix(
   const elapsed = fix.timestamp - previous.at;
   if (elapsed < 0) return true;
   if (mode === 'idle') return elapsed >= BG_IDLE_INTERVAL_MS;
-  const moved = haversineMeters(previous, fix);
-  if (moved >= BG_STATIONARY_METERS) return elapsed >= BG_MOVING_INTERVAL_MS;
-  return elapsed >= BG_STATIONARY_INTERVAL_MS;
+  // A live trip updates the customer map even when the rider is stopped at a light.
+  return elapsed >= BG_MOVING_INTERVAL_MS;
 }
 
 export function pushFix(queue: readonly QueuedFix[], fix: QueuedFix): QueuedFix[] {

@@ -30,6 +30,18 @@ import { clearRestaurantSetupFlag, clearDeliveryPartnerSetupFlag } from '@/lib/n
 import { getApiErrorCode, PartnerApiError } from '@/lib/errors';
 import { getStoredSessionCookies } from '@/lib/session-cookies';
 
+/** Logout is an explicit stop. Swiping the app away must not call this. */
+async function stopBackgroundGps(): Promise<void> {
+  try {
+    const { stopTripBackgroundLocation } = await import(
+      '@/lib/delivery-partner/background-location-task'
+    );
+    await stopTripBackgroundLocation();
+  } catch {
+    // Expo Go has no background task.
+  }
+}
+
 function throwAuth(error: unknown, fallback: string): never {
   throw new PartnerApiError(
     formatAuthError(error, fallback),
@@ -370,6 +382,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       // Clear local session even if server logout fails
     } finally {
+      await stopBackgroundGps();
       await get().clearSession();
       set({ isLoading: false });
     }
@@ -382,6 +395,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       // Clear local session even if server logout fails
     } finally {
+      await stopBackgroundGps();
       await get().clearSession();
       set({ isLoading: false });
     }
