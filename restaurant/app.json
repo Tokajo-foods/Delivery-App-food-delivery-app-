@@ -37,7 +37,7 @@
           "icon": "./assets/tokajo-logo.png",
           "color": "#7A0E22",
           "defaultChannel": "tokajo-delivery-alerts",
-          "sounds": ["./assets/sounds/order_bell.wav"]
+          "sounds": ["./assets/sounds/order_bell.wav", "./assets/sounds/incoming_call.wav"]
         }
       ],
       [
@@ -52,8 +52,19 @@
           }
         }
       ],
+      "expo-audio",
       ["@livekit/react-native-expo-plugin", { "android": { "audioType": "communication" } }],
-      "@config-plugins/react-native-webrtc"
+      "@config-plugins/react-native-webrtc",
+      [
+        "@config-plugins/react-native-callkeep",
+        {
+          "ios": {
+            "appName": "TOKAJO FOODS",
+            "supportsVideo": false,
+            "includesCallsInRecents": false
+          }
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true,
@@ -61,7 +72,8 @@
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Allow TOKAJO FOODS to use the microphone for in-app calls on an order. Your mobile number stays hidden.",
-        "UIBackgroundModes": ["location"]
+        "UIBackgroundModes": ["location", "audio", "voip", "remote-notification"],
+        "NSUserNotificationsUsageDescription": "TOKAJO FOODS uses notifications for incoming order calls even when the app is closed."
       }
     },
     "android": {
@@ -84,6 +96,10 @@
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.BLUETOOTH_CONNECT",
         "android.permission.WAKE_LOCK",
+        "android.permission.USE_FULL_SCREEN_INTENT",
+        "android.permission.MANAGE_OWN_CALLS",
+        "android.permission.FOREGROUND_SERVICE_PHONE_CALL",
+        "android.permission.READ_PHONE_STATE",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ]

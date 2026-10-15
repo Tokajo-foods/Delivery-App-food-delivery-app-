@@ -44,6 +44,11 @@ export type InternetCallSession = {
   state: string;
   callerRole: string;
   calleeRole: string;
+  callerName?: string | null;
+  callerLogoUrl?: string | null;
+  calleeName?: string | null;
+  calleeLogoUrl?: string | null;
+  orderNumber?: string | null;
   roomName?: string | null;
   livekitUrl?: string | null;
   token?: string | null;

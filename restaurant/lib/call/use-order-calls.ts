@@ -3,15 +3,17 @@ import { Linking } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { callErrorMessage, getOrderMasks, recordAttempt } from '@/lib/call/api';
+import { startOutgoingCall } from '@/lib/call/call-engine';
+import { useCallStore } from '@/lib/call/call-store';
 import { listenOrderCallEvents } from '@/lib/call/listen';
 import { buildCallRows } from '@/lib/call/rows';
 import { DISCLOSURE, pairKeyFor, type CallRole, type ViewerKind } from '@/lib/call/types';
-import { useLiveCall } from '@/lib/call/use-live-call';
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }
 
+/** Order call buttons stay here. The full-screen WhatsApp UI lives in CallHost. */
 export function useOrderCalls(orderId: string, viewer: ViewerKind) {
   const queryClient = useQueryClient();
   const query = useQuery({
@@ -23,7 +25,8 @@ export function useOrderCalls(orderId: string, viewer: ViewerKind) {
   const [notice, setNotice] = useState<string | null>(null);
   const [dialBusy, setDialBusy] = useState<string | null>(null);
   const rows = useMemo(() => buildCallRows(query.data, viewer), [query.data, viewer]);
-  const voice = useLiveCall(orderId, viewer, query.data?.live, setNotice);
+  const engineBusy = useCallStore((s) => s.busy);
+  const engineNotice = useCallStore((s) => s.notice);
 
   useEffect(() => {
     if (!orderId) return undefined;
@@ -57,20 +60,25 @@ export function useOrderCalls(orderId: string, viewer: ViewerKind) {
     }
   }
 
+  async function startInternet(role: CallRole, fallbackName?: string) {
+    setNotice(null);
+    await startOutgoingCall(orderId, role, fallbackName);
+  }
+
   return {
     disclosure: query.data?.disclosure || DISCLOSURE,
     rows,
     loading: query.isLoading,
     loadError: query.error ? callErrorMessage(query.error) : null,
-    notice,
-    busy: dialBusy || voice.busy,
-    live: voice.live,
-    muted: voice.muted,
+    notice: notice || engineNotice,
+    busy: dialBusy || engineBusy,
+    live: null,
+    muted: false,
     dial,
-    startInternet: voice.startInternet,
-    accept: voice.accept,
-    decline: voice.decline,
-    hangup: voice.hangup,
-    toggleMute: voice.toggleMute,
+    startInternet,
+    accept: async () => undefined,
+    decline: async () => undefined,
+    hangup: async () => undefined,
+    toggleMute: async () => undefined,
   };
 }

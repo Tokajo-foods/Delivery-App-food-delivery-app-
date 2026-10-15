@@ -8,6 +8,7 @@ import { KitchenConfigGate } from '@/components/dashboard/KitchenConfigGate';
 import { KitchenPushSync } from '@/components/dashboard/KitchenPushSync';
 import { KitchenInboxSync } from '@/components/dashboard/KitchenInboxSync';
 import { KitchenNewOrderAlerts } from '@/components/dashboard/KitchenNewOrderAlerts';
+import { CallHost } from '@/components/call/CallHost';
 import { RiderLiveSync } from '@/components/delivery/RiderLiveSync';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
 import {
@@ -261,9 +262,15 @@ export default function AppLayout() {
           <KitchenPushSync />
           <KitchenInboxSync />
           <KitchenNewOrderAlerts />
+          <CallHost viewer="restaurant" />
         </>
       ) : null}
-      {gate === 'ready' && effectiveRole === 'delivery' ? <RiderLiveSync /> : null}
+      {gate === 'ready' && effectiveRole === 'delivery' ? (
+        <>
+          <RiderLiveSync />
+          <CallHost viewer="rider" />
+        </>
+      ) : null}
       <Stack
         screenOptions={{
           headerShown: false,

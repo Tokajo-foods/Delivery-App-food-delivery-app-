@@ -41,7 +41,7 @@ export function KitchenCustomerCard({
     Alert.alert(customerName, 'Choose how to call', [
       {
         text: 'Internet call',
-        onPress: () => void calls.startInternet('customer'),
+        onPress: () => void calls.startInternet('customer', customerName),
       },
       {
         text: 'Normal call',

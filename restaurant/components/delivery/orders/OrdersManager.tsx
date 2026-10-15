@@ -1108,7 +1108,10 @@ function DeliveryCard({
         }}
         onInternet={() => {
           if (!callPeer) return;
-          void calls.startInternet(callPeer);
+          void calls.startInternet(
+            callPeer,
+            callPeer === 'restaurant' ? stops.restaurantName : namedCustomer || 'Customer',
+          );
           setCallPeer(null);
         }}
       />
