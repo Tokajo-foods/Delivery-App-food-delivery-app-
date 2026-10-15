@@ -1,16 +1,16 @@
-import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { CodRemitSheet } from '@/components/delivery/shared/CodRemitSheet';
 import { fonts } from '@/constants/typography';
 import { formatCurrency } from '@/lib/delivery-partner/analytics-api';
 import { useCodLimitStatus } from '@/lib/delivery-partner/finance-hooks';
 import { useDeliveryPartnerMe } from '@/lib/delivery-partner/hooks';
-import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
 import { getApiErrorCode } from '@/lib/errors';
 
 /** Live COD cap from GET /partners/me/cod/limit-status */
 export function CodLimitBanner() {
-  const router = useRouter();
+  const [showRemit, setShowRemit] = useState(false);
   const me = useDeliveryPartnerMe(true);
   const ready = Boolean(me.data?.id) && !me.isError;
   const query = useCodLimitStatus(ready);
@@ -56,13 +56,10 @@ export function CodLimitBanner() {
   return (
     <View style={[styles.bar, blocked ? styles.barBlocked : styles.barWarn]}>
       <Text style={styles.text}>{copy}</Text>
-      <Pressable
-        onPress={() => router.push(DELIVERY_ROUTES.earnings)}
-        hitSlop={8}
-        style={styles.cta}
-      >
-        <Text style={styles.ctaText}>{blocked ? 'Remit' : 'Details'}</Text>
+      <Pressable onPress={() => setShowRemit(true)} hitSlop={8} style={styles.cta}>
+        <Text style={styles.ctaText}>Remit</Text>
       </Pressable>
+      <CodRemitSheet visible={showRemit} onClose={() => setShowRemit(false)} />
     </View>
   );
 }
