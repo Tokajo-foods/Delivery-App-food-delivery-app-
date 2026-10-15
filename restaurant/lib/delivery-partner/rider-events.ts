@@ -20,7 +20,6 @@ import {
 } from '@/lib/delivery-partner/offer-store';
 import { resolveOfferEarnings, formatInr } from '@/lib/delivery-partner/offer-earnings';
 import type { RiderGatewayEvent } from '@/lib/delivery-partner/rider-gateway-types';
-import { partnerTrackingKeys } from '@/lib/delivery-partner/tracking-hooks';
 import { presentDeviceNotification, RIDER_OFFER_CHANNEL_ID } from '@/lib/notification/device-alerts';
 import { notificationKeys } from '@/lib/notification/hooks';
 
@@ -48,6 +47,13 @@ function pickNumber(record: Record<string, unknown>, keys: string[]) {
 
 function invalidate(queryClient: QueryClient, queryKey: readonly unknown[]) {
   void queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
+}
+
+/** Refresh the open trip only. Do not refetch earnings, heatmap, or history. */
+function refreshOpenTrip(queryClient: QueryClient, deliveryId?: string) {
+  invalidate(queryClient, deliveryPartnerKeys.active());
+  invalidate(queryClient, deliveryPartnerKeys.actives());
+  if (deliveryId) invalidate(queryClient, deliveryPartnerKeys.delivery(deliveryId));
 }
 
 function cancelCopy(reason?: string) {
@@ -125,8 +131,7 @@ export function applyRiderSocketEvent(
           { channelId: RIDER_OFFER_CHANNEL_ID }
         );
       }
-      invalidate(queryClient, deliveryPartnerKeys.active());
-      invalidate(queryClient, deliveryPartnerKeys.all);
+      refreshOpenTrip(queryClient, offer?.deliveryId);
       break;
     }
     case 'delivery:assignment-expiring': {
@@ -152,26 +157,21 @@ export function applyRiderSocketEvent(
         body: message || cancelCopy(reason),
         tone: 'warn',
       });
-      invalidate(queryClient, deliveryPartnerKeys.active());
-      invalidate(queryClient, deliveryPartnerKeys.all);
+      refreshOpenTrip(queryClient, deliveryId);
       invalidate(queryClient, partnerAvailabilityKeys.status());
       break;
     }
     case 'delivery:assigned': {
       const deliveryId = pickString(record, ['deliveryId', 'id']);
       clearIncomingOffer(deliveryId);
-      invalidate(queryClient, deliveryPartnerKeys.active());
-      invalidate(queryClient, deliveryPartnerKeys.all);
+      refreshOpenTrip(queryClient, deliveryId);
       invalidate(queryClient, partnerAvailabilityKeys.status());
-      invalidate(queryClient, partnerTrackingKeys.all);
       break;
     }
     case 'delivery:updated':
     case 'delivery:status':
-      invalidate(queryClient, deliveryPartnerKeys.active());
-      invalidate(queryClient, deliveryPartnerKeys.all);
+      refreshOpenTrip(queryClient, pickString(record, ['deliveryId', 'id']));
       invalidate(queryClient, partnerAvailabilityKeys.status());
-      invalidate(queryClient, partnerTrackingKeys.all);
       break;
     case 'notification:new': {
       const title = pickString(record, ['title']) ?? 'TOKAJO';
@@ -203,7 +203,6 @@ export function applyRiderSocketEvent(
       invalidate(queryClient, notificationKeys.all);
       if (isKyc) {
         invalidate(queryClient, deliveryPartnerKeys.me());
-        invalidate(queryClient, deliveryPartnerKeys.all);
       }
       break;
     }

@@ -2,7 +2,6 @@ import * as Location from 'expo-location';
 import { useEffect, useRef } from 'react';
 import { Alert, AppState } from 'react-native';
 
-import { deliveryPartnerApi } from '@/lib/delivery-partner/api';
 import { useDeliveryOrderMutations } from '@/lib/delivery-partner/hooks';
 import {
   askToEnableLocation,
@@ -51,7 +50,7 @@ export function useAutoLivePlace(enabled: boolean, isOnline: boolean) {
     let applying = false;
     let refreshing = false;
 
-    const applyCoords = async (latitude: number, longitude: number, accuracy?: number | null) => {
+    const applyCoords = async (latitude: number, longitude: number) => {
       if (applying) return;
       applying = true;
       try {
@@ -64,16 +63,7 @@ export function useAutoLivePlace(enabled: boolean, isOnline: boolean) {
           locating: false,
           servicesOn: true,
         });
-        try {
-          await deliveryPartnerApi.pushLocation({
-            latitude,
-            longitude,
-            accuracy: accuracy ?? undefined,
-            timestamp: Date.now(),
-          });
-        } catch {
-          // header still shows the Google place
-        }
+        // Server GPS is owned by partnerLocationTracker. This hook only labels the header.
       } finally {
         applying = false;
       }
@@ -93,21 +83,17 @@ export function useAutoLivePlace(enabled: boolean, isOnline: boolean) {
           });
           return;
         }
-        await applyCoords(read.latitude, read.longitude, read.accuracy);
+        await applyCoords(read.latitude, read.longitude);
         if (!alive || watch) return;
         watch = await Location.watchPositionAsync(
           {
-            accuracy: Location.Accuracy.BestForNavigation,
-            distanceInterval: 20,
-            timeInterval: 8000,
+            accuracy: Location.Accuracy.Balanced,
+            distanceInterval: 40,
+            timeInterval: 15000,
             mayShowUserSettingsDialog: false,
           },
           (pos) => {
-            void applyCoords(
-              pos.coords.latitude,
-              pos.coords.longitude,
-              pos.coords.accuracy
-            );
+            void applyCoords(pos.coords.latitude, pos.coords.longitude);
           }
         );
       } finally {

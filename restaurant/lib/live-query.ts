@@ -67,19 +67,19 @@ export const LIVE_INTERVALS = {
   settings: 90_000,
   duty: 20_000,
   /** Delivery partner portal — longer intervals to stay under gateway budgets */
-  deliveryActive: 12_000,
+  deliveryActive: 20_000,
   deliveryMe: 45_000,
   deliveryHistory: 60_000,
   deliveryAnalytics: 90_000,
   deliveryEarnings: 60_000,
   deliveryRestaurants: 60_000,
   deliverySupport: 90_000,
-  deliveryStatus: 15_000,
+  deliveryStatus: 30_000,
   deliveryShifts: 60_000,
   deliveryAttendance: 90_000,
   deliveryHubs: 30_000,
-  deliveryHeatmap: 30_000,
-  deliveryTracking: 8_000,
+  deliveryHeatmap: 60_000,
+  deliveryTracking: 20_000,
   deliveryHistoryTrail: 30_000,
 } as const;
 

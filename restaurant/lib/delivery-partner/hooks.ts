@@ -143,7 +143,7 @@ export function useDeliveryDetail(
 ) {
   const id = deliveryId?.trim() ?? '';
   const isActive = useAppIsActive();
-  const intervalMs = options?.intervalMs ?? 4_000;
+  const intervalMs = options?.intervalMs ?? 12_000;
   return useQuery({
     queryKey: deliveryPartnerKeys.delivery(id),
     queryFn: () => deliveryPartnerApi.getDelivery(id),
@@ -250,7 +250,7 @@ export function useTripChat(deliveryId?: string, enabled = true) {
     enabled: enabled && Boolean(id),
     staleTime: 4_000,
     gcTime: 5 * 60_000,
-    refetchInterval: liveRefetchInterval(8_000, isActive),
+    refetchInterval: liveRefetchInterval(20_000, isActive),
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     retry: keepRetrying,
@@ -429,16 +429,7 @@ export function useDeliveryOrderMutations() {
       }),
       queryClient.invalidateQueries({ queryKey: deliveryPartnerKeys.me() }),
       queryClient.invalidateQueries({
-        queryKey: [...deliveryPartnerKeys.all, 'analytics'],
-      }),
-      queryClient.invalidateQueries({
-        queryKey: [...deliveryPartnerKeys.all, 'availability'],
-      }),
-      queryClient.invalidateQueries({
-        queryKey: [...deliveryPartnerKeys.all, 'tracking'],
-      }),
-      queryClient.invalidateQueries({
-        queryKey: [...deliveryPartnerKeys.all, 'finance'],
+        queryKey: [...deliveryPartnerKeys.all, 'availability', 'status'],
       }),
     ]);
   };
@@ -456,6 +447,14 @@ export function useDeliveryOrderMutations() {
       queryClient.setQueryData(deliveryPartnerKeys.active(), null);
       if (status === 'returned') {
         announceOrderReturned(delivery.id, delivery.rtoFee);
+      }
+      if (status === 'delivered' || status === 'returned') {
+        void queryClient.invalidateQueries({
+          queryKey: [...deliveryPartnerKeys.all, 'analytics'],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: [...deliveryPartnerKeys.all, 'finance'],
+        });
       }
     } else if (delivery.id) {
       queryClient.setQueryData(deliveryPartnerKeys.active(), delivery);

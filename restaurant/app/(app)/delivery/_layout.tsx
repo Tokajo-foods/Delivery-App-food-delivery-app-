@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import { DeliveryLiveSync } from '@/components/delivery/DeliveryLiveSync';
 import { RiderPlaceSync } from '@/components/delivery/RiderPlaceSync';
 import { PlatformPushSync } from '@/components/delivery/profile/PlatformPushSync';
-import { usePartnerLocationSync } from '@/lib/delivery-partner/use-partner-location-sync';
 import { useDeliveryNotificationSync } from '@/lib/notification/use-notification-sync';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -19,7 +18,6 @@ export default function DeliveryLayout() {
   const isDelivery = isHydrated && role === 'delivery';
 
   useDeliveryNotificationSync(isDelivery);
-  usePartnerLocationSync(isDelivery);
 
   useEffect(() => {
     if (!isHydrated) return;
