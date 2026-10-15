@@ -4,6 +4,7 @@ import type { OwnerOrder } from '@/lib/dashboard/types';
 import { notificationKeys } from '@/lib/notification/hooks';
 import { restaurantOrderKeys, syncDashboardFromOrders } from '@/lib/order/hooks';
 import type { KitchenKdsBoard } from '@/lib/order/owner-api';
+import { earningsKeys } from '@/lib/restaurant/earnings-keys';
 
 export type KitchenInboundEvent =
   | 'kitchen:order-new'
@@ -127,6 +128,17 @@ function patchList(
   );
 }
 
+/** Wallet credit lands shortly after the status sync, so refetch once more after a beat. */
+function refreshEarnings(queryClient: QueryClient, restaurantId: string) {
+  const invalidate = () =>
+    void queryClient.invalidateQueries({
+      queryKey: earningsKeys.restaurant(restaurantId),
+      refetchType: 'active',
+    });
+  invalidate();
+  setTimeout(invalidate, 3_000);
+}
+
 /** Apply a kitchen socket payload to the live board + ticket cache. */
 export function applyKitchenSocketEvent(
   queryClient: QueryClient,
@@ -184,12 +196,18 @@ export function applyKitchenSocketEvent(
       queryKey: restaurantOrderKeys.restaurant(restaurantId),
       refetchType: 'active',
     });
+    if (mapped.status === 'delivered' || mapped.status === 'cancelled') {
+      refreshEarnings(queryClient, restaurantId);
+    }
     return;
   }
 
   if (event === 'delivery:status') {
     if (!orderId) return;
     const tripStatus = pickString(record, ['status', 'deliveryStatus']);
+    if (tripStatus === 'delivered' || tripStatus === 'returned') {
+      refreshEarnings(queryClient, restaurantId);
+    }
     if (tripStatus) {
       patchList(queryClient, restaurantId, orderId, {
         deliveryTripStatus: tripStatus,

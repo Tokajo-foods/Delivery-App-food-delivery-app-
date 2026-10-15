@@ -17,6 +17,7 @@ import {
   Store,
   UserRound,
   Users,
+  Wallet,
   type LucideIcon,
 } from 'lucide-react-native';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -177,6 +178,14 @@ export default function AdminScreen() {
       accent: '#0F172A',
       soft: '#F8F9FA',
       onPress: () => router.push('/reviews'),
+    },
+    {
+      label: 'Earnings & passbook',
+      hint: 'Today, week, month and every order credit',
+      icon: Wallet,
+      accent: '#0F172A',
+      soft: '#F8F9FA',
+      onPress: () => router.push('/earnings'),
     },
     {
       label: 'Payouts & invoices',

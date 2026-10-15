@@ -1,4 +1,5 @@
-import { BarChart3, MessageSquareQuote, Tag } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { BarChart3, MessageSquareQuote, Tag, Wallet } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { authTheme } from '@/constants/auth-theme';
@@ -36,6 +37,12 @@ const ACTIONS = [
     hint: () => undefined,
     icon: BarChart3,
   },
+  {
+    key: 'earnings',
+    label: 'Earnings',
+    hint: () => undefined,
+    icon: Wallet,
+  },
 ] as const;
 
 export function QuickActionsGrid({
@@ -44,10 +51,12 @@ export function QuickActionsGrid({
   onAnalyticsPress,
   onReviewsPress,
 }: Props) {
+  const router = useRouter();
   const handlers: Record<string, (() => void) | undefined> = {
     promos: onPromosPress,
     analytics: onAnalyticsPress,
     reviews: onReviewsPress,
+    earnings: () => router.push('/earnings'),
   };
 
   return (
@@ -113,7 +122,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cellPress: {
-    width: '33.333%',
+    width: '25%',
   },
   cell: {
     alignItems: 'center',
