@@ -421,17 +421,27 @@ class PartnerLocationTracker {
     });
   }
 
+  private watchAgeMs() {
+    const ts = this.latest?.timestamp;
+    if (!ts || !Number.isFinite(ts)) return Number.POSITIVE_INFINITY;
+    return Date.now() - ts;
+  }
+
   private async pingNow() {
     if (!this.running || this.pingInFlight) return;
+    const started = Date.now();
+    const onTrip = this.snapshot.onDelivery;
     if (isGloballyBackingOff()) {
-      this.schedulePing(this.snapshot.nextPingAfterMs || IDLE_PING_MS);
+      this.schedulePing(onTrip ? TRIP_PING_MS : IDLE_PING_MS);
       return;
     }
 
-    await this.refreshDeviceGps();
+    if (!onTrip || this.watchAgeMs() > 3_000) {
+      await this.refreshDeviceGps();
+    }
     const coords = this.latest;
     if (!coords || !isValidCoords(coords)) {
-      this.schedulePing(this.snapshot.nextPingAfterMs || IDLE_PING_MS);
+      this.schedulePing(onTrip ? TRIP_PING_MS : this.snapshot.nextPingAfterMs || IDLE_PING_MS);
       return;
     }
 
@@ -439,11 +449,13 @@ class PartnerLocationTracker {
     try {
       const result = await partnerTrackingApi.pushLocation(coords);
       this.applyPing(result);
-      this.schedulePing(result.nextPingAfterMs || IDLE_PING_MS);
+      const tripNow = Boolean(result.activeDeliveryId) || onTrip;
+      const target = tripNow ? TRIP_PING_MS : result.nextPingAfterMs || IDLE_PING_MS;
+      this.schedulePing(Math.max(500, target - (Date.now() - started)));
     } catch (error) {
       this.applyError(error);
-      const fallback = this.snapshot.onDelivery ? TRIP_PING_MS : IDLE_PING_MS;
-      this.schedulePing(fallback);
+      const fallback = onTrip ? TRIP_PING_MS : IDLE_PING_MS;
+      this.schedulePing(Math.max(500, fallback - (Date.now() - started)));
     } finally {
       this.pingInFlight = false;
     }
