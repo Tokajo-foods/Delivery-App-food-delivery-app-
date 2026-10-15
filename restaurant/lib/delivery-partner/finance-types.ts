@@ -46,6 +46,13 @@ export type WalletTransaction = {
   remittanceId?: string;
   note?: string;
   createdAt?: string;
+  /** Trip credits: normal drop or return to restaurant (customer unreachable). */
+  tripKind?: 'delivery' | 'return' | string;
+  breakdown?: { base: number; incentive: number; tip: number };
+  distanceKm?: number;
+  paymentMethod?: string;
+  orderNumber?: string;
+  restaurantName?: string;
 };
 
 export type WalletTransactionsResult = {
@@ -256,6 +263,7 @@ export function walletTxnLabel(type?: string) {
   if (key === 'cod_adjust') return 'COD adjustment';
   if (key === 'incentive_credit') return 'Incentive';
   if (key === 'referral_credit') return 'Referral bonus';
+  if (key === 'earnings_adjust') return 'Earnings adjustment';
   return key ? key.replace(/_/g, ' ') : 'Ledger';
 }
 

@@ -2,17 +2,8 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { earningsPageStyles as styles } from '@/components/delivery/earnings/earnings-page-styles';
 import { formatCurrency } from '@/lib/delivery-partner/analytics-api';
-import type { CodPending, CodRemittance, PartnerPayout, WalletTransaction } from '@/lib/delivery-partner/finance-types';
-import { eligibilityReasonCopy, payoutStatusLabel, walletTxnLabel } from '@/lib/delivery-partner/finance-types';
-
-const TXN_TYPES = [
-  { key: '', label: 'All' },
-  { key: 'delivery_credit', label: 'Trips' },
-  { key: 'payout_debit', label: 'Payouts' },
-  { key: 'cod_collect', label: 'COD in' },
-  { key: 'cod_remit', label: 'Remits' },
-  { key: 'incentive_credit', label: 'Bonus' },
-];
+import type { CodPending, CodRemittance, PartnerPayout } from '@/lib/delivery-partner/finance-types';
+import { eligibilityReasonCopy, payoutStatusLabel } from '@/lib/delivery-partner/finance-types';
 
 function when(iso?: string | null) {
   if (!iso) return '';
@@ -56,9 +47,9 @@ export function EarningsCodPanel({
   return (
     <View style={styles.card}>
       <View style={styles.cardHead}>
-        <Text style={styles.cardTitle}>Cash due</Text>
+        <Text style={styles.cardTitle}>Cash in hand</Text>
         <Pressable onPress={onRemit}>
-          <Text style={styles.link}>Remit</Text>
+          <Text style={styles.link}>Deposit</Text>
         </Pressable>
       </View>
       {pendingError ? (
@@ -76,24 +67,24 @@ export function EarningsCodPanel({
           </Text>
           <Text style={styles.muted}>
             Today {formatCurrency(pending?.todayCollected ?? 0, currency)} ·{' '}
-            {pending?.todayCount ?? 0} trips · remitted{' '}
+            {pending?.todayCount ?? 0} COD orders · deposited{' '}
             {formatCurrency(pending?.remittedLifetime ?? 0, currency)}
           </Text>
           {pending?.blocked ? (
             <Text style={[styles.muted, styles.negative]}>
-              New COD orders stay blocked until you remit.
+              New cash orders stay blocked until you deposit.
             </Text>
           ) : null}
         </>
       )}
-      <Text style={styles.cardTitle}>Remittance history</Text>
+      <Text style={styles.cardTitle}>Deposit history</Text>
       {loading ? <ActivityIndicator color="#EA4B14" /> : null}
       {error ? (
         <Pressable onPress={onRetry}>
           <Text style={styles.muted}>{error}</Text>
         </Pressable>
       ) : !rows.length && !loading ? (
-        <Text style={styles.empty}>No remittances yet.</Text>
+        <Text style={styles.empty}>No deposits yet.</Text>
       ) : (
         rows.map((row) => (
           <View key={row.remittanceId} style={styles.row}>
@@ -214,78 +205,5 @@ export function EarningsPayoutsPanel({
         ) : null}
       </View>
     </>
-  );
-}
-
-export function EarningsLedgerPanel({
-  txnType,
-  onType,
-  rows,
-  loading,
-  error,
-  onRetry,
-  hasNext,
-  loadingMore,
-  onMore,
-}: {
-  txnType: string;
-  onType: (key: string) => void;
-  rows: WalletTransaction[];
-  loading: boolean;
-  error: string | null;
-  onRetry: () => void;
-  hasNext: boolean;
-  loadingMore: boolean;
-  onMore: () => void;
-}) {
-  return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>Ledger</Text>
-      <View style={styles.chips}>
-        {TXN_TYPES.map((item) => {
-          const on = txnType === item.key;
-          return (
-            <Pressable
-              key={item.key || 'all'}
-              onPress={() => onType(item.key)}
-              style={[styles.chip, on && styles.chipOn]}
-            >
-              <Text style={[styles.chipText, on && styles.chipTextOn]}>{item.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-      {loading ? <ActivityIndicator color="#EA4B14" /> : null}
-      {error ? (
-        <Pressable onPress={onRetry}>
-          <Text style={styles.muted}>{error}</Text>
-        </Pressable>
-      ) : !rows.length && !loading ? (
-        <Text style={styles.empty}>No ledger rows.</Text>
-      ) : (
-        rows.map((row) => {
-          const debit = (row.direction ?? '').toLowerCase() === 'debit';
-          return (
-            <View key={row.id} style={styles.row}>
-              <View style={styles.rowTop}>
-                <Text style={styles.rowTitle}>{walletTxnLabel(row.type)}</Text>
-                <Text style={[styles.rowValue, debit && styles.negative]}>
-                  {debit ? '−' : '+'}
-                  {formatCurrency(row.netAmount ?? row.amount, row.currency)}
-                </Text>
-              </View>
-              <Text style={styles.rowMeta}>
-                {[row.note, row.status, when(row.createdAt)].filter(Boolean).join(' · ')}
-              </Text>
-            </View>
-          );
-        })
-      )}
-      {hasNext ? (
-        <Pressable onPress={onMore} style={styles.retry} disabled={loadingMore}>
-          <Text style={styles.retryText}>{loadingMore ? 'Loading…' : 'Load more'}</Text>
-        </Pressable>
-      ) : null}
-    </View>
   );
 }

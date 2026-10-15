@@ -1,0 +1,76 @@
+import { StyleSheet } from 'react-native';
+
+import { authTheme } from '@/constants/auth-theme';
+import { fonts } from '@/constants/typography';
+
+export const passbookStyles = StyleSheet.create({
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#EFE6DF',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    gap: 12,
+  },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  title: { fontFamily: fonts.bold, fontSize: 17, color: '#0F172A' },
+  sub: { fontFamily: fonts.medium, fontSize: 12, color: '#64748B', marginTop: 2 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: '#F6F1ED',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  chipOn: { backgroundColor: '#FFF1E8', borderColor: '#FDBA74' },
+  chipText: { fontFamily: fonts.medium, fontSize: 12, color: '#64748B' },
+  chipTextOn: { fontFamily: fonts.bold, color: authTheme.brand },
+  segment: { flexDirection: 'row', backgroundColor: '#F4EEE9', borderRadius: 10, padding: 2 },
+  segmentBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  segmentOn: { backgroundColor: '#FFFFFF' },
+  segmentText: { fontFamily: fonts.semiBold, fontSize: 11, color: '#64748B' },
+  segmentTextOn: { color: authTheme.brand },
+
+  dayHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FAF7F5',
+    marginHorizontal: -16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  dayLabel: { fontFamily: fonts.bold, fontSize: 12, color: '#334155', letterSpacing: 0.3 },
+  daySummary: { fontFamily: fonts.semiBold, fontSize: 12, color: '#15803D' },
+
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 12 },
+  rowDivider: { borderTopWidth: 1, borderTopColor: '#F4EEE9' },
+  icon: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  copy: { flex: 1, minWidth: 0, gap: 2 },
+  rowTitle: { fontFamily: fonts.semiBold, fontSize: 14, color: '#0F172A' },
+  rowSub: { fontFamily: fonts.medium, fontSize: 12, color: '#64748B', lineHeight: 16 },
+  rowTime: { fontFamily: fonts.medium, fontSize: 11, color: '#94A3B8' },
+  amountCol: { alignItems: 'flex-end', gap: 4 },
+  amount: { fontFamily: fonts.extraBold, fontSize: 15 },
+  tag: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  tagText: { fontFamily: fonts.semiBold, fontSize: 10 },
+
+  center: { paddingVertical: 32, alignItems: 'center', gap: 8 },
+  empty: { fontFamily: fonts.medium, fontSize: 13, color: '#94A3B8', textAlign: 'center' },
+  error: { fontFamily: fonts.medium, fontSize: 13, color: '#B91C1C', textAlign: 'center' },
+  more: {
+    alignSelf: 'center',
+    marginVertical: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FDBA74',
+    backgroundColor: '#FFF7F2',
+  },
+  moreText: { fontFamily: fonts.bold, fontSize: 13, color: authTheme.brand },
+});

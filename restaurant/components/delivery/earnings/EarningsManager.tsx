@@ -1,154 +1,77 @@
-import { useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import {
-  EarningsCodPanel,
-  EarningsLedgerPanel,
-  EarningsPayoutsPanel,
-} from '@/components/delivery/earnings/EarningsRecordsPanel';
-import { EarningsWalletPanel } from '@/components/delivery/earnings/EarningsWalletPanel';
-import { earningsPageStyles as styles } from '@/components/delivery/earnings/earnings-page-styles';
 import { CodRemitSheet } from '@/components/delivery/earnings/CodRemitSheet';
+import { EarningsCodSummary } from '@/components/delivery/earnings/EarningsCodSummary';
+import { EarningsDailyCard } from '@/components/delivery/earnings/EarningsDailyCard';
+import { EarningsHeroCard } from '@/components/delivery/earnings/EarningsHeroCard';
+import { EarningsPayoutCard } from '@/components/delivery/earnings/EarningsPayoutCard';
+import { EarningsCodPanel, EarningsPayoutsPanel } from '@/components/delivery/earnings/EarningsRecordsPanel';
+import { earningsPageStyles as styles } from '@/components/delivery/earnings/earnings-page-styles';
 import { InstantPayoutSheet } from '@/components/delivery/earnings/InstantPayoutSheet';
+import { PassbookPanel } from '@/components/delivery/earnings/PassbookPanel';
 import { PayoutDetailSheet } from '@/components/delivery/earnings/PayoutDetailSheet';
+import { useEarningsData, type EarningsTab } from '@/components/delivery/earnings/use-earnings-data';
 import { DeliveryHeaderActions } from '@/components/delivery/shared/HeaderActions';
-import { PARTNER_BOTTOM_NAV_INSET } from '@/constants/auth-theme';
-import { formatCurrency, lastNDays, selectEarningsPeriod } from '@/lib/delivery-partner/analytics-api';
-import {
-  usePartnerDailyEarnings,
-  usePartnerEarnings,
-  usePartnerIncentives,
-} from '@/lib/delivery-partner/analytics-hooks';
-import type { EarningsPeriodDays, EarningsPeriodKey } from '@/lib/delivery-partner/analytics-types';
-import { usePartnerBank } from '@/lib/delivery-partner/bank-hooks';
+import { PARTNER_BOTTOM_NAV_INSET, authTheme } from '@/constants/auth-theme';
 import { isBankVerified } from '@/lib/delivery-partner/bank-types';
 import { formatFinanceError } from '@/lib/delivery-partner/finance-api';
-import {
-  useCodPending,
-  useCodRemittanceHistory,
-  useInstantPayoutEligibility,
-  usePartnerPayouts,
-  usePartnerWallet,
-  usePayoutSchedule,
-  useWalletTransactions,
-} from '@/lib/delivery-partner/finance-hooks';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
+import { dayLabel, istDayKey } from '@/lib/delivery-partner/passbook';
 
-const TABS = [
-  { key: 'wallet', label: 'Wallet' },
-  { key: 'cod', label: 'COD' },
+const TABS: { key: EarningsTab; label: string }[] = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'passbook', label: 'Passbook' },
+  { key: 'cash', label: 'COD' },
   { key: 'payouts', label: 'Payouts' },
-  { key: 'ledger', label: 'Ledger' },
-] as const;
+];
 
-type TabKey = (typeof TABS)[number]['key'];
-
-const CHART_DAYS: Record<EarningsPeriodKey, EarningsPeriodDays> = {
-  today: 7,
-  week: 7,
-  month: 30,
-  lifetime: 90,
-};
-
-function when(iso?: string | null) {
-  if (!iso) return '';
-  const ms = Date.parse(iso);
-  if (!Number.isFinite(ms)) return '';
-  return new Date(ms).toLocaleString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+function errorText(query: { isError: boolean; error: unknown; data?: unknown }, fallback: string) {
+  return query.isError && !query.data ? formatFinanceError(query.error, fallback) : null;
 }
 
 export function PartnerEarningsManager() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [period, setPeriod] = useState<EarningsPeriodKey>('today');
-  const [tab, setTab] = useState<TabKey>('wallet');
-  const [txnType, setTxnType] = useState('');
-  const [pullRefreshing, setPullRefreshing] = useState(false);
+  const [tab, setTab] = useState<EarningsTab>('overview');
+  const [refreshing, setRefreshing] = useState(false);
   const [showInstant, setShowInstant] = useState(false);
   const [showRemit, setShowRemit] = useState(false);
   const [payoutId, setPayoutId] = useState<string | null>(null);
+  const data = useEarningsData(tab);
+  const { wallet, earnings, codPending, schedule, bank, passbook } = data;
 
-  const chartDays = CHART_DAYS[period];
-  const earnings = usePartnerEarnings();
-  const daily = usePartnerDailyEarnings(chartDays);
-  const incentivesQuery = usePartnerIncentives();
-  const wallet = usePartnerWallet(true);
-  const eligibility = useInstantPayoutEligibility(true);
-  const schedule = usePayoutSchedule(true);
-  const codPending = useCodPending(true);
-  const remittances = useCodRemittanceHistory(tab === 'cod');
-  const payouts = usePartnerPayouts(tab === 'payouts');
-  const ledger = useWalletTransactions(txnType || undefined, tab === 'ledger');
-  const bankQuery = usePartnerBank(true);
-
-  const summary = earnings.data;
-  const selected = selectEarningsPeriod(summary, period);
-  const currency = wallet.data?.currency ?? summary?.currency ?? 'INR';
-  const chartPoints = useMemo(
-    () => lastNDays(daily.data?.points ?? [], Math.min(chartDays, 14)),
-    [daily.data?.points, chartDays]
-  );
-  const payable = wallet.data?.earningsBalance ?? 0;
-  const cashDue = wallet.data?.cashInHand ?? codPending.data?.cashInHand ?? 0;
-  const lifetime = wallet.data?.lifetimeEarnings ?? 0;
-  const bank = bankQuery.data;
-  const payout = summary?.payout;
+  const currency = wallet.data?.currency ?? earnings.data?.currency ?? 'INR';
+  const cashInHand = codPending.data?.cashInHand ?? wallet.data?.cashInHand ?? 0;
+  const nextPayoutIso = schedule.data?.nextPayoutAt ?? wallet.data?.nextWeeklyPayoutAt;
 
   const onRefresh = async () => {
-    setPullRefreshing(true);
+    setRefreshing(true);
     try {
-      await Promise.all([
-        earnings.refetch(),
-        daily.refetch(),
-        incentivesQuery.refetch(),
-        bankQuery.refetch(),
-        wallet.refetch(),
-        eligibility.refetch(),
-        schedule.refetch(),
-        codPending.refetch(),
-        remittances.refetch(),
-        payouts.refetch(),
-        ledger.refetch(),
-      ]);
+      await data.refetchAll();
     } finally {
-      setPullRefreshing(false);
+      setRefreshing(false);
     }
   };
 
   const openInstant = () => {
-    if (!eligibility.data?.bankVerified && !isBankVerified(bank)) {
+    if (!data.eligibility.data?.bankVerified && !isBankVerified(bank.data)) {
       router.push(DELIVERY_ROUTES.profile);
       return;
     }
     setShowInstant(true);
   };
 
-  const loading = wallet.isLoading && !wallet.data;
-  const error =
-    wallet.error && !wallet.data
-      ? formatFinanceError(wallet.error, 'Could not load wallet.')
-      : null;
+  const walletError = errorText(wallet, 'Could not load your wallet.');
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 8 }]}>
       <View style={styles.header}>
         <View style={styles.headerCopy}>
           <Text style={styles.title}>Earnings</Text>
-          <Text style={styles.sub}>Payouts and daily totals</Text>
+          <Text style={styles.sub}>Trips, cash and payouts in one place</Text>
         </View>
         <DeliveryHeaderActions onBrand hideProfile compact />
       </View>
@@ -156,11 +79,7 @@ export function PartnerEarningsManager() {
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: PARTNER_BOTTOM_NAV_INSET + 24 }]}
         refreshControl={
-          <RefreshControl
-            refreshing={pullRefreshing}
-            onRefresh={() => void onRefresh()}
-            tintColor="#EA4B14"
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} tintColor={authTheme.brand} />
         }
         showsVerticalScrollIndicator={false}
       >
@@ -168,132 +87,118 @@ export function PartnerEarningsManager() {
           {TABS.map((item) => {
             const on = tab === item.key;
             return (
-              <Pressable
-                key={item.key}
-                onPress={() => setTab(item.key)}
-                style={[styles.segmentBtn, on && styles.segmentOn]}
-              >
-                <Text style={[styles.segmentText, on && styles.segmentTextOn]}>
-                  {item.label}
-                </Text>
+              <Pressable key={item.key} onPress={() => setTab(item.key)} style={[styles.segmentBtn, on && styles.segmentOn]}>
+                <Text style={[styles.segmentText, on && styles.segmentTextOn]}>{item.label}</Text>
               </Pressable>
             );
           })}
         </View>
 
-        {loading ? (
+        {wallet.isLoading && !wallet.data ? (
           <View style={styles.center}>
-            <ActivityIndicator color="#EA4B14" />
+            <ActivityIndicator color={authTheme.brand} />
             <Text style={styles.muted}>Loading earnings…</Text>
           </View>
-        ) : error ? (
+        ) : walletError ? (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Could not load earnings</Text>
-            <Text style={styles.muted}>{error}</Text>
+            <Text style={styles.muted}>{walletError}</Text>
             <Pressable onPress={() => void onRefresh()} style={styles.retry}>
               <Text style={styles.retryText}>Retry</Text>
             </Pressable>
           </View>
-        ) : tab === 'wallet' ? (
-          <EarningsWalletPanel
+        ) : tab === 'overview' ? (
+          <>
+            <EarningsHeroCard
+              currency={currency}
+              lifetime={wallet.data?.lifetimeEarnings ?? earnings.data?.lifetime.totalEarnings ?? 0}
+              lifetimeTrips={earnings.data?.lifetime.totalDeliveries ?? 0}
+              summary={earnings.data}
+              payable={wallet.data?.earningsBalance ?? 0}
+              onWithdraw={openInstant}
+            />
+            <EarningsCodSummary
+              currency={currency}
+              pending={codPending.data}
+              cashInHand={cashInHand}
+              error={errorText(codPending, 'Could not load COD.')}
+              onRetry={() => void codPending.refetch()}
+              onDeposit={() => setShowRemit(true)}
+              onHistory={() => setTab('cash')}
+            />
+            <EarningsDailyCard
+              currency={currency}
+              range={data.dailyRange}
+              onRange={data.setDailyRange}
+              points={data.daily.data?.points ?? []}
+              loading={data.daily.isLoading && !data.daily.data}
+              error={errorText(data.daily, 'Could not load daily earnings.')}
+              onRetry={() => void data.daily.refetch()}
+            />
+            <EarningsPayoutCard
+              currency={currency}
+              bank={bank.data}
+              bankError={bank.isError}
+              nextPayout={nextPayoutIso ? dayLabel(istDayKey(nextPayoutIso)) : null}
+              scheduleNote={schedule.data?.cycle ? `${schedule.data.cycle} payout` : null}
+              incentives={data.incentives.data?.incentives ?? []}
+            />
+          </>
+        ) : tab === 'passbook' ? (
+          <PassbookPanel
             currency={currency}
-            payable={payable}
-            cashDue={cashDue}
-            lifetime={lifetime}
-            pendingPayouts={wallet.data?.pendingPayouts ?? 0}
-            settled={Math.max(0, lifetime - payable)}
-            nextDue={
-              schedule.data?.nextPayoutAt || wallet.data?.nextWeeklyPayoutAt
-                ? when(schedule.data?.nextPayoutAt ?? wallet.data?.nextWeeklyPayoutAt)
-                : 'When the hold window ends'
-            }
-            period={period}
-            onPeriod={setPeriod}
-            selected={selected}
-            chartPoints={chartPoints}
-            hasChart={chartPoints.some((point) => point.earnings > 0 || point.orders > 0)}
-            earningsError={earnings.isError && !summary ? formatFinanceError(earnings.error, 'Could not load earnings.') : null}
-            onRetryEarnings={() => void earnings.refetch()}
-            scheduleError={schedule.isError && !schedule.data ? formatFinanceError(schedule.error, 'Could not load the payout schedule.') : null}
-            onRetrySchedule={() => void schedule.refetch()}
-            scheduleLine={
-              schedule.data
-                ? `${schedule.data.weekday ?? 'Tuesday'} · next ${schedule.data.nextPayoutDate ?? (when(schedule.data.nextPayoutAt) || '—')}`
-                : null
-            }
-            feeLine={
-              schedule.data
-                ? `Instant from ${formatCurrency(schedule.data.instantMin ?? 200, currency)} · fee ${schedule.data.instantFeePercent ?? 2.5}% (min ${formatCurrency(schedule.data.instantFeeMin ?? 5, currency)}) · daily cap ${formatCurrency(schedule.data.instantDailyCap ?? 5000, currency)}`
-                : null
-            }
-            incentiveRows={incentivesQuery.data?.incentives ?? []}
-            incentivesError={incentivesQuery.isError}
-            bank={bank}
-            bankError={bankQuery.isError}
-            payout={payout}
-            hasPayout={Boolean(bank?.hasAccount || payout?.bankAccountNo || payout?.ifscCode)}
-            codBlocked={Boolean(codPending.data?.blocked || wallet.data?.cod?.blocked)}
-            codLimit={codPending.data?.limit ?? 0}
-            remitDue={Boolean(wallet.data?.cod?.remitDueToday)}
-            onWithdraw={openInstant}
-            onRemit={() => setShowRemit(true)}
-            onHistory={() => setTab('ledger')}
+            filter={data.passbookFilter}
+            onFilter={data.setPassbookFilter}
+            range={data.passbookRange}
+            onRange={data.setPassbookRange}
+            rows={passbook.data?.pages.flatMap((page) => page.items) ?? []}
+            total={passbook.data?.pages[0]?.total ?? 0}
+            loading={passbook.isLoading && !passbook.data}
+            error={passbook.isError ? formatFinanceError(passbook.error, 'Could not load the passbook.') : null}
+            onRetry={() => void passbook.refetch()}
+            hasNext={Boolean(passbook.hasNextPage)}
+            loadingMore={passbook.isFetchingNextPage}
+            onMore={() => void passbook.fetchNextPage()}
           />
-        ) : tab === 'cod' ? (
+        ) : tab === 'cash' ? (
           <EarningsCodPanel
             currency={currency}
             pending={codPending.data}
-            pendingError={codPending.isError && !codPending.data ? formatFinanceError(codPending.error, 'Could not load COD.') : null}
+            pendingError={errorText(codPending, 'Could not load COD.')}
             onRetryPending={() => void codPending.refetch()}
-            rows={remittances.data?.pages.flatMap((page) => page.items) ?? []}
-            loading={remittances.isLoading && !remittances.data}
-            error={remittances.isError ? formatFinanceError(remittances.error, 'Could not load remittances.') : null}
-            onRetry={() => void remittances.refetch()}
-            hasNext={Boolean(remittances.hasNextPage)}
-            loadingMore={remittances.isFetchingNextPage}
-            onMore={() => void remittances.fetchNextPage()}
+            rows={data.remittances.data?.pages.flatMap((page) => page.items) ?? []}
+            loading={data.remittances.isLoading && !data.remittances.data}
+            error={data.remittances.isError ? formatFinanceError(data.remittances.error, 'Could not load deposits.') : null}
+            onRetry={() => void data.remittances.refetch()}
+            hasNext={Boolean(data.remittances.hasNextPage)}
+            loadingMore={data.remittances.isFetchingNextPage}
+            onMore={() => void data.remittances.fetchNextPage()}
             onRemit={() => setShowRemit(true)}
           />
-        ) : tab === 'payouts' ? (
+        ) : (
           <EarningsPayoutsPanel
             currency={currency}
-            eligible={Boolean(eligibility.data?.eligible)}
-            maxAmount={eligibility.data?.maxAmount ?? 0}
-            reasons={eligibility.data?.reasons ?? []}
-            eligibilityError={eligibility.isError && !eligibility.data ? formatFinanceError(eligibility.error, 'Could not check eligibility.') : null}
-            onRetryEligibility={() => void eligibility.refetch()}
+            eligible={Boolean(data.eligibility.data?.eligible)}
+            maxAmount={data.eligibility.data?.maxAmount ?? 0}
+            reasons={data.eligibility.data?.reasons ?? []}
+            eligibilityError={errorText(data.eligibility, 'Could not check eligibility.')}
+            onRetryEligibility={() => void data.eligibility.refetch()}
             onWithdraw={openInstant}
-            rows={payouts.data?.pages.flatMap((page) => page.items) ?? []}
-            loading={payouts.isLoading && !payouts.data}
-            error={payouts.isError ? formatFinanceError(payouts.error, 'Could not load payouts.') : null}
-            onRetry={() => void payouts.refetch()}
-            hasNext={Boolean(payouts.hasNextPage)}
-            loadingMore={payouts.isFetchingNextPage}
-            onMore={() => void payouts.fetchNextPage()}
+            rows={data.payouts.data?.pages.flatMap((page) => page.items) ?? []}
+            loading={data.payouts.isLoading && !data.payouts.data}
+            error={data.payouts.isError ? formatFinanceError(data.payouts.error, 'Could not load payouts.') : null}
+            onRetry={() => void data.payouts.refetch()}
+            hasNext={Boolean(data.payouts.hasNextPage)}
+            loadingMore={data.payouts.isFetchingNextPage}
+            onMore={() => void data.payouts.fetchNextPage()}
             onOpen={setPayoutId}
-          />
-        ) : (
-          <EarningsLedgerPanel
-            txnType={txnType}
-            onType={setTxnType}
-            rows={ledger.data?.pages.flatMap((page) => page.items) ?? []}
-            loading={ledger.isLoading && !ledger.data}
-            error={ledger.isError ? formatFinanceError(ledger.error, 'Could not load the ledger.') : null}
-            onRetry={() => void ledger.refetch()}
-            hasNext={Boolean(ledger.hasNextPage)}
-            loadingMore={ledger.isFetchingNextPage}
-            onMore={() => void ledger.fetchNextPage()}
           />
         )}
       </ScrollView>
 
       <InstantPayoutSheet visible={showInstant} onClose={() => setShowInstant(false)} />
       <CodRemitSheet visible={showRemit} onClose={() => setShowRemit(false)} />
-      <PayoutDetailSheet
-        visible={Boolean(payoutId)}
-        payoutId={payoutId}
-        onClose={() => setPayoutId(null)}
-      />
+      <PayoutDetailSheet visible={Boolean(payoutId)} payoutId={payoutId} onClose={() => setPayoutId(null)} />
     </View>
   );
 }

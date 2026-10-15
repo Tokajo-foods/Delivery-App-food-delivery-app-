@@ -1,0 +1,115 @@
+import { StyleSheet } from 'react-native';
+
+import { authTheme } from '@/constants/auth-theme';
+import { fonts } from '@/constants/typography';
+
+const WHITE_70 = 'rgba(255,255,255,0.78)';
+
+export const overviewStyles = StyleSheet.create({
+  hero: { borderRadius: 22, padding: 18, gap: 14, overflow: 'hidden' },
+  heroKicker: { fontFamily: fonts.semiBold, fontSize: 11, color: WHITE_70, letterSpacing: 1 },
+  heroAmount: { fontFamily: fonts.extraBold, fontSize: 36, color: '#FFFFFF', letterSpacing: -0.8 },
+  heroSub: { fontFamily: fonts.medium, fontSize: 12, color: WHITE_70, marginTop: 2 },
+  heroStats: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.22)',
+    paddingTop: 12,
+  },
+  heroStat: { flex: 1, gap: 2 },
+  heroStatDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.22)', marginHorizontal: 10 },
+  heroStatLabel: { fontFamily: fonts.medium, fontSize: 11, color: WHITE_70 },
+  heroStatValue: { fontFamily: fonts.bold, fontSize: 16, color: '#FFFFFF' },
+  heroStatMeta: { fontFamily: fonts.medium, fontSize: 10, color: WHITE_70 },
+  withdrawBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingLeft: 14,
+    paddingRight: 8,
+    gap: 10,
+  },
+  withdrawLabel: { fontFamily: fonts.medium, fontSize: 11, color: WHITE_70 },
+  withdrawValue: { fontFamily: fonts.extraBold, fontSize: 18, color: '#FFFFFF' },
+  withdrawBtn: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+  },
+  withdrawBtnText: { fontFamily: fonts.bold, fontSize: 13, color: authTheme.brand },
+
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#EFE6DF',
+    padding: 16,
+    gap: 12,
+  },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  cardIcon: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  cardTitle: { flex: 1, fontFamily: fonts.bold, fontSize: 15, color: '#0F172A' },
+  cardSub: { fontFamily: fonts.medium, fontSize: 12, color: '#64748B' },
+  link: { fontFamily: fonts.bold, fontSize: 13, color: authTheme.brand },
+
+  statRow: { flexDirection: 'row', gap: 8 },
+  stat: { flex: 1, backgroundColor: '#FAF7F5', borderRadius: 14, padding: 10, gap: 2 },
+  statLabel: { fontFamily: fonts.medium, fontSize: 11, color: '#64748B' },
+  statValue: { fontFamily: fonts.bold, fontSize: 15, color: '#0F172A' },
+  statMeta: { fontFamily: fonts.medium, fontSize: 10, color: '#94A3B8' },
+
+  track: { height: 8, borderRadius: 4, backgroundColor: '#F1EAE3', overflow: 'hidden' },
+  fill: { height: '100%', borderRadius: 4 },
+  trackCaption: { flexDirection: 'row', justifyContent: 'space-between' },
+  caption: { fontFamily: fonts.medium, fontSize: 11, color: '#64748B' },
+  warn: {
+    backgroundColor: '#FFF7ED',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FDBA74',
+    padding: 10,
+  },
+  warnText: { fontFamily: fonts.medium, fontSize: 12, color: '#9A3412', lineHeight: 17 },
+
+  segment: { flexDirection: 'row', backgroundColor: '#F4EEE9', borderRadius: 10, padding: 2 },
+  segmentBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  segmentOn: { backgroundColor: '#FFFFFF' },
+  segmentText: { fontFamily: fonts.semiBold, fontSize: 11, color: '#64748B' },
+  segmentTextOn: { color: authTheme.brand },
+
+  chart: { height: 132, flexDirection: 'row', alignItems: 'flex-end', gap: 4 },
+  barCol: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%', gap: 4 },
+  bar: { width: '100%', maxWidth: 26, borderRadius: 6, minHeight: 3 },
+  barLabel: { fontFamily: fonts.medium, fontSize: 10, color: '#94A3B8' },
+  barLabelOn: { fontFamily: fonts.bold, color: authTheme.brand },
+  tooltip: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFF5F0',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  tooltipDay: { fontFamily: fonts.semiBold, fontSize: 12, color: '#0F172A' },
+  tooltipValue: { fontFamily: fonts.extraBold, fontSize: 14, color: authTheme.brand },
+
+  dayRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 11,
+    borderTopWidth: 1,
+    borderTopColor: '#F4EEE9',
+    gap: 12,
+  },
+  dayCopy: { flex: 1, gap: 2 },
+  dayTitle: { fontFamily: fonts.semiBold, fontSize: 14, color: '#0F172A' },
+  dayMeta: { fontFamily: fonts.medium, fontSize: 12, color: '#64748B' },
+  dayAmount: { fontFamily: fonts.bold, fontSize: 15, color: '#15803D' },
+  empty: { fontFamily: fonts.medium, fontSize: 13, color: '#94A3B8', paddingVertical: 6 },
+  moreBtn: { alignSelf: 'center', paddingVertical: 6, paddingHorizontal: 12 },
+});

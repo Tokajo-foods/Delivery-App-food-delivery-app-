@@ -1,23 +1,28 @@
 import axios from 'axios';
 
 import { API_BASE_URL, api, assertApiBaseUrl } from '@/lib/api';
+import {
+  mapCodLimit,
+  mapCodPending,
+  mapRemittance,
+  mapUpiQr,
+  mapUpiSettlement,
+} from '@/lib/delivery-partner/finance-cod-mappers';
+import {
+  asRecord,
+  mapEligibility,
+  mapPaged,
+  mapPayout,
+  mapSchedule,
+  mapTripEarnings,
+  mapTxn,
+  mapWallet,
+  pickString,
+} from '@/lib/delivery-partner/finance-mappers';
 import type {
-  CodLimitStatus,
-  CodPending,
   CodRemitPayload,
-  CodRemittance,
   CodRemittanceHistory,
-  CodUpiQr,
-  CodUpiSettlement,
-  InstantEligibility,
-  PartnerPayout,
   PartnerPayoutsResult,
-  PartnerWallet,
-  PayoutSchedule,
-  TripEarnings,
-  TripEarningsBreakdown,
-  WalletCodSnapshot,
-  WalletTransaction,
   WalletTransactionsResult,
 } from '@/lib/delivery-partner/finance-types';
 import { formatTripError } from '@/lib/delivery-partner/rider-ack';
@@ -27,52 +32,6 @@ import {
 } from '@/lib/errors';
 
 const ME_BASE = '/api/v1/delivery-service/partners/me';
-
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
-}
-
-function unwrap(payload: unknown): unknown {
-  const record = asRecord(payload);
-  if ('data' in record) return record.data;
-  return payload;
-}
-
-function pickString(record: Record<string, unknown>, keys: string[]) {
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'string' && value.trim()) return value.trim();
-    if (typeof value === 'number' && Number.isFinite(value)) return String(value);
-  }
-  return undefined;
-}
-
-function pickNumber(record: Record<string, unknown>, keys: string[]) {
-  for (const key of keys) {
-    const value = Number(record[key]);
-    if (Number.isFinite(value)) return value;
-  }
-  return undefined;
-}
-
-function pickBool(record: Record<string, unknown>, keys: string[]) {
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'boolean') return value;
-    if (value === 1 || value === '1' || value === 'true') return true;
-    if (value === 0 || value === '0' || value === 'false') return false;
-  }
-  return undefined;
-}
-
-function pickStringList(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => (typeof item === 'string' ? item.trim() : ''))
-    .filter(Boolean);
-}
 
 function extractErrorCode(data: unknown): string | undefined {
   const payload = asRecord(data);
@@ -137,278 +96,6 @@ async function request<T>(
     }
     throw error;
   }
-}
-
-function extractRows(data: unknown): Record<string, unknown>[] {
-  if (Array.isArray(data)) return data as Record<string, unknown>[];
-  const record = asRecord(data);
-  const nested =
-    record.items ??
-    record.transactions ??
-    record.payouts ??
-    record.remittances ??
-    record.rows ??
-    record.results;
-  return Array.isArray(nested) ? (nested as Record<string, unknown>[]) : [];
-}
-
-function mapPaged<T>(
-  payload: unknown,
-  mapItem: (row: Record<string, unknown>) => T | null
-): {
-  items: T[];
-  page: number;
-  limit: number;
-  total: number;
-  hasNext: boolean;
-} {
-  const record = asRecord(payload);
-  const data = unwrap(payload);
-  const rows = extractRows(data).length ? extractRows(data) : extractRows(payload);
-  const meta = asRecord(data);
-  const page = pickNumber(record, ['page']) ?? pickNumber(meta, ['page']) ?? 1;
-  const limit =
-    pickNumber(record, ['limit']) ?? pickNumber(meta, ['limit']) ?? rows.length;
-  const total =
-    pickNumber(record, ['total']) ??
-    pickNumber(meta, ['total']) ??
-    pickNumber(record, ['count']) ??
-    rows.length;
-  const totalPages =
-    pickNumber(record, ['totalPages']) ??
-    pickNumber(meta, ['totalPages']) ??
-    (limit > 0 ? Math.ceil(total / limit) : 1);
-  return {
-    items: rows.map(mapItem).filter((row): row is T => row != null),
-    page,
-    limit,
-    total,
-    hasNext: page < totalPages || (limit > 0 && page * limit < total),
-  };
-}
-
-function mapCodSnapshot(raw: unknown): WalletCodSnapshot | undefined {
-  const record = asRecord(raw);
-  if (!Object.keys(record).length) return undefined;
-  return {
-    cashInHand: pickNumber(record, ['cashInHand']) ?? 0,
-    limit: pickNumber(record, ['limit']) ?? 0,
-    remainingCapacity: pickNumber(record, ['remainingCapacity']) ?? 0,
-    blocked: pickBool(record, ['blocked']) ?? false,
-    remitDueToday: pickBool(record, ['remitDueToday']) ?? false,
-  };
-}
-
-function mapWallet(raw: unknown): PartnerWallet {
-  const record = asRecord(unwrap(raw));
-  return {
-    currency: pickString(record, ['currency']) ?? 'INR',
-    earningsBalance: pickNumber(record, ['earningsBalance', 'balance']) ?? 0,
-    pendingPayouts: pickNumber(record, ['pendingPayouts']) ?? 0,
-    lifetimeEarnings: pickNumber(record, ['lifetimeEarnings']) ?? 0,
-    cashInHand: pickNumber(record, ['cashInHand']) ?? 0,
-    nextWeeklyPayoutAt: pickString(record, ['nextWeeklyPayoutAt']),
-    instantEligible: pickBool(record, ['instantEligible']) ?? false,
-    cod: mapCodSnapshot(record.cod),
-  };
-}
-
-function mapTxn(row: Record<string, unknown>): WalletTransaction | null {
-  const id =
-    pickString(row, ['txnId', 'id', 'transactionId']) ??
-    pickString(row, ['deliveryId', 'payoutId', 'remittanceId']);
-  if (!id) return null;
-  const direction = pickString(row, ['direction']);
-  return {
-    id,
-    type: pickString(row, ['type']) ?? 'ledger',
-    direction,
-    amount: pickNumber(row, ['amount']) ?? 0,
-    feeAmount: pickNumber(row, ['feeAmount']),
-    netAmount: pickNumber(row, ['netAmount']),
-    currency: pickString(row, ['currency']) ?? 'INR',
-    status: pickString(row, ['status']),
-    deliveryId: pickString(row, ['deliveryId']),
-    orderId: pickString(row, ['orderId']),
-    payoutId: pickString(row, ['payoutId']),
-    remittanceId: pickString(row, ['remittanceId']),
-    note: pickString(row, ['note', 'description']),
-    createdAt: pickString(row, ['occurredAt', 'createdAt', 'at']),
-  };
-}
-
-function mapPayout(raw: unknown): PartnerPayout | null {
-  const row = asRecord(unwrap(raw));
-  const payoutId = pickString(row, ['payoutId', 'id']);
-  if (!payoutId) return null;
-  return {
-    payoutId,
-    kind: pickString(row, ['kind', 'type']) ?? 'weekly',
-    status: pickString(row, ['status']) ?? 'pending',
-    period: pickString(row, ['period']),
-    grossAmount: pickNumber(row, ['grossAmount', 'amount']) ?? 0,
-    feeAmount: pickNumber(row, ['feeAmount']) ?? 0,
-    tdsAmount: pickNumber(row, ['tdsAmount']) ?? 0,
-    netAmount: pickNumber(row, ['netAmount']) ?? 0,
-    bankAccountMasked: pickString(row, ['bankAccountMasked', 'accountMasked']),
-    ifscCode: pickString(row, ['ifscCode', 'ifsc']),
-    gatewayPayoutId: pickString(row, ['gatewayPayoutId']) ?? null,
-    failureReason: pickString(row, ['failureReason']) ?? null,
-    gatewayAvailable: pickBool(row, ['gatewayAvailable']),
-    requestedAt: pickString(row, ['requestedAt', 'createdAt']),
-    paidAt: pickString(row, ['paidAt']) ?? null,
-  };
-}
-
-function mapEligibility(raw: unknown): InstantEligibility {
-  const record = asRecord(unwrap(raw));
-  return {
-    eligible: pickBool(record, ['eligible']) ?? false,
-    reasons: pickStringList(record.reasons),
-    availableBalance: pickNumber(record, ['availableBalance']) ?? 0,
-    minAmount: pickNumber(record, ['minAmount']) ?? 200,
-    maxAmount: pickNumber(record, ['maxAmount']) ?? 0,
-    feePercent: pickNumber(record, ['feePercent']) ?? 0,
-    feeMin: pickNumber(record, ['feeMin']) ?? 0,
-    estimatedFee: pickNumber(record, ['estimatedFee']) ?? 0,
-    estimatedNet: pickNumber(record, ['estimatedNet']) ?? 0,
-    dailyRemainingAmount: pickNumber(record, ['dailyRemainingAmount']),
-    dailyRemainingCount: pickNumber(record, ['dailyRemainingCount']),
-    bankOnFile: pickBool(record, ['bankOnFile']) ?? false,
-    bankVerified: pickBool(record, ['bankVerified']) ?? false,
-    kycActive: pickBool(record, ['kycActive']) ?? false,
-    nextWeeklyPayoutAt: pickString(record, ['nextWeeklyPayoutAt']),
-  };
-}
-
-function mapSchedule(raw: unknown): PayoutSchedule {
-  const record = asRecord(unwrap(raw));
-  const instant = asRecord(record.instant);
-  const period = asRecord(record.currentPeriod);
-  return {
-    cycle: pickString(record, ['cycle']) ?? 'weekly',
-    weekday: pickString(record, ['weekday']),
-    timezone: pickString(record, ['timezone']),
-    nextPayoutDate: pickString(record, ['nextPayoutDate']),
-    nextPayoutAt: pickString(record, ['nextPayoutAt']),
-    cutoff: pickString(record, ['cutoff']),
-    currentPeriodLabel: pickString(period, ['label']),
-    instantMin: pickNumber(instant, ['minAmount']),
-    instantFeePercent: pickNumber(instant, ['feePercent']),
-    instantFeeMin: pickNumber(instant, ['feeMin']),
-    instantDailyCap: pickNumber(instant, ['dailyCapAmount']),
-    instantDailyCount: pickNumber(instant, ['dailyCapCount']),
-  };
-}
-
-function mapBreakdown(raw: unknown): TripEarningsBreakdown {
-  const record = asRecord(raw);
-  return {
-    baseFare: pickNumber(record, ['baseFare']),
-    distanceFare: pickNumber(record, ['distanceFare']),
-    surge: pickNumber(record, ['surge']),
-    waitTime: pickNumber(record, ['waitTime']),
-    tip: pickNumber(record, ['tip']),
-    incentive: pickNumber(record, ['incentive']),
-    platformFee: pickNumber(record, ['platformFee']),
-    tds: pickNumber(record, ['tds']),
-  };
-}
-
-function mapTripEarnings(raw: unknown): TripEarnings {
-  const record = asRecord(unwrap(raw));
-  return {
-    deliveryId: pickString(record, ['deliveryId', 'id']) ?? '',
-    orderId: pickString(record, ['orderId']),
-    status: pickString(record, ['status']),
-    deliveredAt: pickString(record, ['deliveredAt']),
-    actualDistanceKm: pickNumber(record, ['actualDistanceKm']),
-    waitMinutes: pickNumber(record, ['waitMinutes']),
-    currency: pickString(record, ['currency']) ?? 'INR',
-    breakdown: mapBreakdown(record.breakdown),
-    gross: pickNumber(record, ['gross']) ?? 0,
-    net: pickNumber(record, ['net']) ?? 0,
-  };
-}
-
-function mapCodPending(raw: unknown): CodPending {
-  const record = asRecord(unwrap(raw));
-  const today = asRecord(record.today);
-  return {
-    currency: pickString(record, ['currency']) ?? 'INR',
-    cashInHand: pickNumber(record, ['cashInHand']) ?? 0,
-    limit: pickNumber(record, ['limit']) ?? 0,
-    remainingCapacity: pickNumber(record, ['remainingCapacity']) ?? 0,
-    blocked: pickBool(record, ['blocked']) ?? false,
-    remitDueToday: pickBool(record, ['remitDueToday']) ?? false,
-    remittedLifetime: pickNumber(record, ['remittedLifetime']) ?? 0,
-    minRemit: pickNumber(record, ['minRemit']) ?? 1,
-    maxRemit: pickNumber(record, ['maxRemit']) ?? 0,
-    todayCollected: pickNumber(today, ['collected']),
-    todayCount: pickNumber(today, ['count']),
-  };
-}
-
-function mapCodLimit(raw: unknown): CodLimitStatus {
-  const record = asRecord(unwrap(raw));
-  return {
-    cashInHand: pickNumber(record, ['cashInHand']) ?? 0,
-    limit: pickNumber(record, ['limit']) ?? 0,
-    remainingCapacity: pickNumber(record, ['remainingCapacity']) ?? 0,
-    usedPercent: pickNumber(record, ['usedPercent']) ?? 0,
-    blocked: pickBool(record, ['blocked']) ?? false,
-    remitDueToday: pickBool(record, ['remitDueToday']) ?? false,
-    blocksNewCodOrders: pickBool(record, ['blocksNewCodOrders']) ?? false,
-    code: pickString(record, ['code']),
-    message: pickString(record, ['message']),
-  };
-}
-
-function mapRemittance(raw: unknown): CodRemittance | null {
-  const row = asRecord(unwrap(raw));
-  const remittanceId = pickString(row, ['remittanceId', 'id']);
-  if (!remittanceId) return null;
-  return {
-    remittanceId,
-    amount: pickNumber(row, ['amount']) ?? 0,
-    method: pickString(row, ['method']) ?? 'hub_cash',
-    reference: pickString(row, ['reference']),
-    note: pickString(row, ['note']),
-    status: pickString(row, ['status']) ?? 'recorded',
-    cashBefore: pickNumber(row, ['cashBefore']),
-    cashAfter: pickNumber(row, ['cashAfter']),
-    remittedAt: pickString(row, ['remittedAt', 'createdAt']),
-  };
-}
-
-function mapUpiQr(raw: unknown): CodUpiQr {
-  const record = asRecord(unwrap(raw));
-  return {
-    deliveryId: pickString(record, ['deliveryId']) ?? '',
-    orderId: pickString(record, ['orderId']),
-    amount: pickNumber(record, ['amount']) ?? 0,
-    currency: pickString(record, ['currency']) ?? 'INR',
-    upiIntent: pickString(record, ['upiIntent']),
-    qrImageUrl: pickString(record, ['qrImageUrl']) ?? null,
-    qrId: pickString(record, ['qrId']) ?? null,
-    expiresAt: pickString(record, ['expiresAt']),
-    source: pickString(record, ['source']),
-    settledVia: pickString(record, ['settledVia']) ?? null,
-  };
-}
-
-function mapUpiSettlement(raw: unknown): CodUpiSettlement {
-  const record = asRecord(unwrap(raw));
-  return {
-    deliveryId: pickString(record, ['deliveryId']) ?? '',
-    orderId: pickString(record, ['orderId']),
-    amount: pickNumber(record, ['amount']) ?? 0,
-    settledVia: pickString(record, ['settledVia']) ?? 'upi',
-    cashInHandDelta: pickNumber(record, ['cashInHandDelta']) ?? 0,
-    cashInHand: pickNumber(record, ['cashInHand']) ?? 0,
-    txnRef: pickString(record, ['txnRef']),
-    collectedAt: pickString(record, ['collectedAt']),
-  };
 }
 
 export const partnerFinanceApi = {

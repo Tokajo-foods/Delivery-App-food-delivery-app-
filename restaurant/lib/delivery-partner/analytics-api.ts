@@ -316,6 +316,8 @@ function mapDailyPoint(raw: unknown): PartnerDailyEarning | null {
     incentives: incentives ?? undefined,
     tips: tips ?? undefined,
     onlineHours: pickNumber(record, ['onlineHours', 'hoursOnline', 'activeHours']),
+    codCollected: pickNumber(record, ['codCollected']),
+    codOrders: pickNumber(record, ['codOrders']),
   };
 }
 

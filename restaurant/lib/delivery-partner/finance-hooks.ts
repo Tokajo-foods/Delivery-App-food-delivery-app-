@@ -12,8 +12,8 @@ import {
 export const partnerFinanceKeys = {
   all: [...deliveryPartnerKeys.all, 'finance'] as const,
   wallet: () => [...partnerFinanceKeys.all, 'wallet'] as const,
-  transactions: (type?: string) =>
-    [...partnerFinanceKeys.all, 'txns', type ?? 'all'] as const,
+  transactions: (type?: string, days?: number) =>
+    [...partnerFinanceKeys.all, 'txns', type ?? 'all', days ?? 30] as const,
   tripEarnings: (deliveryId: string) =>
     [...partnerFinanceKeys.all, 'trip-earnings', deliveryId] as const,
   payouts: () => [...partnerFinanceKeys.all, 'payouts'] as const,
@@ -57,14 +57,23 @@ export function usePartnerWallet(enabled = true) {
   });
 }
 
-export function useWalletTransactions(type?: string, enabled = true) {
+/** IST `YYYY-MM-DD` for `daysBack` days before today (India has no DST). */
+function istDateKeyDaysAgo(daysBack: number) {
+  const ist = Date.now() + 5.5 * 60 * 60 * 1000 - daysBack * 24 * 60 * 60 * 1000;
+  return new Date(ist).toISOString().slice(0, 10);
+}
+
+/** Passbook rows for the last `days` IST days (server default window is 30). */
+export function useWalletTransactions(type?: string, enabled = true, days = 30) {
   return useInfiniteQuery({
-    queryKey: partnerFinanceKeys.transactions(type),
+    queryKey: partnerFinanceKeys.transactions(type, days),
     queryFn: ({ pageParam }) =>
       partnerFinanceApi.getWalletTransactions({
         page: pageParam,
-        limit: 20,
+        limit: 25,
         type: type || undefined,
+        dateFrom: istDateKeyDaysAgo(days - 1),
+        dateTo: istDateKeyDaysAgo(0),
       }),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasNext ? last.page + 1 : undefined),

@@ -42,6 +42,9 @@ export type PartnerDailyEarning = {
   incentives?: number;
   tips?: number;
   onlineHours?: number;
+  /** COD cash collected in hand that day (UPI-settled excluded). */
+  codCollected?: number;
+  codOrders?: number;
 };
 
 export type PartnerPayoutAccount = {
