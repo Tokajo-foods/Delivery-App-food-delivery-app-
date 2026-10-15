@@ -14,6 +14,7 @@ import { deliveryPartnerKeys } from '@/lib/delivery-partner/hooks';
 import {
   LIVE_INTERVALS,
   liveRefetchInterval,
+  riderLiveQueryOptions,
   useAppIsActive,
 } from '@/lib/live-query';
 
@@ -50,16 +51,7 @@ export function usePartnerDutyStatus(enabled = true) {
     queryKey: partnerAvailabilityKeys.status(),
     queryFn: () => partnerAvailabilityApi.getStatus(),
     enabled,
-    staleTime: LIVE_INTERVALS.deliveryStatus / 2,
-    gcTime: 5 * 60_000,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryStatus,
-      isActive
-    ),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMount: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryStatus),
     retry: keepRetrying,
     placeholderData: (previous) => previous,
   });
@@ -72,16 +64,7 @@ export function usePartnerDutySummary(enabled = true) {
     queryKey: partnerAvailabilityKeys.dutySummary(),
     queryFn: () => partnerAvailabilityApi.getDutySummary(),
     enabled,
-    staleTime: LIVE_INTERVALS.deliveryStatus,
-    gcTime: 5 * 60_000,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryStatus,
-      isActive
-    ),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMount: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryStatus),
     retry: keepRetrying,
     placeholderData: (previous) => previous,
   });
@@ -175,16 +158,7 @@ export function usePartnerAttendance(
     queryKey: partnerAvailabilityKeys.attendance(range?.from, range?.to),
     queryFn: () => partnerAvailabilityApi.getAttendance(range),
     enabled,
-    staleTime: LIVE_INTERVALS.deliveryAttendance / 2,
-    gcTime: 5 * 60_000,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryAttendance,
-      isActive
-    ),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMount: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryAttendance),
     retry: keepRetrying,
     placeholderData: (previous) => previous,
   });
@@ -197,16 +171,7 @@ export function usePartnerAttendanceStreak(enabled = true) {
     queryKey: partnerAvailabilityKeys.streak(),
     queryFn: () => partnerAvailabilityApi.getAttendanceStreak(),
     enabled,
-    staleTime: LIVE_INTERVALS.deliveryAttendance / 2,
-    gcTime: 5 * 60_000,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryAttendance,
-      isActive
-    ),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMount: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryAttendance),
     retry: keepRetrying,
     placeholderData: (previous) => previous,
   });

@@ -4,7 +4,7 @@ import { deliveryPartnerKeys } from '@/lib/delivery-partner/hooks';
 import { getPartnerKyc } from '@/lib/delivery-partner/kyc-api';
 import {
   LIVE_INTERVALS,
-  liveRefetchInterval,
+  riderLiveQueryOptions,
   useAppIsActive,
 } from '@/lib/live-query';
 
@@ -15,7 +15,6 @@ export function usePartnerKyc(enabled = true) {
     queryKey: [...deliveryPartnerKeys.me(), 'kyc'] as const,
     queryFn: getPartnerKyc,
     enabled,
-    staleTime: LIVE_INTERVALS.deliveryMe / 2,
-    refetchInterval: liveRefetchInterval(LIVE_INTERVALS.deliveryMe, isActive),
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryMe),
   });
 }

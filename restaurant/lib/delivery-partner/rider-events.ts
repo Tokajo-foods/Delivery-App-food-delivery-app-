@@ -44,15 +44,50 @@ function pickNumber(record: Record<string, unknown>, keys: string[]) {
   return undefined;
 }
 
+const LEDGER_STATUSES = new Set([
+  'delivered',
+  'returned',
+  'cancelled',
+  'canceled',
+  'failed',
+  'reassigned',
+]);
+
 function invalidate(queryClient: QueryClient, queryKey: readonly unknown[]) {
   void queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
 }
 
-/** Refresh the open trip only. Do not refetch earnings, heatmap, or history. */
-function refreshOpenTrip(queryClient: QueryClient, deliveryId?: string) {
+/** Active trip + orders list + duty (home / orders tabs). */
+function refreshRiderTrip(queryClient: QueryClient, deliveryId?: string) {
   invalidate(queryClient, deliveryPartnerKeys.active());
   invalidate(queryClient, deliveryPartnerKeys.actives());
-  if (deliveryId) invalidate(queryClient, deliveryPartnerKeys.delivery(deliveryId));
+  invalidate(queryClient, [...deliveryPartnerKeys.all, 'deliveries']);
+  invalidate(queryClient, [...deliveryPartnerKeys.all, 'delivery']);
+  invalidate(queryClient, partnerAvailabilityKeys.status());
+  invalidate(queryClient, partnerAvailabilityKeys.dutySummary());
+  if (deliveryId) {
+    invalidate(queryClient, deliveryPartnerKeys.delivery(deliveryId));
+    invalidate(queryClient, deliveryPartnerKeys.timeline(deliveryId));
+  }
+}
+
+/** Earnings, wallet, performance, streak — same numbers across the app. */
+function refreshRiderLedger(queryClient: QueryClient) {
+  invalidate(queryClient, partnerAnalyticsKeys.all);
+  invalidate(queryClient, [...deliveryPartnerKeys.all, 'finance']);
+  invalidate(queryClient, [...deliveryPartnerKeys.all, 'performance-extra']);
+  invalidate(queryClient, partnerAvailabilityKeys.dutySummary());
+  invalidate(queryClient, partnerAvailabilityKeys.streak());
+  invalidate(queryClient, deliveryPartnerKeys.me());
+}
+
+/** Socket reconnect or first paint — refresh every rider query that is on screen. */
+export function refreshAllRiderQueries(queryClient: QueryClient) {
+  invalidate(queryClient, deliveryPartnerKeys.all);
+}
+
+function isLedgerStatus(value?: string) {
+  return Boolean(value && LEDGER_STATUSES.has(value.trim().toLowerCase()));
 }
 
 function cancelCopy(reason?: string) {
@@ -82,7 +117,7 @@ export function applyRiderSocketEvent(
         setIncomingOffer(offer);
         alertNewOffer();
       }
-      refreshOpenTrip(queryClient, offer?.deliveryId);
+      refreshRiderTrip(queryClient, offer?.deliveryId);
       break;
     }
     case 'delivery:assignment-expiring': {
@@ -108,22 +143,24 @@ export function applyRiderSocketEvent(
         body: message || cancelCopy(reason),
         tone: 'warn',
       });
-      refreshOpenTrip(queryClient, deliveryId);
-      invalidate(queryClient, partnerAvailabilityKeys.status());
+      refreshRiderTrip(queryClient, deliveryId);
+      refreshRiderLedger(queryClient);
       break;
     }
     case 'delivery:assigned': {
       const deliveryId = pickString(record, ['deliveryId', 'id']);
       clearIncomingOffer(deliveryId);
-      refreshOpenTrip(queryClient, deliveryId);
-      invalidate(queryClient, partnerAvailabilityKeys.status());
+      refreshRiderTrip(queryClient, deliveryId);
       break;
     }
     case 'delivery:updated':
-    case 'delivery:status':
-      refreshOpenTrip(queryClient, pickString(record, ['deliveryId', 'id']));
-      invalidate(queryClient, partnerAvailabilityKeys.status());
+    case 'delivery:status': {
+      const deliveryId = pickString(record, ['deliveryId', 'id']);
+      const status = pickString(record, ['status', 'deliveryStatus']);
+      refreshRiderTrip(queryClient, deliveryId);
+      if (!status || isLedgerStatus(status)) refreshRiderLedger(queryClient);
       break;
+    }
     case 'notification:new': {
       const title = pickString(record, ['title']) ?? 'TOKAJO';
       const body =
@@ -176,8 +213,8 @@ export function applyRiderSocketEvent(
             : 'Your IST ledger just updated',
         tone: 'success',
       });
-      invalidate(queryClient, partnerAnalyticsKeys.all);
-      invalidate(queryClient, [...deliveryPartnerKeys.all, 'finance']);
+      refreshRiderLedger(queryClient);
+      refreshRiderTrip(queryClient, pickString(record, ['deliveryId', 'id']));
       break;
     }
     case 'chat:new-message': {

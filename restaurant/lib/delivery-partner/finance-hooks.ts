@@ -6,6 +6,7 @@ import { deliveryPartnerKeys } from '@/lib/delivery-partner/hooks';
 import {
   LIVE_INTERVALS,
   liveRefetchInterval,
+  riderLiveQueryOptions,
   useAppIsActive,
 } from '@/lib/live-query';
 
@@ -46,13 +47,7 @@ export function usePartnerWallet(enabled = true) {
     queryKey: partnerFinanceKeys.wallet(),
     queryFn: () => partnerFinanceApi.getWallet(),
     enabled,
-    staleTime: LIVE_INTERVALS.deliveryEarnings / 2,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryEarnings,
-      isActive
-    ),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryEarnings),
     placeholderData: (previous) => previous,
   });
 }
@@ -65,6 +60,7 @@ function istDateKeyDaysAgo(daysBack: number) {
 
 /** Passbook rows for the last `days` IST days (server default window is 30). */
 export function useWalletTransactions(type?: string, enabled = true, days = 30) {
+  const isActive = useAppIsActive();
   return useInfiniteQuery({
     queryKey: partnerFinanceKeys.transactions(type, days),
     queryFn: ({ pageParam }) =>
@@ -78,8 +74,7 @@ export function useWalletTransactions(type?: string, enabled = true, days = 30) 
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasNext ? last.page + 1 : undefined),
     enabled,
-    staleTime: 20_000,
-    refetchOnWindowFocus: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryEarnings),
   });
 }
 
@@ -94,14 +89,14 @@ export function useTripEarnings(deliveryId?: string, enabled = true) {
 }
 
 export function usePartnerPayouts(enabled = true) {
+  const isActive = useAppIsActive();
   return useInfiniteQuery({
     queryKey: partnerFinanceKeys.payouts(),
     queryFn: ({ pageParam }) => partnerFinanceApi.getPayouts(pageParam, 20),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasNext ? last.page + 1 : undefined),
     enabled,
-    staleTime: 15_000,
-    refetchOnWindowFocus: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryEarnings),
   });
 }
 
@@ -130,23 +125,18 @@ export function useInstantPayoutEligibility(enabled = true) {
     queryKey: partnerFinanceKeys.eligibility(),
     queryFn: () => partnerFinanceApi.getInstantEligibility(),
     enabled,
-    staleTime: 15_000,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryEarnings,
-      isActive
-    ),
-    refetchOnWindowFocus: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryEarnings),
     placeholderData: (previous) => previous,
   });
 }
 
 export function usePayoutSchedule(enabled = true) {
+  const isActive = useAppIsActive();
   return useQuery({
     queryKey: partnerFinanceKeys.schedule(),
     queryFn: () => partnerFinanceApi.getPayoutSchedule(),
     enabled,
-    staleTime: 60_000,
-    refetchOnWindowFocus: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryEarnings),
     placeholderData: (previous) => previous,
   });
 }
@@ -157,12 +147,7 @@ export function useCodPending(enabled = true) {
     queryKey: partnerFinanceKeys.codPending(),
     queryFn: () => partnerFinanceApi.getCodPending(),
     enabled,
-    staleTime: 15_000,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryEarnings,
-      isActive
-    ),
-    refetchOnWindowFocus: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryEarnings),
     placeholderData: (previous) => previous,
   });
 }
@@ -173,17 +158,13 @@ export function useCodLimitStatus(enabled = true) {
     queryKey: partnerFinanceKeys.codLimit(),
     queryFn: () => partnerFinanceApi.getCodLimitStatus(),
     enabled,
-    staleTime: 15_000,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryStatus,
-      isActive
-    ),
-    refetchOnWindowFocus: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryStatus),
     placeholderData: (previous) => previous,
   });
 }
 
 export function useCodRemittanceHistory(enabled = true) {
+  const isActive = useAppIsActive();
   return useInfiniteQuery({
     queryKey: partnerFinanceKeys.remittances(),
     queryFn: ({ pageParam }) =>
@@ -191,8 +172,7 @@ export function useCodRemittanceHistory(enabled = true) {
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasNext ? last.page + 1 : undefined),
     enabled,
-    staleTime: 20_000,
-    refetchOnWindowFocus: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryEarnings),
   });
 }
 

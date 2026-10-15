@@ -4,7 +4,7 @@ import { partnerAnalyticsApi } from '@/lib/delivery-partner/analytics-api';
 import { deliveryPartnerKeys } from '@/lib/delivery-partner/hooks';
 import {
   LIVE_INTERVALS,
-  liveRefetchInterval,
+  riderLiveQueryOptions,
   useAppIsActive,
 } from '@/lib/live-query';
 
@@ -27,14 +27,7 @@ export function usePartnerPerformance(enabled = true) {
     queryKey: partnerAnalyticsKeys.performance(),
     queryFn: () => partnerAnalyticsApi.getPerformance(),
     enabled,
-    staleTime: LIVE_INTERVALS.deliveryAnalytics / 2,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryAnalytics,
-      isActive
-    ),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryAnalytics),
     placeholderData: (previous) => previous,
   });
 }
@@ -47,14 +40,7 @@ export function usePartnerEarnings(enabled = true) {
     queryKey: partnerAnalyticsKeys.earnings(),
     queryFn: () => partnerAnalyticsApi.getEarnings(),
     enabled,
-    staleTime: LIVE_INTERVALS.deliveryEarnings / 2,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryEarnings,
-      isActive
-    ),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryEarnings),
     placeholderData: (previous) => previous,
   });
 }
@@ -67,14 +53,7 @@ export function usePartnerDailyEarnings(days = 30, enabled = true) {
     queryKey: partnerAnalyticsKeys.dailyEarnings(days),
     queryFn: () => partnerAnalyticsApi.getDailyEarnings(days),
     enabled,
-    staleTime: LIVE_INTERVALS.deliveryEarnings / 2,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryEarnings,
-      isActive
-    ),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryEarnings),
     placeholderData: (previous) => previous,
   });
 }
@@ -92,14 +71,7 @@ export function usePartnerEarningsRange(
     queryKey: partnerAnalyticsKeys.dailyRange(from ?? '', to ?? ''),
     queryFn: () => partnerAnalyticsApi.getDailyEarningsRange(from!, to!),
     enabled: ready,
-    staleTime: LIVE_INTERVALS.deliveryEarnings / 2,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryEarnings,
-      isActive && ready
-    ),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    ...riderLiveQueryOptions(isActive && ready, LIVE_INTERVALS.deliveryEarnings),
     placeholderData: (previous) => previous,
   });
 }
@@ -112,14 +84,7 @@ export function usePartnerIncentives(enabled = true) {
     queryKey: partnerAnalyticsKeys.incentives(),
     queryFn: () => partnerAnalyticsApi.getIncentives(),
     enabled,
-    staleTime: LIVE_INTERVALS.deliveryAnalytics / 2,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryAnalytics,
-      isActive
-    ),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryAnalytics),
     placeholderData: (previous) => previous,
   });
 }

@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { applyRiderSocketEvent } from '@/lib/delivery-partner/rider-events';
+import {
+  applyRiderSocketEvent,
+  refreshAllRiderQueries,
+} from '@/lib/delivery-partner/rider-events';
 import {
   getRiderGatewayStatus,
   startRiderGateway,
@@ -31,6 +34,16 @@ export function useRiderGatewaySocket(enabled: boolean) {
     if (!enabled) return;
     return subscribeRiderGateway((event, payload) => {
       applyRiderSocketEvent(queryClient, event, payload);
+    });
+  }, [enabled, queryClient]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    let wasLive = getRiderGatewayStatus() === 'connected';
+    return subscribeRiderGatewayStatus((next) => {
+      const live = next === 'connected';
+      if (live && !wasLive) refreshAllRiderQueries(queryClient);
+      wasLive = live;
     });
   }, [enabled, queryClient]);
 }

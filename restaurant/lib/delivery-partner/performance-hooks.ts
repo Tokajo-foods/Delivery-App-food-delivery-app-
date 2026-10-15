@@ -7,7 +7,7 @@ import { partnerPerformanceApi } from '@/lib/delivery-partner/performance-api';
 import type { WarningStatus } from '@/lib/delivery-partner/performance-types';
 import {
   LIVE_INTERVALS,
-  liveRefetchInterval,
+  riderLiveQueryOptions,
   useAppIsActive,
 } from '@/lib/live-query';
 
@@ -28,15 +28,7 @@ export const partnerPerformanceKeys = {
 };
 
 function liveQuery(isActive: boolean) {
-  return {
-    staleTime: LIVE_INTERVALS.deliveryAnalytics / 2,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryAnalytics,
-      isActive
-    ),
-    refetchIntervalInBackground: false as const,
-    refetchOnWindowFocus: true,
-  };
+  return riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryAnalytics);
 }
 
 export function useAcceptanceRate(enabled = true) {

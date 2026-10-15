@@ -27,6 +27,7 @@ import { getApiErrorCode } from '@/lib/errors';
 import {
   LIVE_INTERVALS,
   liveRefetchInterval,
+  riderLiveQueryOptions,
   useAppIsActive,
 } from '@/lib/live-query';
 
@@ -74,13 +75,7 @@ export function useDeliveryPartnerMe(enabled = true) {
     queryKey: deliveryPartnerKeys.me(),
     queryFn: () => deliveryPartnerApi.getMe(),
     enabled,
-    staleTime: LIVE_INTERVALS.deliveryMe / 2,
-    gcTime: 5 * 60_000,
-    refetchInterval: liveRefetchInterval(LIVE_INTERVALS.deliveryMe, isActive),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMount: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryMe),
     retry: keepRetrying,
     placeholderData: (previous) => previous,
   });
@@ -99,13 +94,7 @@ export function useActiveDelivery(
     queryKey: deliveryPartnerKeys.active(),
     queryFn: () => deliveryPartnerApi.getActiveDelivery(),
     enabled,
-    staleTime: intervalMs / 2,
-    gcTime: 5 * 60_000,
-    refetchInterval: liveRefetchInterval(intervalMs, isActive),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMount: true,
+    ...riderLiveQueryOptions(isActive, intervalMs),
     retry: keepRetrying,
     placeholderData: (previous) => previous,
   });
@@ -124,13 +113,7 @@ export function useActiveDeliveries(
     queryKey: deliveryPartnerKeys.actives(),
     queryFn: () => deliveryPartnerApi.getActiveDeliveries(),
     enabled,
-    staleTime: intervalMs / 2,
-    gcTime: 5 * 60_000,
-    refetchInterval: liveRefetchInterval(intervalMs, isActive),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMount: true,
+    ...riderLiveQueryOptions(isActive, intervalMs),
     retry: keepRetrying,
     placeholderData: (previous) => previous,
   });
@@ -376,16 +359,7 @@ export function useDeliveryHistory(
         status: status || undefined,
       }),
     getNextPageParam: (last) => (last.hasNext ? last.page + 1 : undefined),
-    staleTime: LIVE_INTERVALS.deliveryHistory / 2,
-    gcTime: 5 * 60_000,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryHistory,
-      isActive
-    ),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMount: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryHistory),
     retry: keepRetrying,
     placeholderData: (previous) => previous,
   });

@@ -66,22 +66,35 @@ export const LIVE_INTERVALS = {
   notifications: 60_000,
   settings: 90_000,
   duty: 20_000,
-  /** Delivery partner portal — longer intervals to stay under gateway budgets */
-  deliveryActive: 20_000,
-  deliveryMe: 45_000,
-  deliveryHistory: 60_000,
-  deliveryAnalytics: 90_000,
-  deliveryEarnings: 60_000,
+  /** Delivery partner portal — short polls; sockets still drive instant updates */
+  deliveryActive: 8_000,
+  deliveryMe: 20_000,
+  deliveryHistory: 10_000,
+  deliveryAnalytics: 15_000,
+  deliveryEarnings: 10_000,
   deliveryRestaurants: 60_000,
   deliverySupport: 90_000,
-  deliveryStatus: 30_000,
+  deliveryStatus: 8_000,
   deliveryShifts: 60_000,
-  deliveryAttendance: 90_000,
+  deliveryAttendance: 15_000,
   deliveryHubs: 30_000,
   deliveryHeatmap: 60_000,
-  deliveryTracking: 20_000,
-  deliveryHistoryTrail: 30_000,
+  deliveryTracking: 8_000,
+  deliveryHistoryTrail: 20_000,
 } as const;
+
+/** Shared React Query options so rider screens stay live without pull-to-refresh. */
+export function riderLiveQueryOptions(isActive: boolean, intervalMs: number) {
+  return {
+    staleTime: 3_000,
+    gcTime: 5 * 60_000,
+    refetchInterval: liveRefetchInterval(intervalMs, isActive),
+    refetchIntervalInBackground: false as const,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMount: 'always' as const,
+  };
+}
 
 export function useAppIsActive() {
   const [isActive, setIsActive] = useState(AppState.currentState === 'active');
