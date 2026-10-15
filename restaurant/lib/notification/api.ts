@@ -11,6 +11,9 @@ import type {
 } from '@/lib/notification/types';
 
 const NOTIFICATION_SERVICE = '/api/v1/notification-service';
+const DELIVERY_SERVICE = '/api/v1/delivery-service';
+/** Rider inbox — canonical delivery-service proxy (role=delivery_partner). */
+const RIDER_INBOX = `${DELIVERY_SERVICE}/partners/me/notifications`;
 const NOTIFICATIONS_BASE = `${NOTIFICATION_SERVICE}/notifications`;
 
 type Envelope<T> = {
@@ -119,7 +122,7 @@ function mapNotification(raw: Record<string, unknown>): AppNotification {
         String(raw.status ?? '').toLowerCase() === 'read';
 
   return {
-    id: String(raw._id ?? raw.id ?? ''),
+    id: String(raw.notificationId ?? raw._id ?? raw.id ?? ''),
     title: String(raw.title ?? raw.subject ?? 'Notification'),
     body: String(
       raw.body ?? raw.message ?? raw.content ?? raw.description ?? ''
@@ -187,7 +190,7 @@ export const notificationApi = {
 
     const qs = query.toString();
     const res = await request<unknown>(
-      `${NOTIFICATIONS_BASE}${qs ? `?${qs}` : ''}`
+      `${RIDER_INBOX}${qs ? `?${qs}` : ''}`
     );
 
     const dataRecord = asRecord(res.data);
@@ -210,13 +213,15 @@ export const notificationApi = {
 
   /** GET /notifications/unread-count */
   getUnreadCount: async (): Promise<UnreadCountResult> => {
-    const res = await request<unknown>(`${NOTIFICATIONS_BASE}/unread-count`);
+    const res = await request<unknown>(
+      `${DELIVERY_SERVICE}/notifications/unread-count`
+    );
     return { count: mapUnreadCount(res.data) };
   },
 
   /** PUT /notifications/read-all */
   markAllRead: async (): Promise<void> => {
-    await request(`${NOTIFICATIONS_BASE}/read-all`, { method: 'PUT' });
+    await request(`${RIDER_INBOX}/read-all`, { method: 'PUT' });
   },
 
   /** DELETE /notifications/clear-all */
@@ -227,7 +232,7 @@ export const notificationApi = {
   /** PUT /notifications/:id/read */
   markRead: async (id: string): Promise<AppNotification | null> => {
     const res = await request<Record<string, unknown>>(
-      `${NOTIFICATIONS_BASE}/${encodeURIComponent(id)}/read`,
+      `${RIDER_INBOX}/${encodeURIComponent(id)}/read`,
       { method: 'PUT' }
     );
     if (!res.data || typeof res.data !== 'object') return null;
@@ -236,9 +241,10 @@ export const notificationApi = {
 
   /** DELETE /notifications/:id */
   deleteNotification: async (id: string): Promise<void> => {
-    await request(`${NOTIFICATIONS_BASE}/${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-    });
+    await request(
+      `${DELIVERY_SERVICE}/notifications/${encodeURIComponent(id)}`,
+      { method: 'DELETE' }
+    );
   },
 
   /** GET /health */

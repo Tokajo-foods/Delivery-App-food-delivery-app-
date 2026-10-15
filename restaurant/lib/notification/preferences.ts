@@ -63,10 +63,9 @@ export function preferenceKeyForType(
   }
   if (
     t.includes('promo') ||
-    t.includes('offer') ||
-    t.includes('deal') ||
     t.includes('campaign') ||
-    t.includes('marketing')
+    t.includes('marketing') ||
+    t === 'broadcast'
   ) {
     return 'promo';
   }

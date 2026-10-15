@@ -38,7 +38,6 @@ import {
   useUnreadNotificationCount,
 } from '@/lib/notification/hooks';
 import {
-  isNotificationAllowed,
   loadNotificationPreferences,
   saveNotificationPreferences,
 } from '@/lib/notification/preferences';
@@ -149,22 +148,17 @@ export function PartnerNotificationsManager() {
 
   const rawNotifications = listQuery.data?.notifications ?? [];
   const notifications = useMemo(() => {
-    const allowed = rawNotifications.filter((n) =>
-      isNotificationAllowed(n, prefs)
-    );
     if (filter === 'unread') {
-      return allowed.filter((n) => !n.isRead);
+      return rawNotifications.filter((n) => !n.isRead);
     }
-    return allowed;
-  }, [rawNotifications, prefs, filter]);
+    return rawNotifications;
+  }, [rawNotifications, filter]);
 
   const totalFromApi =
     listQuery.data?.meta?.total ?? rawNotifications.length;
   const unread =
     unreadCount.data ??
-    rawNotifications.filter(
-      (n) => !n.isRead && isNotificationAllowed(n, prefs)
-    ).length;
+    rawNotifications.filter((n) => !n.isRead).length;
   const statusLabel = unread > 0 ? `${unread} pending` : 'All caught up';
 
   const loading = listQuery.isLoading && !listQuery.data;
@@ -444,8 +438,8 @@ export function PartnerNotificationsManager() {
             <Text style={styles.prefsTitle}>Notification Preferences</Text>
           </View>
           <Text style={styles.prefsSubtitle}>
-            Choose what you want alerts for. Off categories stay out of the
-            inbox and the phone notification tray. Saved on this device.
+            Choose what you want phone alerts for. Every update still appears
+            in this inbox. Saved on this device.
           </Text>
 
           {!prefsReady ? (

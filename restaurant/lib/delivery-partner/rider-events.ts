@@ -20,6 +20,10 @@ import {
 } from '@/lib/delivery-partner/offer-store';
 import type { RiderGatewayEvent } from '@/lib/delivery-partner/rider-gateway-types';
 import { presentDeviceNotification } from '@/lib/notification/device-alerts';
+import {
+  bumpUnreadCount,
+  prependInboxNotification,
+} from '@/lib/notification/inbox-cache';
 import { notificationKeys } from '@/lib/notification/hooks';
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -174,20 +178,29 @@ export function applyRiderSocketEvent(
         tone: kind.includes('reject') ? 'warn' : 'info',
       });
       const notificationId = pickString(record, ['notificationId', 'id']);
+      const type = pickString(record, ['type']) ?? 'system';
+      const createdAt =
+        pickString(record, ['createdAt']) ?? new Date().toISOString();
+      if (notificationId) {
+        prependInboxNotification(queryClient, {
+          id: notificationId,
+          title,
+          body,
+          type,
+          isRead: false,
+          createdAt,
+          data,
+        });
+      }
       void presentDeviceNotification({
         id: notificationId ?? `live-${Date.now()}`,
         title,
         body,
-        type: pickString(record, ['type']) ?? 'system',
+        type,
         isRead: false,
         data,
       });
-      queryClient.setQueryData(
-        notificationKeys.unreadCount(),
-        (current: { count?: number } | undefined) => ({
-          count: Math.max(0, (current?.count ?? 0) + 1),
-        })
-      );
+      bumpUnreadCount(queryClient);
       invalidate(queryClient, notificationKeys.all);
       if (isKyc) {
         invalidate(queryClient, deliveryPartnerKeys.me());
