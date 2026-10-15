@@ -20,6 +20,7 @@ import {
 } from '@/lib/delivery-partner/api';
 import { decodeGooglePolyline } from '@/lib/delivery-partner/decode-polyline';
 import { partnerLocationTracker } from '@/lib/delivery-partner/location-tracker';
+import { useGoogleDriveRoute } from '@/lib/delivery-partner/use-google-drive-route';
 import { useOrderTrackingSocket } from '@/lib/delivery-partner/tracking-socket';
 import {
   etaLabel,
@@ -233,12 +234,12 @@ export function DeliveryTripMap({
       ? delivery.customerName || 'Customer'
       : delivery.restaurantName || 'Restaurant';
 
-  const etaSeconds =
+  const serverEtaSeconds =
     navRoute?.etaSeconds ??
     socketEta?.etaSeconds ??
     eta?.etaSeconds ??
     tracking?.etaSeconds;
-  const distanceMeters =
+  const serverDistanceMeters =
     navRoute?.distanceMeters ??
     socketEta?.distanceMeters ??
     eta?.distanceMeters ??
@@ -268,6 +269,16 @@ export function DeliveryTripMap({
       ? 'restaurant'
       : 'customer';
   const destination = destinationKind === 'restaurant' ? pickup : drop;
+  const drive = useGoogleDriveRoute(displayRider, destination);
+  const etaSeconds = drive?.etaSeconds ?? serverEtaSeconds;
+  const distanceMeters = drive?.distanceMeters ?? serverDistanceMeters;
+  const routeProvider = drive ? 'google' : provider;
+  const routeInTraffic = drive ? true : durationInTraffic;
+  const driveLine = useMemo(
+    () => decodeGooglePolyline(drive?.polyline ?? ''),
+    [drive?.polyline]
+  );
+  const drawnLine = driveLine.length >= 2 ? driveLine : polylineCoords;
   const [tracksPins, setTracksPins] = useState(true);
   useEffect(() => {
     const timer = setTimeout(() => setTracksPins(false), 700);
@@ -324,7 +335,7 @@ export function DeliveryTripMap({
   useEffect(() => {
     if (!mapRef.current) return;
     const points = [
-      ...polylineCoords,
+      ...drawnLine,
       displayRider,
       pickup,
       drop,
@@ -344,7 +355,7 @@ export function DeliveryTripMap({
       animated: true,
     });
   }, [
-    polylineCoords.length,
+    drawnLine.length,
     displayRider?.latitude,
     displayRider?.longitude,
     pickup,
@@ -443,9 +454,9 @@ export function DeliveryTripMap({
             lineDashPattern={[8, 6]}
           />
         ) : null}
-        {polylineCoords.length >= 2 ? (
+        {drawnLine.length >= 2 ? (
           <Polyline
-            coordinates={polylineCoords}
+            coordinates={drawnLine}
             strokeColor={authTheme.brand}
             strokeWidth={4}
           />
@@ -481,7 +492,7 @@ export function DeliveryTripMap({
               : ''}
           </Text>
           <Text style={styles.etaProvider}>
-            {etaLabel({ provider, durationInTraffic })}
+            {etaLabel({ provider: routeProvider, durationInTraffic: routeInTraffic })}
           </Text>
         </View>
       ) : null}

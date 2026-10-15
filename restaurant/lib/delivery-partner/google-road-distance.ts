@@ -10,6 +10,8 @@ export type GoogleRoadLeg = {
   etaMinutes: number;
   source: 'routes' | 'directions' | 'distance_matrix';
   provider: 'google';
+  /** Encoded Google driving polyline, when the Routes API returns one. */
+  polyline?: string;
 };
 
 export type RoadPoint = {
@@ -21,6 +23,7 @@ type RoutesResponse = {
   routes?: Array<{
     distanceMeters?: number;
     duration?: string;
+    polyline?: { encodedPolyline?: string };
     legs?: Array<{
       distanceMeters?: number;
       duration?: string;
@@ -132,7 +135,7 @@ async function fetchRoutesLeg(
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY,
         'X-Goog-FieldMask':
-          'routes.distanceMeters,routes.duration,routes.legs.distanceMeters,routes.legs.duration',
+          'routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline,routes.legs.distanceMeters,routes.legs.duration',
       },
       timeout: 12_000,
     }
@@ -147,12 +150,15 @@ async function fetchRoutesLeg(
     warnRoad('Routes API empty', { id, error: data.error?.message });
     return null;
   }
-  return toLeg(
+  const leg = toLeg(
     id,
     meters,
     seconds ?? (meters / 1000 / 22) * 3600,
     'routes'
   );
+  const encoded = route?.polyline?.encodedPolyline;
+  if (encoded) leg.polyline = encoded;
+  return leg;
 }
 
 async function fetchDirectionsLeg(
