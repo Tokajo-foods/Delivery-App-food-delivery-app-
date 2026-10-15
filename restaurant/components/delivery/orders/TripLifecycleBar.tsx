@@ -15,6 +15,7 @@ import { X } from 'lucide-react-native';
 import { fonts } from '@/constants/typography';
 import { OrderCallPanel } from '@/components/call/OrderCallPanel';
 import { CodUpiSheet } from '@/components/delivery/orders/CodUpiSheet';
+import { FoodProofSheet } from '@/components/delivery/orders/FoodProofSheet';
 import {
   deliveryPartnerApi,
   nextDeliveryAction,
@@ -88,7 +89,7 @@ export function tripGeofenceState(
     action === 'return_store' ||
     action === 'complete_return'
   ) {
-    const blocked = !geo.atPickup;
+    const blocked = false;
     return {
       blocked,
       hint: blocked
@@ -245,6 +246,7 @@ export function TripLifecycleBar({
   const [otp, setOtp] = useState('');
   const [checklistOk, setChecklistOk] = useState(true);
   const [pickupPhotoUri, setPickupPhotoUri] = useState<string | null>(null);
+  const [dropPhotoUri, setDropPhotoUri] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [cancelCode, setCancelCode] = useState<CancelReasonCode>(
     'vehicle_breakdown'
@@ -368,7 +370,8 @@ export function TripLifecycleBar({
     )
       .then(() => {
         setOtp('');
-        setSheet('otp');
+        setDropPhotoUri(delivery.proofPhotoUrl ?? null);
+        setSheet('deliver');
       })
       .catch(() => undefined);
 
@@ -383,11 +386,8 @@ export function TripLifecycleBar({
     const hasLocalPhoto =
       Boolean(pickupPhotoUri) && !pickupPhotoUri!.startsWith('http');
 
-    if (!code && !checklistOk) {
-      Alert.alert(
-        'Pickup check',
-        'Enter the kitchen OTP or tick all items collected.'
-      );
+    if (!/^\d{4}$/.test(code)) {
+      Alert.alert('OTP required', 'Enter the 4-digit kitchen OTP.');
       return;
     }
     if (!existingProof && !hasLocalPhoto) {
@@ -456,57 +456,57 @@ export function TripLifecycleBar({
     }
   };
 
-  const submitOtp = async () => {
+  const submitDeliver = async () => {
     const code = otp.trim();
-    if (code.length < 4) {
+    if (!/^\d{4}$/.test(code) && !delivery.otpVerified) {
       Alert.alert('OTP required', 'Enter the 4-digit customer OTP.');
       return;
     }
-    try {
-      await run('Verifying OTP…', () =>
-        mutations.verifyOtp.mutateAsync({ deliveryId: delivery.id, otp: code })
-      );
-      setSheet(null);
-      setOtp('');
-    } catch {
-      // alerted in run()
-    }
-  };
-
-  const submitDeliver = async () => {
-    const code = otp.trim();
-    const otpOk = Boolean(code) || Boolean(delivery.otpVerified);
-    const photoOk = Boolean(delivery.proofPhotoUrl?.startsWith('https://'));
-    if (!otpOk) {
+    const localDrop = Boolean(dropPhotoUri) && !dropPhotoUri!.startsWith('http');
+    if (!localDrop && !delivery.proofPhotoUrl?.startsWith('https://') && !dropPhotoUri?.startsWith('https://')) {
       Alert.alert(
-        'OTP required',
-        'Enter the customer OTP (or verify it first) to complete delivery.'
+        'Handover photo required',
+        'Take a photo of handing the food to the customer.'
       );
       return;
     }
-    if (!photoOk) {
-      Alert.alert(
-        'Delivery photo required',
-        'Take a proof-of-delivery photo before marking delivered.'
-      );
-      return;
-    }
+    setBusy('Saving handover photo…');
     try {
-      await run('Completing delivery…', () =>
-        mutations.deliver.mutateAsync({
+      let proofUrl = delivery.proofPhotoUrl?.startsWith('https://')
+        ? delivery.proofPhotoUrl
+        : dropPhotoUri?.startsWith('https://')
+          ? dropPhotoUri
+          : undefined;
+      if (localDrop && dropPhotoUri) {
+        const uploaded = await mutations.uploadPod.mutateAsync({
           deliveryId: delivery.id,
-          payload: {
-            otp: code || undefined,
-            proofUrl: delivery.proofPhotoUrl,
-            signatureUrl: delivery.signatureUrl,
-          },
-        })
-      );
+          photoUri: dropPhotoUri,
+        });
+        proofUrl = uploaded.proofPhotoUrl?.startsWith('https://')
+          ? uploaded.proofPhotoUrl
+          : proofUrl;
+      }
+      if (!proofUrl?.startsWith('https://')) {
+        Alert.alert('Handover photo required', 'Upload failed — take the photo again.');
+        return;
+      }
+      setBusy('Completing delivery…');
+      await mutations.deliver.mutateAsync({
+        deliveryId: delivery.id,
+        payload: {
+          otp: code || undefined,
+          proofUrl,
+          signatureUrl: delivery.signatureUrl,
+        },
+      });
       setSheet(null);
       setOtp('');
-      Alert.alert('Delivered', 'Order marked as delivered.');
-    } catch {
-      // alerted
+      setDropPhotoUri(null);
+      Alert.alert('Delivered', 'Food handed over. The photo is on the customer order.');
+    } catch (error) {
+      Alert.alert('Could not complete', formatTripError(error, 'Enter the customer OTP and take the handover photo.'));
+    } finally {
+      setBusy(null);
     }
   };
 
@@ -568,28 +568,6 @@ export function TripLifecycleBar({
     } catch {
       // alerted
     }
-  };
-
-  const capturePod = async (fromCamera: boolean) => {
-    const uri = await pickImage(fromCamera);
-    if (!uri) return;
-    void run('Uploading proof photo…', () =>
-      mutations.uploadPod.mutateAsync({
-        deliveryId: delivery.id,
-        photoUri: uri,
-      })
-    ).catch(() => undefined);
-  };
-
-  const captureSign = async (fromCamera: boolean) => {
-    const uri = await pickImage(fromCamera);
-    if (!uri) return;
-    void run('Uploading signature…', () =>
-      mutations.captureSignature.mutateAsync({
-        deliveryId: delivery.id,
-        uri,
-      })
-    ).catch(() => undefined);
   };
 
   const submitUnreachable = async () => {
@@ -809,9 +787,8 @@ export function TripLifecycleBar({
         <View style={styles.group}>
           <Text style={styles.proofMeta}>
             {[
-              delivery.otpVerified ? 'OTP verified' : 'OTP required',
-              delivery.proofPhotoUrl ? 'Photo added' : 'Photo required',
-              delivery.signatureUrl ? 'Signature added' : null,
+              delivery.otpVerified ? 'OTP verified' : 'Customer OTP',
+              delivery.proofPhotoUrl ? 'Handover photo saved' : 'Handover photo',
               isCodPayment(delivery.paymentMethod)
                 ? settledUpi
                   ? 'COD settled UPI'
@@ -832,62 +809,15 @@ export function TripLifecycleBar({
           ) : null}
           <Pressable
             onPress={() => {
-              setOtp('');
-              setSheet('otp');
+              setOtp(delivery.otpVerified ? otp : '');
+              setDropPhotoUri(delivery.proofPhotoUrl ?? dropPhotoUri);
+              setSheet('deliver');
             }}
-            disabled={disabled}
-            style={styles.secondary}
-          >
-            <Text style={styles.secondaryText}>
-              {delivery.otpVerified ? 'OTP verified ✓' : 'Verify drop OTP'}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => void capturePod(true)}
-            disabled={disabled}
-            style={styles.secondary}
-          >
-            <Text style={styles.secondaryText}>
-              {delivery.proofPhotoUrl ? 'Proof photo ✓' : 'Take proof photo (required)'}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => void capturePod(false)}
-            disabled={disabled}
-            style={styles.secondary}
-          >
-            <Text style={styles.secondaryText}>Choose proof from gallery</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => void captureSign(true)}
             disabled={primaryDisabled}
-            style={styles.secondary}
+            style={[styles.primary, primaryDisabled && styles.disabled]}
           >
-            <Text style={styles.secondaryText}>
-              {delivery.signatureUrl
-                ? 'Signature captured ✓'
-                : 'Capture signature'}
-            </Text>
+            <Text style={styles.primaryText}>Hand over food</Text>
           </Pressable>
-          <Pressable
-            onPress={() => void captureSign(false)}
-            disabled={primaryDisabled}
-            style={styles.secondary}
-          >
-            <Text style={styles.secondaryText}>Choose signature photo</Text>
-          </Pressable>
-          {status === 'at_customer' || step === 'deliver' ? (
-            <Pressable
-              onPress={() => {
-                setOtp('');
-                setSheet('deliver');
-              }}
-              disabled={primaryDisabled}
-              style={[styles.primary, primaryDisabled && styles.disabled]}
-            >
-              <Text style={styles.primaryText}>Mark delivered</Text>
-            </Pressable>
-          ) : null}
         </View>
       ) : null}
 
@@ -1056,147 +986,34 @@ export function TripLifecycleBar({
         </View>
       ) : null}
 
-      <Modal
-        visible={sheet === 'pickup'}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSheet(null)}
-      >
-        <View style={styles.backdrop}>
-          <View style={styles.card}>
-            <View style={styles.header}>
-              <Text style={styles.title}>Verify & pick up</Text>
-              <Pressable onPress={() => setSheet(null)} hitSlop={8}>
-                <X color="#6B7280" size={20} />
-              </Pressable>
-            </View>
-            <Text style={styles.sub}>
-              Kitchen OTP or item checklist, plus a mandatory parcel photo
-              before you leave the restaurant.
-            </Text>
-            <TextInput
-              value={otp}
-              onChangeText={setOtp}
-              placeholder="Kitchen OTP (if asked)"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="number-pad"
-              style={styles.input}
-              maxLength={8}
-              autoFocus
-            />
-            <Pressable
-              onPress={() => setChecklistOk((v) => !v)}
-              style={styles.checkRow}
-            >
-              <View
-                style={[styles.check, checklistOk && styles.checkOn]}
-              />
-              <Text style={styles.checkLabel}>All items collected</Text>
-            </Pressable>
-            <Pressable
-              onPress={() =>
-                void pickImage(true).then((uri) => {
-                  if (uri) setPickupPhotoUri(uri);
-                })
-              }
-              style={styles.secondary}
-            >
-              <Text style={styles.secondaryText}>
-                {pickupPhotoUri || delivery.pickupProofUrl
-                  ? 'Parcel photo added ✓'
-                  : 'Take parcel photo (required)'}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() =>
-                void pickImage(false).then((uri) => {
-                  if (uri) setPickupPhotoUri(uri);
-                })
-              }
-              style={styles.secondary}
-            >
-              <Text style={styles.secondaryText}>Choose pickup photo</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => void submitPickup()}
-              disabled={disabled}
-              style={styles.primary}
-            >
-              <Text style={styles.primaryText}>Pick up order</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        visible={sheet === 'otp' || sheet === 'deliver'}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSheet(null)}
-      >
-        <View style={styles.backdrop}>
-          <View style={styles.card}>
-            <View style={styles.header}>
-              <Text style={styles.title}>
-                {sheet === 'otp' ? 'Verify customer OTP' : 'Complete delivery'}
-              </Text>
-              <Pressable onPress={() => setSheet(null)} hitSlop={8}>
-                <X color="#6B7280" size={20} />
-              </Pressable>
-            </View>
-            <Text style={styles.sub}>
-              {sheet === 'otp'
-                ? 'This checks the OTP without finishing the trip. Then add a delivery photo and mark delivered.'
-                : 'Customer OTP and a delivery photo are both required. Signature is optional.'}
-            </Text>
-            <TextInput
-              value={otp}
-              onChangeText={setOtp}
-              placeholder="Customer OTP"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="number-pad"
-              style={styles.input}
-              maxLength={8}
-              autoFocus={sheet === 'otp'}
-            />
-            {sheet === 'deliver' ? (
-              <>
-                <Pressable
-                  onPress={() => void capturePod(false)}
-                  style={styles.secondary}
-                >
-                  <Text style={styles.secondaryText}>
-                    {delivery.proofPhotoUrl
-                      ? 'Proof photo added ✓'
-                      : 'Choose proof from gallery'}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => void captureSign(false)}
-                  style={styles.secondary}
-                >
-                  <Text style={styles.secondaryText}>
-                    {delivery.signatureUrl
-                      ? 'Signature added ✓'
-                      : 'Choose signature photo'}
-                  </Text>
-                </Pressable>
-              </>
-            ) : null}
-            <Pressable
-              onPress={() =>
-                void (sheet === 'otp' ? submitOtp() : submitDeliver())
-              }
-              disabled={disabled}
-              style={styles.primary}
-            >
-              <Text style={styles.primaryText}>
-                {sheet === 'otp' ? 'Verify OTP' : 'Mark delivered'}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+      <FoodProofSheet
+        visible={sheet === 'pickup' || sheet === 'deliver'}
+        mode={sheet === 'deliver' ? 'handover' : 'pickup'}
+        otp={otp}
+        photoUri={
+          sheet === 'deliver'
+            ? dropPhotoUri ?? delivery.proofPhotoUrl ?? null
+            : pickupPhotoUri ?? delivery.pickupProofUrl ?? null
+        }
+        busy={disabled}
+        onOtp={setOtp}
+        onClose={() => setSheet(null)}
+        onTakePhoto={() =>
+          void pickImage(true).then((uri) => {
+            if (!uri) return;
+            if (sheet === 'deliver') setDropPhotoUri(uri);
+            else setPickupPhotoUri(uri);
+          })
+        }
+        onChoosePhoto={() =>
+          void pickImage(false).then((uri) => {
+            if (!uri) return;
+            if (sheet === 'deliver') setDropPhotoUri(uri);
+            else setPickupPhotoUri(uri);
+          })
+        }
+        onSubmit={() => void (sheet === 'deliver' ? submitDeliver() : submitPickup())}
+      />
 
       <Modal
         visible={sheet === 'return_otp'}
