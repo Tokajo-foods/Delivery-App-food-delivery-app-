@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     color: '#111827',
   },
   otpCapture: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
     opacity: 0.02,
     color: '#111827',
   },

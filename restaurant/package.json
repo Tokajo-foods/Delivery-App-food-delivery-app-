@@ -1,7 +1,7 @@
 {
   "name": "restaurant",
   "version": "1.0.0",
-  "main": "expo-router/entry",
+  "main": "index.ts",
   "dependencies": {
     "@config-plugins/react-native-webrtc": "^13.0.0",
     "@expo-google-fonts/manrope": "^0.4.2",

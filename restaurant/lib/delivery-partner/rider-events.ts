@@ -18,9 +18,8 @@ import {
   patchIncomingOffer,
   setIncomingOffer,
 } from '@/lib/delivery-partner/offer-store';
-import { resolveOfferEarnings, formatInr } from '@/lib/delivery-partner/offer-earnings';
 import type { RiderGatewayEvent } from '@/lib/delivery-partner/rider-gateway-types';
-import { presentDeviceNotification, RIDER_OFFER_CHANNEL_ID } from '@/lib/notification/device-alerts';
+import { presentDeviceNotification } from '@/lib/notification/device-alerts';
 import { notificationKeys } from '@/lib/notification/hooks';
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -63,36 +62,6 @@ function cancelCopy(reason?: string) {
   return reason?.trim() || 'Assignment cancelled';
 }
 
-function offerNotificationBody(
-  offer: NonNullable<ReturnType<typeof parseIncomingOffer>>,
-  earnings: ReturnType<typeof resolveOfferEarnings>
-) {
-  const parts: string[] = [];
-  if (earnings) {
-    if (earnings.showIncentive && earnings.incentive > 0) {
-      parts.push(
-        `${formatInr(earnings.basePay)} + ${formatInr(earnings.incentive)} incentive = ${formatInr(earnings.netTotal)}`
-      );
-    } else {
-      parts.push(`Earn ${formatInr(earnings.netTotal)}`);
-    }
-  }
-  const pickup =
-    offer.pickupDistanceKm != null && Number.isFinite(offer.pickupDistanceKm)
-      ? `${offer.pickupDistanceKm.toFixed(1)} km to store`
-      : null;
-  const drop =
-    offer.dropDistanceKm != null && Number.isFinite(offer.dropDistanceKm)
-      ? `${offer.dropDistanceKm.toFixed(1)} km drop`
-      : offer.estimatedKm != null && Number.isFinite(offer.estimatedKm)
-        ? `${offer.estimatedKm.toFixed(1)} km`
-        : null;
-  if (pickup) parts.push(pickup);
-  else if (drop) parts.push(drop);
-  if (offer.restaurantName) parts.push(offer.restaurantName);
-  return parts.join(' · ') || 'A nearby order is waiting — open to accept.';
-}
-
 /**
  * Apply rider Socket.IO events to UI stores + TanStack Query.
  * REST poll remains the fallback if the socket drops.
@@ -109,27 +78,9 @@ export function applyRiderSocketEvent(
     case 'delivery:new': {
       const offer = parseIncomingOffer(payload);
       if (offer && !isOfferDeclined(offer.deliveryId, offer.orderId)) {
+        // Tray / lock-screen alert comes from notification-service push (works when the app is closed).
         setIncomingOffer(offer);
         alertNewOffer();
-        const earnings = resolveOfferEarnings(offer);
-        void presentDeviceNotification(
-          {
-            id: `offer-${offer.deliveryId}`,
-            title: earnings?.showIncentive
-              ? `New order · ${formatInr(earnings.netTotal)} (incl. incentive)`
-              : 'New delivery request',
-            body: offerNotificationBody(offer, earnings),
-            type: 'delivery',
-            isRead: false,
-            data: {
-              deliveryId: offer.deliveryId,
-              orderId: offer.orderId,
-              kind: 'rider_new_offer',
-              screen: 'delivery',
-            },
-          },
-          { channelId: RIDER_OFFER_CHANNEL_ID }
-        );
       }
       refreshOpenTrip(queryClient, offer?.deliveryId);
       break;

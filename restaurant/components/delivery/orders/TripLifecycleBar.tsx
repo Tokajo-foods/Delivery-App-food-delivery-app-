@@ -557,7 +557,7 @@ export function TripLifecycleBar({
       setSheet(null);
       setNote('');
       const foodOut = ['picked_up', 'out_for_delivery', 'at_customer', 'arrived_at_customer'].includes(
-        normalize(delivery.status)
+        normalizeDeliveryStatus(delivery.status)
       );
       Alert.alert(
         foodOut ? 'Return the order' : 'Issue reported',

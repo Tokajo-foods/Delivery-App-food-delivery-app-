@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import { IncomingOfferOverlay } from '@/components/delivery/orders/IncomingOfferOverlay';
+import { useRiderOfferPush } from '@/lib/delivery-partner/offer-push';
 import { usePartnerPricingRules } from '@/lib/delivery-partner/pricing-hooks';
 import { usePartnerLocationSync } from '@/lib/delivery-partner/use-partner-location-sync';
 import { useRiderGatewaySocket } from '@/lib/delivery-partner/use-rider-gateway';
@@ -20,6 +21,7 @@ export function RiderLiveSync() {
   useRiderGatewaySocket(enabled);
   usePartnerLocationSync(enabled);
   usePartnerPricingRules(enabled);
+  useRiderOfferPush(enabled);
 
   useEffect(() => {
     if (!enabled || Platform.OS === 'web') return;

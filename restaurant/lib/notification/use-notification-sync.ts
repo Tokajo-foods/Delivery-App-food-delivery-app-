@@ -127,7 +127,9 @@ export function useDeliveryNotificationSync(enabled = true) {
       }
     });
 
-    const responseSub = addNotificationOpenListener((_data) => {
+    const responseSub = addNotificationOpenListener((data) => {
+      // Offer taps open the accept popup on Orders (useRiderOfferPush).
+      if (data.kind === 'rider_new_offer') return;
       router.push(DELIVERY_ROUTES.notifications as never);
     });
 

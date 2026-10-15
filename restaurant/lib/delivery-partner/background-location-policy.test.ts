@@ -18,10 +18,10 @@ const fix = (over: Partial<QueuedFix> = {}): QueuedFix => ({
 });
 
 describe('background trip status', () => {
-  it('starts only after pickup and through a return', () => {
+  it('starts at accept and runs through a return', () => {
     assert.equal(isBackgroundTripStatus('assigned'), false);
-    assert.equal(isBackgroundTripStatus('accepted'), false);
-    assert.equal(isBackgroundTripStatus('arrived'), false);
+    assert.equal(isBackgroundTripStatus('accepted'), true);
+    assert.equal(isBackgroundTripStatus('arrived'), true);
     assert.equal(isBackgroundTripStatus('picked_up'), true);
     assert.equal(isBackgroundTripStatus('out_for_delivery'), true);
     assert.equal(isBackgroundTripStatus('at_customer'), true);
@@ -52,6 +52,16 @@ describe('background sampling', () => {
         latitude: 28.6102,
         timestamp: 1_000_000 + 4_000,
       })),
+      true,
+    );
+  });
+
+  it('pings every 10s while online without a trip, moving or not', () => {
+    const previous = { latitude: 28.61, longitude: 77.21, at: 1_000_000 };
+    const moved = { latitude: 28.62, timestamp: 1_000_000 + 5_000 };
+    assert.equal(shouldSampleFix(previous, fix(moved), 'idle'), false);
+    assert.equal(
+      shouldSampleFix(previous, fix({ timestamp: 1_000_000 + 10_000 }), 'idle'),
       true,
     );
   });

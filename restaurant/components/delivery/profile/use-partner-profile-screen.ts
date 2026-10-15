@@ -10,8 +10,11 @@ import {
   getDocumentProgress,
   getPartnerVerificationBadge,
 } from '@/lib/delivery-partner/go-online-guard';
+import { normalizeDeliveryStatus } from '@/lib/delivery-partner/api';
+import { isBackgroundTripStatus } from '@/lib/delivery-partner/background-location-policy';
 import {
   deliveryPartnerKeys,
+  useActiveDelivery,
   useDeliveryPartnerMe,
 } from '@/lib/delivery-partner/hooks';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
@@ -48,6 +51,7 @@ export function usePartnerProfileScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const me = useDeliveryPartnerMe();
+  const active = useActiveDelivery();
   const platformMe = usePlatformMe();
   const logout = useAuthStore((s) => s.logout);
   const authUser = useAuthStore((s) => s.user);
@@ -112,6 +116,14 @@ export function usePartnerProfileScreen() {
   };
 
   const onLogout = () => {
+    const tripStatus = active.data?.status ? normalizeDeliveryStatus(active.data.status) : null;
+    if (isBackgroundTripStatus(tripStatus)) {
+      Alert.alert(
+        'Active delivery',
+        'Complete your active delivery before logging out. Location must stay on until the order is delivered.'
+      );
+      return;
+    }
     Alert.alert('Log out', 'Are you sure you want to log out?', [
       { text: 'Cancel', style: 'cancel' },
       {

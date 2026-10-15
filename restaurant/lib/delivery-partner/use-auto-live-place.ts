@@ -4,26 +4,31 @@ import { Alert, AppState } from 'react-native';
 
 import { useDeliveryOrderMutations } from '@/lib/delivery-partner/hooks';
 import {
-  askToEnableLocation,
   labelForCoords,
   readAccurateGps,
 } from '@/lib/delivery-partner/live-place';
 import {
   getLivePlaceSnapshot,
   patchLivePlace,
+  type LocationLockReason,
 } from '@/lib/delivery-partner/live-place-store';
+import {
+  readLocationLock,
+  restoreLocationAccess,
+} from '@/lib/delivery-partner/location-restore';
 import { pushLiveToast } from '@/lib/delivery-partner/live-toast-store';
+import { getApiErrorCode } from '@/lib/errors';
 
 const SERVICE_WATCH_MS = 4000;
 
-function confirmKeepLocation(): Promise<boolean> {
+function confirmGoOffline(): Promise<boolean> {
   return new Promise((resolve) => {
     Alert.alert(
-      'Location is required',
-      'By closing the location your ID goes offline.',
+      'Location is off',
+      'Turning location off will take you offline and you will stop getting new orders.',
       [
-        { text: 'Stay tuned', onPress: () => resolve(true) },
-        { text: 'OK', style: 'destructive', onPress: () => resolve(false) },
+        { text: 'Turn location on', onPress: () => resolve(false) },
+        { text: 'Go offline', style: 'destructive', onPress: () => resolve(true) },
       ],
       { cancelable: false }
     );
@@ -32,15 +37,19 @@ function confirmKeepLocation(): Promise<boolean> {
 
 /**
  * While the rider is online, location must stay on.
- * The first time it drops, ask: OK goes offline, Stay tuned keeps duty and turns location back on.
+ * - Online, no trip: warn first; the rider chooses to turn it back on or go offline.
+ * - On a trip (accept → delivered): never offer offline. `TripLocationLock` blocks the app until fixed.
  */
-export function useAutoLivePlace(enabled: boolean, isOnline: boolean) {
+export function useAutoLivePlace(enabled: boolean, isOnline: boolean, onTrip: boolean) {
   const { setOnline } = useDeliveryOrderMutations();
   const onlineRef = useRef(isOnline);
+  const onTripRef = useRef(onTrip);
   const goOfflineRef = useRef(setOnline.mutate);
   const promptedRef = useRef(false);
   const forcedRef = useRef(false);
+  const tripPromptedRef = useRef(false);
   onlineRef.current = isOnline;
+  onTripRef.current = onTrip;
   goOfflineRef.current = setOnline.mutate;
 
   useEffect(() => {
@@ -56,13 +65,7 @@ export function useAutoLivePlace(enabled: boolean, isOnline: boolean) {
       try {
         const label = await labelForCoords(latitude, longitude);
         if (!alive) return;
-        patchLivePlace({
-          label,
-          latitude,
-          longitude,
-          locating: false,
-          servicesOn: true,
-        });
+        patchLivePlace({ label, latitude, longitude, locating: false, servicesOn: true });
         // Server GPS is owned by partnerLocationTracker. This hook only labels the header.
       } finally {
         applying = false;
@@ -101,62 +104,93 @@ export function useAutoLivePlace(enabled: boolean, isOnline: boolean) {
       }
     };
 
-    const onServicesOff = async () => {
-      patchLivePlace({ servicesOn: false, locating: false });
-      watch?.remove();
-      watch = null;
+    const goOffline = () => {
+      forcedRef.current = true;
+      goOfflineRef.current(false, {
+        onSuccess: () => {
+          pushLiveToast({
+            title: 'You are offline',
+            body: 'Location is off, so you will not get new orders.',
+            tone: 'warn',
+          });
+        },
+        onError: (err) => {
+          forcedRef.current = false;
+          pushLiveToast({
+            title: 'Still online',
+            body:
+              getApiErrorCode(err) === 'ACTIVE_DELIVERY'
+                ? 'Finish your active delivery first. Keep location on.'
+                : 'Could not go offline. Turn location back on.',
+            tone: 'warn',
+          });
+        },
+      });
+    };
+
+    const onLocationBlocked = async (reason: LocationLockReason) => {
+      if (reason !== 'background') {
+        patchLivePlace({ servicesOn: reason !== 'services', locating: false });
+        watch?.remove();
+        watch = null;
+      }
+
+      if (onTripRef.current) {
+        // The lock screen owns the UI. Fire the Android system dialog once per outage.
+        if (tripPromptedRef.current) return;
+        tripPromptedRef.current = true;
+        await restoreLocationAccess(reason);
+        return;
+      }
+
       if (!onlineRef.current) {
-        if (promptedRef.current) return;
+        if (promptedRef.current || reason === 'background') return;
         promptedRef.current = true;
-        const turnedOn = await askToEnableLocation();
+        const turnedOn = await restoreLocationAccess(reason);
         if (turnedOn && alive) {
           promptedRef.current = false;
           await refreshPlace();
         }
         return;
       }
+
       if (forcedRef.current || promptedRef.current) return;
       promptedRef.current = true;
-      const stayTuned = await confirmKeepLocation();
+      const wantsOffline = await confirmGoOffline();
       if (!alive || !onlineRef.current) {
         promptedRef.current = false;
         return;
       }
-      if (!stayTuned) {
+      if (onTripRef.current) {
+        // Accepted an order while the alert was open: offline is no longer allowed.
         promptedRef.current = false;
-        forcedRef.current = true;
-        goOfflineRef.current(false, {
-          onSuccess: () => {
-            pushLiveToast({
-              title: 'You are offline',
-              body: 'Location is off, so your ID is offline.',
-              tone: 'warn',
-            });
-          },
-        });
         return;
       }
-      const turnedOn = await askToEnableLocation();
-      promptedRef.current = false;
-      if (turnedOn && alive) {
-        await refreshPlace();
+      if (wantsOffline) {
+        promptedRef.current = false;
+        goOffline();
+        return;
       }
+      const turnedOn = await restoreLocationAccess(reason);
+      promptedRef.current = false;
+      if (turnedOn && alive) await refreshPlace();
     };
 
     const checkServices = async (refresh: boolean) => {
-      const servicesOn = await Location.hasServicesEnabledAsync().catch(() => false);
-      const permission = await Location.getForegroundPermissionsAsync().catch(
-        () => null
-      );
-      const allowed = permission?.status === 'granted';
+      const lock = await readLocationLock(onTripRef.current);
       if (!alive) return;
+      const relevant = lock && (onlineRef.current || onTripRef.current || lock === 'services')
+        ? lock
+        : null;
+      patchLivePlace({ lockReason: onTripRef.current ? relevant : null });
       if (!onlineRef.current) forcedRef.current = false;
-      if (!servicesOn || (onlineRef.current && !allowed)) {
-        await onServicesOff();
+      if (relevant) {
+        await onLocationBlocked(relevant);
         return;
       }
       forcedRef.current = false;
       promptedRef.current = false;
+      tripPromptedRef.current = false;
       patchLivePlace({ servicesOn: true });
       if (refresh || !getLivePlaceSnapshot().label) await refreshPlace();
     };
@@ -176,4 +210,8 @@ export function useAutoLivePlace(enabled: boolean, isOnline: boolean) {
       watch?.remove();
     };
   }, [enabled]);
+
+  useEffect(() => {
+    if (!onTrip) patchLivePlace({ lockReason: null });
+  }, [onTrip]);
 }

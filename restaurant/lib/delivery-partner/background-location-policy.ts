@@ -1,5 +1,9 @@
-/** When the OS may keep sending GPS after the app leaves the foreground. */
+/** Trip statuses where the customer map follows the rider (accept → delivered / returned). */
 const ACTIVE_TRIP = new Set([
+  'accepted',
+  'arrived',
+  'arrived_at_restaurant',
+  'at_restaurant',
   'picked_up',
   'out_for_delivery',
   'at_customer',
@@ -7,8 +11,12 @@ const ACTIVE_TRIP = new Set([
   'returning_to_restaurant',
 ]);
 
+export type BackgroundLocationMode = 'trip' | 'idle';
+
 export const BG_MOVING_INTERVAL_MS = 4_000;
 export const BG_STATIONARY_INTERVAL_MS = 12_000;
+/** Online with no trip: server marks GPS stale after 60s and 5 pings persist once, so ping every 10s. */
+export const BG_IDLE_INTERVAL_MS = 10_000;
 export const BG_STATIONARY_METERS = 8;
 export const BG_POOR_ACCURACY_M = 80;
 export const BG_MAX_QUEUE = 8;
@@ -53,10 +61,12 @@ export function isUsableAccuracy(accuracy: number | null | undefined): boolean {
 export function shouldSampleFix(
   previous: { latitude: number; longitude: number; at: number } | null,
   fix: QueuedFix,
+  mode: BackgroundLocationMode = 'trip',
 ): boolean {
   if (!previous) return true;
   const elapsed = fix.timestamp - previous.at;
   if (elapsed < 0) return true;
+  if (mode === 'idle') return elapsed >= BG_IDLE_INTERVAL_MS;
   const moved = haversineMeters(previous, fix);
   if (moved >= BG_STATIONARY_METERS) return elapsed >= BG_MOVING_INTERVAL_MS;
   return elapsed >= BG_STATIONARY_INTERVAL_MS;

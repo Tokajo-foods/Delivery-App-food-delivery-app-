@@ -1,11 +1,15 @@
 import { useSyncExternalStore } from 'react';
 
+/** Why live location cannot run right now. `background` only matters during a trip. */
+export type LocationLockReason = 'services' | 'permission' | 'background';
+
 export type LivePlaceSnapshot = {
   label: string | null;
   latitude: number | null;
   longitude: number | null;
   locating: boolean;
   servicesOn: boolean | null;
+  lockReason: LocationLockReason | null;
 };
 
 const EMPTY: LivePlaceSnapshot = {
@@ -14,6 +18,7 @@ const EMPTY: LivePlaceSnapshot = {
   longitude: null,
   locating: false,
   servicesOn: null,
+  lockReason: null,
 };
 
 let snapshot: LivePlaceSnapshot = EMPTY;

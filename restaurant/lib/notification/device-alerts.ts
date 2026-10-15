@@ -6,7 +6,8 @@ import { storageGetItem, storageSetItem } from '@/lib/storage';
 
 const SEEN_IDS_KEY = 'delivery.notification.seenIds.v1';
 const CHANNEL_ID = 'tokajo-delivery-alerts';
-export const RIDER_OFFER_CHANNEL_ID = 'tokajo-rider-offers';
+/** v2: Android channels are immutable, and v1 had no lock-screen visibility or bell. */
+export const RIDER_OFFER_CHANNEL_ID = 'tokajo-rider-offers-v2';
 const KITCHEN_ORDERS_CHANNEL_ID = 'tokajo-kitchen-orders';
 export const KITCHEN_ORDER_BELL_CHANNEL_ID = 'tokajo-kitchen-order-bell';
 export const KITCHEN_ORDER_QUIET_CHANNEL_ID = 'tokajo-kitchen-order-quiet';
@@ -30,6 +31,18 @@ function canUseNativeNotifications() {
 let notificationsModule: NotificationsModule | null | undefined;
 let handlerReady = false;
 let configured = false;
+let foregroundFilter: ((data: Record<string, unknown>) => boolean) | null = null;
+
+/** Return false to hide a push banner while the app is open (e.g. the offer popup already shows it). */
+export function setForegroundNotificationFilter(
+  filter: ((data: Record<string, unknown>) => boolean) | null
+): void {
+  foregroundFilter = filter;
+}
+
+export function getNotificationsModule(): NotificationsModule | null {
+  return loadNotificationsModule();
+}
 
 function loadNotificationsModule(): NotificationsModule | null {
   if (notificationsModule !== undefined) return notificationsModule;
@@ -46,14 +59,13 @@ function loadNotificationsModule(): NotificationsModule | null {
     if (!handlerReady) {
       mod.setNotificationHandler({
         handleNotification: async (notification) => {
-          const data = notification.request.content.data ?? {};
-          const kind = String(
-            (data as { kind?: unknown }).kind ?? ''
-          );
+          const data = (notification.request.content.data ?? {}) as Record<string, unknown>;
+          const kind = String(data.kind ?? '');
+          const show = foregroundFilter ? foregroundFilter(data) : true;
           return {
-            shouldShowBanner: true,
-            shouldShowList: true,
-            shouldPlaySound: kind !== 'kitchen_new_order',
+            shouldShowBanner: show,
+            shouldShowList: show,
+            shouldPlaySound: show && kind !== 'kitchen_new_order',
             shouldSetBadge: true,
           };
         },
@@ -86,8 +98,12 @@ export async function ensureDeviceNotificationReady(): Promise<boolean> {
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 400, 160, 400, 160, 520],
           lightColor: '#16A34A',
-          sound: 'default',
+          sound: 'order_bell',
+          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
         });
+        await Notifications.deleteNotificationChannelAsync('tokajo-rider-offers').catch(
+          () => undefined
+        );
         await Notifications.setNotificationChannelAsync(KITCHEN_ORDERS_CHANNEL_ID, {
           name: 'Kitchen new orders',
           importance: Notifications.AndroidImportance.MAX,
