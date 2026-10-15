@@ -1,0 +1,199 @@
+import { StyleSheet } from 'react-native';
+
+import { authTheme } from '@/constants/auth-theme';
+import { fonts } from '@/constants/typography';
+
+export const policyStyles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: authTheme.surface,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 14,
+    backgroundColor: authTheme.card,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: authTheme.cardBorder,
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  brand: {
+    fontFamily: fonts.bold,
+    fontSize: 13,
+    letterSpacing: 2,
+    color: authTheme.brand,
+  },
+  badge: {
+    marginLeft: 'auto',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: authTheme.brandSoft,
+  },
+  badgeText: {
+    fontFamily: fonts.semiBold,
+    fontSize: 10,
+    color: authTheme.brandDark,
+    letterSpacing: 0.4,
+  },
+  title: {
+    marginTop: 8,
+    fontFamily: fonts.bold,
+    fontSize: 20,
+    lineHeight: 26,
+    color: authTheme.text,
+  },
+  meta: {
+    marginTop: 4,
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    color: authTheme.textMuted,
+  },
+  progressTrack: {
+    marginTop: 12,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: authTheme.tabBg,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: authTheme.brand,
+  },
+  scroll: {
+    padding: 16,
+    gap: 12,
+  },
+  intro: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 20,
+    color: authTheme.textMuted,
+  },
+  section: {
+    backgroundColor: authTheme.card,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: authTheme.cardBorder,
+    padding: 14,
+  },
+  sectionHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  sectionNo: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: authTheme.brandMuted,
+  },
+  sectionNoText: {
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    color: authTheme.brandDark,
+  },
+  sectionTitle: {
+    flex: 1,
+    fontFamily: fonts.bold,
+    fontSize: 15,
+    color: authTheme.text,
+  },
+  bulletRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+  },
+  bulletDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    marginTop: 8,
+    backgroundColor: authTheme.brand,
+  },
+  bulletText: {
+    flex: 1,
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 20,
+    color: authTheme.text,
+  },
+  declaration: {
+    backgroundColor: authTheme.heroStart,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: authTheme.brandMuted,
+    padding: 14,
+  },
+  declarationTitle: {
+    fontFamily: fonts.bold,
+    fontSize: 15,
+    color: authTheme.brandDark,
+    marginBottom: 6,
+  },
+  footer: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    gap: 10,
+    backgroundColor: authTheme.card,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: authTheme.cardBorder,
+  },
+  hint: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    color: authTheme.textMuted,
+    textAlign: 'center',
+  },
+  checkRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: authTheme.inputBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+  },
+  checkboxOn: {
+    borderColor: authTheme.brand,
+    backgroundColor: authTheme.brand,
+  },
+  checkLabel: {
+    flex: 1,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    lineHeight: 19,
+    color: authTheme.text,
+  },
+  disabled: {
+    opacity: 0.45,
+  },
+  declineBtn: {
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  declineText: {
+    fontFamily: fonts.semiBold,
+    fontSize: 14,
+    color: authTheme.textMuted,
+  },
+  acceptedNote: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: authTheme.success,
+    textAlign: 'center',
+  },
+});

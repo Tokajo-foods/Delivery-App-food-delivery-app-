@@ -19,6 +19,7 @@ export const DELIVERY_ROUTES = {
   incentives: '/delivery/incentives',
   performance: '/delivery/performance',
   setup: '/delivery/setup',
+  policy: '/delivery/policy',
 } as const;
 
 export type DeliveryRoute =

@@ -229,6 +229,10 @@ export function DeliveryHomeScreen() {
       },
       onError: (err) => {
         const code = getApiErrorCode(err);
+        if (code === 'POLICY_NOT_ACCEPTED') {
+          router.replace(DELIVERY_ROUTES.policy as never);
+          return;
+        }
         const isKyc =
           code === 'PARTNER_NOT_ACTIVE' ||
           code === 'KYC_INCOMPLETE' ||
