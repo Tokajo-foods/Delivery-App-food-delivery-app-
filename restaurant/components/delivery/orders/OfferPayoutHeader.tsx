@@ -22,7 +22,16 @@ export function OfferPayoutHeader({
   stackEarnings,
 }: Props) {
   const earnings = stackEarnings ?? resolveOfferEarnings(offer);
-  const bonus = earnings?.showIncentive ? earnings.incentive : 0;
+  const fee = offer.deliveryFee;
+  const incentive = earnings?.showIncentive ? earnings.incentive : 0;
+  const tip = earnings?.tip ?? 0;
+  const commission = offer.platformCommissionPct;
+  const parts = [
+    fee != null ? `${formatInr(fee)} delivery` : null,
+    incentive > 0 ? `${formatInr(incentive)} incentive` : null,
+    commission != null ? `after ${commission}% platform` : null,
+    tip > 0 ? `${formatInr(tip)} tip` : null,
+  ].filter(Boolean);
 
   return (
     <View style={styles.payoutBlock}>
@@ -33,7 +42,7 @@ export function OfferPayoutHeader({
         {earnings ? formatInr(earnings.netTotal) : 'Earnings on accept'}
       </Text>
       <Text style={styles.payoutSub}>
-        {bonus > 0 ? `Includes ${formatInr(bonus)} extra` : 'You earn this trip'}
+        {parts.length ? parts.join(' · ') : 'You earn this trip'}
       </Text>
     </View>
   );

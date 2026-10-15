@@ -128,7 +128,9 @@ export function IncomingOfferOverlay() {
     return {
       basePay: base,
       incentive,
-      netTotal: base + incentive,
+      tip: 0,
+      netTotal: base,
+      commissionPercent: 0,
       showIncentive: incentive > 0,
     };
   }, [stacked, batch?.deliveries]);

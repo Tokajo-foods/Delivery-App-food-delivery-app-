@@ -16,7 +16,11 @@ export function resolveOfferEarnings(offer: IncomingOffer): OfferEarnings | null
   if (offer.netEarnings != null && Number.isFinite(offer.netEarnings)) {
     return {
       ...fromParts,
-      netTotal: Math.max(fromParts.basePay + fromParts.incentive, offer.netEarnings),
+      basePay: offer.partnerEarnings ?? fromParts.basePay,
+      incentive: Math.max(0, offer.incentiveBonus ?? 0),
+      tip: Math.max(0, offer.tipAmount ?? 0),
+      netTotal: offer.netEarnings,
+      showIncentive: (offer.incentiveBonus ?? 0) > 0,
     };
   }
   return fromParts;

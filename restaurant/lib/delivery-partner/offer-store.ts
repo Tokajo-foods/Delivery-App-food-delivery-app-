@@ -19,7 +19,12 @@ export type IncomingOffer = {
   partnerEarnings?: number;
   /** Rain / distance incentive on top of base pay (INR). */
   incentiveBonus?: number;
-  /** Base pay + incentive (server-computed for this rider). */
+  /** Customer delivery fee + incentive, before commission. */
+  grossBeforeCommission?: number;
+  partnerSharePct?: number;
+  platformCommissionPct?: number;
+  tipAmount?: number;
+  /** Rounded rider pay after commission, plus tip. */
   netEarnings?: number;
   estimatedKm?: number;
   /** Rider GPS → restaurant (km). */
@@ -149,6 +154,10 @@ export function parseIncomingOffer(payload: unknown): IncomingOffer | null {
       'incentive',
       'bonus',
     ]),
+    grossBeforeCommission: pickNumber(source, ['grossBeforeCommission', 'gross']),
+    partnerSharePct: pickNumber(source, ['partnerSharePct']),
+    platformCommissionPct: pickNumber(source, ['platformCommissionPct']),
+    tipAmount: pickNumber(source, ['tipAmount', 'tip']),
     netEarnings: pickNumber(source, ['netEarnings', 'netPay', 'totalEarnings']),
     estimatedKm: pickNumber(source, ['estimatedKm', 'distanceKm', 'distance']),
     pickupDistanceKm: pickNumber(source, [
