@@ -557,6 +557,10 @@ export function useDeliveryOrderMutations() {
     },
     onSuccess: async (delivery) => {
       applyDeliveryResult(delivery);
+      const { partnerLocationTracker } = await import(
+        '@/lib/delivery-partner/location-tracker'
+      );
+      partnerLocationTracker.shareNow();
       await invalidateAll();
     },
   });

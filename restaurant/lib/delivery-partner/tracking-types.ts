@@ -163,8 +163,8 @@ export type TrackingRoute = {
 };
 
 export const IDLE_PING_MS = 15_000;
-/** Trip GPS → server every 3s so customer map stays live. */
-export const TRIP_PING_MS = 10_000;
+/** Accepted trip: push GPS every 4s. The server asks for the same gap. */
+export const TRIP_PING_MS = 4_000;
 export const IDLE_HEARTBEAT_MS = 30_000;
 export const TRIP_HEARTBEAT_MS = 20_000;
 export const LOW_ACCURACY_METERS = 80;

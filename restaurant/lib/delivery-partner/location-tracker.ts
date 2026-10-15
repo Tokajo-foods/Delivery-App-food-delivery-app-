@@ -103,6 +103,16 @@ class PartnerLocationTracker {
     return this.running;
   }
 
+  /** Send a GPS ping now. Called when a trip is accepted so the customer map starts immediately. */
+  shareNow() {
+    if (!this.running) return;
+    if (this.pingInFlight) {
+      this.schedulePing(400);
+      return;
+    }
+    void this.pingNow();
+  }
+
   getLastKnown(): PartnerGpsCoords | null {
     return this.latest ?? this.snapshot.coords;
   }
