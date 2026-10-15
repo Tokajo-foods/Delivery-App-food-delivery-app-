@@ -7,7 +7,6 @@ import { dutyStyles as styles } from '@/components/delivery/home/duty-control-st
 import {
   breakExtendMinutes,
   breakSecondsLeft,
-  canAcceptOffers,
   formatDutyKm,
   formatMinutes,
   type PartnerBreakPolicy,
@@ -91,7 +90,6 @@ export function DutyControlCard({
   const onDelivery = dutyStatus === 'on_delivery';
   const onBreak = dutyStatus === 'on_break' || Boolean(snapshot?.break?.active);
   const onWayToHub = dutyStatus === 'on_way_to_hub';
-  const accepting = canAcceptOffers(dutyStatus);
   const copy = statusCopy(dutyStatus, isOnDuty);
   const maxMinutes = Math.max(
     0,
@@ -100,7 +98,10 @@ export function DutyControlCard({
       snapshot?.break?.minutesRemainingToday ?? policy?.maxMinutesPerDay ?? 60,
     ),
   );
-  const defaultMinutes = Math.min(policy?.defaultMinutes ?? 30, maxMinutes || 30);
+  const defaultMinutes = Math.min(
+    policy?.defaultMinutes ?? snapshot?.break?.defaultMinutes ?? 15,
+    maxMinutes || 15,
+  );
   const extendBy = breakExtendMinutes(snapshot?.break, policy);
 
   const [tick, setTick] = useState(0);
@@ -176,7 +177,7 @@ export function DutyControlCard({
           </View>
         ) : null}
 
-        {accepting && !onDelivery ? (
+        {isOnDuty && !onDelivery && !onBreak ? (
           <BreakTimePanel
             maxMinutes={maxMinutes}
             defaultMinutes={defaultMinutes}

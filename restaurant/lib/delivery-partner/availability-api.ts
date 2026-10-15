@@ -549,7 +549,7 @@ export const DUTY_ERROR_COPY: Record<string, string> = {
   ACTIVE_DELIVERY: 'Complete your active delivery before changing duty status.',
   PARTNER_OFFLINE: 'Go online before starting a break.',
   ALREADY_ON_BREAK: 'You are already on a break.',
-  BREAK_TOO_EARLY: 'Stay online a bit longer before starting a break.',
+  BREAK_TOO_EARLY: 'Go online, then start your break from the duty card.',
   BREAK_LIMIT_EXCEEDED: 'You have used today’s break allowance.',
   BREAK_MAX_REACHED: 'This break cannot be extended further.',
   NOT_ON_BREAK: 'You are not on a break.',

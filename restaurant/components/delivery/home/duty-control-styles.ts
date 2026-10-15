@@ -93,6 +93,9 @@ export const dutyStyles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 12,
   },
+  startBtnDisabled: {
+    backgroundColor: '#CBD5E1',
+  },
   startBtnText: {
     color: '#FFFFFF',
     fontFamily: fonts.semiBold,

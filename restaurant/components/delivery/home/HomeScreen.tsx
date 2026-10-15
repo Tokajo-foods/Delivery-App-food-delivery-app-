@@ -49,7 +49,6 @@ import {
   usePartnerDutySummary,
 } from '@/lib/delivery-partner/availability-hooks';
 import {
-  canAcceptOffers,
   isDutySwitchOn,
   resolveDisplayStreak,
 } from '@/lib/delivery-partner/availability-types';
@@ -118,7 +117,6 @@ export function DeliveryHomeScreen() {
     Boolean(me.data?.isOnline ?? me.data?.isAvailable ?? duty.data?.isOnline)
   );
   const onDelivery = dutyStatus === 'on_delivery';
-  const acceptingOrders = canAcceptOffers(dutyStatus);
   const breakBusy =
     startBreak.isPending || endBreak.isPending || extendBreak.isPending;
   const goOnlineBlocker = getGoOnlineBlocker(me.data);
@@ -261,7 +259,7 @@ export function DeliveryHomeScreen() {
       );
       return;
     }
-    if (!acceptingOrders) {
+    if (!isOnline) {
       Alert.alert('Go online first', 'You need to be online to take a break.');
       return;
     }
