@@ -24,15 +24,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDeliveryHeaderScrollProps } from '@/components/delivery/shared/header-scroll';
 import { authTheme, PARTNER_BOTTOM_NAV_INSET } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
-import { getApiErrorMessage } from '@/lib/errors';
+import { getApiErrorCode, getApiErrorMessage } from '@/lib/errors';
 import {
   useDeliveryPartnerMe,
   useUploadPartnerDocument,
 } from '@/lib/delivery-partner/hooks';
+import { usePartnerKyc } from '@/lib/delivery-partner/kyc-hooks';
 import {
   PARTNER_DOC_TYPES,
   displayDocumentStatus,
   normalizeDocStatus,
+  requiredDocCount,
 } from '@/lib/delivery-partner/documents-types';
 import type {
   PartnerDocument,
@@ -77,12 +79,14 @@ function statusMeta(status: PartnerDocumentStatus) {
 function DocCard({
   label,
   hint,
+  required,
   doc,
   uploading,
   onUpload,
 }: {
   label: string;
   hint: string;
+  required: boolean;
   doc?: PartnerDocument;
   uploading: boolean;
   onUpload: () => void;
@@ -101,7 +105,7 @@ function DocCard({
             {label}
           </Text>
           <Text style={styles.docHint} numberOfLines={2}>
-            {hint}
+            {required ? `Required · ${hint}` : `Optional · ${hint}`}
           </Text>
         </View>
         <View style={[styles.badge, { backgroundColor: meta.bg }]}>
@@ -158,7 +162,11 @@ function DocCard({
             <>
               <Upload color="#FFFFFF" size={14} />
               <Text style={styles.uploadText}>
-                {hasFile ? 'Re-upload' : 'Upload'}
+                {status === 'verified'
+                  ? 'Verified — locked'
+                  : hasFile
+                    ? 'Re-upload'
+                    : 'Upload'}
               </Text>
             </>
           )}
@@ -179,13 +187,16 @@ export function PartnerDocumentsManager() {
   );
 
   const me = useDeliveryPartnerMe();
+  const kyc = usePartnerKyc();
   const upload = useUploadPartnerDocument();
 
   const documents = me.data?.documents;
   const verifiedCount = useMemo(
     () =>
       PARTNER_DOC_TYPES.filter(
-        (d) => displayDocumentStatus(documents?.[d.type]) === 'verified'
+        (d) =>
+          d.required &&
+          displayDocumentStatus(documents?.[d.type]) === 'verified'
       ).length,
     [documents]
   );
@@ -199,7 +210,8 @@ export function PartnerDocumentsManager() {
       })),
     [documents]
   );
-  const totalDocs = PARTNER_DOC_TYPES.length;
+  const totalDocs = requiredDocCount();
+  const canGoOnline = kyc.data?.canGoOnline === true;
 
   const loading = me.isLoading && !me.data;
   const error =
@@ -210,13 +222,22 @@ export function PartnerDocumentsManager() {
   const onRefresh = async () => {
     setPullRefreshing(true);
     try {
-      await me.refetch();
+      await Promise.all([me.refetch(), kyc.refetch()]);
     } finally {
       setPullRefreshing(false);
     }
   };
 
   const pickAndUpload = async (docType: PartnerDocumentType) => {
+    const current = displayDocumentStatus(documents?.[docType]);
+    if (current === 'verified') {
+      Alert.alert(
+        'Document locked',
+        'Admin already approved this document. You can replace it only if it is rejected.'
+      );
+      return;
+    }
+
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       Alert.alert(
@@ -247,8 +268,13 @@ export function PartnerDocumentsManager() {
       );
     } catch (err) {
       Alert.alert(
-        'Upload failed',
-        getApiErrorMessage(err, 'Could not upload document.')
+        getApiErrorCode(err) === 'DOCUMENT_VERIFIED'
+          ? 'Document locked'
+          : 'Upload failed',
+        getApiErrorMessage(
+          err,
+          'Could not upload document.'
+        )
       );
     } finally {
       setUploadingType(null);
@@ -300,10 +326,9 @@ export function PartnerDocumentsManager() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.bannerTitle}>Document Verification</Text>
                 <Text style={styles.bannerBody}>
-                  Upload clear photos of all required documents. KYC stays
-                  “Under review” until ops approve — we never fake verified.
-                  You can go online without verification. PAN number and tax
-                  PDFs are below, separate from the PAN card photo.
+                  {canGoOnline
+                    ? 'All required documents are approved. You can go online. Verified files stay locked until admin rejects them.'
+                    : 'Upload a clear photo of every required document. Admin reviews each file. You can replace a file until it is approved. After approval it is locked. If rejected, the reason appears here and you can re-upload. Go-online stays blocked until every required document is approved.'}
                 </Text>
               </View>
               <View style={styles.countBox}>
@@ -335,6 +360,7 @@ export function PartnerDocumentsManager() {
                   key={item.type}
                   label={item.label}
                   hint={item.hint}
+                  required={item.required}
                   doc={documents?.[item.type]}
                   uploading={uploadingType === item.type}
                   onUpload={() => void pickAndUpload(item.type)}

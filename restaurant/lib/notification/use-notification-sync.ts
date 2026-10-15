@@ -130,6 +130,12 @@ export function useDeliveryNotificationSync(enabled = true) {
     const responseSub = addNotificationOpenListener((data) => {
       // Offer taps open the accept popup on Orders (useRiderOfferPush).
       if (data.kind === 'rider_new_offer') return;
+      const kind = String(data.kind ?? '').toLowerCase();
+      const screen = String(data.screen ?? '').toLowerCase();
+      if (screen === 'documents' || kind.includes('kyc')) {
+        router.push(DELIVERY_ROUTES.documents as never);
+        return;
+      }
       router.push(DELIVERY_ROUTES.notifications as never);
     });
 

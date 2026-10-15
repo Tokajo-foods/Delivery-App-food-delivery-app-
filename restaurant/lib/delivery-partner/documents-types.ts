@@ -1,6 +1,6 @@
 /**
  * Partner KYC documents — `docType` values match POST /partners/me/documents.
- * Documents screen shows Aadhaar, DL, RC, insurance (PAN + bank payout live elsewhere / optional).
+ * Required docs must be admin-verified before go-online. Insurance is optional.
  */
 
 export type PartnerDocumentStatus =
@@ -17,7 +17,8 @@ export type PartnerDocumentType =
   | 'vehicleRC'
   | 'insurance'
   | 'bankPassbook'
-  | 'profilePhoto';
+  | 'profilePhoto'
+  | 'cancelledCheque';
 
 export type PartnerDocument = {
   type: PartnerDocumentType;
@@ -37,26 +38,55 @@ export const PARTNER_DOC_TYPES: {
   type: PartnerDocumentType;
   label: string;
   hint: string;
+  required: boolean;
 }[] = [
+  {
+    type: 'profilePhoto',
+    label: 'Profile photo',
+    hint: 'Clear face photo, same as restaurant owner photo',
+    required: true,
+  },
   {
     type: 'aadhar',
     label: 'Aadhaar Card',
     hint: 'Upload front & back as a single image',
+    required: true,
+  },
+  {
+    type: 'pan',
+    label: 'PAN card',
+    hint: 'Clear photo of your PAN card',
+    required: true,
   },
   {
     type: 'drivingLicense',
     label: 'Driving License',
     hint: 'Valid driving license (front side)',
+    required: true,
   },
   {
     type: 'vehicleRC',
     label: 'Vehicle RC',
     hint: 'Vehicle registration certificate',
+    required: true,
+  },
+  {
+    type: 'bankPassbook',
+    label: 'Bank passbook',
+    hint: 'First page showing account holder name and number',
+    required: true,
+  },
+  {
+    type: 'cancelledCheque',
+    label: 'Blank cheque',
+    hint: 'Cancelled / blank cheque photo',
+    required: true,
   },
   {
     type: 'insurance',
     label: 'Vehicle Insurance',
-    hint: 'Valid insurance document',
+    hint: 'Optional — if you upload it, admin must verify it too',
+    required: false,
   },
 ];
 
@@ -87,14 +117,14 @@ export const DOC_TYPE_ALIASES: Record<string, PartnerDocumentType> = {
   profile_photo: 'profilePhoto',
   avatar: 'profilePhoto',
   photo: 'profilePhoto',
+  cancelledCheque: 'cancelledCheque',
+  cancelled_cheque: 'cancelledCheque',
+  blankCheque: 'cancelledCheque',
+  blank_cheque: 'cancelledCheque',
+  cheque: 'cancelledCheque',
 };
 
-const CANONICAL_DOC_TYPES: PartnerDocumentType[] = [
-  ...PARTNER_DOC_TYPES.map((d) => d.type),
-  'pan',
-  'bankPassbook',
-  'profilePhoto',
-];
+const CANONICAL_DOC_TYPES: PartnerDocumentType[] = PARTNER_DOC_TYPES.map((d) => d.type);
 
 export function normalizeDocType(value: string): PartnerDocumentType | null {
   const key = value.trim();
@@ -131,20 +161,10 @@ export function normalizeDocStatus(status?: string): PartnerDocumentStatus {
   ) {
     return 'pending';
   }
-  if (
-    s === 'rejected' ||
-    s === 'declined' ||
-    s === 'failed' ||
-    s === 'invalid'
-  ) {
+  if (s === 'rejected' || s === 'declined' || s === 'failed' || s === 'invalid') {
     return 'rejected';
   }
-  if (
-    s === 'not_uploaded' ||
-    s === 'missing' ||
-    s === 'none' ||
-    s === 'empty'
-  ) {
+  if (s === 'not_uploaded' || s === 'missing' || s === 'none' || s === 'empty') {
     return 'not_uploaded';
   }
   return s;
@@ -153,13 +173,15 @@ export function normalizeDocStatus(status?: string): PartnerDocumentStatus {
 export function countVerifiedDocuments(docs?: PartnerDocumentsMap) {
   if (!docs) return 0;
   return PARTNER_DOC_TYPES.filter(
-    (d) => normalizeDocStatus(docs[d.type]?.status) === 'verified'
+    (d) => d.required && normalizeDocStatus(docs[d.type]?.status) === 'verified'
   ).length;
 }
 
-/**
- * Display status for UI: pending without a file is shown as not uploaded.
- */
+export function requiredDocCount() {
+  return PARTNER_DOC_TYPES.filter((d) => d.required).length;
+}
+
+/** Display status for UI: pending without a file is shown as not uploaded. */
 export function displayDocumentStatus(
   doc?: PartnerDocument | null
 ): PartnerDocumentStatus {

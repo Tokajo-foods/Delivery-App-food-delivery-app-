@@ -950,6 +950,9 @@ export function useUploadPartnerDocument() {
       void queryClient.invalidateQueries({
         queryKey: deliveryPartnerKeys.me(),
       });
+      void queryClient.invalidateQueries({
+        queryKey: [...deliveryPartnerKeys.me(), 'kyc'],
+      });
     },
   });
 }
