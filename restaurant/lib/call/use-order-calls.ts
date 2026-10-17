@@ -72,13 +72,7 @@ export function useOrderCalls(orderId: string, viewer: ViewerKind) {
     loadError: query.error ? callErrorMessage(query.error) : null,
     notice: notice || engineNotice,
     busy: dialBusy || engineBusy,
-    live: null,
-    muted: false,
     dial,
     startInternet,
-    accept: async () => undefined,
-    decline: async () => undefined,
-    hangup: async () => undefined,
-    toggleMute: async () => undefined,
   };
 }

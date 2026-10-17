@@ -52,7 +52,10 @@ export type InternetCallSession = {
   roomName?: string | null;
   livekitUrl?: string | null;
   token?: string | null;
+  endReason?: CallEndReason | null;
 };
+
+export type CallEndReason = 'declined' | 'busy' | 'no_answer' | 'cancelled' | 'hung_up' | 'dropped';
 
 export type LiveCall = {
   callId: string;

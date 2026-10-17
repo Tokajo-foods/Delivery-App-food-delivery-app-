@@ -121,7 +121,11 @@ export async function ringIncomingCall(
   opts?: { verify?: boolean; inApp?: boolean },
 ): Promise<void> {
   if (!meta.callId || !meta.orderId || closed.has(meta.callId)) return;
-  if (getCall()) return;
+  const current = getCall();
+  if (current) {
+    if (current.callId !== meta.callId) void rejectBusy(meta.callId, meta.calleeRole);
+    return;
+  }
   let call: ActiveCall;
   if (opts?.verify) {
     const session = await getInternetCall(meta.callId).catch(() => null);
@@ -232,6 +236,13 @@ export async function declineCall(callId: string): Promise<void> {
     // The ring may already have timed out. Clear it here either way.
   }
   await finishCall(callId, { local: true });
+}
+
+/** Already on a call here. An outlet rings every staff phone, so only a person line answers busy. */
+async function rejectBusy(callId: string, calleeRole?: string): Promise<void> {
+  if (calleeRole === 'restaurant' || closed.has(callId)) return;
+  closed.add(callId);
+  await declineInternetCall(callId, 'busy').catch(() => undefined);
 }
 
 export async function hangupCall(): Promise<void> {

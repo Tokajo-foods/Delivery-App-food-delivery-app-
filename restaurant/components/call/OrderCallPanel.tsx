@@ -1,5 +1,5 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Bike, Mic, MicOff, Phone, Store, User, Video } from 'lucide-react-native';
+import { Bike, Phone, Store, User, Video } from 'lucide-react-native';
 
 import { useOrderCalls } from '@/lib/call/use-order-calls';
 import type { CallRole, CallRow, ViewerKind } from '@/lib/call/types';
@@ -21,7 +21,6 @@ const BRAND = '#EA4B14';
 export function OrderCallPanel({ orderId, viewer, names }: Props) {
   const calls = useOrderCalls(orderId, viewer);
   if (!orderId) return null;
-  const incoming = calls.live?.direction === 'in' && calls.live.state === 'ringing';
   const titleFor = (role: CallRole) => names?.[role] || FALLBACK[role];
 
   return (
@@ -35,35 +34,6 @@ export function OrderCallPanel({ orderId, viewer, names }: Props) {
       ) : null}
       {calls.loadError ? <Text style={styles.error}>{calls.loadError}</Text> : null}
       {calls.notice ? <Text style={styles.notice}>{calls.notice}</Text> : null}
-
-      {calls.live ? (
-        <View style={[styles.live, incoming && styles.liveIn]}>
-          <Text style={styles.liveKicker}>{incoming ? 'Incoming call' : liveKicker(calls.live.state)}</Text>
-          <Text style={styles.liveText}>{liveLine(incoming, calls.live.state, titleFor(calls.live.role))}</Text>
-          {incoming ? (
-            <View style={styles.actions}>
-              <Pressable disabled={Boolean(calls.busy)} onPress={() => void calls.accept()} style={styles.primary}>
-                <Text style={styles.primaryText}>{calls.busy === 'accept' ? 'Joining…' : 'Accept'}</Text>
-              </Pressable>
-              <Pressable disabled={Boolean(calls.busy)} onPress={() => void calls.decline()} style={styles.ghost}>
-                <Text style={styles.ghostText}>Decline</Text>
-              </Pressable>
-            </View>
-          ) : (
-            <View style={styles.actions}>
-              {calls.live.state === 'accepted' ? (
-                <Pressable disabled={Boolean(calls.busy)} onPress={() => void calls.toggleMute()} style={styles.ghost}>
-                  {calls.muted ? <MicOff color="#111827" size={14} /> : <Mic color="#111827" size={14} />}
-                  <Text style={styles.ghostText}>{calls.muted ? 'Unmute' : 'Mute'}</Text>
-                </Pressable>
-              ) : null}
-              <Pressable disabled={Boolean(calls.busy)} onPress={() => void calls.hangup()} style={styles.end}>
-                <Text style={styles.primaryText}>{calls.busy === 'end' ? 'Ending…' : 'End call'}</Text>
-              </Pressable>
-            </View>
-          )}
-        </View>
-      ) : null}
 
       {!calls.loading && calls.rows.length === 0 && !calls.loadError ? (
         <Text style={styles.empty}>{emptyCopy(viewer)}</Text>
@@ -88,19 +58,6 @@ function emptyCopy(viewer: ViewerKind): string {
     return 'Customer and restaurant calls show after you accept the order. Chat still works.';
   }
   return 'The customer call shows after the order is placed. The delivery partner call shows after they accept. Chat still works.';
-}
-
-function liveKicker(state: string): string {
-  if (state === 'ringing') return 'Ringing';
-  if (state === 'accepted') return 'Connected';
-  return 'On a call';
-}
-
-function liveLine(incoming: boolean, state: string, title: string): string {
-  if (incoming) return `${title} is calling you`;
-  if (state === 'ringing') return `Ringing ${title}`;
-  if (state === 'accepted') return `Talking with ${title}`;
-  return title;
 }
 
 function PersonIcon({ role }: { role: CallRole }) {
@@ -181,10 +138,6 @@ const styles = StyleSheet.create({
   error: { color: '#B91C1C', fontSize: 13, lineHeight: 18 },
   notice: { color: '#9A3412', fontSize: 13, lineHeight: 18 },
   empty: { color: '#57534E', fontSize: 13, lineHeight: 18 },
-  live: { gap: 8, backgroundColor: '#FFF7ED', borderRadius: 14, padding: 12 },
-  liveIn: { backgroundColor: '#ECFDF5' },
-  liveKicker: { color: '#C2410C', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
-  liveText: { color: '#111827', fontSize: 15, fontWeight: '700' },
   person: {
     gap: 10,
     paddingTop: 10,

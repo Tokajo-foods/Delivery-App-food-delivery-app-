@@ -34,8 +34,11 @@ export async function acceptInternetCall(callId: string): Promise<InternetCallSe
   return unwrap<InternetCallSession>(res.data);
 }
 
-export async function declineInternetCall(callId: string): Promise<void> {
-  const res = await api.post(`${ROOT}/internet-calls/${encodeURIComponent(callId)}/decline`, {});
+export async function declineInternetCall(callId: string, reason?: 'busy'): Promise<void> {
+  const res = await api.post(
+    `${ROOT}/internet-calls/${encodeURIComponent(callId)}/decline`,
+    reason ? { reason } : {}
+  );
   unwrap(res.data);
 }
 

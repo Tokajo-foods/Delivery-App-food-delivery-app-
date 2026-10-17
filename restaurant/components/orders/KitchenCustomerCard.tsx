@@ -1,4 +1,4 @@
-import { MessageCircle, Mic, MicOff, Phone } from 'lucide-react-native';
+import { MessageCircle, Phone } from 'lucide-react-native';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { authTheme } from '@/constants/auth-theme';
@@ -34,8 +34,6 @@ export function KitchenCustomerCard({
 }: Props) {
   const calls = useOrderCalls(orderId, 'restaurant');
   const canReach = fulfillmentTone !== 'table';
-  const live = calls.live;
-  const incoming = live?.direction === 'in' && live.state === 'ringing';
 
   const openCallChoices = () => {
     Alert.alert(customerName, 'Choose how to call', [
@@ -78,35 +76,7 @@ export function KitchenCustomerCard({
       </View>
 
       {calls.notice ? <Text style={styles.notice}>{calls.notice}</Text> : null}
-      {live ? (
-        <View style={styles.live}>
-          <Text style={styles.liveText}>
-            {incoming ? 'Incoming call' : live.state === 'accepted' ? 'On a call' : 'Calling…'}
-          </Text>
-          {incoming ? (
-            <View style={styles.liveActions}>
-              <Pressable onPress={() => void calls.accept()} style={styles.accept}>
-                <Text style={styles.liveBtnText}>Accept</Text>
-              </Pressable>
-              <Pressable onPress={() => void calls.decline()} style={styles.decline}>
-                <Text style={styles.liveBtnText}>Decline</Text>
-              </Pressable>
-            </View>
-          ) : (
-            <View style={styles.liveActions}>
-              {live.state === 'accepted' ? (
-                <Pressable onPress={() => void calls.toggleMute()} style={styles.mute}>
-                  {calls.muted ? <MicOff color="#1C1917" size={14} /> : <Mic color="#1C1917" size={14} />}
-                </Pressable>
-              ) : null}
-              <Pressable onPress={() => void calls.hangup()} style={styles.decline}>
-                <Text style={styles.liveBtnText}>End</Text>
-              </Pressable>
-            </View>
-          )}
-          {calls.busy ? <ActivityIndicator color={authTheme.brand} /> : null}
-        </View>
-      ) : null}
+      {calls.busy ? <ActivityIndicator color={authTheme.brand} /> : null}
 
       <Text style={styles.label}>Delivery address</Text>
       <Text style={styles.address}>
@@ -178,29 +148,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9A3412',
   },
-  live: { gap: 8 },
-  liveText: { fontFamily: fonts.semiBold, fontSize: 13, color: authTheme.text },
-  liveActions: { flexDirection: 'row', gap: 8 },
-  accept: {
-    backgroundColor: '#059669',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  decline: {
-    backgroundColor: '#DC2626',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  mute: {
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E7E5E4',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  liveBtnText: { color: '#FFFFFF', fontFamily: fonts.bold, fontSize: 13 },
   address: {
     fontFamily: fonts.semiBold,
     fontSize: 14,

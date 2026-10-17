@@ -36,6 +36,7 @@ function useStatus(call: ActiveCall): string {
   }, []);
   if (call.phase === 'incoming') return 'Incoming voice call';
   if (call.phase === 'connecting') return 'Connecting…';
+  if (call.reconnecting) return 'Reconnecting…';
   if (call.phase === 'outgoing') return now - openedAt < 2000 ? 'Calling…' : 'Ringing…';
   return formatCallDuration(Math.max(0, Math.floor((now - (call.connectedAt ?? now)) / 1000)));
 }
@@ -52,18 +53,17 @@ export function CallScreen(props: Props) {
     <CallControl
       label="Speaker"
       tone={speaker ? 'on' : 'neutral'}
-      size={incoming ? 52 : 64}
       onPress={props.onToggleSpeaker}
-      icon={<Volume2 color={speaker ? '#0B141A' : '#FFFFFF'} size={incoming ? 22 : 26} />}
+      icon={<Volume2 color={speaker ? '#0B141A' : '#FFFFFF'} size={26} />}
     />
   );
   const muteBtn = (
     <CallControl
       label={muted ? 'Unmute' : 'Mute'}
       tone={muted ? 'on' : 'neutral'}
-      size={incoming ? 52 : 64}
+      disabled={call.phase !== 'active'}
       onPress={props.onToggleMute}
-      icon={muted ? <MicOff color="#0B141A" size={incoming ? 22 : 26} /> : <Mic color="#FFFFFF" size={incoming ? 22 : 26} />}
+      icon={muted ? <MicOff color="#0B141A" size={26} /> : <Mic color="#FFFFFF" size={26} />}
     />
   );
 
@@ -97,10 +97,6 @@ export function CallScreen(props: Props) {
 
       {incoming ? (
         <View style={styles.footer}>
-          <View style={styles.row}>
-            {speakerBtn}
-            {muteBtn}
-          </View>
           <View style={styles.row}>
             <CallControl
               label="Decline"
@@ -162,6 +158,6 @@ const styles = StyleSheet.create({
   sub: { marginTop: 6, fontFamily: fonts.medium, fontSize: 14, color: '#8696A0' },
   status: { marginTop: 14, fontFamily: fonts.medium, fontSize: 16, color: '#D1D7DB' },
   timer: { letterSpacing: 1, fontVariant: ['tabular-nums'] },
-  footer: { gap: 36 },
+  footer: { paddingBottom: 12 },
   row: { flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'flex-start' },
 });

@@ -20,6 +20,7 @@ export type ActiveCall = {
   connectedAt: number | null;
   /** The OS call screen (CallKit / ConnectionService) owns the ring. */
   nativeRinging: boolean;
+  reconnecting?: boolean;
 };
 
 type CallStore = {
