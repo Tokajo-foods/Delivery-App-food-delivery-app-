@@ -70,6 +70,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.tokajofoods.restaurant",
       "usesAppleSignIn": true,
+      "entitlements": {
+        "com.apple.developer.usernotifications.time-sensitive": true
+      },
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Allow TOKAJO FOODS to use the microphone for in-app calls on an order. Your mobile number stays hidden.",
         "UIBackgroundModes": ["location", "audio", "voip", "remote-notification"],

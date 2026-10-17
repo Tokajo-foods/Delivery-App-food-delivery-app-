@@ -19,6 +19,7 @@ type CallKeepModule = {
   setCurrentCallActive: (uuid: string) => void;
   setMutedCall: (uuid: string, muted: boolean) => void;
   backToForeground: () => void;
+  checkPhoneAccountEnabled?: () => Promise<boolean>;
   getInitialEvents?: () => Promise<InitialEvent[]>;
   clearInitialEvents?: () => void;
   addEventListener: (type: string, handler: (event: KeepEvent) => void) => void;
@@ -99,11 +100,20 @@ export function setupNativeIncomingCalls(): Promise<boolean> {
   return setupPromise;
 }
 
-/** System incoming-call screen with the phone's own ringtone. False when unavailable. */
+/** A headless wake cannot show CallKeep's permission alert, so setup may never settle. */
+function withTimeout<T>(work: Promise<T>, fallback: T, ms = 4000): Promise<T> {
+  return Promise.race([work, new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))]);
+}
+
+/** System incoming-call screen with the phone's own ringtone. False → caller shows the ringing notification. */
 export async function displayNativeIncomingCall(callId: string, callerName: string): Promise<boolean> {
-  if (!(await setupNativeIncomingCalls())) return false;
+  if (!(await withTimeout(setupNativeIncomingCalls(), false))) return false;
   const keep = loadCallKeep();
   if (!keep) return false;
+  if (Platform.OS === 'android' && keep.checkPhoneAccountEnabled) {
+    const enabled = await withTimeout(keep.checkPhoneAccountEnabled().catch(() => false), false);
+    if (!enabled) return false;
+  }
   try {
     keep.displayIncomingCall(callUuidFromId(callId), 'TOKAJO', callerName, 'generic', false);
     return true;
