@@ -22,6 +22,7 @@ function terminalNotice(
   peerName: string,
 ): string {
   if (endReason === 'dropped') return DROPPED;
+  if (endReason === 'time_limit') return 'Call reached the time limit. Call again if you need to.';
   if (direction === 'out') {
     if (endReason === 'busy') return `${peerName} is on another call. Try again shortly.`;
     if (state === 'timed_out') return 'No answer. Try again or use chat.';
