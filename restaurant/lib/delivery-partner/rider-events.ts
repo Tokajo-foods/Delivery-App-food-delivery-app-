@@ -25,6 +25,7 @@ import {
   prependInboxNotification,
 } from '@/lib/notification/inbox-cache';
 import { notificationKeys } from '@/lib/notification/hooks';
+import { invalidateRiderPricing } from '@/lib/pricing/pricing-sync';
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object'
@@ -230,6 +231,9 @@ export function applyRiderSocketEvent(
       refreshRiderTrip(queryClient, pickString(record, ['deliveryId', 'id']));
       break;
     }
+    case 'pricing:config_updated':
+      invalidateRiderPricing(queryClient);
+      break;
     case 'chat:new-message': {
       const mapped = mapRiderChatMessage(payload);
       if (mapped) appendRiderChat(mapped);

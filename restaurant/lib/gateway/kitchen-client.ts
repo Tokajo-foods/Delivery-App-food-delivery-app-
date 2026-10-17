@@ -2,27 +2,10 @@ import { AppState } from 'react-native';
 import type { Socket } from 'socket.io-client';
 
 import { connectGatewaySocket } from '@/lib/gateway/connect';
-import type { KitchenInboundEvent } from '@/lib/gateway/kitchen-events';
-
-const INBOUND: KitchenInboundEvent[] = [
-  'kitchen:order-new',
-  'kitchen:order-status',
-  'kitchen:order-cancelled',
-  'kitchen:rider-assigned',
-  'kitchen:rider-arrived',
-  'kitchen:scheduled-due',
-  'order:status',
-  'order:items-removed',
-  'delivery:status',
-  'payment:cod-paid',
-  'notification:new',
-  'chat:new-message',
-  'typing',
-  'tracking:location',
-  'partner:location',
-  'call:masks',
-  'call:internet',
-];
+import {
+  KITCHEN_INBOUND_EVENTS as INBOUND,
+  type KitchenInboundEvent,
+} from '@/lib/gateway/kitchen-event-types';
 
 export type KitchenChatMessage = {
   id: string;

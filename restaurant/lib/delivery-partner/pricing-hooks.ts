@@ -44,8 +44,9 @@ export function usePartnerPricingRules(enabled = true) {
     queryKey: PRICING_KEY,
     queryFn: fetchPricingRules,
     enabled,
-    staleTime: 30 * 60_000,
+    staleTime: 5 * 60_000,
     gcTime: 60 * 60_000,
+    refetchOnReconnect: true,
     retry: 1,
   });
 }

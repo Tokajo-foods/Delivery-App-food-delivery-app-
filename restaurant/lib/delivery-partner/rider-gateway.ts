@@ -10,31 +10,13 @@ import {
   ackToError,
   type RiderSocketAck,
 } from '@/lib/delivery-partner/rider-ack';
-import type {
-  RiderGatewayEvent,
-  RiderGatewayStatus,
-  RiderLocationEmit,
-  RiderOutboundEvent,
+import {
+  RIDER_INBOUND_EVENTS as INBOUND,
+  type RiderGatewayEvent,
+  type RiderGatewayStatus,
+  type RiderLocationEmit,
+  type RiderOutboundEvent,
 } from '@/lib/delivery-partner/rider-gateway-types';
-
-const INBOUND: RiderGatewayEvent[] = [
-  'delivery:new',
-  'delivery:assigned',
-  'delivery:assignment-expiring',
-  'delivery:cancelled',
-  'delivery:updated',
-  'delivery:status',
-  'notification:new',
-  'earnings:updated',
-  'wallet:credited',
-  'chat:new-message',
-  'typing',
-  'partner:location',
-  'tracking:location',
-  'tracking:eta',
-  'call:masks',
-  'call:internet',
-];
 
 type RiderListener = (event: RiderGatewayEvent, payload: unknown) => void;
 type StatusListener = (status: RiderGatewayStatus) => void;

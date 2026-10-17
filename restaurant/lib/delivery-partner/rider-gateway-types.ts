@@ -1,20 +1,24 @@
-export type RiderGatewayEvent =
-  | 'delivery:new'
-  | 'delivery:assigned'
-  | 'delivery:assignment-expiring'
-  | 'delivery:cancelled'
-  | 'delivery:updated'
-  | 'delivery:status'
-  | 'notification:new'
-  | 'earnings:updated'
-  | 'wallet:credited'
-  | 'chat:new-message'
-  | 'typing'
-  | 'partner:location'
-  | 'tracking:location'
-  | 'tracking:eta'
-  | 'call:masks'
-  | 'call:internet';
+export const RIDER_INBOUND_EVENTS = [
+  'delivery:new',
+  'delivery:assigned',
+  'delivery:assignment-expiring',
+  'delivery:cancelled',
+  'delivery:updated',
+  'delivery:status',
+  'notification:new',
+  'earnings:updated',
+  'wallet:credited',
+  'chat:new-message',
+  'typing',
+  'partner:location',
+  'tracking:location',
+  'tracking:eta',
+  'call:masks',
+  'call:internet',
+  'pricing:config_updated',
+] as const;
+
+export type RiderGatewayEvent = (typeof RIDER_INBOUND_EVENTS)[number];
 
 export type RiderOutboundEvent =
   | 'partner:online'

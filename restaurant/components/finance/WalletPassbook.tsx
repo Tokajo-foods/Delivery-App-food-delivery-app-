@@ -140,7 +140,9 @@ export function WalletPassbook({
           {formatCurrency(wallet?.balance ?? 0)}
         </Text>
         <Text style={styles.muted}>
-          Net earnings after {wallet?.commissionPercent ?? 12}% platform fee.
+          {wallet
+            ? `Net earnings after ${wallet.commissionPercent}% platform fee. `
+            : 'Net earnings after platform fee. '}
           Admin bank release deducts from this balance.
         </Text>
         <View style={styles.walletMetaRow}>

@@ -1,49 +1,39 @@
 /**
  * Rider net pay — delivery fee minus platform commission; incentive/tip added as-is.
- * Commission % comes from GET /partners/me/config/pricing-rules when cached.
+ * Prefer the server `partnerEarnings` on the trip/offer. Commission % only comes from
+ * the trip payload or GET /partners/me/config/pricing-rules — never a local constant.
  */
-
-export const DEFAULT_PARTNER_COMMISSION_PCT = 12;
 
 export type PartnerTripPay = {
   basePay: number;
   incentive: number;
   tip: number;
   netTotal: number;
-  commissionPercent: number;
+  commissionPercent: number | null;
   showIncentive: boolean;
 };
 
 let cachedCommissionPct: number | null = null;
 
+function validPct(pct: number | null | undefined): pct is number {
+  return pct != null && Number.isFinite(pct) && pct >= 0 && pct <= 100;
+}
+
 export function setPartnerCommissionPercent(pct: number | null) {
-  cachedCommissionPct =
-    pct != null && Number.isFinite(pct) && pct >= 0 && pct <= 100 ? pct : null;
+  cachedCommissionPct = validPct(pct) ? pct : null;
 }
 
 export function resolveCommissionPercent(input?: {
   platformCommissionPct?: number;
   partnerSharePct?: number;
-}): number {
-  if (cachedCommissionPct != null) return cachedCommissionPct;
-  if (
-    input?.platformCommissionPct != null
-    && Number.isFinite(input.platformCommissionPct)
-  ) {
-    return input.platformCommissionPct;
-  }
-  if (input?.partnerSharePct != null && Number.isFinite(input.partnerSharePct)) {
-    return Math.max(0, 100 - input.partnerSharePct);
-  }
-  return DEFAULT_PARTNER_COMMISSION_PCT;
+}): number | null {
+  if (validPct(input?.platformCommissionPct)) return input.platformCommissionPct;
+  if (validPct(input?.partnerSharePct)) return Math.max(0, 100 - input.partnerSharePct);
+  return cachedCommissionPct;
 }
 
-export function partnerNetFromDeliveryFee(
-  deliveryFee: number,
-  commissionPercent = DEFAULT_PARTNER_COMMISSION_PCT
-): number {
-  const rate =
-    commissionPercent > 1 ? commissionPercent / 100 : commissionPercent;
+export function partnerNetFromDeliveryFee(deliveryFee: number, commissionPercent: number): number {
+  const rate = commissionPercent > 1 ? commissionPercent / 100 : commissionPercent;
   return Math.round(Math.max(0, deliveryFee) * (1 - rate) * 100) / 100;
 }
 
@@ -63,7 +53,7 @@ export function resolvePartnerTripPay(input: {
   });
   const basePay =
     input.partnerEarnings ??
-    (fee != null && Number.isFinite(fee)
+    (fee != null && Number.isFinite(fee) && commissionPercent != null
       ? partnerNetFromDeliveryFee(fee, commissionPercent)
       : null);
   if (basePay == null || !Number.isFinite(basePay)) return null;

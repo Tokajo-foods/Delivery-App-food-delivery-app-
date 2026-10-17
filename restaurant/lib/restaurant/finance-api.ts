@@ -373,7 +373,7 @@ export const restaurantFinanceApi = {
         lifetimeDebited: pickNumber(raw, ['lifetimeDebited']),
         lastCreditedAt: raw.lastCreditedAt ? String(raw.lastCreditedAt) : null,
         lastDebitedAt: raw.lastDebitedAt ? String(raw.lastDebitedAt) : null,
-        commissionPercent: pickNumber(raw, ['commissionPercent']) || 12,
+        commissionPercent: pickNumber(raw, ['commissionPercent']),
       };
     } catch (error) {
       throwFinanceError(error, 'Failed to load wallet');

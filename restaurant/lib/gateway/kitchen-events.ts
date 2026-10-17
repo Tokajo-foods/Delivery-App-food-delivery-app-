@@ -6,24 +6,10 @@ import { restaurantOrderKeys, syncDashboardFromOrders } from '@/lib/order/hooks'
 import type { KitchenKdsBoard } from '@/lib/order/owner-api';
 import { earningsKeys } from '@/lib/restaurant/earnings-keys';
 
-export type KitchenInboundEvent =
-  | 'kitchen:order-new'
-  | 'kitchen:order-status'
-  | 'kitchen:order-cancelled'
-  | 'kitchen:rider-assigned'
-  | 'kitchen:rider-arrived'
-  | 'kitchen:scheduled-due'
-  | 'order:status'
-  | 'order:items-removed'
-  | 'delivery:status'
-  | 'payment:cod-paid'
-  | 'notification:new'
-  | 'chat:new-message'
-  | 'typing'
-  | 'tracking:location'
-  | 'partner:location'
-  | 'call:masks'
-  | 'call:internet';
+import type { KitchenInboundEvent } from '@/lib/gateway/kitchen-event-types';
+import { invalidateKitchenPricing } from '@/lib/pricing/pricing-sync';
+
+export type { KitchenInboundEvent };
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object'
@@ -146,6 +132,11 @@ export function applyKitchenSocketEvent(
   event: KitchenInboundEvent,
   payload: unknown
 ) {
+  if (event === 'pricing:config_updated') {
+    invalidateKitchenPricing(queryClient);
+    return;
+  }
+
   if (event === 'notification:new') {
     void queryClient.invalidateQueries({
       queryKey: notificationKeys.all,

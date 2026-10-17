@@ -1,19 +1,18 @@
 /**
- * Kitchen bill helpers — prefer server `order.bill.restaurant` when it has real amounts.
+ * Kitchen bill helpers — server `order.bill.restaurant` is the source of truth.
  * Kitchen earn = food items − discount − admin commission. Never packaging, GST, or delivery.
+ * When an order has no server bill, the commission % must come from
+ * GET /restaurants/:id/commission (admin rule) — there is no local default.
  */
-
-export const PLATFORM_COMMISSION_PERCENT = 12;
 
 export type RestaurantBill = {
   itemTotal: number;
-  packaging: number;
-  tax: number;
   discount: number;
   restaurantCharges: number;
-  commissionPercent: number;
-  commissionAmount: number;
-  youEarn: number;
+  /** null until the server commission is known. */
+  commissionPercent: number | null;
+  commissionAmount: number | null;
+  youEarn: number | null;
 };
 
 export type CentralBillPayload = {
@@ -46,14 +45,20 @@ function money(n: number): number {
   return Math.round(Math.max(0, n) * 100) / 100;
 }
 
-function fromServer(bill: NonNullable<CentralBillPayload['restaurant']>): RestaurantBill {
+function finitePct(value: unknown): number | null {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : null;
+}
+
+function fromServer(
+  bill: NonNullable<CentralBillPayload['restaurant']>,
+  fallbackPercent: number | null,
+): RestaurantBill {
   return {
     itemTotal: money(Number(bill.itemTotal) || 0),
-    packaging: 0,
-    tax: 0,
     discount: money(Number(bill.discount) || 0),
     restaurantCharges: money(Number(bill.restaurantCharges) || 0),
-    commissionPercent: Number(bill.commissionPercent) || PLATFORM_COMMISSION_PERCENT,
+    commissionPercent: finitePct(bill.commissionPercent) ?? fallbackPercent,
     commissionAmount: money(Number(bill.commissionAmount) || 0),
     youEarn: money(Number(bill.youEarn) || 0),
   };
@@ -75,13 +80,15 @@ function serverBillUsable(
 
 /**
  * Kitchen-facing bill: food − discount, then admin commission % → you earn.
+ * `serverCommissionPercent` is the outlet's current rule from the commission API.
  */
 export function buildRestaurantBill(
   order: OrderLike,
-  commissionPercent = PLATFORM_COMMISSION_PERCENT,
+  serverCommissionPercent?: number | null,
 ): RestaurantBill {
+  const fallbackPercent = finitePct(serverCommissionPercent);
   if (serverBillUsable(order.bill?.restaurant)) {
-    return fromServer(order.bill!.restaurant!);
+    return fromServer(order.bill!.restaurant!, fallbackPercent);
   }
 
   const fromItems = (order.items ?? []).reduce((sum, item) => {
@@ -104,28 +111,19 @@ export function buildRestaurantBill(
     }
   }
 
-  const pct = Number.isFinite(commissionPercent) ? commissionPercent : PLATFORM_COMMISSION_PERCENT;
-  const rate = pct > 1 ? pct / 100 : pct;
-  const commissionAmount = money(restaurantCharges * rate);
-  const youEarn = money(restaurantCharges - commissionAmount);
+  const commissionAmount =
+    fallbackPercent != null ? money(restaurantCharges * (fallbackPercent / 100)) : null;
   return {
     itemTotal: itemTotal > 0 ? itemTotal : restaurantCharges,
-    packaging: 0,
-    tax: 0,
     discount,
     restaurantCharges,
-    commissionPercent: +(rate * 100).toFixed(2),
+    commissionPercent: fallbackPercent,
     commissionAmount,
-    youEarn,
+    youEarn: commissionAmount != null ? money(restaurantCharges - commissionAmount) : null,
   };
 }
 
 /** List / card total for kitchen — restaurant charges before commission. */
 export function resolveRestaurantOrderTotal(order: OrderLike): number {
   return buildRestaurantBill(order).restaurantCharges;
-}
-
-/** Net earning after 12% — business snapshot / delivered earnings. */
-export function resolveRestaurantYouEarn(order: OrderLike): number {
-  return buildRestaurantBill(order).youEarn;
 }
