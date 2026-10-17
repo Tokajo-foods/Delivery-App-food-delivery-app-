@@ -1,8 +1,8 @@
 /**
  * Kitchen bill helpers — server `order.bill.restaurant` is the source of truth.
  * Kitchen earn = food items − discount − admin commission. Never packaging, GST, or delivery.
- * When an order has no server bill, the commission % must come from
- * GET /restaurants/:id/commission (admin rule) — there is no local default.
+ * Commission amount and "you earn" are only ever read from the server bill. The current
+ * rule % from GET /restaurants/:id/commission is shown as a label, never multiplied here.
  */
 
 export type RestaurantBill = {
@@ -91,35 +91,22 @@ export function buildRestaurantBill(
     return fromServer(order.bill!.restaurant!, fallbackPercent);
   }
 
-  const fromItems = (order.items ?? []).reduce((sum, item) => {
-    if (item.itemTotal != null && Number.isFinite(item.itemTotal)) {
-      return sum + Number(item.itemTotal);
-    }
-    return sum + (item.price ?? 0) * (item.quantity || 1);
-  }, 0);
-  const itemTotal = money(
-    order.subtotal != null && order.subtotal > 0 ? order.subtotal : fromItems,
-  );
+  // No server bill yet: show server order amounts only; commission and earn stay unknown.
+  const itemTotal = money(Number(order.subtotal ?? 0));
   const discount = money(Number(order.discount ?? 0));
   let restaurantCharges = money(itemTotal - discount);
-
   // Kitchen `grandTotal` is item total after toKitchenOrderView — not customer payable.
   if (restaurantCharges <= 0) {
     const fallback = Number(order.total ?? order.grandTotal ?? 0);
-    if (Number.isFinite(fallback) && fallback > 0) {
-      restaurantCharges = money(fallback);
-    }
+    if (Number.isFinite(fallback) && fallback > 0) restaurantCharges = money(fallback);
   }
-
-  const commissionAmount =
-    fallbackPercent != null ? money(restaurantCharges * (fallbackPercent / 100)) : null;
   return {
     itemTotal: itemTotal > 0 ? itemTotal : restaurantCharges,
     discount,
     restaurantCharges,
     commissionPercent: fallbackPercent,
-    commissionAmount,
-    youEarn: commissionAmount != null ? money(restaurantCharges - commissionAmount) : null,
+    commissionAmount: null,
+    youEarn: null,
   };
 }
 

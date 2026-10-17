@@ -9,7 +9,7 @@ export type OfferEarnings = PartnerTripPay;
 export function resolveOfferEarnings(offer: IncomingOffer): OfferEarnings | null {
   const fromParts = resolvePartnerTripPay({
     deliveryFee: offer.deliveryFee,
-    partnerEarnings: offer.partnerEarnings,
+    partnerEarnings: offer.payout?.rounded ?? offer.partnerEarnings,
     incentiveBonus: offer.incentiveBonus,
   });
   if (!fromParts) return null;
@@ -27,10 +27,4 @@ export function resolveOfferEarnings(offer: IncomingOffer): OfferEarnings | null
   return fromParts;
 }
 
-export function formatInr(amount: number) {
-  const n = Math.round(Math.max(0, amount) * 100) / 100;
-  return `₹${n.toLocaleString('en-IN', {
-    minimumFractionDigits: n % 1 === 0 ? 0 : 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
+export { formatInr } from '@/lib/format/money';

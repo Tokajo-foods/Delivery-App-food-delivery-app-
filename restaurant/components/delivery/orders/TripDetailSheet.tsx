@@ -21,6 +21,7 @@ import {
 import { formatTripError } from '@/lib/delivery-partner/rider-ack';
 import { useTripEarnings } from '@/lib/delivery-partner/finance-hooks';
 import type { PartnerDelivery } from '@/lib/delivery-partner/types';
+import { formatInrOrNull } from '@/lib/format/money';
 
 type Props = {
   visible: boolean;
@@ -30,14 +31,8 @@ type Props = {
   onClose: () => void;
 };
 
-function money(amount?: number, currency = 'INR') {
-  if (amount == null || !Number.isFinite(amount)) return null;
-  const symbol = currency === 'INR' ? '₹' : `${currency} `;
-  const n = Math.round(Math.max(0, amount) * 100) / 100;
-  return `${symbol}${n.toLocaleString('en-IN', {
-    minimumFractionDigits: n % 1 === 0 ? 0 : 2,
-    maximumFractionDigits: 2,
-  })}`;
+function money(amount?: number, _currency = 'INR') {
+  return formatInrOrNull(amount);
 }
 
 function formatWhen(iso?: string | null) {

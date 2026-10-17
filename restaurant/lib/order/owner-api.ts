@@ -274,6 +274,7 @@ function mapItems(raw: unknown): OwnerOrderItem[] {
   return raw.map((row) => {
     const item = asRecord(row);
     const price = Number(item.price ?? item.unitPrice ?? item.basePrice);
+    const lineTotal = Number(item.itemTotal ?? item.lineTotal);
     const modifiersRaw = item.modifiers;
     const modifiers = Array.isArray(modifiersRaw)
       ? modifiersRaw
@@ -295,6 +296,7 @@ function mapItems(raw: unknown): OwnerOrderItem[] {
       name: String(item.name ?? item.itemName ?? item.title ?? 'Item'),
       quantity: Number(item.quantity ?? item.qty ?? 1),
       price: Number.isFinite(price) ? price : undefined,
+      lineTotal: Number.isFinite(lineTotal) && item.itemTotal != null ? lineTotal : undefined,
       specialInstructions:
         String(item.specialInstructions ?? item.notes ?? '').trim() || undefined,
       modifiers: modifiers?.length ? modifiers : undefined,
@@ -430,18 +432,12 @@ export function mapOwnerOrder(data: Record<string, unknown>): OwnerOrder {
   );
   // Kitchen display total = food − discount (no packaging / GST / delivery).
   const restaurantParts = (subtotal ?? 0) - (discount ?? 0);
-  const itemsTotal = items.reduce(
-    (sum, item) => sum + (item.price ?? 0) * (item.quantity || 1),
-    0
-  );
   const total =
     billCharges != null && billCharges > 0
       ? billCharges
       : restaurantParts > 0
         ? restaurantParts
-        : itemsTotal > 0
-          ? itemsTotal
-          : explicitTotal;
+        : explicitTotal;
 
   return {
     id: String(data._id ?? data.id ?? data.orderId ?? ''),

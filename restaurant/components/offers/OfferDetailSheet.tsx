@@ -21,6 +21,7 @@ import {
   useOfferMutations,
 } from '@/lib/restaurant/offers-hooks';
 import type { RestaurantOffer } from '@/lib/restaurant/types';
+import { formatInr } from '@/lib/format/money';
 
 function formatDateInput(value?: string) {
   if (!value) return '';
@@ -194,12 +195,12 @@ export function OfferDetailSheet({
               </Text>
               {row.minOrderAmount != null ? (
                 <Text style={styles.kv}>
-                  Min item total Rs {Math.round(row.minOrderAmount)}
+                  Min item total {formatInr(row.minOrderAmount)}
                 </Text>
               ) : null}
               {row.maxDiscountAmount != null ? (
                 <Text style={styles.kv}>
-                  Max discount Rs {Math.round(row.maxDiscountAmount)}
+                  Max discount {formatInr(row.maxDiscountAmount)}
                 </Text>
               ) : null}
               <Text style={styles.kv}>

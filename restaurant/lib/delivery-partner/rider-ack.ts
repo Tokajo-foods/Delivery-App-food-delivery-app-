@@ -1,6 +1,7 @@
 import { Alert } from 'react-native';
 
 import { PartnerApiError, getApiErrorCode, getApiErrorMessage } from '@/lib/errors';
+import { formatInr } from '@/lib/format/money';
 
 const FALLBACK_CODES = new Set([
   'SOCKET_OFFLINE',
@@ -215,7 +216,7 @@ export function announceOrderReturned(deliveryId: string, rtoFee?: number) {
   announcedReturns.add(id);
   const earned =
     rtoFee != null && Number.isFinite(rtoFee) && rtoFee > 0
-      ? ` You earned ₹${Math.round(rtoFee)}.`
+      ? ` You earned ${formatInr(rtoFee)}.`
       : '';
   Alert.alert('Order returned', `Order returned to restaurant.${earned}`);
 }

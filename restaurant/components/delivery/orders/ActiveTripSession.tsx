@@ -56,6 +56,7 @@ import {
 } from '@/lib/delivery-partner/tracking-hooks';
 import type { OrderTracking } from '@/lib/delivery-partner/tracking-types';
 import type { PartnerDelivery } from '@/lib/delivery-partner/types';
+import { formatInrOrNull } from '@/lib/format/money';
 
 const LIVE = new Set([
   'accepted',
@@ -66,10 +67,8 @@ const LIVE = new Set([
   'returning_to_restaurant',
 ]);
 
-function money(amount?: number, currency = 'INR') {
-  if (amount == null || !Number.isFinite(amount)) return null;
-  const symbol = currency === 'INR' ? '₹' : `${currency} `;
-  return `${symbol}${Math.round(amount)}`;
+function money(amount?: number, _currency = 'INR') {
+  return formatInrOrNull(amount);
 }
 
 function tripPhase(status: string) {

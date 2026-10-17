@@ -59,6 +59,7 @@ import {
 import { restaurantMenuApi } from '@/lib/restaurant/menu-api';
 import { CSV_TEMPLATE, parseMenuCsv } from '@/lib/restaurant/menu-csv';
 import type { MenuCategory, MenuItem, ModifierGroup, SpiceLevel } from '@/lib/restaurant/types';
+import { formatInr } from '@/lib/format/money';
 
 type CategoryModalState =
   | { mode: 'create' }
@@ -2061,7 +2062,7 @@ function BulkImportModal({
                       {item.name}
                     </Text>
                     <Text style={styles.previewMeta} numberOfLines={1}>
-                      ₹{item.price}
+                      {formatInr(item.price)}
                       {item.isVeg != null ? (item.isVeg ? ' · Veg' : ' · Non-veg') : ''}
                       {item.spiceLevel ? ` · ${item.spiceLevel}` : ''}
                     </Text>

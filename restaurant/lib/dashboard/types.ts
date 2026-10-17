@@ -3,6 +3,8 @@ export type OwnerOrderItem = {
   name: string;
   quantity: number;
   price?: number;
+  /** Server line total (unit + add-ons) × qty from order-service `itemTotal`. */
+  lineTotal?: number;
   specialInstructions?: string;
   /** Selected add-ons for kitchen / owner bill. */
   modifiers?: string[];

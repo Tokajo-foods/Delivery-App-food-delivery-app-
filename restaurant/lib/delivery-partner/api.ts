@@ -474,6 +474,8 @@ export function mapPartnerBatch(raw: unknown): PartnerBatch {
       ? deliveryIds
       : deliveries.map((row) => row.deliveryId),
     deliveries,
+    totalPartnerEarnings: pickNumber(source, ['totalPartnerEarnings']),
+    totalIncentiveBonus: pickNumber(source, ['totalIncentiveBonus']),
     sequence: sequenceRaw.map((item, index) => mapBatchStop(item, index)),
     sequenceConfirmed: pickBool(source, ['sequenceConfirmed', 'confirmed']) ?? false,
     sequenceConfirmedAt: pickString(source, ['sequenceConfirmedAt']) ?? null,

@@ -1,7 +1,7 @@
 /**
- * Rider net pay — delivery fee minus platform commission; incentive/tip added as-is.
- * Prefer the server `partnerEarnings` on the trip/offer. Commission % only comes from
- * the trip payload or GET /partners/me/config/pricing-rules — never a local constant.
+ * Rider pay is server-computed: `partnerEarnings` (delivery fee after commission) and the
+ * final payout come from delivery-service. Without them the amount is unknown — never derived here.
+ * Commission % (display only) comes from the trip payload or GET /partners/me/config/pricing-rules.
  */
 
 export type PartnerTripPay = {
@@ -32,39 +32,35 @@ export function resolveCommissionPercent(input?: {
   return cachedCommissionPct;
 }
 
-export function partnerNetFromDeliveryFee(deliveryFee: number, commissionPercent: number): number {
-  const rate = commissionPercent > 1 ? commissionPercent / 100 : commissionPercent;
-  return Math.round(Math.max(0, deliveryFee) * (1 - rate) * 100) / 100;
-}
-
 export function resolvePartnerTripPay(input: {
   deliveryFee?: number;
   partnerEarnings?: number;
   incentiveBonus?: number;
   tipAmount?: number;
+  /** Server final payout (`netEarnings` / `payout.finalAmount`) when the payload has it. */
+  netTotal?: number;
   commissionPercent?: number;
   partnerSharePct?: number;
   platformCommissionPct?: number;
 }): PartnerTripPay | null {
-  const fee = input.deliveryFee;
   const commissionPercent = resolveCommissionPercent({
     platformCommissionPct: input.platformCommissionPct ?? input.commissionPercent,
     partnerSharePct: input.partnerSharePct,
   });
-  const basePay =
-    input.partnerEarnings ??
-    (fee != null && Number.isFinite(fee) && commissionPercent != null
-      ? partnerNetFromDeliveryFee(fee, commissionPercent)
-      : null);
+  const basePay = input.partnerEarnings;
   if (basePay == null || !Number.isFinite(basePay)) return null;
 
   const incentive = Math.max(0, input.incentiveBonus ?? 0);
   const tip = Math.max(0, input.tipAmount ?? 0);
+  const serverNet = input.netTotal;
   return {
     basePay,
     incentive,
     tip,
-    netTotal: basePay + incentive + tip,
+    netTotal:
+      serverNet != null && Number.isFinite(serverNet)
+        ? serverNet
+        : Math.round((basePay + incentive + tip) * 100) / 100,
     commissionPercent,
     showIncentive: incentive > 0,
   };
@@ -75,6 +71,7 @@ export function resolvePartnerDisplayEarning(input: {
   partnerEarnings?: number;
   incentiveBonus?: number;
   tipAmount?: number;
+  netTotal?: number;
 }): number | undefined {
   const pay = resolvePartnerTripPay(input);
   return pay?.netTotal;

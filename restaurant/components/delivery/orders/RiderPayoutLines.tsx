@@ -1,14 +1,9 @@
 import { Text, View } from 'react-native';
 
 import type { RiderPayout } from '@/lib/delivery-partner/types';
+import { formatInr } from '@/lib/format/money';
 
-function inr(amount: number) {
-  const n = Math.round(Math.max(0, amount) * 100) / 100;
-  return `₹${n.toLocaleString('en-IN', {
-    minimumFractionDigits: n % 1 === 0 ? 0 : 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
+const inr = formatInr;
 
 type Row = { label: string; value: string; strong?: boolean };
 

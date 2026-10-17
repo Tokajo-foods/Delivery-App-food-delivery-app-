@@ -46,6 +46,7 @@ import {
   type TripIssueCode,
   type UnreachableChannel,
 } from '@/lib/delivery-partner/types';
+import { formatInr } from '@/lib/format/money';
 
 type SheetKey =
   | 'pickup'
@@ -612,7 +613,7 @@ export function TripLifecycleBar({
       Alert.alert(
         'Returning to restaurant',
         fee && fee > 0
-          ? `Take the food back to the restaurant. Do not collect cash. You’ll earn ₹${Math.round(fee)} for returning this order.`
+          ? `Take the food back to the restaurant. Do not collect cash. You’ll earn ${formatInr(fee)} for returning this order.`
           : 'Take the food back to the restaurant. Do not collect cash.'
       );
     } catch {
@@ -893,7 +894,7 @@ export function TripLifecycleBar({
           </Text>
           {delivery.rtoFee && delivery.rtoFee > 0 ? (
             <Text style={styles.waitText}>
-              You’ll be paid ₹{Math.round(delivery.rtoFee)}, the full amount shown for this trip, when the kitchen receives the food.
+              You’ll be paid {formatInr(delivery.rtoFee)}, the full amount shown for this trip, when the kitchen receives the food.
             </Text>
           ) : null}
           {step === 'return_store' ? (

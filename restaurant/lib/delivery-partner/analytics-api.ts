@@ -13,6 +13,7 @@ import type {
   PartnerPerformance,
   PartnerRatingBucket,
 } from '@/lib/delivery-partner/analytics-types';
+import { formatInr, formatInrOrNull } from '@/lib/format/money';
 
 const ME_BASE = '/api/v1/delivery-service/partners/me';
 
@@ -441,17 +442,8 @@ export function selectEarningsPeriod(
   return summary[key] ?? emptyPeriod();
 }
 
-function formatMoney(amount?: number, currency = 'INR') {
-  if (amount == null || !Number.isFinite(amount)) return undefined;
-  try {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  } catch {
-    return `₹${Math.round(amount)}`;
-  }
+function formatMoney(amount?: number, _currency = 'INR') {
+  return formatInrOrNull(amount) ?? undefined;
 }
 
 function mapIncentive(raw: unknown, index: number): PartnerIncentive | null {
@@ -631,7 +623,7 @@ export function formatCurrency(amount?: number, currency = 'INR') {
   if (amount == null || !Number.isFinite(amount)) {
     return formatMoney(0, currency) ?? '₹0';
   }
-  return formatMoney(amount, currency) ?? `₹${Math.round(amount)}`;
+  return formatMoney(amount, currency) ?? formatInr(amount);
 }
 
 export function formatPercent(value: number) {

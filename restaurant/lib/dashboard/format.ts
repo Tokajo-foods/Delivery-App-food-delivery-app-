@@ -1,3 +1,5 @@
+import { formatInr } from '@/lib/format/money';
+
 export function getTimeGreeting(date = new Date()): string {
   const hour = date.getHours();
   if (hour < 12) return 'GOOD MORNING';
@@ -5,14 +7,8 @@ export function getTimeGreeting(date = new Date()): string {
   return 'GOOD EVENING';
 }
 
-export function formatCurrency(amount: number, currency = 'INR'): string {
-  const safe = Number.isFinite(amount) ? amount : 0;
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: safe % 1 === 0 ? 0 : 2,
-    maximumFractionDigits: 2,
-  }).format(safe);
+export function formatCurrency(amount: number, _currency = 'INR'): string {
+  return formatInr(amount);
 }
 
 export function splitCurrency(amount: number): { whole: string; fraction: string } {

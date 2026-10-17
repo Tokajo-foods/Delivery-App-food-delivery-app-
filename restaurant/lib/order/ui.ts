@@ -12,6 +12,7 @@ import {
   Truck,
   type LucideIcon,
 } from 'lucide-react-native';
+import { formatInr } from '@/lib/format/money';
 
 export type TimelineStepKey =
   | 'placed'
@@ -129,11 +130,7 @@ export function kitchenTimeline(order: OwnerOrder): TimelineStep[] {
 }
 
 export function money(value?: number | null) {
-  const amount = Number.isFinite(value as number) ? (value as number) : 0;
-  return `₹${amount.toLocaleString('en-IN', {
-    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
-    maximumFractionDigits: 2,
-  })}`;
+  return formatInr(value);
 }
 
 export function orderPlacedLabel(value?: string) {
@@ -194,11 +191,6 @@ export function addressText(order: OwnerOrder) {
 export function resolveOrderTotal(order: OwnerOrder) {
   const kitchen = resolveRestaurantOrderTotal(order);
   if (kitchen > 0) return kitchen;
-  const fromItems = order.items.reduce(
-    (sum, item) => sum + (item.price ?? 0) * (item.quantity || 1),
-    0
-  );
-  if (fromItems > 0) return fromItems;
   if (order.total != null && Number.isFinite(order.total) && order.total > 0) {
     return order.total;
   }

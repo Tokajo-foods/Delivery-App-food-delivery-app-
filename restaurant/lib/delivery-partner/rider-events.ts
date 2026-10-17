@@ -26,6 +26,7 @@ import {
 } from '@/lib/notification/inbox-cache';
 import { notificationKeys } from '@/lib/notification/hooks';
 import { invalidateRiderPricing } from '@/lib/pricing/pricing-sync';
+import { formatInr } from '@/lib/format/money';
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object'
@@ -222,8 +223,8 @@ export function applyRiderSocketEvent(
         body:
           amount != null
             ? rto
-              ? `₹${Math.round(amount)} return fee added to your wallet`
-              : `₹${Math.round(amount)} added to today's earnings`
+              ? `${formatInr(amount)} return fee added to your wallet`
+              : `${formatInr(amount)} added to today's earnings`
             : 'Your IST ledger just updated',
         tone: 'success',
       });

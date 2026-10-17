@@ -21,6 +21,7 @@ import {
   useModifierGroups,
 } from '@/lib/restaurant/menu-hooks';
 import type { MenuCategory, ModifierGroup } from '@/lib/restaurant/types';
+import { formatInr } from '@/lib/format/money';
 
 type CategoryAddOnsManagerProps = {
   visible: boolean;
@@ -178,7 +179,7 @@ export function CategoryAddOnsManager({
                           {group.options
                             .map(
                               (o) =>
-                                `${o.name}${o.price ? ` (+₹${o.price})` : ''}`
+                                `${o.name}${o.price ? ` (+${formatInr(o.price)})` : ''}`
                             )
                             .join(' · ') || 'No options'}
                         </Text>

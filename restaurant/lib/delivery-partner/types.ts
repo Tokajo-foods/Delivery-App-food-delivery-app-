@@ -413,6 +413,9 @@ export type PartnerBatch = {
   partnerId?: string;
   deliveryIds: string[];
   deliveries: PartnerBatchMember[];
+  /** Server sum of member partnerEarnings / incentives. */
+  totalPartnerEarnings?: number;
+  totalIncentiveBonus?: number;
   sequence: PartnerBatchStop[];
   sequenceConfirmed: boolean;
   sequenceConfirmedAt?: string | null;

@@ -1,10 +1,11 @@
 import type { OfferDiscountType, RestaurantOffer } from '@/lib/restaurant/types';
+import { formatInr } from '@/lib/format/money';
 
 /** Short badge: "50% OFF", "₹50 OFF", "FREE DELIVERY". */
 export function discountLabel(offer: Pick<RestaurantOffer, 'discountType' | 'discountValue'>) {
   const value = offer.discountValue ?? 0;
   const type = String(offer.discountType ?? 'percentage').toLowerCase();
-  if (type === 'flat') return `₹${Math.round(value)} OFF`;
+  if (type === 'flat') return `${formatInr(value)} OFF`;
   if (type === 'free_delivery') return 'FREE DELIVERY';
   if (type === 'bogo' || type.includes('buy')) return 'BOGO';
   return `${Math.round(value)}% OFF`;
@@ -24,15 +25,15 @@ export function offerEffectSummary(input: {
   const value = input.discountValue ?? 0;
   const min = input.minOrderAmount ?? 0;
   const minPart =
-    min > 0 ? ` on item total ₹${Math.round(min)}+` : ' on item total';
+    min > 0 ? ` on item total ${formatInr(min)}+` : ' on item total';
 
-  if (type === 'flat') return `₹${Math.round(value)} off${minPart}`;
+  if (type === 'flat') return `${formatInr(value)} off${minPart}`;
   if (type === 'free_delivery') return `Free delivery${minPart}`;
   if (type === 'bogo' || type.includes('buy')) return `Buy 1 Get 1${minPart}`;
 
   const cap =
     input.maxDiscountAmount != null && input.maxDiscountAmount > 0
-      ? ` (max ₹${Math.round(input.maxDiscountAmount)})`
+      ? ` (max ${formatInr(input.maxDiscountAmount)})`
       : '';
   return `${Math.round(value)}% off${minPart}${cap}`;
 }

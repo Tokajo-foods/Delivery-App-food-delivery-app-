@@ -20,6 +20,7 @@ import {
   type KotPrintResult,
 } from '@/lib/order/owner-api';
 import { kitchenHandoverErrorCopy, money } from '@/lib/order/ui';
+import { formatInr } from '@/lib/format/money';
 
 const DELAY_REASONS = [
   'Rush hour',
@@ -234,7 +235,7 @@ export function ItemsUnavailableSheet({
                     <Text style={styles.itemName}>{item.name}</Text>
                     <Text style={styles.itemMeta}>
                       {item.quantity}×
-                      {item.price != null ? ` · ${money(item.price * item.quantity)}` : ''}
+                      {item.lineTotal != null ? ` · ${money(item.lineTotal)}` : ''}
                     </Text>
                   </View>
                 </Pressable>
@@ -484,7 +485,7 @@ export function RiderHandoverCard({
         </Text>
         {handover?.rtoFee != null && handover.rtoFee > 0 ? (
           <Text style={styles.copy}>
-            Rider is paid ₹{Math.round(handover.rtoFee)} for this return
+            Rider is paid {formatInr(handover.rtoFee)} for this return
             (the full trip amount — do not collect cash).
           </Text>
         ) : null}

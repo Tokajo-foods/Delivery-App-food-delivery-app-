@@ -41,6 +41,8 @@ import type {
   MenuItem,
   ModifierGroup,
 } from '@/lib/restaurant/types';
+import { formatInrOrNull } from '@/lib/format/money';
+import { formatInr } from '@/lib/format/money';
 
 export const MEAL_OPTIONS: { meal: MealPeriod; label: string; hint: string }[] = [
   { meal: 'breakfast', label: 'Breakfast', hint: '07:00 – 11:00' },
@@ -75,8 +77,7 @@ export function VegMark({ veg }: { veg?: boolean }) {
 }
 
 export function money(value?: number) {
-  if (value == null || !Number.isFinite(value)) return '—';
-  return `₹${Math.round(value)}`;
+  return formatInrOrNull(value) ?? '—';
 }
 
 export function MenuItemRow({
@@ -648,7 +649,7 @@ export function ModifierLibraryModal({
                       {group.options
                         .map((option) =>
                           option.price
-                            ? `${option.name} +₹${option.price}`
+                            ? `${option.name} +${formatInr(option.price)}`
                             : option.name
                         )
                         .join(' · ')}

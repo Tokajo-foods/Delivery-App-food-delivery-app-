@@ -650,9 +650,7 @@ export function OrderDetailScreen({ orderId }: Props) {
                       ) : null}
                     </View>
                     <Text style={styles.itemPrice}>
-                      {item.price != null
-                        ? money(item.price * item.quantity)
-                        : '—'}
+                      {item.lineTotal != null ? money(item.lineTotal) : '—'}
                     </Text>
                   </View>
                 ))

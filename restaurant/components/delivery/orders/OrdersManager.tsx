@@ -73,6 +73,8 @@ type TabKey = 'active' | 'history';
 type HistoryFilter = '' | 'delivered' | 'cancelled' | 'reassigned' | 'returned';
 
 import { REJECT_REASON_CODES, toRejectReasonCode } from '@/lib/delivery-partner/rider-gateway-types';
+import { formatInrOrNull } from '@/lib/format/money';
+import { formatInr } from '@/lib/format/money';
 
 const LIVE_STATUSES = new Set([
   'assigned',
@@ -90,17 +92,8 @@ function shortOrderCode(delivery: PartnerDelivery) {
   return (clean.slice(-6) || clean).toUpperCase();
 }
 
-function money(amount?: number, currency = 'INR') {
-  if (amount == null || !Number.isFinite(amount)) return null;
-  try {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  } catch {
-    return `₹${Math.round(amount)}`;
-  }
+function money(amount?: number, _currency = 'INR') {
+  return formatInrOrNull(amount);
 }
 
 function formatWhen(iso?: string) {
@@ -1198,7 +1191,7 @@ function HistoryRow({
           {deliveryStatusLabel(delivery.status)}
           {normalizeDeliveryStatus(delivery.status) === 'returned' &&
           delivery.rtoFee
-            ? ` · Paid ₹${Math.round(delivery.rtoFee)}`
+            ? ` · Paid ${formatInr(delivery.rtoFee)}`
             : ''}
         </Text>
       </View>

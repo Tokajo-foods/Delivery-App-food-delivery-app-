@@ -116,15 +116,9 @@ export function IncomingOfferOverlay() {
     stacked ? 2 : 1
   );
   const stackEarnings = useMemo(() => {
-    if (!stacked || !batch?.deliveries.length) return null;
-    const base = batch.deliveries.reduce(
-      (sum, row) => sum + (row.partnerEarnings ?? row.deliveryFee ?? 0),
-      0
-    );
-    const incentive = batch.deliveries.reduce(
-      (sum, row) => sum + (row.incentiveBonus ?? 0),
-      0
-    );
+    if (!stacked || batch?.totalPartnerEarnings == null) return null;
+    const base = batch.totalPartnerEarnings;
+    const incentive = batch.totalIncentiveBonus ?? 0;
     return {
       basePay: base,
       incentive,
