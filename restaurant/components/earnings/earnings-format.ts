@@ -1,4 +1,4 @@
-import type { EarningsPeriod, PassbookEntry } from '@/lib/restaurant/earnings-types';
+import type { EarningsPeriod, EarningsSummary, PassbookEntry } from '@/lib/restaurant/earnings-types';
 
 const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -56,6 +56,40 @@ export function dayBarLabel(dateKey: string, period: EarningsPeriod): string {
   const w = new Date(`${dateKey}T00:00:00Z`);
   if (Number.isNaN(w.getTime())) return '';
   return period === 'month' ? String(w.getUTCDate()) : WEEKDAYS[w.getUTCDay()].slice(0, 1);
+}
+
+export const DELTA_LABELS: Record<EarningsPeriod, string> = {
+  today: 'vs yesterday',
+  week: 'vs last week',
+  month: 'vs last month',
+};
+
+function shiftDay(dateKey: string, days: number): string {
+  return new Date(Date.parse(`${dateKey}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
+}
+
+/**
+ * % change of net earnings against the same number of days just before the period.
+ * Null when the daily series does not reach back far enough or the prior window is ₹0.
+ */
+export function periodDeltaPercent(summary: EarningsSummary, period: EarningsPeriod): number | null {
+  const from = istDateKey(summary.periods[period].from);
+  const today = istDateKey(new Date());
+  if (!from || !summary.daily.length) return null;
+  const length = Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000) + 1;
+  const prevStart = shiftDay(from, -length);
+  const prevEnd = shiftDay(from, -1);
+  const earliest = summary.daily.reduce((min, d) => (d.date < min ? d.date : min), summary.daily[0].date);
+  if (earliest > prevStart) return null;
+
+  let current = 0;
+  let previous = 0;
+  for (const d of summary.daily) {
+    if (d.date >= from && d.date <= today) current += d.netEarnings;
+    else if (d.date >= prevStart && d.date <= prevEnd) previous += d.netEarnings;
+  }
+  if (previous <= 0) return null;
+  return ((current - previous) / previous) * 100;
 }
 
 export function entryTitle(entry: PassbookEntry): string {
