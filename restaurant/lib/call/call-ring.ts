@@ -111,7 +111,15 @@ export async function ringIncomingCall(meta: RingMeta, opts: RingOptions = {}): 
     void dismissIncomingCallNotification();
     return;
   }
-  if (getCall() || isCallClosed(call.callId)) return;
+  const raced = getCall();
+  if (raced || isCallClosed(call.callId)) {
+    // Socket rang in-app while the VoIP check was in flight: CallKit owns the ring now.
+    if (nativeShown && raced?.callId === call.callId && raced.phase === 'incoming') {
+      await stopCallTones();
+      store().patchCall(call.callId, { nativeRinging: true });
+    }
+    return;
+  }
   guardRing(call.callId);
 
   if (nativeShown) {

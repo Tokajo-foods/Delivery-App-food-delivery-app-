@@ -1,6 +1,11 @@
 import { AppState, Platform } from 'react-native';
 
-import { dismissFullScreenCallAlert, type CallAlertPress } from '@/lib/call/android-call-alert';
+import {
+  dismissFullScreenCallAlert,
+  keepCallOverLockScreen,
+  releaseCallLockScreen,
+  type CallAlertPress,
+} from '@/lib/call/android-call-alert';
 import { acceptCall, declineCall, ensureNativeBindings, isCallClosed } from '@/lib/call/call-engine';
 import { applyRemoteCallState } from '@/lib/call/call-remote';
 import { ringIncomingCall, type RingMeta } from '@/lib/call/call-ring';
@@ -121,10 +126,12 @@ export async function handleCallAlertPress(press: CallAlertPress): Promise<void>
     await acceptCall(meta.callId);
     return;
   }
+  keepCallOverLockScreen();
   const current = getCall();
   if (current?.callId === meta.callId) {
     if (current.phase === 'incoming') void startRingtone();
     return;
   }
   await ringIncomingCall(meta, { verify: true, inApp: true });
+  if (getCall()?.callId !== meta.callId) releaseCallLockScreen();
 }
