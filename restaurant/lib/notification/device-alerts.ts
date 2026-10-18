@@ -2,15 +2,20 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 import type { AppNotification } from '@/lib/notification/types';
+import {
+  DELIVERY_ALERTS_CHANNEL_ID as CHANNEL_ID,
+  KITCHEN_ORDER_BELL_CHANNEL_ID,
+  KITCHEN_ORDER_QUIET_CHANNEL_ID,
+  RIDER_OFFER_CHANNEL_ID,
+  ensureAndroidPushChannels,
+} from '@/lib/notification/push-channels';
 import { storageGetItem, storageSetItem } from '@/lib/storage';
 
+export { KITCHEN_ORDER_BELL_CHANNEL_ID, KITCHEN_ORDER_QUIET_CHANNEL_ID, RIDER_OFFER_CHANNEL_ID };
+
 const SEEN_IDS_KEY = 'delivery.notification.seenIds.v1';
-const CHANNEL_ID = 'tokajo-delivery-alerts';
-/** v2: Android channels are immutable, and v1 had no lock-screen visibility or bell. */
-export const RIDER_OFFER_CHANNEL_ID = 'tokajo-rider-offers-v2';
-const KITCHEN_ORDERS_CHANNEL_ID = 'tokajo-kitchen-orders';
-export const KITCHEN_ORDER_BELL_CHANNEL_ID = 'tokajo-kitchen-order-bell';
-export const KITCHEN_ORDER_QUIET_CHANNEL_ID = 'tokajo-kitchen-order-quiet';
+/** In the foreground the in-app bell loop + order alert own these; a second remote banner would double up. */
+const FOREGROUND_SILENT_KINDS = new Set(['kitchen_new_order', 'kitchen_order_reminder', 'kitchen_scheduled_order']);
 
 type NotificationsModule = typeof import('expo-notifications');
 
@@ -61,11 +66,15 @@ function loadNotificationsModule(): NotificationsModule | null {
         handleNotification: async (notification) => {
           const data = (notification.request.content.data ?? {}) as Record<string, unknown>;
           const kind = String(data.kind ?? '');
+          const remote = notification.request.trigger != null;
+          if (remote && FOREGROUND_SILENT_KINDS.has(kind)) {
+            return { shouldShowBanner: false, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: true };
+          }
           const show = foregroundFilter ? foregroundFilter(data) : true;
           return {
             shouldShowBanner: show,
             shouldShowList: show,
-            shouldPlaySound: show && kind !== 'kitchen_new_order',
+            shouldPlaySound: show && !FOREGROUND_SILENT_KINDS.has(kind),
             shouldSetBadge: true,
           };
         },
@@ -85,49 +94,7 @@ export async function ensureDeviceNotificationReady(): Promise<boolean> {
 
   try {
     if (!configured) {
-      if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-          name: 'Delivery alerts',
-          importance: Notifications.AndroidImportance.HIGH,
-          vibrationPattern: [0, 250, 150, 250],
-          lightColor: '#7A0E22',
-          sound: 'default',
-        });
-        await Notifications.setNotificationChannelAsync(RIDER_OFFER_CHANNEL_ID, {
-          name: 'New delivery offers',
-          importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: [0, 400, 160, 400, 160, 520],
-          lightColor: '#16A34A',
-          sound: 'order_bell',
-          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-        });
-        await Notifications.deleteNotificationChannelAsync('tokajo-rider-offers').catch(
-          () => undefined
-        );
-        await Notifications.setNotificationChannelAsync(KITCHEN_ORDERS_CHANNEL_ID, {
-          name: 'Kitchen new orders',
-          importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: [0, 400, 200, 400],
-          lightColor: '#7A0E22',
-          sound: 'default',
-        });
-        await Notifications.setNotificationChannelAsync(KITCHEN_ORDER_BELL_CHANNEL_ID, {
-          name: 'Kitchen order bell',
-          importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: [0, 500, 200, 500],
-          lightColor: '#EA4B14',
-          sound: 'order_bell',
-          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-        });
-        await Notifications.setNotificationChannelAsync(KITCHEN_ORDER_QUIET_CHANNEL_ID, {
-          name: 'Kitchen orders (silent)',
-          importance: Notifications.AndroidImportance.HIGH,
-          vibrationPattern: [0, 200],
-          lightColor: '#EA4B14',
-          sound: null,
-          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-        });
-      }
+      if (Platform.OS === 'android') await ensureAndroidPushChannels(Notifications);
       configured = true;
     }
 

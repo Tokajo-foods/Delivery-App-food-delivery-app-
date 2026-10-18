@@ -42,6 +42,16 @@ async function stopBackgroundGps(): Promise<void> {
   }
 }
 
+/** Must run before the session is revoked; lazy import avoids an auth-store ↔ push-api cycle. */
+async function unregisterPushBeforeLogout(): Promise<void> {
+  try {
+    const { unregisterKitchenPush } = await import('@/lib/restaurant/kitchen-push-logout');
+    await unregisterKitchenPush();
+  } catch {
+    // Server drops dead tokens on the next send; logout must not block on this.
+  }
+}
+
 function throwAuth(error: unknown, fallback: string): never {
   throw new PartnerApiError(
     formatAuthError(error, fallback),
@@ -377,6 +387,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     set({ isLoading: true });
+    await unregisterPushBeforeLogout();
     try {
       await authApi.logout();
     } catch {
@@ -390,6 +401,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logoutAll: async () => {
     set({ isLoading: true });
+    await unregisterPushBeforeLogout();
     try {
       await authApi.logoutAll();
     } catch {

@@ -9,6 +9,8 @@ import { KitchenPushSync } from '@/components/dashboard/KitchenPushSync';
 import { KitchenInboxSync } from '@/components/dashboard/KitchenInboxSync';
 import { HoursDriftPrompt } from '@/components/dashboard/HoursDriftPrompt';
 import { KitchenNewOrderAlerts } from '@/components/dashboard/KitchenNewOrderAlerts';
+import { KitchenOrderRinger } from '@/components/dashboard/KitchenOrderRinger';
+import { KitchenPushRouter } from '@/components/dashboard/KitchenPushRouter';
 import { CallHost } from '@/components/call/CallHost';
 import { RiderLiveSync } from '@/components/delivery/RiderLiveSync';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
@@ -263,6 +265,8 @@ export default function AppLayout() {
           <KitchenPushSync />
           <KitchenInboxSync />
           <KitchenNewOrderAlerts />
+          <KitchenOrderRinger />
+          <KitchenPushRouter />
           <HoursDriftPrompt />
           <CallHost viewer="restaurant" />
         </>

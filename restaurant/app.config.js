@@ -1,3 +1,14 @@
+const fs = require('fs');
+const path = require('path');
+
+/**
+ * Android push (Expo → FCM) needs the Firebase Android app config. One google-services.json can
+ * list both packages (com.tokajofoods.restaurant + com.tokajofoods.delivery). EAS: file env GOOGLE_SERVICES_JSON.
+ */
+const googleServicesFile =
+  process.env.GOOGLE_SERVICES_JSON?.trim() ||
+  (fs.existsSync(path.join(__dirname, 'google-services.json')) ? './google-services.json' : undefined);
+
 /** Merges env into Expo config (API URL + Google Maps SDK keys + OAuth). */
 module.exports = ({ config }) => {
   const mapsKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() || '';
@@ -74,6 +85,7 @@ module.exports = ({ config }) => {
     android: {
       ...config.android,
       package: androidPackage,
+      ...(googleServicesFile ? { googleServicesFile } : {}),
       usesCleartextTraffic: true,
       adaptiveIcon: {
         ...(config.android?.adaptiveIcon || {}),

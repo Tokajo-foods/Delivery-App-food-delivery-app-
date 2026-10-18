@@ -34,7 +34,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/tokajo-logo.png",
+          "icon": "./assets/notification-icon.png",
           "color": "#7A0E22",
           "defaultChannel": "tokajo-delivery-alerts",
           "sounds": ["./assets/sounds/order_bell.wav", "./assets/sounds/incoming_call.wav"]

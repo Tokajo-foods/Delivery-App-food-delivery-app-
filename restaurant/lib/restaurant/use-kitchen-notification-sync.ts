@@ -1,5 +1,4 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 
@@ -9,13 +8,11 @@ import {
   noteRateLimited,
 } from '@/lib/live-query';
 import {
-  addNotificationOpenListener,
+  getNotificationsModule,
   syncDeviceAlertsForNotifications,
 } from '@/lib/notification/device-alerts';
 import { useMyRestaurantId } from '@/lib/order/hooks';
-import {
-  kitchenInboxApi,
-} from '@/lib/restaurant/inbox-api';
+import { kitchenInboxApi, loadStoredKitchenDevice } from '@/lib/restaurant/inbox-api';
 import { kitchenInboxKeys } from '@/lib/restaurant/inbox-hooks';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -28,7 +25,6 @@ const BACKOFF_POLL_MS = 75_000;
  */
 export function useKitchenNotificationSync(enabled = true) {
   const queryClient = useQueryClient();
-  const router = useRouter();
   const token = useAuthStore((s) => s.token);
   const role = useAuthStore((s) => s.role);
   const restaurant = useMyRestaurantId();
@@ -85,7 +81,12 @@ export function useKitchenNotificationSync(enabled = true) {
         const prev = lastCountRef.current;
         lastCountRef.current = count;
 
-        await syncDeviceAlertsForNotifications(list.notifications);
+        // With a registered push device the server already showed each row on the lock screen.
+        const remotePush = Boolean(await loadStoredKitchenDevice().catch(() => null));
+        await syncDeviceAlertsForNotifications(list.notifications, {
+          allowed: () => !remotePush,
+        });
+        void getNotificationsModule()?.setBadgeCountAsync(count).catch(() => undefined);
 
         if (prev != null && count > prev) {
           void queryClient.invalidateQueries({
@@ -116,20 +117,10 @@ export function useKitchenNotificationSync(enabled = true) {
       }
     });
 
-    const responseSub = addNotificationOpenListener((data) => {
-      const screen = data.screen != null ? String(data.screen) : '';
-      if (screen === 'onboarding' || String(data.action ?? '').includes('kyc')) {
-        router.push('/onboarding' as never);
-        return;
-      }
-      router.push('/notifications' as never);
-    });
-
     return () => {
       cancelled = true;
       if (timer) clearTimeout(timer);
       appSub.remove();
-      responseSub.remove();
     };
-  }, [enabled, token, role, restaurantId, queryClient, router]);
+  }, [enabled, token, role, restaurantId, queryClient]);
 }
