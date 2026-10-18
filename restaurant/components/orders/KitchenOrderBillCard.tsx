@@ -6,7 +6,6 @@ import { fonts } from '@/constants/typography';
 import type { OwnerOrder } from '@/lib/dashboard/types';
 import { buildRestaurantBill } from '@/lib/order/restaurant-bill';
 import { displayStatus, money } from '@/lib/order/ui';
-import { useRestaurantCommission } from '@/lib/restaurant/finance-hooks';
 
 type Props = {
   order: OwnerOrder;
@@ -17,8 +16,7 @@ type Props = {
  * Matches partner orange theme; no customer GMV / packaging / GST.
  */
 export function KitchenOrderBillCard({ order }: Props) {
-  const commission = useRestaurantCommission();
-  const bill = buildRestaurantBill(order, commission.data?.commissionPercent);
+  const bill = buildRestaurantBill(order);
   const delivered = String(order.status ?? '').toLowerCase() === 'delivered';
   const paymentMethod = order.paymentMethod?.replace(/_/g, ' ');
 

@@ -38,12 +38,11 @@ function signed(amount: number): string {
 
 export function EarningsBreakdown({
   totals,
-  commissionPercent,
 }: {
   totals: EarningsPeriodTotals;
-  commissionPercent?: number;
 }) {
   const delivered = totals.deliveredOrders;
+  const commissionPercent = totals.commissionPercent;
   return (
     <View style={styles.card}>
       <Text style={styles.title}>Settlement</Text>

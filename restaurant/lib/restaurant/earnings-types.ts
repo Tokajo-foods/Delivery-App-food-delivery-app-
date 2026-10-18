@@ -13,6 +13,8 @@ export type EarningsPeriodTotals = {
   returnedOrders: number;
   grossSales: number;
   commission: number;
+  /** Actual wallet commission ÷ food sales for this period (from API). */
+  commissionPercent?: number;
   orderEarnings: number;
   returnedEarnings: number;
   adjustments: number;

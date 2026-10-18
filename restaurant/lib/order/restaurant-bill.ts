@@ -1,8 +1,8 @@
 /**
  * Kitchen bill helpers — server `order.bill.restaurant` is the source of truth.
  * Kitchen earn = food items − discount − admin commission. Never packaging, GST, or delivery.
- * Commission amount and "you earn" are only ever read from the server bill. The current
- * rule % from GET /restaurants/:id/commission is shown as a label, never multiplied here.
+ * Commission amount, percent, and "you earn" are only ever read from the server bill
+ * (frozen from admin pricing at place). The client never multiplies a live %.
  */
 
 export type RestaurantBill = {
@@ -79,16 +79,11 @@ function serverBillUsable(
 }
 
 /**
- * Kitchen-facing bill: food − discount, then admin commission % → you earn.
- * `serverCommissionPercent` is the outlet's current rule from the commission API.
+ * Kitchen-facing bill: food − discount, then admin commission from the order API.
  */
-export function buildRestaurantBill(
-  order: OrderLike,
-  serverCommissionPercent?: number | null,
-): RestaurantBill {
-  const fallbackPercent = finitePct(serverCommissionPercent);
+export function buildRestaurantBill(order: OrderLike): RestaurantBill {
   if (serverBillUsable(order.bill?.restaurant)) {
-    return fromServer(order.bill!.restaurant!, fallbackPercent);
+    return fromServer(order.bill!.restaurant!, null);
   }
 
   // No server bill yet: show server order amounts only; commission and earn stay unknown.
@@ -104,7 +99,7 @@ export function buildRestaurantBill(
     itemTotal: itemTotal > 0 ? itemTotal : restaurantCharges,
     discount,
     restaurantCharges,
-    commissionPercent: fallbackPercent,
+    commissionPercent: null,
     commissionAmount: null,
     youEarn: null,
   };

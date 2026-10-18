@@ -61,9 +61,7 @@ export function EarningsManager() {
             />
           )}
           {summary.data ? <EarningsTrend summary={summary.data} period={period} /> : null}
-          {totals ? (
-            <EarningsBreakdown totals={totals} commissionPercent={summary.data?.commissionPercent} />
-          ) : null}
+          {totals ? <EarningsBreakdown totals={totals} /> : null}
         </ScrollView>
       ) : (
         <PassbookView
