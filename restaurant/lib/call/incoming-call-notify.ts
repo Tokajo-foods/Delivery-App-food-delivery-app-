@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 
+import { dismissFullScreenCallAlert } from '@/lib/call/android-call-alert';
 import { getNotificationsModule } from '@/lib/notification/device-alerts';
 
 export const CALL_CHANNEL = 'tokajo-calls';
@@ -80,6 +81,7 @@ export async function presentIncomingCallNotification(input: {
 }
 
 export async function dismissIncomingCallNotification(): Promise<void> {
+  await dismissFullScreenCallAlert();
   const N = getNotificationsModule();
   if (!N) return;
   await N.dismissNotificationAsync(RING_ID).catch(() => undefined);

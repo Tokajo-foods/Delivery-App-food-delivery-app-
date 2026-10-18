@@ -1,8 +1,19 @@
 import { requireOptionalNativeModule } from 'expo-modules-core';
 import { Platform } from 'react-native';
 
-import { handleCallPush, handleCallResponse } from '@/lib/call/call-push';
+import { onCallAlertBackgroundEvent, readCallAlertEvent } from '@/lib/call/android-call-alert';
+import { handleCallAlertPress, handleCallPush, handleCallResponse } from '@/lib/call/call-push';
+import { startVoipPushListener } from '@/lib/call/voip-push';
 import { isExpoGoRuntime } from '@/lib/notification/device-alerts';
+
+// Decline on the Android full-screen alert runs here with the app closed.
+onCallAlertBackgroundEvent(async (event) => {
+  const press = readCallAlertEvent(event);
+  if (press) await handleCallAlertPress(press).catch(() => undefined);
+});
+
+// A VoIP push can launch the closed iPhone app for a call before any screen mounts.
+startVoipPushListener();
 
 /**
  * Defined at bundle load (index.ts). Android delivers call pushes data-only, so after a

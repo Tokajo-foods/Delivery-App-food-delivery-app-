@@ -1,4 +1,4 @@
-import { AppState } from 'react-native';
+import { Platform } from 'react-native';
 
 import {
   acceptInternetCall,
@@ -8,12 +8,10 @@ import {
   disconnectInternetCall,
   getInternetCall,
 } from '@/lib/call/api';
+import { keepCallOverLockScreen, releaseCallLockScreen } from '@/lib/call/android-call-alert';
 import { getCall, roleLabel, useCallStore, type ActiveCall } from '@/lib/call/call-store';
-import { startRingback, startRingtone, stopCallTones } from '@/lib/call/call-tones';
-import {
-  dismissIncomingCallNotification,
-  presentIncomingCallNotification,
-} from '@/lib/call/incoming-call-notify';
+import { startRingback, stopCallTones } from '@/lib/call/call-tones';
+import { dismissIncomingCallNotification } from '@/lib/call/incoming-call-notify';
 import {
   connectVoice,
   disconnectVoice,
@@ -22,9 +20,9 @@ import {
   setVoiceSpeaker,
 } from '@/lib/call/internet-audio';
 import {
+  answerNativeCall,
   bindNativeCallActions,
   bringAppToForeground,
-  displayNativeIncomingCall,
   END_REASON,
   endNativeCall,
   markNativeCallActive,
@@ -33,16 +31,6 @@ import {
 } from '@/lib/call/native-incoming-call';
 import { isCallRole, type CallRole, type InternetCallSession } from '@/lib/call/types';
 
-export type RingMeta = {
-  orderId: string;
-  callId: string;
-  callerRole: string;
-  calleeRole?: string;
-  callerName?: string | null;
-  callerLogoUrl?: string | null;
-  orderNumber?: string | null;
-};
-
 const closed = new Set<string>();
 const store = () => useCallStore.getState();
 
@@ -50,7 +38,11 @@ export function isCallClosed(callId: string): boolean {
   return closed.has(callId);
 }
 
-function fromSession(session: InternetCallSession, direction: 'in' | 'out'): ActiveCall {
+export function markCallClosed(callId: string): void {
+  closed.add(callId);
+}
+
+export function fromSession(session: InternetCallSession, direction: 'in' | 'out'): ActiveCall {
   const peer = direction === 'out' ? session.calleeRole : session.callerRole;
   const peerRole: CallRole = isCallRole(peer) ? peer : 'customer';
   const name = direction === 'out' ? session.calleeName : session.callerName;
@@ -75,7 +67,7 @@ function fromSession(session: InternetCallSession, direction: 'in' | 'out'): Act
 /** The OS call screen answer / end / mute buttons drive the same actions as the app. */
 export function ensureNativeBindings(): Promise<void> {
   return bindNativeCallActions({
-    onAnswer: (callId) => void acceptCall(callId),
+    onAnswer: (callId) => void acceptCall(callId, { fromNative: true }),
     onEnd: (callId) => {
       if (closed.has(callId)) return;
       const call = getCall();
@@ -115,66 +107,8 @@ export async function startOutgoingCall(orderId: string, role: CallRole, fallbac
   }
 }
 
-/** Socket, push, or the order screen saw a ring for this device. Idempotent per call id. */
-export async function ringIncomingCall(
-  meta: RingMeta,
-  opts?: { verify?: boolean; inApp?: boolean },
-): Promise<void> {
-  if (!meta.callId || !meta.orderId || closed.has(meta.callId)) return;
-  const current = getCall();
-  if (current) {
-    if (current.callId !== meta.callId) void rejectBusy(meta.callId, meta.calleeRole);
-    return;
-  }
-  let call: ActiveCall;
-  if (opts?.verify) {
-    const session = await getInternetCall(meta.callId).catch(() => null);
-    if (!session || session.state !== 'ringing') {
-      closed.add(meta.callId);
-      reportNativeCallEnded(meta.callId, END_REASON.unanswered);
-      void dismissIncomingCallNotification();
-      return;
-    }
-    call = fromSession(session, 'in');
-  } else {
-    const peerRole: CallRole = isCallRole(meta.callerRole) ? meta.callerRole : 'customer';
-    call = {
-      callId: meta.callId,
-      orderId: meta.orderId,
-      phase: 'incoming',
-      direction: 'in',
-      peerRole,
-      peerName: meta.callerName?.trim() || roleLabel(peerRole),
-      peerLogoUrl: meta.callerLogoUrl?.trim() || null,
-      orderNumber: meta.orderNumber?.trim() || null,
-      callerRole: meta.callerRole,
-      calleeRole: meta.calleeRole ?? '',
-      remoteState: 'ringing',
-      connectedAt: null,
-      nativeRinging: false,
-    };
-  }
-  if (getCall() || closed.has(call.callId)) return;
-  store().set({ call, muted: false, speaker: false, notice: null });
-  if (opts?.inApp || AppState.currentState === 'active') {
-    void startRingtone();
-    return;
-  }
-  await ensureNativeBindings();
-  const shown = await displayNativeIncomingCall(call.callId, call.peerName);
-  store().patchCall(call.callId, { nativeRinging: shown });
-  if (!shown) {
-    await presentIncomingCallNotification({
-      orderId: call.orderId,
-      callId: call.callId,
-      callerRole: call.callerRole,
-      callerName: call.peerName,
-      orderNumber: call.orderNumber,
-    });
-  }
-}
-
-export async function acceptCall(callId: string): Promise<void> {
+/** `fromNative`: the OS call screen already moved to answered. */
+export async function acceptCall(callId: string, opts?: { fromNative?: boolean }): Promise<void> {
   if (closed.has(callId)) return;
   let call = getCall();
   if (call && call.callId !== callId) return;
@@ -188,10 +122,13 @@ export async function acceptCall(callId: string): Promise<void> {
     store().set({ call });
   }
   if (call.phase !== 'incoming') return;
+  const nativeRinging = call.nativeRinging;
   await stopCallTones();
   void dismissIncomingCallNotification();
   store().patchCall(callId, { phase: 'connecting', nativeRinging: false });
   store().set({ busy: 'accept', notice: null });
+  if (nativeRinging && !opts?.fromNative && Platform.OS === 'ios') answerNativeCall(callId);
+  if (Platform.OS === 'android') keepCallOverLockScreen();
   bringAppToForeground();
   try {
     await ensureMicrophone();
@@ -239,7 +176,7 @@ export async function declineCall(callId: string): Promise<void> {
 }
 
 /** Already on a call here. An outlet rings every staff phone, so only a person line answers busy. */
-async function rejectBusy(callId: string, calleeRole?: string): Promise<void> {
+export async function rejectBusy(callId: string, calleeRole?: string): Promise<void> {
   if (calleeRole === 'restaurant' || closed.has(callId)) return;
   closed.add(callId);
   await declineInternetCall(callId, 'busy').catch(() => undefined);
@@ -291,6 +228,7 @@ export async function finishCall(
   if (opts.local) endNativeCall(callId);
   else reportNativeCallEnded(callId, opts.reason ?? END_REASON.remoteEnded);
   void dismissIncomingCallNotification();
+  releaseCallLockScreen();
   await disconnectVoice();
   store().set({ call: null, busy: null, muted: false, speaker: false, notice: opts.notice ?? null });
 }

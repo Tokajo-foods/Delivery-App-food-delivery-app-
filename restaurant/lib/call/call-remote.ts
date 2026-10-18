@@ -1,11 +1,6 @@
 import { callErrorMessage, disconnectInternetCall, getInternetCall } from '@/lib/call/api';
-import {
-  connectOutgoingCall,
-  finishCall,
-  isCallClosed,
-  ringIncomingCall,
-  type RingMeta,
-} from '@/lib/call/call-engine';
+import { connectOutgoingCall, finishCall, isCallClosed } from '@/lib/call/call-engine';
+import { ringIncomingCall, type RingMeta } from '@/lib/call/call-ring';
 import { getCall, useCallStore } from '@/lib/call/call-store';
 import { END_REASON, reportNativeCallEnded } from '@/lib/call/native-incoming-call';
 import { dismissIncomingCallNotification } from '@/lib/call/incoming-call-notify';

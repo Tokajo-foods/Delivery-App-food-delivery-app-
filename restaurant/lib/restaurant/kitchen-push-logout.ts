@@ -1,3 +1,4 @@
+import { releaseVoipDevice } from '@/lib/call/voip-push';
 import { getNotificationsModule } from '@/lib/notification/device-alerts';
 import { stopOrderBell } from '@/lib/notification/order-bell-loop';
 import {
@@ -28,6 +29,7 @@ export async function unregisterKitchenPush(): Promise<void> {
     Promise.allSettled([
       outlet ? kitchenInboxApi.unregisterDevice(outlet.restaurantId, outlet.deviceId) : Promise.resolve(),
       account ? userAccountApi.unregisterDevice(account.deviceId) : Promise.resolve(),
+      releaseVoipDevice(),
     ])
   );
   await Promise.allSettled([clearStoredKitchenDevice(), clearStoredPushDevice()]);

@@ -1,15 +1,11 @@
 import { AppState, Platform } from 'react-native';
 
-import {
-  acceptCall,
-  declineCall,
-  ensureNativeBindings,
-  isCallClosed,
-  ringIncomingCall,
-  type RingMeta,
-} from '@/lib/call/call-engine';
+import { dismissFullScreenCallAlert, type CallAlertPress } from '@/lib/call/android-call-alert';
+import { acceptCall, declineCall, ensureNativeBindings, isCallClosed } from '@/lib/call/call-engine';
 import { applyRemoteCallState } from '@/lib/call/call-remote';
+import { ringIncomingCall, type RingMeta } from '@/lib/call/call-ring';
 import { getCall } from '@/lib/call/call-store';
+import { startRingtone } from '@/lib/call/call-tones';
 import { presentMissedCallNotification } from '@/lib/call/incoming-call-notify';
 
 type Data = Record<string, unknown>;
@@ -28,7 +24,7 @@ function record(value: unknown): Data | null {
   return null;
 }
 
-/** Expo push, raw FCM data, and background-task payloads all nest the data differently. */
+/** Expo push, raw FCM data, VoIP, and background-task payloads all nest the data differently. */
 export function readCallPushData(raw: unknown): Data | null {
   const base = record(raw);
   if (!base) return null;
@@ -87,6 +83,16 @@ export async function handleCallPush(raw: unknown, source: 'task' | 'foreground'
   }
 }
 
+/** iOS PushKit: native code already showed CallKit before this runs. */
+export async function handleVoipPush(raw: unknown): Promise<void> {
+  const data = readCallPushData(raw);
+  if (!data || String(data.kind) !== 'internet_call') return;
+  const meta = metaOf(data);
+  if (!meta.callId) return;
+  await ensureNativeBindings();
+  await ringIncomingCall(meta, { nativeShown: true });
+}
+
 /** Tap or Accept / Decline on the ringing notification. */
 export async function handleCallResponse(actionIdentifier: string, raw: unknown): Promise<boolean> {
   const data = readCallPushData(raw);
@@ -100,4 +106,25 @@ export async function handleCallResponse(actionIdentifier: string, raw: unknown)
   await ringIncomingCall(meta, { verify: true, inApp: true });
   if (actionIdentifier === 'ACCEPT') await acceptCall(meta.callId);
   return true;
+}
+
+/** Accept / Decline / tap on the Android full-screen call alert. */
+export async function handleCallAlertPress(press: CallAlertPress): Promise<void> {
+  const meta = metaOf(press.data);
+  if (!meta.callId) return;
+  await dismissFullScreenCallAlert(meta.callId);
+  if (press.action === 'decline') {
+    await declineCall(meta.callId);
+    return;
+  }
+  if (press.action === 'accept') {
+    await acceptCall(meta.callId);
+    return;
+  }
+  const current = getCall();
+  if (current?.callId === meta.callId) {
+    if (current.phase === 'incoming') void startRingtone();
+    return;
+  }
+  await ringIncomingCall(meta, { verify: true, inApp: true });
 }

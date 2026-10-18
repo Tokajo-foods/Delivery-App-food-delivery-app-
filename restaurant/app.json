@@ -64,7 +64,8 @@
             "includesCallsInRecents": false
           }
         }
-      ]
+      ],
+      "./plugins/with-call-native"
     ],
     "ios": {
       "supportsTablet": true,

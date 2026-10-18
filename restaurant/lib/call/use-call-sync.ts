@@ -1,12 +1,20 @@
 import { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 
+import {
+  initialCallAlertPress,
+  onCallAlertForegroundEvent,
+  readCallAlertEvent,
+  type CallAlertPress,
+} from '@/lib/call/android-call-alert';
 import { ensureNativeBindings } from '@/lib/call/call-engine';
-import { handleCallPush, handleCallResponse } from '@/lib/call/call-push';
+import { handleCallAlertPress, handleCallPush, handleCallResponse } from '@/lib/call/call-push';
 import { handleVoiceLink, onCallSocketEvent, syncCurrentCall } from '@/lib/call/call-remote';
 import { useCallStore } from '@/lib/call/call-store';
+import { askFullScreenCallPermissionOnce } from '@/lib/call/full-screen-permission';
 import { ensureCallNotificationSetup } from '@/lib/call/incoming-call-notify';
 import { onVoiceLink } from '@/lib/call/internet-audio';
+import { syncVoipDevice } from '@/lib/call/voip-push';
 import { subscribeRiderGateway } from '@/lib/delivery-partner/rider-gateway';
 import { subscribeKitchenEvents } from '@/lib/gateway/kitchen-client';
 import { getNotificationsModule } from '@/lib/notification/device-alerts';
@@ -22,6 +30,24 @@ export function useCallSync(viewer: 'restaurant' | 'rider', userId: string | nul
     if (!enabled || Platform.OS === 'web') return;
     void ensureCallNotificationSetup();
     void ensureNativeBindings();
+    void askFullScreenCallPermissionOnce();
+  }, [enabled]);
+
+  useEffect(() => {
+    syncVoipDevice(enabled ? (viewer === 'rider' ? 'rider' : 'kitchen') : null);
+  }, [enabled, viewer]);
+
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const run = (press: CallAlertPress | null) => {
+      if (!press) return;
+      const key = `alert:${String(press.data.callId ?? '')}:${press.action}`;
+      if (handledResponses.has(key)) return;
+      handledResponses.add(key);
+      void handleCallAlertPress(press);
+    };
+    void initialCallAlertPress().then(run);
+    return onCallAlertForegroundEvent((event) => run(readCallAlertEvent(event)));
   }, [enabled]);
 
   useEffect(() => onVoiceLink(handleVoiceLink), []);

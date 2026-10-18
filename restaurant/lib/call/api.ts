@@ -57,6 +57,24 @@ export async function getInternetCall(callId: string): Promise<InternetCallSessi
   return unwrap<InternetCallSession>(res.data);
 }
 
+const NOTIFY = '/api/v1/notification-service';
+
+/** PUT /devices/voip — iPhone PushKit token so calls ring through CallKit with the app closed. */
+export async function registerVoipDevice(input: {
+  voipToken: string;
+  bundleId: string;
+  app: 'kitchen' | 'rider';
+  deviceId?: string;
+}): Promise<void> {
+  const res = await api.put(`${NOTIFY}/devices/voip`, input);
+  unwrap(res.data);
+}
+
+export async function unregisterVoipDevice(voipToken: string): Promise<void> {
+  const res = await api.delete(`${NOTIFY}/devices/voip`, { data: { voipToken } });
+  unwrap(res.data);
+}
+
 export function callErrorMessage(error: unknown): string {
   const parsed = readError(error);
   if (parsed.code === 'CALL_RATE_LIMITED' || parsed.status === 429) {
