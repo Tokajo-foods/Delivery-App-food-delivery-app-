@@ -498,6 +498,7 @@ export function mapOwnerOrder(data: Record<string, unknown>): OwnerOrder {
     scheduledFor:
       String(data.scheduledFor ?? data.scheduledAt ?? data.slotTime ?? '').trim() ||
       undefined,
+    kitchenReleaseAt: String(data.kitchenReleaseAt ?? '').trim() || undefined,
     isDelayed:
       data.isDelayed === true ||
       String(data.lane ?? data.column ?? data.bucket ?? '').toLowerCase() ===

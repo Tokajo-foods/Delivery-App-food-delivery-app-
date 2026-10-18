@@ -188,9 +188,7 @@ export function KitchenOrdersManager() {
     enabled: tab === 'board',
   });
   const ordersQuery = useRestaurantOrders(restaurantId);
-  const scheduledQuery = useScheduledOrders(restaurantId, {
-    enabled: tab === 'scheduled',
-  });
+  const scheduledQuery = useScheduledOrders(restaurantId);
   const historyQuery = useOrderHistory(restaurantId, range, {
     enabled: tab === 'history',
   });
@@ -618,7 +616,7 @@ export function KitchenOrdersManager() {
             scheduled.length === 0 ? (
               <EmptyState
                 title="No scheduled orders"
-                body="Pre-orders show here with the slot time until they are due."
+                body="Customers can book up to 3 days ahead. Each order moves to Active and rings when it's time to prepare."
               />
             ) : (
               scheduled.map((order) => (
@@ -860,7 +858,14 @@ function OrderTicket({
               : ticketItems(order)}
           </Text>
           {scheduled ? (
-            <Text style={styles.slotText}>{formatSlot(order.scheduledFor)}</Text>
+            <>
+              <Text style={styles.slotText}>Deliver {formatSlot(order.scheduledFor)}</Text>
+              {order.kitchenReleaseAt ? (
+                <Text style={styles.ticketTime}>
+                  Moves to Active & rings at {formatSlot(order.kitchenReleaseAt)}
+                </Text>
+              ) : null}
+            </>
           ) : (
             <Text style={styles.ticketTime}>
               {windowLabel && canReject(order)

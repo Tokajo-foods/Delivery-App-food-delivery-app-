@@ -2,117 +2,20 @@ import type { QueryClient } from '@tanstack/react-query';
 
 import type { OwnerOrder } from '@/lib/dashboard/types';
 import { notificationKeys } from '@/lib/notification/hooks';
-import { restaurantOrderKeys, syncDashboardFromOrders } from '@/lib/order/hooks';
+import { restaurantOrderKeys } from '@/lib/order/hooks';
 import type { KitchenKdsBoard } from '@/lib/order/owner-api';
 import { earningsKeys } from '@/lib/restaurant/earnings-keys';
 
+import {
+  asRecord,
+  mapIncomingOrder,
+  patchList,
+  pickString,
+} from '@/lib/gateway/kitchen-event-patch';
 import type { KitchenInboundEvent } from '@/lib/gateway/kitchen-event-types';
 import { invalidateKitchenPricing } from '@/lib/pricing/pricing-sync';
 
 export type { KitchenInboundEvent };
-
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object'
-    ? (value as Record<string, unknown>)
-    : {};
-}
-
-function pickString(record: Record<string, unknown>, keys: string[]): string | undefined {
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'string' && value.trim()) return value.trim();
-  }
-  return undefined;
-}
-
-function fulfillmentFromDeliveryType(value?: string): OwnerOrder['fulfillmentTone'] {
-  const raw = (value ?? '').toLowerCase();
-  if (raw.includes('pickup') || raw.includes('takeaway')) return 'pickup';
-  if (raw.includes('dine') || raw.includes('table')) return 'table';
-  return 'delivery';
-}
-
-function fulfillmentLabel(tone: OwnerOrder['fulfillmentTone']): string {
-  if (tone === 'pickup') return 'Pickup';
-  if (tone === 'table') return 'Dine-in';
-  return 'Delivery';
-}
-
-function mapIncomingOrder(
-  record: Record<string, unknown>,
-  fallbackStatus?: string
-): Partial<OwnerOrder> & { id?: string } {
-  const id = pickString(record, ['orderId', 'id', '_id']);
-  const status =
-    pickString(record, ['status', 'orderStatus']) ?? fallbackStatus;
-  const deliveryType = pickString(record, ['deliveryType', 'fulfillment']);
-  const totalRaw = record.grandTotal ?? record.total;
-  const total = typeof totalRaw === 'number' ? totalRaw : Number(totalRaw);
-  const patch: Partial<OwnerOrder> & { id?: string } = {
-    ...(id ? { id } : {}),
-    ...(pickString(record, ['orderNumber'])
-      ? { orderNumber: pickString(record, ['orderNumber']) }
-      : {}),
-    ...(status ? { status } : {}),
-    ...(pickString(record, ['paymentMethod'])
-      ? { paymentMethod: pickString(record, ['paymentMethod']) }
-      : {}),
-    ...(Number.isFinite(total) ? { total } : {}),
-  };
-  if (deliveryType) {
-    const tone = fulfillmentFromDeliveryType(deliveryType);
-    patch.fulfillmentTone = tone;
-    patch.fulfillmentLabel = fulfillmentLabel(tone);
-  }
-  return patch;
-}
-
-function patchList(
-  queryClient: QueryClient,
-  restaurantId: string,
-  orderId: string,
-  patch: Partial<OwnerOrder>
-) {
-  const listKey = restaurantOrderKeys.list(restaurantId);
-  queryClient.setQueryData(listKey, (current: unknown) => {
-    if (!Array.isArray(current)) {
-      if (patch.id && patch.status) return [patch as OwnerOrder];
-      return current;
-    }
-    const rows = current as OwnerOrder[];
-    const index = rows.findIndex((row) => row.id === orderId);
-    if (index < 0) {
-      if (!patch.status) return rows;
-      const next: OwnerOrder = {
-        id: orderId,
-        orderNumber: patch.orderNumber ?? orderId.slice(-6).toUpperCase(),
-        status: patch.status,
-        items: [],
-        fulfillmentLabel: patch.fulfillmentLabel ?? 'Delivery',
-        fulfillmentTone: patch.fulfillmentTone ?? 'delivery',
-        ...patch,
-      };
-      return [next, ...rows];
-    }
-    const merged = { ...rows[index], ...patch, id: orderId };
-    const copy = [...rows];
-    copy[index] = merged;
-    return copy;
-  });
-
-  const list = queryClient.getQueryData(listKey);
-  if (Array.isArray(list)) {
-    syncDashboardFromOrders(queryClient, list);
-  }
-
-  queryClient.setQueryData(
-    restaurantOrderKeys.detail(restaurantId, orderId),
-    (current: unknown) => {
-      if (!current || typeof current !== 'object') return current;
-      return { ...(current as OwnerOrder), ...patch, id: orderId };
-    }
-  );
-}
 
 /** Wallet credit lands shortly after the status sync, so refetch once more after a beat. */
 function refreshEarnings(queryClient: QueryClient, restaurantId: string) {
@@ -161,6 +64,13 @@ export function applyKitchenSocketEvent(
   const record = asRecord(payload);
   const orderId = pickString(record, ['orderId', 'id', '_id']);
 
+  if (event === 'kitchen:order-scheduled') {
+    void queryClient.invalidateQueries({
+      queryKey: restaurantOrderKeys.scheduled(restaurantId),
+    });
+    return;
+  }
+
   if (
     event === 'kitchen:order-new' ||
     event === 'kitchen:scheduled-due' ||
@@ -182,11 +92,18 @@ export function applyKitchenSocketEvent(
         pickString(record, ['reason', 'cancellationReason']) ??
         mapped.rejectionReason;
     }
-    patchList(queryClient, restaurantId, orderId, mapped);
+    // Only "new" events add a row; status pings for unseen tickets (e.g. future scheduled) just refetch.
+    const insert = event === 'kitchen:order-new' || event === 'kitchen:scheduled-due';
+    patchList(queryClient, restaurantId, orderId, mapped, insert);
     void queryClient.invalidateQueries({
       queryKey: restaurantOrderKeys.restaurant(restaurantId),
       refetchType: 'active',
     });
+    if (event === 'kitchen:scheduled-due') {
+      void queryClient.invalidateQueries({
+        queryKey: restaurantOrderKeys.scheduled(restaurantId),
+      });
+    }
     if (mapped.status === 'delivered' || mapped.status === 'cancelled') {
       refreshEarnings(queryClient, restaurantId);
     }

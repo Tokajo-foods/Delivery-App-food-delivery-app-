@@ -5,6 +5,7 @@ export const KITCHEN_INBOUND_EVENTS = [
   'kitchen:rider-assigned',
   'kitchen:rider-arrived',
   'kitchen:scheduled-due',
+  'kitchen:order-scheduled',
   'order:status',
   'order:items-removed',
   'delivery:status',

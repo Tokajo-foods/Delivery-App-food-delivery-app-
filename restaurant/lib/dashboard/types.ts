@@ -50,6 +50,8 @@ export type OwnerOrder = {
   deliveryAddress?: OwnerOrderAddress;
   rejectionReason?: string;
   scheduledFor?: string;
+  /** When a scheduled ticket leaves the Scheduled tab for the live board (rings then). */
+  kitchenReleaseAt?: string;
   isDelayed?: boolean;
   prepMinutes?: number;
   itemCount?: number;
