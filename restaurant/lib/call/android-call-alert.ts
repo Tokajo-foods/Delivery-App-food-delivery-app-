@@ -121,13 +121,26 @@ function stringData(input: CallAlertInput): Record<string, string> {
   return out;
 }
 
-/** Stops the ring. The lock-screen flag stays until the call itself is over. */
+/**
+ * Stops the ring. The lock-screen flag stays until the call itself is over. Without an id after a
+ * headless restart (the alert outlived the JS runtime that showed it), every call alert is cleared.
+ */
 export async function dismissFullScreenCallAlert(callId?: string): Promise<void> {
   const n = load();
   const id = callId ? alertId(callId) : showingId;
   if (!callId || id === showingId) showingId = null;
-  if (!n || !id) return;
-  await n.default.cancelNotification(id).catch(() => undefined);
+  if (!n) return;
+  if (id) {
+    await n.default.cancelNotification(id).catch(() => undefined);
+    return;
+  }
+  const shown = await n.default.getDisplayedNotifications().catch(() => []);
+  await Promise.all(
+    shown
+      .map((row) => row.id ?? row.notification?.id ?? '')
+      .filter((key) => key.startsWith('tokajo-call-'))
+      .map((key) => n.default.cancelNotification(key).catch(() => undefined)),
+  );
 }
 
 export function releaseCallLockScreen(): void {

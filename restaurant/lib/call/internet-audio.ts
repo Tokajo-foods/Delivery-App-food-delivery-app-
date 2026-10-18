@@ -149,6 +149,17 @@ export async function setVoiceMuted(muted: boolean): Promise<void> {
   await active.localParticipant.setMicrophoneEnabled(!muted);
 }
 
+/** iOS CallKit activated the audio session (answered from the lock screen): re-apply voice setup. */
+export async function refreshVoiceSession(): Promise<void> {
+  if (Platform.OS === 'web' || !active) return;
+  try {
+    await startSession();
+    await routeOutput(speakerOn);
+  } catch {
+    // The next foreground switch retries.
+  }
+}
+
 /** Loudspeaker on, or back to earpiece (a connected headset / Bluetooth wins). */
 export async function setVoiceSpeaker(on: boolean): Promise<void> {
   speakerOn = on;

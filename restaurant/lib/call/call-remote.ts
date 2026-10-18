@@ -1,3 +1,4 @@
+import { dismissFullScreenCallAlert } from '@/lib/call/android-call-alert';
 import { callErrorMessage, disconnectInternetCall, getInternetCall } from '@/lib/call/api';
 import { connectOutgoingCall, finishCall, isCallClosed } from '@/lib/call/call-engine';
 import { ringIncomingCall, type RingMeta } from '@/lib/call/call-ring';
@@ -38,6 +39,7 @@ export async function applyRemoteCallState(
   if (!call || call.callId !== callId) {
     if (TERMINAL.has(state) || extra?.reason) {
       reportNativeCallEnded(callId, END_REASON.unanswered);
+      void dismissFullScreenCallAlert(callId);
       void dismissIncomingCallNotification();
     }
     return;

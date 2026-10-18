@@ -191,6 +191,7 @@ type NativeHandlers = {
   onAnswer: (callId: string) => void;
   onEnd: (callId: string) => void;
   onMute: (callId: string, muted: boolean) => void;
+  onAudioActivated?: () => void;
 };
 
 let bound = false;
@@ -213,6 +214,7 @@ export async function bindNativeCallActions(handlers: NativeHandlers): Promise<v
   keep.addEventListener('answerCall', (e) => route('answerCall', e));
   keep.addEventListener('endCall', (e) => route('endCall', e));
   keep.addEventListener('didPerformSetMutedCallAction', (e) => route('didPerformSetMutedCallAction', e));
+  keep.addEventListener('didActivateAudioSession', () => handlers.onAudioActivated?.());
   try {
     const initial = (await keep.getInitialEvents?.()) ?? [];
     initial.forEach((event) => route(event.name, event.data ?? {}));

@@ -2,7 +2,14 @@ import { AppState, Platform } from 'react-native';
 
 import { getInternetCall } from '@/lib/call/api';
 import { showFullScreenCallAlert } from '@/lib/call/android-call-alert';
-import { ensureNativeBindings, fromSession, isCallClosed, markCallClosed, rejectBusy } from '@/lib/call/call-engine';
+import {
+  ensureNativeBindings,
+  finishCall,
+  fromSession,
+  isCallClosed,
+  markCallClosed,
+  rejectBusy,
+} from '@/lib/call/call-engine';
 import { getCall, roleLabel, useCallStore, type ActiveCall } from '@/lib/call/call-store';
 import { startRingtone, stopCallTones } from '@/lib/call/call-tones';
 import { dismissIncomingCallNotification, presentIncomingCallNotification } from '@/lib/call/incoming-call-notify';
@@ -29,6 +36,26 @@ type RingOptions = {
 };
 
 const store = () => useCallStore.getState();
+
+/** Past the server ring window (45 s default). Covers a missed stop push or socket while locked. */
+const RING_GUARD_MS = 50_000;
+const RING_GUARD_RETRY_MS = 15_000;
+
+function guardRing(callId: string, delay = RING_GUARD_MS): void {
+  setTimeout(() => {
+    void (async () => {
+      const call = getCall();
+      if (!call || call.callId !== callId || call.phase !== 'incoming') return;
+      const session = await getInternetCall(callId).catch(() => null);
+      if (session?.state === 'ringing') {
+        guardRing(callId, RING_GUARD_RETRY_MS);
+        return;
+      }
+      if (getCall()?.phase !== 'incoming') return;
+      await finishCall(callId, { notice: 'Missed call.', reason: END_REASON.unanswered });
+    })();
+  }, delay);
+}
 
 function fromMeta(meta: RingMeta): ActiveCall {
   const peerRole: CallRole = isCallRole(meta.callerRole) ? meta.callerRole : 'customer';
@@ -85,6 +112,7 @@ export async function ringIncomingCall(meta: RingMeta, opts: RingOptions = {}): 
     return;
   }
   if (getCall() || isCallClosed(call.callId)) return;
+  guardRing(call.callId);
 
   if (nativeShown) {
     store().set({ call: { ...call, nativeRinging: true }, muted: false, speaker: false, notice: null });

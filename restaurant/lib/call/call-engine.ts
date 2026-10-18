@@ -16,6 +16,7 @@ import {
   connectVoice,
   disconnectVoice,
   ensureMicrophone,
+  refreshVoiceSession,
   setVoiceMuted,
   setVoiceSpeaker,
 } from '@/lib/call/internet-audio';
@@ -77,6 +78,7 @@ export function ensureNativeBindings(): Promise<void> {
     onMute: (callId, muted) => {
       if (getCall()?.callId === callId && store().muted !== muted) void setMuted(muted);
     },
+    onAudioActivated: () => void refreshVoiceSession(),
   });
 }
 
