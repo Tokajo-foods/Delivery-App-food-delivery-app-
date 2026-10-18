@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 
 import type { OwnerOrder } from '@/lib/dashboard/types';
-import { notificationKeys } from '@/lib/notification/hooks';
+import { refreshInboxQueries } from '@/lib/notification/inbox-list-patch';
 import { restaurantOrderKeys } from '@/lib/order/hooks';
 import type { KitchenKdsBoard } from '@/lib/order/owner-api';
 import { earningsKeys } from '@/lib/restaurant/earnings-keys';
@@ -41,10 +41,7 @@ export function applyKitchenSocketEvent(
   }
 
   if (event === 'notification:new') {
-    void queryClient.invalidateQueries({
-      queryKey: notificationKeys.all,
-      refetchType: 'active',
-    });
+    refreshInboxQueries(queryClient);
     return;
   }
 
