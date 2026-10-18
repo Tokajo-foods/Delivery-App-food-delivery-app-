@@ -1,9 +1,11 @@
 import {
   Bike,
+  Phone,
   Star,
 } from 'lucide-react-native';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -12,11 +14,13 @@ import {
 
 import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
+import { useOrderCalls } from '@/lib/call/use-order-calls';
 import { getApiErrorMessage } from '@/lib/errors';
 import type { KitchenRider } from '@/lib/order/owner-api';
 import { displayStatus } from '@/lib/order/ui';
 
 type Props = {
+  orderId: string;
   rider?: KitchenRider;
   loading?: boolean;
   error?: unknown;
@@ -35,6 +39,7 @@ function dutyLabel(rider: KitchenRider) {
 }
 
 export function KitchenRiderCard({
+  orderId,
   rider,
   loading,
   error,
@@ -44,6 +49,16 @@ export function KitchenRiderCard({
 }: Props) {
   const assigned = Boolean(rider?.assigned && (rider.name || rider.partnerId));
   const searching = !assigned && (rider?.searching === true || Boolean(rider?.message));
+  const calls = useOrderCalls(assigned ? orderId : '', 'restaurant');
+  const riderName = rider?.name?.trim() || 'Delivery partner';
+
+  const openCallChoices = () => {
+    Alert.alert(riderName, 'Choose how to call', [
+      { text: 'Internet call', onPress: () => void calls.startInternet('rider', riderName) },
+      { text: 'Normal call', onPress: () => void calls.dial('rider') },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
 
   return (
     <View style={styles.card}>
@@ -94,7 +109,24 @@ export function KitchenRiderCard({
         </View>
       )}
 
+      {assigned && calls.notice ? <Text style={styles.error}>{calls.notice}</Text> : null}
+
       <View style={styles.actions}>
+        {assigned ? (
+          <Pressable
+            accessibilityLabel="Call delivery partner"
+            disabled={Boolean(calls.busy)}
+            onPress={openCallChoices}
+            style={[styles.action, styles.callAction, calls.busy ? styles.disabled : null]}
+          >
+            {calls.busy ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <Phone color="#FFFFFF" size={15} />
+            )}
+            <Text style={[styles.actionText, styles.callText]}>Call rider</Text>
+          </Pressable>
+        ) : null}
         {canRate && assigned ? (
           <Pressable onPress={onRate} style={styles.action}>
             <Star color="#D97706" size={15} />
@@ -199,4 +231,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: authTheme.text,
   },
+  callAction: { backgroundColor: '#EA4B14' },
+  callText: { color: '#FFFFFF' },
+  disabled: { opacity: 0.5 },
 });

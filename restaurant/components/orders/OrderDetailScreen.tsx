@@ -670,6 +670,7 @@ export function OrderDetailScreen({ orderId }: Props) {
             {order.fulfillmentTone === 'delivery' ? (
               <>
                 <KitchenRiderCard
+                  orderId={orderId}
                   rider={rider}
                   loading={riderQuery.isLoading}
                   error={riderQuery.error}
