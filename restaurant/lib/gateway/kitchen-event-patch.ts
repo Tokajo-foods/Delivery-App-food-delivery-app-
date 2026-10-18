@@ -38,10 +38,9 @@ export function mapIncomingOrder(
   const id = pickString(record, ['orderId', 'id', '_id']);
   const rawStatus =
     pickString(record, ['status', 'orderStatus']) ?? fallbackStatus;
+  const kitchenStatus = rawStatus ? kitchenOrderStatus(rawStatus, record) : undefined;
   const status =
-    rawStatus && kitchenOrderStatus(rawStatus, record) === 'returned'
-      ? 'returned'
-      : rawStatus;
+    kitchenStatus === 'returned' || kitchenStatus === 'cancelled_paid' ? kitchenStatus : rawStatus;
   const deliveryType = pickString(record, ['deliveryType', 'fulfillment']);
   const totalRaw = record.grandTotal ?? record.total;
   const total = typeof totalRaw === 'number' ? totalRaw : Number(totalRaw);

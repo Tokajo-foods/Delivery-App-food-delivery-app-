@@ -49,6 +49,7 @@ const STATUS_RANK: Record<string, number> = {
   completed: 5,
   returned: 4,
   cancelled: -1,
+  cancelled_paid: -1,
   rejected: -1,
 };
 
@@ -60,6 +61,7 @@ export function displayStatus(status?: string | null) {
   const raw = String(status ?? '').trim();
   if (!raw) return 'Unknown';
   if (raw === 'returned') return 'Returned · Paid';
+  if (raw === 'cancelled_paid') return 'Cancelled · Paid';
   return raw
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -72,7 +74,11 @@ export function statusTone(status?: string | null) {
   if (status === 'pending_payment') {
     return { backgroundColor: '#FFFBEB', color: '#B45309', border: '#FDE68A' };
   }
-  if (status === 'returning_to_restaurant' || status === 'returned') {
+  if (
+    status === 'returning_to_restaurant' ||
+    status === 'returned' ||
+    status === 'cancelled_paid'
+  ) {
     return { backgroundColor: '#FFF7ED', color: '#C2410C', border: '#FED7AA' };
   }
   if (status === 'ready' || status === 'out_for_delivery' || status === 'delivered') {
@@ -106,6 +112,9 @@ export function statusCaption(
   }
   if (status === 'returned') {
     return 'Returned to restaurant — food amount credited to your earnings';
+  }
+  if (status === 'cancelled_paid') {
+    return 'No rider came — order cancelled, food amount credited to your earnings';
   }
   if (status === 'failed') return 'Return failed';
   if (status === 'delivered' && fulfillmentTone === 'pickup') {

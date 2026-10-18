@@ -391,15 +391,21 @@ export function normalizeOwnerOrderStatus(status?: string): string {
   return normalized;
 }
 
-/** RTO orders close as `cancelled` for the customer but the kitchen is paid — show `returned`. */
+/**
+ * Cancelled delivery orders the kitchen is still paid for: RTO return → `returned`,
+ * no rider after cooking → `cancelled_paid`. Every other cancel (incl. takeaway) stays `cancelled`.
+ */
 export function kitchenOrderStatus(
   status: string | undefined,
   record: Record<string, unknown>
 ): string {
   const normalized = normalizeOwnerOrderStatus(status);
-  const returned =
-    record.returnedToRestaurant === true || Boolean(record.returnedToRestaurantAt);
-  return normalized === 'cancelled' && returned ? 'returned' : normalized;
+  if (normalized !== 'cancelled') return normalized;
+  if (record.returnedToRestaurant === true || record.returnedToRestaurantAt) return 'returned';
+  if (record.paidOnCancel === true || record.kitchenPaid === true || record.riderFailureCreditAt) {
+    return 'cancelled_paid';
+  }
+  return normalized;
 }
 
 export function mapOwnerOrder(data: Record<string, unknown>): OwnerOrder {

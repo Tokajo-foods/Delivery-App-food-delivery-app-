@@ -240,6 +240,7 @@ function patchKdsStatus(
   if (
     nextStatus === 'cancelled' ||
     nextStatus === 'rejected' ||
+    nextStatus === 'cancelled_paid' ||
     nextStatus === 'returned'
   ) {
     return next;

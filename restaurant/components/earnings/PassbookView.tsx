@@ -64,7 +64,7 @@ export function PassbookView({
   );
 
   const refreshing = passbook.isRefetching && !passbook.isFetchingNextPage && !passbook.isLoading;
-  const credited = (totals?.orderEarnings ?? 0) + (totals?.returnedEarnings ?? 0);
+  const credited = totals?.orderEarnings ?? 0;
 
   const header = (
     <View style={styles.header}>

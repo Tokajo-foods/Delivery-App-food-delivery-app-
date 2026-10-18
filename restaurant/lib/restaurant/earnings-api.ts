@@ -14,7 +14,13 @@ import type {
 
 const RESTAURANT_BASE = '/api/v1/restaurant-service/restaurants';
 const PERIODS: EarningsPeriod[] = ['today', 'week', 'month'];
-const KINDS: PassbookEntryKind[] = ['order', 'rto_credit', 'payout', 'adjustment'];
+const KINDS: PassbookEntryKind[] = [
+  'order',
+  'rto_credit',
+  'no_rider_credit',
+  'payout',
+  'adjustment',
+];
 
 export type EarningsApiError = Error & { status?: number; code?: string };
 
@@ -70,10 +76,13 @@ function mapPeriod(raw: unknown, period: EarningsPeriod): EarningsPeriodTotals {
     orders: num(r.orders),
     deliveredOrders: num(r.deliveredOrders),
     returnedOrders: num(r.returnedOrders),
+    noRiderOrders: num(r.noRiderOrders),
     grossSales: num(r.grossSales),
     commission: num(r.commission),
+    commissionPercent: r.commissionPercent == null ? undefined : num(r.commissionPercent),
     orderEarnings: num(r.orderEarnings),
     returnedEarnings: num(r.returnedEarnings),
+    noRiderEarnings: num(r.noRiderEarnings),
     adjustments: num(r.adjustments),
     adjustmentCount: num(r.adjustmentCount),
     netEarnings: num(r.netEarnings),

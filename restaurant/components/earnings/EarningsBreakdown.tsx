@@ -41,14 +41,20 @@ export function EarningsBreakdown({
 }: {
   totals: EarningsPeriodTotals;
 }) {
-  const delivered = totals.deliveredOrders;
   const commissionPercent = totals.commissionPercent;
+  const salesHint = [
+    `${totals.deliveredOrders} delivered`,
+    totals.returnedOrders > 0 ? `${totals.returnedOrders} returned (RTO)` : null,
+    totals.noRiderOrders > 0 ? `${totals.noRiderOrders} cancelled · no rider` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
   return (
     <View style={styles.card}>
       <Text style={styles.title}>Settlement</Text>
       <Line
         label="Food sales"
-        hint={`${delivered} delivered ${delivered === 1 ? 'order' : 'orders'}`}
+        hint={salesHint}
         value={formatCurrency(totals.grossSales)}
         tone="neutral"
       />
@@ -58,14 +64,6 @@ export function EarningsBreakdown({
         value={`−${formatCurrency(totals.commission)}`}
         tone="minus"
       />
-      {totals.returnedOrders > 0 ? (
-        <Line
-          label="RTO food credit"
-          hint={`${totals.returnedOrders} returned`}
-          value={`+${formatCurrency(totals.returnedEarnings)}`}
-          tone="plus"
-        />
-      ) : null}
       <Line
         label="Adjustments"
         hint={totals.adjustmentCount ? `${totals.adjustmentCount} entries` : undefined}

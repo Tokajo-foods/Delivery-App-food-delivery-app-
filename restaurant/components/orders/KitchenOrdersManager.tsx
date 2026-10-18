@@ -165,7 +165,11 @@ function incomingMatches(order: OwnerOrder, filter: IncomingFilter) {
     );
   }
   if (filter === 'cancelled') {
-    return order.status === 'cancelled' || order.status === 'rejected';
+    return (
+      order.status === 'cancelled' ||
+      order.status === 'cancelled_paid' ||
+      order.status === 'rejected'
+    );
   }
   return order.status === filter;
 }
@@ -876,7 +880,9 @@ function OrderTicket({
         <View style={styles.ticketRight}>
           <Text style={styles.amount}>{money(resolveOrderTotal(order))}</Text>
           <View style={styles.statusRow}>
-            {order.status === 'cancelled' || order.status === 'rejected' ? (
+            {order.status === 'cancelled' ||
+            order.status === 'cancelled_paid' ||
+            order.status === 'rejected' ? (
               <Ban color={tone.color} size={12} strokeWidth={3} />
             ) : order.status === 'delivered' ? (
               <CheckCircle2 color={tone.color} size={12} strokeWidth={3} />

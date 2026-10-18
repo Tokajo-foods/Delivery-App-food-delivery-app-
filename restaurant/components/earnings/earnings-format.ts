@@ -100,6 +100,7 @@ export function entryTitle(entry: PassbookEntry): string {
       : '';
   if (entry.kind === 'order') return `Order ${ref}`.trim();
   if (entry.kind === 'rto_credit') return `Returned order ${ref}`.trim();
+  if (entry.kind === 'no_rider_credit') return `Cancelled order ${ref}`.trim();
   if (entry.kind === 'payout') {
     return entry.payoutId ? `Bank payout · ${entry.payoutId.slice(-6).toUpperCase()}` : 'Bank payout';
   }
@@ -109,6 +110,7 @@ export function entryTitle(entry: PassbookEntry): string {
 export const KIND_LABELS: Record<PassbookEntry['kind'], string> = {
   order: 'Delivered',
   rto_credit: 'RTO food credit',
+  no_rider_credit: 'No rider · food paid',
   payout: 'Paid to bank',
   adjustment: 'Adjustment',
 };

@@ -2,7 +2,12 @@ export type EarningsPeriod = 'today' | 'week' | 'month';
 
 export type PassbookFilter = 'all' | 'order_credit' | 'payout_debit' | 'adjustment';
 
-export type PassbookEntryKind = 'order' | 'rto_credit' | 'payout' | 'adjustment';
+export type PassbookEntryKind =
+  | 'order'
+  | 'rto_credit'
+  | 'no_rider_credit'
+  | 'payout'
+  | 'adjustment';
 
 export type EarningsPeriodTotals = {
   period: EarningsPeriod;
@@ -11,12 +16,16 @@ export type EarningsPeriodTotals = {
   orders: number;
   deliveredOrders: number;
   returnedOrders: number;
+  /** Delivery orders cancelled after cooking because no rider came (kitchen still paid). */
+  noRiderOrders: number;
   grossSales: number;
   commission: number;
   /** Actual wallet commission ÷ food sales for this period (from API). */
   commissionPercent?: number;
+  /** All order credits (delivered + returned + no rider). */
   orderEarnings: number;
   returnedEarnings: number;
+  noRiderEarnings: number;
   adjustments: number;
   adjustmentCount: number;
   netEarnings: number;

@@ -1,4 +1,4 @@
-import { Landmark, RotateCcw, TrendingDown, TrendingUp, Wallet } from 'lucide-react-native';
+import { Bike, Landmark, RotateCcw, TrendingDown, TrendingUp, Wallet } from 'lucide-react-native';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { authTheme } from '@/constants/auth-theme';
@@ -94,6 +94,15 @@ export function EarningsHero({
           <Text style={styles.noteText}>
             Includes {formatCurrency(totals.returnedEarnings)} RTO food credit · {totals.returnedOrders}{' '}
             returned
+          </Text>
+        </View>
+      ) : null}
+      {totals && totals.noRiderOrders > 0 ? (
+        <View style={styles.note}>
+          <Bike color="#B45309" size={13} />
+          <Text style={styles.noteText}>
+            Includes {formatCurrency(totals.noRiderEarnings)} for {totals.noRiderOrders} cancelled ·
+            no rider (food was ready)
           </Text>
         </View>
       ) : null}

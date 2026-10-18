@@ -1,4 +1,5 @@
 import {
+  Bike,
   Landmark,
   RotateCcw,
   ShoppingBag,
@@ -18,6 +19,7 @@ import { entryTitle, formatIstTime, KIND_LABELS } from './earnings-format';
 const KIND_STYLE: Record<PassbookEntryKind, { icon: LucideIcon; fg: string; bg: string }> = {
   order: { icon: ShoppingBag, fg: '#15803D', bg: '#F0FDF4' },
   rto_credit: { icon: RotateCcw, fg: '#B45309', bg: '#FFFBEB' },
+  no_rider_credit: { icon: Bike, fg: '#B45309', bg: '#FFFBEB' },
   payout: { icon: Landmark, fg: '#1D4ED8', bg: '#EFF6FF' },
   adjustment: { icon: SlidersHorizontal, fg: '#64748B', bg: '#F8FAFC' },
 };
