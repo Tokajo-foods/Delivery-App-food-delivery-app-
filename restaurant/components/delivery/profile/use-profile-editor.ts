@@ -17,7 +17,7 @@ import {
 import type { PlatformUser } from '@/lib/user/account-types';
 import { useAuthStore } from '@/store/auth-store';
 
-export type ProfileEditSection = 'personal' | 'vehicle' | 'password' | null;
+export type ProfileEditSection = 'personal' | 'vehicle' | null;
 
 type Args = {
   profile?: DeliveryPartnerProfile | null;
@@ -36,14 +36,12 @@ export function useProfileEditor({
 }: Args) {
   const updateProfile = useUpdatePartnerProfile();
   const { updateName, uploadPhoto, deletePhoto } = usePlatformAccountMutations();
-  const changePassword = useAuthStore((s) => s.changePassword);
   const resendEmailVerification = useAuthStore((s) => s.resendEmailVerification);
 
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [editSection, setEditSection] = useState<ProfileEditSection>(null);
   const [saving, setSaving] = useState(false);
   const [resendingEmail, setResendingEmail] = useState(false);
-  const [passwordBusy, setPasswordBusy] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
@@ -51,10 +49,6 @@ export function useProfileEditor({
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [vehicleModel, setVehicleModel] = useState('');
   const [vehicleColor, setVehicleColor] = useState('');
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const openEdit = (section: ProfileEditSection) => {
     if (!profile || !section) return;
@@ -72,23 +66,16 @@ export function useProfileEditor({
       setVehicleModel(profile.vehicle?.model ?? profile.vehicleModel ?? '');
       setVehicleColor(profile.vehicle?.color ?? profile.vehicleColor ?? '');
     }
-    if (section === 'password') {
-      setOldPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      setPasswordError(null);
-    }
     setEditSection(section);
   };
 
   const closeEdit = () => {
-    if (saving || passwordBusy) return;
-    setPasswordError(null);
+    if (saving) return;
     setEditSection(null);
   };
 
   const saveEdit = async () => {
-    if (!editSection || editSection === 'password') return;
+    if (!editSection) return;
     if (editSection === 'personal') {
       if (firstName.trim().length < 2) {
         Alert.alert('First name required', 'Enter at least 2 characters.');
@@ -125,23 +112,6 @@ export function useProfileEditor({
       Alert.alert('Update failed', getApiErrorMessage(err, 'Could not update profile.'));
     } finally {
       setSaving(false);
-    }
-  };
-
-  const submitPasswordChange = async () => {
-    setPasswordError(null);
-    if (oldPassword.length < 6) return setPasswordError('Enter your current password.');
-    if (newPassword.length < 6) return setPasswordError('New password must be at least 6 characters.');
-    if (newPassword !== confirmPassword) return setPasswordError('New passwords do not match.');
-    setPasswordBusy(true);
-    try {
-      const message = await changePassword({ oldPassword, newPassword, confirmPassword });
-      setEditSection(null);
-      Alert.alert('Password updated', message || 'Your password was changed.');
-    } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'Failed to change password');
-    } finally {
-      setPasswordBusy(false);
     }
   };
 
@@ -231,7 +201,6 @@ export function useProfileEditor({
       editSection,
       closeEdit,
       saving,
-      passwordBusy,
       firstName,
       setFirstName,
       lastName,
@@ -245,15 +214,7 @@ export function useProfileEditor({
       setVehicleModel,
       vehicleColor,
       setVehicleColor,
-      oldPassword,
-      setOldPassword,
-      newPassword,
-      setNewPassword,
-      confirmPassword,
-      setConfirmPassword,
-      passwordError,
       saveEdit,
-      submitPasswordChange,
     },
   };
 }

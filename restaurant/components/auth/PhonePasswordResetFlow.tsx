@@ -15,7 +15,9 @@ import { usePhoneAuthStatus } from '@/components/auth/usePhoneAuthStatus';
 import { theme } from '@/constants/theme';
 import { formatAuthError } from '@/lib/auth/api';
 import { phoneAuthApi } from '@/lib/auth/phone-auth-api';
+import { precheckPhone } from '@/lib/auth/phone-precheck';
 import { getApiErrorCode } from '@/lib/errors';
+import { useAuthStore } from '@/store/auth-store';
 
 const RESTART = new Set(['FIREBASE_TOKEN_EXPIRED', 'FIREBASE_TOKEN_INVALID', 'PHONE_MISMATCH']);
 
@@ -28,9 +30,12 @@ type Props = {
 export function PhonePasswordResetFlow({ initialPhone, onBack }: Props) {
   const router = useRouter();
   const availability = usePhoneAuthStatus();
+  const role = useAuthStore((s) => s.role);
   const otp = useFirebasePhoneOtp({
     initialPhone,
     cooldownSeconds: availability.status?.resendCooldownSeconds,
+    precheck: async (phone) =>
+      (await precheckPhone(phone, role, 'forgot_password'))?.message ?? null,
   });
   const [resetToken, setResetToken] = useState<string | null>(null);
   const [password, setPassword] = useState('');

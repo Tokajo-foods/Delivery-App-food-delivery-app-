@@ -8,7 +8,6 @@ import {
 } from '@/lib/auth/auth-normalize';
 import type {
   AppleLoginPayload,
-  ChangePasswordPayload,
   ConfirmForgotPasswordOtpPayload,
   ConfirmRegisterOtpResult,
   ForgotPasswordPayload,
@@ -191,18 +190,6 @@ export const authApi = {
     const data = await authRequest<unknown>(`${AUTH_BASE}/logout-all`, {
       method: 'POST',
       body: {},
-    });
-    return normalizeMessageResponse(data);
-  },
-
-  changePassword: async (payload: ChangePasswordPayload) => {
-    const data = await authRequest<unknown>(`${AUTH_BASE}/change-password`, {
-      method: 'POST',
-      body: {
-        currentPassword: payload.oldPassword,
-        newPassword: payload.newPassword,
-        confirmPassword: payload.confirmPassword ?? payload.newPassword,
-      },
     });
     return normalizeMessageResponse(data);
   },

@@ -44,7 +44,7 @@ type Props = {
   onEditAddress: () => void;
   onChangePhone: () => void;
   onChangeEmail: () => void;
-  onForgotPassword: () => void;
+  onChangePassword: () => void;
   vehicleTitle: string;
   vehicleMeta: string;
   onEditVehicle: () => void;
@@ -199,7 +199,7 @@ export function ProfilePageView(props: Props) {
             <Row label="Phone" value={s.phone} action="Change" onAction={s.onChangePhone} />
             <Row label="Age" value={s.age} />
             <Row label="Address" value={s.address} lines={2} action="Edit" onAction={s.onEditAddress} />
-            <Row label="Password" value="••••••••" action="Forgot password" onAction={s.onForgotPassword} />
+            <Row label="Password" value="••••••••" action="Change" onAction={s.onChangePassword} />
           </View>
 
           <Text style={styles.groupLabel}>Vehicle</Text>

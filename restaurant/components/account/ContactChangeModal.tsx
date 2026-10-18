@@ -13,9 +13,7 @@ import {
   contactChangeSuccessBody,
   contactChangeTitle,
   isValidContactEmail,
-  normalizeContactPhone,
   type ContactChangeStep,
-  type ContactKind,
 } from '@/components/account/contact-change-copy';
 import { contactChangeStyles as styles } from '@/components/account/contact-change-styles';
 import { getApiErrorCode } from '@/lib/errors';
@@ -25,13 +23,14 @@ import {
 } from '@/lib/user/account-hooks';
 
 /**
- * Dual-OTP contact change: verify current → new → success popup.
+ * Dual email OTP change: verify current → new → success popup.
+ * Phone changes use Firebase OTP on the `/change-phone` screen.
  */
 export function ContactChangeModal({
   kind,
   onClose,
 }: {
-  kind: ContactKind | null;
+  kind: 'email' | null;
   current?: string;
   onClose: () => void;
 }) {
@@ -82,7 +81,6 @@ export function ContactChangeModal({
 
   if (!kind) return null;
 
-  const isPhone = kind === 'phone';
   const title = contactChangeTitle(kind, step);
 
   const applyCooldown = (seconds: number, err?: unknown) => {
@@ -113,15 +111,8 @@ export function ContactChangeModal({
 
   const onSendNew = async () => {
     setError(null);
-    const value = isPhone
-      ? normalizeContactPhone(newValue)
-      : newValue.trim().toLowerCase();
-    if (isPhone) {
-      if (value.replace(/\D/g, '').length < 10) {
-        setError('Enter a valid mobile number.');
-        return;
-      }
-    } else if (!isValidContactEmail(value)) {
+    const value = newValue.trim().toLowerCase();
+    if (!isValidContactEmail(value)) {
       setError('Enter a valid email address.');
       return;
     }
@@ -242,9 +233,9 @@ export function ContactChangeModal({
             <TextInput
               value={newValue}
               onChangeText={setNewValue}
-              placeholder={isPhone ? '9876543210' : 'you@example.com'}
+              placeholder="you@example.com"
               placeholderTextColor="#9CA3AF"
-              keyboardType={isPhone ? 'phone-pad' : 'email-address'}
+              keyboardType="email-address"
               autoCapitalize="none"
               style={styles.input}
             />

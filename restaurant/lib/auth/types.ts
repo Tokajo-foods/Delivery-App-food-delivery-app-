@@ -188,12 +188,6 @@ export type ResetPasswordWithOtpPayload = {
   confirmPassword?: string;
 };
 
-export type ChangePasswordPayload = {
-  oldPassword: string;
-  newPassword: string;
-  confirmPassword?: string;
-};
-
 export type MessageResponse = {
   message: string;
 };

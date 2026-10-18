@@ -14,7 +14,6 @@ import {
 import type {
   AppleLoginPayload,
   AuthUser,
-  ChangePasswordPayload,
   ForgotPasswordPayload,
   GoogleLoginPayload,
   LoginPayload,
@@ -78,7 +77,6 @@ type AuthState = {
   forgotPassword: (payload: ForgotPasswordPayload) => Promise<string>;
   resetPassword: (payload: ResetPasswordPayload) => Promise<string>;
   verifyEmail: (token: string) => Promise<string>;
-  changePassword: (payload: ChangePasswordPayload) => Promise<string>;
   resendEmailVerification: () => Promise<string>;
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
@@ -356,18 +354,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return response.message ?? 'Email verified successfully';
     } catch (error) {
       throwAuth(error, 'Email verification failed');
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  changePassword: async (payload) => {
-    set({ isLoading: true });
-    try {
-      const response = await authApi.changePassword(payload);
-      return response.message ?? 'Password changed successfully';
-    } catch (error) {
-      throwAuth(error, 'Failed to change password');
     } finally {
       set({ isLoading: false });
     }

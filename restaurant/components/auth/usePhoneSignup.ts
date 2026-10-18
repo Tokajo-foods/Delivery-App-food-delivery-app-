@@ -11,6 +11,7 @@ import { usePhoneAuthStatus } from '@/components/auth/usePhoneAuthStatus';
 import { AUTH_ERROR_COPY, formatAuthError } from '@/lib/auth/auth-error-copy';
 import { isAuthApiError } from '@/lib/auth/http';
 import { phoneAuthApi } from '@/lib/auth/phone-auth-api';
+import { precheckPhone } from '@/lib/auth/phone-precheck';
 import type { PartnerRole, PhoneAuthResult } from '@/lib/auth/types';
 import { getApiErrorCode } from '@/lib/errors';
 
@@ -36,9 +37,18 @@ type Options = {
 /** Phone OTP → details → POST /auth/phone/register (fresh ID token at submit). */
 export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) {
   const availability = usePhoneAuthStatus();
+  const [error, setError] = useState<string | null>(null);
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const otp = useFirebasePhoneOtp({
     initialPhone,
     cooldownSeconds: availability.status?.resendCooldownSeconds,
+    precheck: async (phone) => {
+      setAlreadyRegistered(false);
+      const miss = await precheckPhone(phone, role, 'register');
+      if (!miss) return null;
+      setAlreadyRegistered(miss.code === 'PHONE_ALREADY_REGISTERED');
+      return miss.message;
+    },
   });
   const [step, setStep] = useState<'phone' | 'details'>(
     otp.stage === 'verified' ? 'details' : 'phone'
@@ -48,8 +58,6 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
     ...initialDetails,
   });
   const [fieldErrors, setFieldErrors] = useState<SignupDetailErrors>({});
-  const [error, setError] = useState<string | null>(null);
-  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const patchDetails = (patch: Partial<SignupDetails>) =>

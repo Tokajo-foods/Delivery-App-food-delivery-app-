@@ -57,9 +57,8 @@ export function usePartnerProfileScreen() {
   const authUser = useAuthStore((s) => s.user);
   const [pullRefreshing, setPullRefreshing] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [contactKind, setContactKind] = useState<'phone' | 'email' | null>(null);
+  const [contactKind, setContactKind] = useState<'email' | null>(null);
   const [addressMapOpen, setAddressMapOpen] = useState(false);
-  const [forgotOpen, setForgotOpen] = useState(false);
   const [savingAddress, setSavingAddress] = useState(false);
   const saveHome = useSaveHomeLocation();
 
@@ -178,9 +177,9 @@ export function usePartnerProfileScreen() {
       age: dash(ageLabel(profile?.dateOfBirth)),
       address: dash(riderAddress(profile?.homeAddress, profile?.city)),
       onEditAddress: () => setAddressMapOpen(true),
-      onChangePhone: () => setContactKind('phone'),
+      onChangePhone: () => router.push('/change-phone'),
       onChangeEmail: () => setContactKind('email'),
-      onForgotPassword: () => setForgotOpen(true),
+      onChangePassword: () => router.push('/change-password'),
       vehicleTitle: vehicleLabel(vehicleTypeRaw),
       vehicleMeta: vehicleBits.length ? vehicleBits.join(' · ') : 'Add your vehicle details',
       onEditVehicle: () => editor.openEdit('vehicle'),
@@ -191,8 +190,6 @@ export function usePartnerProfileScreen() {
     accountPhone,
     accountEmail,
     setContactKind,
-    forgotOpen,
-    setForgotOpen,
     edit: editor.edit,
     addressMap: {
       visible: addressMapOpen,

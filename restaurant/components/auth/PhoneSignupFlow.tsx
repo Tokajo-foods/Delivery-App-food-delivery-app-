@@ -37,6 +37,21 @@ export function PhoneSignupFlow({ signup, role, submitLabel, onSubmit, busy }: P
           onSubmit={(code) => void signup.verifyPhone(code)}
           submitLabel="Verify number"
         />
+        {signup.alreadyRegistered && signup.otp.stage === 'phone' ? (
+          <View className="mt-3">
+            <PrimaryButton
+              label="Sign in with OTP"
+              icon={LogIn}
+              variant="outline"
+              onPress={() =>
+                router.replace({
+                  pathname: '/verify-otp',
+                  params: { role, phone: signup.otp.phoneInput },
+                })
+              }
+            />
+          </View>
+        ) : null}
       </View>
     );
   }

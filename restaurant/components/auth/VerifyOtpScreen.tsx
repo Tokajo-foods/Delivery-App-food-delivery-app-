@@ -14,6 +14,7 @@ import { usePhoneAuthStatus } from '@/components/auth/usePhoneAuthStatus';
 import { theme } from '@/constants/theme';
 import { formatAuthError } from '@/lib/auth/auth-error-copy';
 import { phoneAuthApi } from '@/lib/auth/phone-auth-api';
+import { precheckPhone } from '@/lib/auth/phone-precheck';
 import { applyPhoneAuthSession } from '@/lib/auth/phone-session';
 import { PARTNER_ROLES, type PartnerRole } from '@/lib/auth/types';
 import { getApiErrorCode } from '@/lib/errors';
@@ -35,21 +36,46 @@ export function VerifyOtpScreen() {
   const role = useAuthStore((s) => s.role);
   const setRole = useAuthStore((s) => s.setRole);
   const availability = usePhoneAuthStatus();
-  const otp = useFirebasePhoneOtp({
-    initialPhone: typeof params.phone === 'string' ? params.phone : undefined,
-    cooldownSeconds: availability.status?.resendCooldownSeconds,
-  });
   const [submitting, setSubmitting] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signupOffer, setSignupOffer] = useState<SignupOffer | null>(null);
 
+  const roleLabel = (r: PartnerRole) =>
+    PARTNER_ROLES.find((x) => x.value === r)?.label ?? r;
+
+  const offerSignup = (phone: string, code?: string): boolean => {
+    if (code === 'USER_NOT_FOUND') {
+      setSignupOffer({
+        phone,
+        message: 'No account uses this number yet. Create one to continue.',
+      });
+      return true;
+    }
+    if (code === 'ROLE_NOT_ALLOWED') {
+      setSignupOffer({
+        phone,
+        message: `This number has a Tokajo account, but not as ${roleLabel(role)}. Register it for ${roleLabel(role)} to continue.`,
+      });
+      return true;
+    }
+    return false;
+  };
+
+  const otp = useFirebasePhoneOtp({
+    initialPhone: typeof params.phone === 'string' ? params.phone : undefined,
+    cooldownSeconds: availability.status?.resendCooldownSeconds,
+    precheck: async (phone) => {
+      setSignupOffer(null);
+      const miss = await precheckPhone(phone, role, 'login');
+      if (!miss) return null;
+      return offerSignup(phone, miss.code) ? '' : miss.message;
+    },
+  });
+
   useEffect(() => {
     if (params.role === 'delivery' || params.role === 'restaurant') setRole(params.role);
   }, [params.role, setRole]);
-
-  const roleLabel = (r: PartnerRole) =>
-    PARTNER_ROLES.find((x) => x.value === r)?.label ?? r;
 
   const handleSubmit = async (code?: string) => {
     if (submitting) return;
@@ -73,17 +99,7 @@ export function VerifyOtpScreen() {
       const errCode = getApiErrorCode(err);
       if (errCode && RESTART_CODES.has(errCode)) {
         otp.restart(formatAuthError(err, 'Verify your phone again.'));
-      } else if (errCode === 'USER_NOT_FOUND') {
-        setSignupOffer({
-          phone: verified.phone,
-          message: 'No account uses this number yet. Create one — your number stays verified.',
-        });
-      } else if (errCode === 'ROLE_NOT_ALLOWED') {
-        setSignupOffer({
-          phone: verified.phone,
-          message: `This number has a Tokajo account, but not as ${roleLabel(role)}. Register it for ${roleLabel(role)} to continue.`,
-        });
-      } else {
+      } else if (!offerSignup(verified.phone, errCode ?? undefined)) {
         setError(formatAuthError(err, 'OTP sign-in failed'));
       }
     } finally {

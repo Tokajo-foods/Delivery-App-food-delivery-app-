@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { AuthUser } from '@/lib/auth/types';
+import { phoneChangeApi } from '@/lib/auth/account-security-api';
 import { getAuthDeviceId } from '@/lib/auth/device';
 import { deliveryPartnerKeys } from '@/lib/delivery-partner/hooks';
 import {
@@ -151,8 +152,12 @@ export function usePlatformAccountMutations() {
     },
   });
 
-  const updatePhone = useMutation({
-    mutationFn: userAccountApi.updatePhone,
+  const verifyCurrentPhone = useMutation({
+    mutationFn: phoneChangeApi.verifyCurrent,
+  });
+
+  const confirmNewPhone = useMutation({
+    mutationFn: phoneChangeApi.confirmNew,
     onSuccess: syncUser,
   });
 
@@ -276,7 +281,8 @@ export function usePlatformAccountMutations() {
     updateName,
     uploadPhoto,
     deletePhoto,
-    updatePhone,
+    verifyCurrentPhone,
+    confirmNewPhone,
     updateEmail,
     sendCurrentContactOtp,
     verifyCurrentContactOtp,

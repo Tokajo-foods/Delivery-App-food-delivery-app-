@@ -478,22 +478,6 @@ export const userAccountApi = {
     };
   },
 
-  /** PUT /users/me/phone — legacy confirm (prefer dual-OTP contact/*) */
-  updatePhone: async (payload: {
-    phone: string;
-    otp: string;
-  }): Promise<PlatformUser> => {
-    const phone = payload.phone.trim();
-    const otp = payload.otp.trim();
-    if (!phone) throw new PartnerApiError('Enter a phone number.', 'VALIDATION_ERROR');
-    if (!otp) throw new PartnerApiError('Enter the OTP.', 'OTP_REQUIRED');
-    const data = await request<unknown>(`${USERS_ME}/phone`, {
-      method: 'PUT',
-      body: { phone, otp },
-    });
-    return mapPlatformUser(data);
-  },
-
   /** PUT /users/me/email — legacy confirm (prefer dual-OTP contact/*) */
   updateEmail: async (payload: {
     email: string;

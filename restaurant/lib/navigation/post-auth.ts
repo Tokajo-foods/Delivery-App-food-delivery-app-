@@ -23,6 +23,7 @@ const DELIVERY_SETUP_DONE_KEY = 'partner_delivery_setup_done';
 /** Shared screens both roles may open (no portal redirect). */
 const SHARED_APP_SEGMENTS = new Set([
   'change-password',
+  'change-phone',
   'verify-email',
 ]);
 

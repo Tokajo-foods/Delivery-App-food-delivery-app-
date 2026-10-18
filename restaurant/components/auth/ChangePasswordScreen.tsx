@@ -1,104 +1,79 @@
-import { Lock, ShieldCheck } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { CheckCircle2, Lock, ShieldCheck } from 'lucide-react-native';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
 import { AuthBanner } from '@/components/auth/AuthBanner';
 import { AuthField } from '@/components/auth/AuthField';
-import { PrimaryButton } from '@/components/auth/PrimaryButton';
 import { AuthShell } from '@/components/auth/AuthShell';
-import { useAuthStore } from '@/store/auth-store';
+import { PasswordChangeVerifyStep } from '@/components/auth/PasswordChangeVerifyStep';
+import { PrimaryButton } from '@/components/auth/PrimaryButton';
+import { usePasswordChangeFlow } from '@/components/auth/use-password-change-flow';
+import { theme } from '@/constants/theme';
 
+const SUBTITLES = {
+  loading: 'Sending verification codes…',
+  verify: 'Verify the codes sent to your registered email and phone.',
+  password: 'Choose a new password for your partner account.',
+  done: 'Your password has been changed.',
+} as const;
+
+/** Settings password change: email OTP + phone OTP, then the new password. */
 export function ChangePasswordScreen() {
-  const changePassword = useAuthStore((s) => s.changePassword);
-  const isLoading = useAuthStore((s) => s.isLoading);
-
-  const [oldPassword, setOldPassword] = useState('');
+  const router = useRouter();
+  const flow = usePasswordChangeFlow();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-
-  const validate = () => {
-    const next: Record<string, string> = {};
-    if (oldPassword.length < 6) next.oldPassword = 'Enter your current password';
-    if (newPassword.length < 6)
-      next.newPassword = 'Password must be at least 6 characters';
-    if (newPassword !== confirmPassword)
-      next.confirmPassword = 'Passwords do not match';
-    setFieldErrors(next);
-    return Object.keys(next).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    setError(null);
-    setSuccess(null);
-    if (!validate()) return;
-    try {
-      const message = await changePassword({
-        oldPassword,
-        newPassword,
-        confirmPassword,
-      });
-      setSuccess(message);
-      setOldPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to change password');
-    }
-  };
 
   return (
-    <AuthShell
-      title="Change password"
-      subtitle="Update the password for your partner account."
-      showBack
-    >
-      <AuthBanner type="error" message={error} />
-      <AuthBanner type="success" message={success} />
+    <AuthShell title="Change password" subtitle={SUBTITLES[flow.stage]} showBack>
+      {flow.stage === 'loading' ? <ActivityIndicator color={theme.primary} /> : null}
 
-      <AuthField
-        label="Current password"
-        icon={Lock}
-        placeholder="Enter current password"
-        secure
-        autofill="currentPassword"
-        value={oldPassword}
-        onChangeText={setOldPassword}
-        errorText={fieldErrors.oldPassword}
-      />
+      {flow.stage === 'verify' ? <PasswordChangeVerifyStep flow={flow} /> : null}
 
-      <AuthField
-        label="New password"
-        icon={Lock}
-        placeholder="At least 6 characters"
-        secure
-        autofill="newPassword"
-        value={newPassword}
-        onChangeText={setNewPassword}
-        errorText={fieldErrors.newPassword}
-      />
+      {flow.stage === 'password' ? (
+        <>
+          <AuthBanner type="error" message={flow.error} />
+          <AuthField
+            label="New password"
+            icon={Lock}
+            placeholder="8+ chars, upper, lower, digit, symbol"
+            secure
+            autofill="newPassword"
+            value={newPassword}
+            onChangeText={setNewPassword}
+          />
+          <AuthField
+            label="Confirm new password"
+            icon={Lock}
+            placeholder="Re-enter new password"
+            secure
+            autofill="newPassword"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+          />
+          <View className="mt-2">
+            <PrimaryButton
+              label="Update password"
+              icon={ShieldCheck}
+              onPress={() => void flow.confirm(newPassword, confirmPassword)}
+              loading={flow.busy}
+            />
+          </View>
+        </>
+      ) : null}
 
-      <AuthField
-        label="Confirm new password"
-        icon={Lock}
-        placeholder="Re-enter new password"
-        secure
-        autofill="newPassword"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        errorText={fieldErrors.confirmPassword}
-      />
-
-      <View className="mt-2">
-        <PrimaryButton
-          label="Update password"
-          icon={ShieldCheck}
-          onPress={handleSubmit}
-          loading={isLoading}
-        />
-      </View>
+      {flow.stage === 'done' ? (
+        <View>
+          <View className="mb-4 flex-row items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-3">
+            <CheckCircle2 color={theme.success} size={18} />
+            <Text className="flex-1 text-sm font-semibold text-green-700">
+              Password changed. Other devices were signed out.
+            </Text>
+          </View>
+          <PrimaryButton label="Done" onPress={() => router.back()} />
+        </View>
+      ) : null}
     </AuthShell>
   );
 }

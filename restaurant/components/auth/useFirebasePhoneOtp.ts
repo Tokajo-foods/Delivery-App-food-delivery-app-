@@ -26,6 +26,13 @@ type Options = {
   initialPhone?: string;
   cooldownSeconds?: number;
   onSent?: (phone: string) => void;
+  /**
+   * Runs before the first SMS for a number (skipped on resend). Return `null` to send,
+   * a message to block with that error, or `''` to block when the screen shows its own UI.
+   */
+  precheck?: (phoneE164: string) => Promise<string | null>;
+  /** `false` always sends a fresh SMS, even if Firebase is already signed in as this number. */
+  resume?: boolean;
 };
 
 function verifiedSessionFor(initialPhone?: string): string | null {
@@ -42,7 +49,9 @@ function verifiedSessionFor(initialPhone?: string): string | null {
 export function useFirebasePhoneOtp(options: Options = {}) {
   const recaptchaRef = useRef<FirebaseRecaptchaVerifierModal>(null);
   const cooldown = useOtpCountdown();
-  const [resumed] = useState(() => verifiedSessionFor(options.initialPhone));
+  const [resumed] = useState(() =>
+    options.resume === false ? null : verifiedSessionFor(options.initialPhone)
+  );
   const [phoneInput, setPhoneInput] = useState(options.initialPhone ?? '');
   const [phone, setPhone] = useState<string | null>(resumed);
   const [stage, setStage] = useState<PhoneOtpStage>(resumed ? 'verified' : 'phone');
@@ -55,7 +64,7 @@ export function useFirebasePhoneOtp(options: Options = {}) {
 
   const setCode = (value: string) => setCodeState(value.replace(/\D/g, '').slice(0, 6));
 
-  const send = async () => {
+  const send = async ({ skipPrecheck = false } = {}) => {
     setError(null);
     setInfo(null);
     const e164 = toE164Phone(phoneInput);
@@ -74,6 +83,13 @@ export function useFirebasePhoneOtp(options: Options = {}) {
     }
     setBusy('send');
     try {
+      if (options.precheck && !skipPrecheck) {
+        const blocked = await options.precheck(e164);
+        if (blocked !== null) {
+          if (blocked) setError(blocked);
+          return;
+        }
+      }
       const id = await startFirebasePhoneOtp(e164, verifier);
       setVerificationId(id);
       setPhone(e164);
@@ -92,7 +108,7 @@ export function useFirebasePhoneOtp(options: Options = {}) {
 
   const resend = async () => {
     if (cooldown.active || busy) return;
-    await send();
+    await send({ skipPrecheck: Boolean(phone) && toE164Phone(phoneInput) === phone });
   };
 
   const verify = async (override?: string): Promise<PhoneOtpVerified | null> => {

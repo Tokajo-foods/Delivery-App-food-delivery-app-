@@ -44,8 +44,6 @@ import {
   type RestaurantDetail,
   type RestaurantSettings,
 } from '@/lib/restaurant/settings-types';
-import { useAuthStore } from '@/store/auth-store';
-
 type TabKey =
   | 'profile'
   | 'images'
@@ -309,65 +307,19 @@ function StaffTab() {
 
 function SecurityTab() {
   const router = useRouter();
-  const changePassword = useAuthStore((s) => s.changePassword);
-  const isLoading = useAuthStore((s) => s.isLoading);
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
   return (
     <View style={{ gap: 14 }}>
       <Section title="Change Password">
-        <Field
-          label="Current Password"
-          value={oldPassword}
-          onChangeText={setOldPassword}
-          secureTextEntry
-        />
-        <Field
-          label="New Password"
-          value={newPassword}
-          onChangeText={setNewPassword}
-          secureTextEntry
-        />
-        <Field
-          label="Confirm New Password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-        />
+        <Text style={styles.meta}>
+          We send a code to your registered email and phone. After you verify
+          them, you choose a new password.
+        </Text>
       </Section>
       <PrimaryButton
-        label="Update Password"
+        label="Change Password"
         icon={Lock}
-        loading={isLoading}
-        onPress={() => {
-          if (oldPassword.length < 6 || newPassword.length < 6) {
-            Alert.alert('Invalid password', 'Passwords must be at least 6 characters.');
-            return;
-          }
-          if (newPassword !== confirmPassword) {
-            Alert.alert('Mismatch', 'New password and confirmation do not match.');
-            return;
-          }
-          void changePassword({
-            oldPassword,
-            newPassword,
-            confirmPassword,
-          })
-            .then((message) => {
-              Alert.alert('Updated', message || 'Password updated successfully.');
-              setOldPassword('');
-              setNewPassword('');
-              setConfirmPassword('');
-            })
-            .catch((error) => {
-              Alert.alert(
-                'Update failed',
-                error instanceof Error ? error.message : 'Could not update password'
-              );
-            });
-        }}
+        onPress={() => router.push('/change-password')}
       />
       <Pressable
         onPress={() => router.push('/account')}

@@ -17,6 +17,8 @@ import { toApiRole } from '@/lib/auth/types';
 
 const PHONE_BASE = `${AUTH_BASE}/phone`;
 
+export type PhoneCheckPurpose = 'login' | 'register' | 'forgot_password';
+
 function toPhoneAuthResult(data: unknown, role: PartnerRole): PhoneAuthResult {
   const nested = unwrapData(data);
   return {
@@ -41,6 +43,24 @@ export const phoneAuthApi = {
       otpLength: positiveInt(data.otpLength, 6),
       resendCooldownSeconds: positiveInt(data.resendCooldownSeconds, 30),
       tokenMaxAgeSeconds: positiveInt(data.tokenMaxAgeSeconds, 600),
+    };
+  },
+
+  /** Before the Firebase SMS: throws USER_NOT_FOUND / ROLE_NOT_ALLOWED / PHONE_ALREADY_REGISTERED. */
+  check: async (
+    phone: string,
+    role: PartnerRole,
+    purpose: PhoneCheckPurpose
+  ): Promise<{ exists: boolean; linkExistingAccount: boolean }> => {
+    const data = unwrapData(
+      await authRequest<unknown>(`${PHONE_BASE}/check`, {
+        method: 'POST',
+        body: { phone, role: toApiRole(role), purpose },
+      })
+    );
+    return {
+      exists: Boolean(data.exists),
+      linkExistingAccount: Boolean(data.linkExistingAccount),
     };
   },
 

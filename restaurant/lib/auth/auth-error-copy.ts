@@ -62,6 +62,17 @@ export const AUTH_ERROR_COPY: Record<string, string> = {
   TOKEN_EXPIRED: 'This link expired. Request a new one.',
   TOKEN_INVALID: 'This link is invalid. Request a new one.',
   CURRENT_PASSWORD_INVALID: 'Current password is incorrect.',
+  CURRENT_CONTACT_UNVERIFIED: 'Verify your current number again before adding the new one.',
+  SAME_CONTACT: 'That is already your phone number.',
+  PHONE_IN_USE: 'This number is already registered with another account.',
+  CONTACT_MISSING: 'Add an email or phone number to your account first.',
+  EMAIL_OTP_REQUIRED: 'Enter the code sent to your email.',
+  PHONE_OTP_REQUIRED: 'Verify the code sent to your phone.',
+  OTP_ATTEMPTS_EXCEEDED: 'Too many wrong codes. Request a new email code.',
+  CHANGE_TOKEN_INVALID: 'This session expired. Verify the codes again.',
+  SAME_PASSWORD: 'Choose a password different from your current one.',
+  PHONE_CHANGE_USE_FIREBASE: 'Update the app to change your phone number.',
+  PASSWORD_CHANGE_USE_OTP: 'Update the app to change your password.',
   EMAIL_ALREADY_VERIFIED: 'Your email is already verified.',
 };
 

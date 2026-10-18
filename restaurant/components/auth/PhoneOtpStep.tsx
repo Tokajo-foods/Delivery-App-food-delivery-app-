@@ -21,6 +21,8 @@ type Props = {
   /** Backend call in flight after Firebase verification. */
   submitting?: boolean;
   phoneLabel?: string;
+  /** Number is fixed (registered phone): not editable, no "Change number". */
+  lockPhone?: boolean;
 };
 
 export function PhoneOtpStep({
@@ -30,6 +32,7 @@ export function PhoneOtpStep({
   submitLabel,
   submitting = false,
   phoneLabel = 'Mobile number',
+  lockPhone = false,
 }: Props) {
   const blocked = Boolean(availability.unavailable);
   const busy = Boolean(otp.busy) || submitting;
@@ -64,7 +67,7 @@ export function PhoneOtpStep({
             autofill="telephone"
             value={otp.phoneInput}
             onChangeText={otp.setPhoneInput}
-            editable={!busy && !blocked}
+            editable={!busy && !blocked && !lockPhone}
           />
           <Text className="-mt-2 mb-4 text-xs text-secondary-light">
             India (+91) by default. For other countries enter the full +country number.
@@ -93,7 +96,7 @@ export function PhoneOtpStep({
             <PrimaryButton
               label={otp.busy === 'send' ? 'Sending…' : 'Resend OTP'}
               icon={MessageSquareCode}
-              onPress={() => void otp.send()}
+              onPress={() => void otp.resend()}
               loading={otp.busy === 'send'}
               disabled={busy || blocked}
             />
@@ -142,7 +145,7 @@ export function PhoneOtpStep({
         </>
       ) : null}
 
-      {otp.stage !== 'phone' ? (
+      {otp.stage !== 'phone' && !lockPhone ? (
         <Pressable onPress={otp.changeNumber} disabled={busy} hitSlop={8} className="mt-3">
           <Text className="text-center text-sm font-medium text-secondary-light">
             Change number

@@ -20,7 +20,6 @@ type Props = {
   editSection: ProfileEditSection;
   closeEdit: () => void;
   saving: boolean;
-  passwordBusy: boolean;
   firstName: string;
   setFirstName: (v: string) => void;
   lastName: string;
@@ -34,15 +33,7 @@ type Props = {
   setVehicleModel: (v: string) => void;
   vehicleColor: string;
   setVehicleColor: (v: string) => void;
-  oldPassword: string;
-  setOldPassword: (v: string) => void;
-  newPassword: string;
-  setNewPassword: (v: string) => void;
-  confirmPassword: string;
-  setConfirmPassword: (v: string) => void;
-  passwordError: string | null;
   saveEdit: () => Promise<void>;
-  submitPasswordChange: () => Promise<void>;
 };
 
 export function ProfileEditSheet(props: Props) {
@@ -52,9 +43,7 @@ export function ProfileEditSheet(props: Props) {
       ? 'Edit name'
       : props.editSection === 'vehicle'
         ? 'Edit vehicle'
-        : props.editSection === 'password'
-          ? 'Change password'
-          : '';
+        : '';
 
   return (
     <Modal visible={props.editSection != null} animationType="slide" transparent onRequestClose={props.closeEdit}>
@@ -101,25 +90,16 @@ export function ProfileEditSheet(props: Props) {
                 <Field label="Color" value={props.vehicleColor} onChangeText={props.setVehicleColor} />
               </>
             ) : null}
-            {props.editSection === 'password' ? (
-              <>
-                <Text style={styles.hint}>Use your current password, then choose a new one (min. 6 characters).</Text>
-                {props.passwordError ? <Text style={styles.error}>{props.passwordError}</Text> : null}
-                <Field label="Current password" value={props.oldPassword} onChangeText={props.setOldPassword} secure />
-                <Field label="New password" value={props.newPassword} onChangeText={props.setNewPassword} secure />
-                <Field label="Confirm password" value={props.confirmPassword} onChangeText={props.setConfirmPassword} secure />
-              </>
-            ) : null}
           </ScrollView>
           <Pressable
-            onPress={() => void (props.editSection === 'password' ? props.submitPasswordChange() : props.saveEdit())}
-            disabled={props.saving || props.passwordBusy}
+            onPress={() => void props.saveEdit()}
+            disabled={props.saving}
             style={styles.save}
           >
-            {props.saving || props.passwordBusy ? (
+            {props.saving ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.saveText}>{props.editSection === 'password' ? 'Update password' : 'Save'}</Text>
+              <Text style={styles.saveText}>Save</Text>
             )}
           </Pressable>
         </View>
@@ -132,13 +112,11 @@ function Field({
   label,
   value,
   onChangeText,
-  secure,
   caps,
 }: {
   label: string;
   value: string;
   onChangeText: (v: string) => void;
-  secure?: boolean;
   caps?: 'none' | 'words' | 'characters';
 }) {
   return (
@@ -147,8 +125,7 @@ function Field({
       <TextInput
         value={value}
         onChangeText={onChangeText}
-        secureTextEntry={secure}
-        autoCapitalize={caps ?? (secure ? 'none' : 'words')}
+        autoCapitalize={caps ?? 'words'}
         placeholderTextColor="#94A3B8"
         style={styles.input}
       />
@@ -200,7 +177,6 @@ const styles = StyleSheet.create({
   },
   readOnlyText: { fontFamily: fonts.medium, fontSize: 14, color: '#64748B' },
   hint: { fontFamily: fonts.medium, fontSize: 12, color: '#94A3B8', lineHeight: 18, marginBottom: 10 },
-  error: { fontFamily: fonts.medium, fontSize: 13, color: '#B91C1C', marginBottom: 8 },
   options: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   option: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: '#F6F3F0' },
   optionOn: { backgroundColor: '#FFF1E8' },

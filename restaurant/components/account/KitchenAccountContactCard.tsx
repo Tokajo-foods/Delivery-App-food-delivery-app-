@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { ChevronRight, Mail, Phone } from 'lucide-react-native';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -21,20 +22,21 @@ export function KitchenAccountContactCard({
   email,
   emailVerified,
 }: Props) {
+  const router = useRouter();
   const resendEmailVerification = useAuthStore((s) => s.resendEmailVerification);
-  const [contactKind, setContactKind] = useState<'phone' | 'email' | null>(null);
+  const [contactKind, setContactKind] = useState<'email' | null>(null);
 
   return (
     <>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Phone & email</Text>
         <Text style={styles.hint}>
-          Update your login phone or email. We’ll verify the current contact,
-          then the new one with OTP.
+          Update your login phone or email. We’ll send an OTP to the current
+          contact, then to the new one.
         </Text>
 
         <Pressable
-          onPress={() => setContactKind('phone')}
+          onPress={() => router.push('/change-phone')}
           style={styles.row}
           accessibilityRole="button"
           accessibilityLabel="Change phone number"
@@ -92,7 +94,7 @@ export function KitchenAccountContactCard({
 
       <ContactChangeModal
         kind={contactKind}
-        current={contactKind === 'phone' ? phone : email}
+        current={email}
         onClose={() => setContactKind(null)}
       />
     </>
