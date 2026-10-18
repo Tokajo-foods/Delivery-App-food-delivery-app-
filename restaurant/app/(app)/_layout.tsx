@@ -7,6 +7,7 @@ import { RestaurantLiveSync } from '@/components/dashboard/RestaurantLiveSync';
 import { KitchenConfigGate } from '@/components/dashboard/KitchenConfigGate';
 import { KitchenPushSync } from '@/components/dashboard/KitchenPushSync';
 import { KitchenInboxSync } from '@/components/dashboard/KitchenInboxSync';
+import { HoursDriftPrompt } from '@/components/dashboard/HoursDriftPrompt';
 import { KitchenNewOrderAlerts } from '@/components/dashboard/KitchenNewOrderAlerts';
 import { CallHost } from '@/components/call/CallHost';
 import { RiderLiveSync } from '@/components/delivery/RiderLiveSync';
@@ -262,6 +263,7 @@ export default function AppLayout() {
           <KitchenPushSync />
           <KitchenInboxSync />
           <KitchenNewOrderAlerts />
+          <HoursDriftPrompt />
           <CallHost viewer="restaurant" />
         </>
       ) : null}
