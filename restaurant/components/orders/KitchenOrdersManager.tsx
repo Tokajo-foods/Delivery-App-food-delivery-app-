@@ -616,7 +616,7 @@ export function KitchenOrdersManager() {
             scheduled.length === 0 ? (
               <EmptyState
                 title="No scheduled orders"
-                body="Customers can book up to 3 days ahead. Each order moves to Active and rings when it's time to prepare."
+                body="Customers can book up to 3 days ahead. Each order moves to Active and rings at the time the customer chose."
               />
             ) : (
               scheduled.map((order) => (
@@ -859,12 +859,10 @@ function OrderTicket({
           </Text>
           {scheduled ? (
             <>
-              <Text style={styles.slotText}>Deliver {formatSlot(order.scheduledFor)}</Text>
-              {order.kitchenReleaseAt ? (
-                <Text style={styles.ticketTime}>
-                  Moves to Active & rings at {formatSlot(order.kitchenReleaseAt)}
-                </Text>
-              ) : null}
+              <Text style={styles.slotText}>
+                Scheduled {formatSlot(order.kitchenReleaseAt ?? order.scheduledFor)}
+              </Text>
+              <Text style={styles.ticketTime}>Moves to Active & rings at this time</Text>
             </>
           ) : (
             <Text style={styles.ticketTime}>

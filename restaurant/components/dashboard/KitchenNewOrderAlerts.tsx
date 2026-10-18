@@ -95,7 +95,7 @@ export function KitchenNewOrderAlerts() {
       const copy = booked
         ? {
             title: 'New scheduled order',
-            body: `${ref} is scheduled for ${slot ?? 'later'}. It moves to Active and rings when it's time to prepare.`,
+            body: `${ref} is scheduled for ${slot ?? 'later'}. It moves to Active and rings at that time.`,
           }
         : isScheduled
           ? {
