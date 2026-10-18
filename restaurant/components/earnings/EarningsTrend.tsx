@@ -7,7 +7,7 @@ import type { EarningsPeriod, EarningsSummary } from '@/lib/restaurant/earnings-
 
 import { dayBarLabel, dayHeaderLabel, istDateKey } from './earnings-format';
 
-const BAR_HEIGHT = 84;
+const BAR_HEIGHT = 76;
 
 export function EarningsTrend({
   summary,
@@ -28,7 +28,9 @@ export function EarningsTrend({
   return (
     <View style={styles.card}>
       <View style={styles.head}>
-        <Text style={styles.title}>{period === 'month' ? 'Daily earnings this month' : 'Daily earnings this week'}</Text>
+        <Text style={styles.title}>
+          {period === 'month' ? 'Daily this month' : 'Daily this week'}
+        </Text>
         {best.netEarnings > 0 ? (
           <Text style={styles.hint}>
             Best {dayHeaderLabel(best.date)} · {formatCurrency(best.netEarnings)}
@@ -68,22 +70,27 @@ export function EarningsTrend({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-    padding: 16,
+    borderColor: '#F1EAE3',
+    padding: 18,
     gap: 14,
+    shadowColor: '#1F1300',
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   head: { gap: 2 },
-  title: { fontFamily: fonts.bold, fontSize: 15, color: authTheme.text },
+  title: { fontFamily: fonts.semiBold, fontSize: 13, color: '#1C1917' },
   hint: { fontFamily: fonts.medium, fontSize: 12, color: authTheme.textMuted },
   chart: { flexDirection: 'row', alignItems: 'flex-end', gap: 3 },
   col: { flex: 1, alignItems: 'center', gap: 6 },
   track: { height: BAR_HEIGHT, justifyContent: 'flex-end', width: '100%', alignItems: 'center' },
-  bar: { width: '70%', maxWidth: 22, borderRadius: 6 },
+  bar: { width: '62%', maxWidth: 18, borderRadius: 5 },
   barOn: { backgroundColor: '#FDBA8C' },
   barOff: { backgroundColor: '#F1F5F9' },
-  barToday: { backgroundColor: authTheme.brand },
+  barToday: { backgroundColor: '#EA4B14' },
   label: { fontFamily: fonts.medium, fontSize: 10, color: authTheme.textDim },
-  labelToday: { color: authTheme.brand, fontFamily: fonts.bold },
+  labelToday: { color: '#EA4B14', fontFamily: fonts.bold },
 });

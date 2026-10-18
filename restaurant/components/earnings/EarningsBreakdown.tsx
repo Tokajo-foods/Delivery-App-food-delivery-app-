@@ -1,5 +1,4 @@
-import { BookOpenText, ChevronRight } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
@@ -8,7 +7,17 @@ import type { EarningsPeriodTotals } from '@/lib/restaurant/earnings-types';
 
 type Tone = 'plus' | 'minus' | 'neutral';
 
-function Line({ label, hint, value, tone }: { label: string; hint?: string; value: string; tone: Tone }) {
+function Line({
+  label,
+  hint,
+  value,
+  tone,
+}: {
+  label: string;
+  hint?: string;
+  value: string;
+  tone: Tone;
+}) {
   return (
     <View style={styles.line}>
       <View style={styles.lineCopy}>
@@ -30,17 +39,14 @@ function signed(amount: number): string {
 export function EarningsBreakdown({
   totals,
   commissionPercent,
-  onOpenPassbook,
 }: {
   totals: EarningsPeriodTotals;
   commissionPercent?: number;
-  onOpenPassbook: () => void;
 }) {
   const delivered = totals.deliveredOrders;
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Settlement breakdown</Text>
-
+      <Text style={styles.title}>Settlement</Text>
       <Line
         label="Food sales"
         hint={`${delivered} delivered ${delivered === 1 ? 'order' : 'orders'}`}
@@ -48,7 +54,8 @@ export function EarningsBreakdown({
         tone="neutral"
       />
       <Line
-        label={`Platform fee${commissionPercent ? ` · ${commissionPercent}%` : ''}`}
+        label="Platform fee"
+        hint={commissionPercent ? `${commissionPercent}% commission` : undefined}
         value={`−${formatCurrency(totals.commission)}`}
         tone="minus"
       />
@@ -66,21 +73,10 @@ export function EarningsBreakdown({
         value={signed(totals.adjustments)}
         tone={totals.adjustments < 0 ? 'minus' : totals.adjustments > 0 ? 'plus' : 'neutral'}
       />
-
       <View style={styles.totalRow}>
         <Text style={styles.totalLabel}>Net earnings</Text>
         <Text style={styles.totalValue}>{formatCurrency(totals.netEarnings)}</Text>
       </View>
-
-      <Pressable
-        onPress={onOpenPassbook}
-        style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}
-        accessibilityRole="button"
-      >
-        <BookOpenText color={authTheme.brand} size={16} strokeWidth={2.4} />
-        <Text style={styles.ctaText}>View every entry in passbook</Text>
-        <ChevronRight color={authTheme.brand} size={16} />
-      </Pressable>
     </View>
   );
 }
@@ -88,18 +84,23 @@ export function EarningsBreakdown({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-    padding: 16,
-    gap: 12,
+    borderColor: '#F1EAE3',
+    padding: 18,
+    gap: 14,
+    shadowColor: '#1F1300',
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
-  title: { fontFamily: fonts.bold, fontSize: 15, color: authTheme.text },
-  line: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  lineCopy: { flex: 1, gap: 1 },
-  lineLabel: { fontFamily: fonts.semiBold, fontSize: 13.5, color: authTheme.text },
-  lineHint: { fontFamily: fonts.medium, fontSize: 11.5, color: authTheme.textDim },
-  lineValue: { fontFamily: fonts.bold, fontSize: 14, color: authTheme.text },
+  title: { fontFamily: fonts.semiBold, fontSize: 13, color: '#1C1917' },
+  line: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
+  lineCopy: { flex: 1, gap: 2 },
+  lineLabel: { fontFamily: fonts.medium, fontSize: 14, color: authTheme.text },
+  lineHint: { fontFamily: fonts.medium, fontSize: 12, color: authTheme.textDim },
+  lineValue: { fontFamily: fonts.semiBold, fontSize: 14, color: authTheme.text },
   minus: { color: '#B91C1C' },
   plus: { color: '#15803D' },
   totalRow: {
@@ -107,20 +108,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: authTheme.cardBorder,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#D6D3D1',
   },
-  totalLabel: { fontFamily: fonts.extraBold, fontSize: 15, color: authTheme.text },
-  totalValue: { fontFamily: fonts.extraBold, fontSize: 18, color: authTheme.brand, letterSpacing: -0.3 },
-  cta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: authTheme.brandSoft,
-    borderRadius: 12,
-    paddingVertical: 11,
-    paddingHorizontal: 12,
-  },
-  ctaPressed: { backgroundColor: authTheme.brandMuted },
-  ctaText: { flex: 1, fontFamily: fonts.bold, fontSize: 13, color: authTheme.brand },
+  totalLabel: { fontFamily: fonts.semiBold, fontSize: 14, color: authTheme.text },
+  totalValue: { fontFamily: fonts.extraBold, fontSize: 18, color: '#EA4B14', letterSpacing: -0.4 },
 });

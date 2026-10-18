@@ -12,7 +12,7 @@ const VIEWS: { key: EarningsView; label: string; icon: LucideIcon }[] = [
   { key: 'passbook', label: 'Passbook', icon: BookOpenText },
 ];
 
-const PAD = 4;
+const PAD = 3;
 
 export function EarningsViewToggle({
   value,
@@ -28,7 +28,7 @@ export function EarningsViewToggle({
   useEffect(() => {
     Animated.timing(slide, {
       toValue: index,
-      duration: 220,
+      duration: 200,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
@@ -66,7 +66,7 @@ export function EarningsViewToggle({
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
           >
-            <Icon color={on ? '#FFFFFF' : authTheme.textMuted} size={16} strokeWidth={2.4} />
+            <Icon color={on ? authTheme.brand : authTheme.textMuted} size={15} strokeWidth={2.3} />
             <Text style={[styles.label, on && styles.labelOn]}>{v.label}</Text>
           </Pressable>
         );
@@ -78,38 +78,31 @@ export function EarningsViewToggle({
 const styles = StyleSheet.create({
   track: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: authTheme.tabBg,
+    borderRadius: 14,
     padding: PAD,
-    borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
   },
   pill: {
     position: 'absolute',
     top: PAD,
     bottom: PAD,
     left: PAD,
-    borderRadius: 12,
-    backgroundColor: authTheme.brand,
-    shadowColor: authTheme.brand,
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
+    borderRadius: 11,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#1F1300',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   segment: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 7,
-    paddingVertical: 11,
+    gap: 6,
+    paddingVertical: 10,
   },
   label: { fontFamily: fonts.semiBold, fontSize: 14, color: authTheme.textMuted },
-  labelOn: { fontFamily: fonts.bold, color: '#FFFFFF' },
+  labelOn: { fontFamily: fonts.bold, color: authTheme.brand },
 });

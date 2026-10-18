@@ -10,7 +10,7 @@ export default function EarningsScreen() {
   const { data } = useDashboardStats();
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
+    <View style={{ flex: 1, backgroundColor: '#F6F6F7' }}>
       <View style={{ flex: 1 }}>
         <EarningsManager />
       </View>

@@ -1,5 +1,4 @@
 import {
-  ChevronRight,
   Landmark,
   RotateCcw,
   ShoppingBag,
@@ -17,16 +16,16 @@ import type { PassbookEntry, PassbookEntryKind } from '@/lib/restaurant/earnings
 import { entryTitle, formatIstTime, KIND_LABELS } from './earnings-format';
 
 const KIND_STYLE: Record<PassbookEntryKind, { icon: LucideIcon; fg: string; bg: string }> = {
-  order: { icon: ShoppingBag, fg: '#15803D', bg: '#DCFCE7' },
-  rto_credit: { icon: RotateCcw, fg: '#B45309', bg: '#FEF3C7' },
-  payout: { icon: Landmark, fg: '#1D4ED8', bg: '#DBEAFE' },
-  adjustment: { icon: SlidersHorizontal, fg: '#475569', bg: '#F1F5F9' },
+  order: { icon: ShoppingBag, fg: '#15803D', bg: '#F0FDF4' },
+  rto_credit: { icon: RotateCcw, fg: '#B45309', bg: '#FFFBEB' },
+  payout: { icon: Landmark, fg: '#1D4ED8', bg: '#EFF6FF' },
+  adjustment: { icon: SlidersHorizontal, fg: '#64748B', bg: '#F8FAFC' },
 };
 
 function feeLine(entry: PassbookEntry): string | null {
   if (entry.grossAmount == null) return null;
-  const pct = entry.commissionRate != null ? ` (${+(entry.commissionRate * 100).toFixed(2)}%)` : '';
-  return `Food ${formatCurrency(entry.grossAmount)} · Fee −${formatCurrency(entry.commissionAmount ?? 0)}${pct}`;
+  const pct = entry.commissionRate != null ? ` · ${+(entry.commissionRate * 100).toFixed(2)}%` : '';
+  return `${formatCurrency(entry.grossAmount)} − fee ${formatCurrency(entry.commissionAmount ?? 0)}${pct}`;
 }
 
 export const PassbookRow = memo(function PassbookRow({
@@ -51,27 +50,26 @@ export const PassbookRow = memo(function PassbookRow({
       accessibilityLabel={`${entryTitle(entry)}, ${credit ? 'credited' : 'debited'} ${formatCurrency(Math.abs(entry.amount))}`}
     >
       <View style={[styles.icon, { backgroundColor: kind.bg }]}>
-        <Icon color={kind.fg} size={17} strokeWidth={2.2} />
+        <Icon color={kind.fg} size={16} strokeWidth={2.1} />
       </View>
 
       <View style={styles.body}>
-        <Text style={styles.title} numberOfLines={1}>{entryTitle(entry)}</Text>
-        <View style={styles.metaRow}>
-          <Text style={styles.time}>{formatIstTime(entry.createdAt)}</Text>
-          <View style={[styles.badge, { backgroundColor: kind.bg }]}>
-            <Text style={[styles.badgeText, { color: kind.fg }]}>{KIND_LABELS[entry.kind]}</Text>
-          </View>
-        </View>
-        {fees ? <Text style={styles.fees} numberOfLines={1}>{fees}</Text> : null}
+        <Text style={styles.title} numberOfLines={1}>
+          {entryTitle(entry)}
+        </Text>
+        <Text style={styles.meta} numberOfLines={1}>
+          {formatIstTime(entry.createdAt)} · {KIND_LABELS[entry.kind]}
+          {fees ? ` · ${fees}` : ''}
+        </Text>
       </View>
 
       <View style={styles.right}>
         <Text style={[styles.amount, { color: credit ? '#15803D' : '#B91C1C' }]}>
-          {credit ? '+' : '−'}{formatCurrency(Math.abs(entry.amount))}
+          {credit ? '+' : '−'}
+          {formatCurrency(Math.abs(entry.amount))}
         </Text>
         <Text style={styles.balance}>Bal {formatCurrency(entry.balanceAfter)}</Text>
       </View>
-      {tappable ? <ChevronRight color={authTheme.textDim} size={16} /> : <View style={styles.chevronGap} />}
     </Pressable>
   );
 });
@@ -81,21 +79,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 12,
+    paddingVertical: 13,
     paddingHorizontal: 14,
     backgroundColor: '#FFFFFF',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#F1EAE3',
   },
-  pressed: { backgroundColor: '#F8FAFC' },
-  icon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  body: { flex: 1, gap: 3 },
-  title: { fontFamily: fonts.bold, fontSize: 14, color: authTheme.text },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  time: { fontFamily: fonts.medium, fontSize: 12, color: authTheme.textMuted },
-  badge: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1 },
-  badgeText: { fontFamily: fonts.semiBold, fontSize: 10.5 },
-  fees: { fontFamily: fonts.medium, fontSize: 11.5, color: authTheme.textDim },
-  right: { alignItems: 'flex-end', gap: 3 },
-  amount: { fontFamily: fonts.bold, fontSize: 14.5 },
+  pressed: { backgroundColor: '#FAFAF9' },
+  icon: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  body: { flex: 1, gap: 2, minWidth: 0 },
+  title: { fontFamily: fonts.semiBold, fontSize: 14, color: authTheme.text },
+  meta: { fontFamily: fonts.medium, fontSize: 12, color: authTheme.textMuted },
+  right: { alignItems: 'flex-end', gap: 2 },
+  amount: { fontFamily: fonts.bold, fontSize: 14 },
   balance: { fontFamily: fonts.medium, fontSize: 11, color: authTheme.textDim },
-  chevronGap: { width: 16 },
 });

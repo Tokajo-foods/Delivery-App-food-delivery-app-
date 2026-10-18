@@ -8,6 +8,7 @@ import type { EarningsPeriod } from '@/lib/restaurant/earnings-types';
 
 import { periodDeltaPercent } from './earnings-format';
 import { EarningsBreakdown } from './EarningsBreakdown';
+import { PeriodTabs } from './EarningsControls';
 import { EarningsHero } from './EarningsHero';
 import { EarningsError } from './EarningsStates';
 import { EarningsTrend } from './EarningsTrend';
@@ -29,7 +30,10 @@ export function EarningsManager() {
   return (
     <View style={styles.screen}>
       <RestaurantPageHeader title="Earnings" subtitle="Net of platform fee · IST" showBack>
-        <EarningsViewToggle value={view} onChange={setView} />
+        <View style={styles.controls}>
+          <EarningsViewToggle value={view} onChange={setView} />
+          <PeriodTabs value={period} onChange={setPeriod} />
+        </View>
       </RestaurantPageHeader>
 
       {view === 'earnings' ? (
@@ -49,7 +53,6 @@ export function EarningsManager() {
           ) : (
             <EarningsHero
               period={period}
-              onPeriodChange={setPeriod}
               totals={totals}
               balance={summary.data?.balance}
               deltaPercent={deltaPercent}
@@ -59,17 +62,12 @@ export function EarningsManager() {
           )}
           {summary.data ? <EarningsTrend summary={summary.data} period={period} /> : null}
           {totals ? (
-            <EarningsBreakdown
-              totals={totals}
-              commissionPercent={summary.data?.commissionPercent}
-              onOpenPassbook={() => setView('passbook')}
-            />
+            <EarningsBreakdown totals={totals} commissionPercent={summary.data?.commissionPercent} />
           ) : null}
         </ScrollView>
       ) : (
         <PassbookView
           period={period}
-          onPeriodChange={setPeriod}
           totals={totals}
           balance={summary.data?.balance}
           onRefreshSummary={refreshSummary}
@@ -80,6 +78,7 @@ export function EarningsManager() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F5F5F5' },
-  content: { paddingHorizontal: 16, paddingTop: 4, gap: 14 },
+  screen: { flex: 1, backgroundColor: '#F6F6F7' },
+  controls: { gap: 10 },
+  content: { paddingHorizontal: 16, paddingTop: 2, gap: 12 },
 });

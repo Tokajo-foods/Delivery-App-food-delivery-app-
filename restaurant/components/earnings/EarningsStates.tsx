@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
   },
-  dayHeader: { paddingHorizontal: 14, paddingTop: 14, paddingBottom: 6, backgroundColor: '#F8FAFC' },
+  dayHeader: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 4, backgroundColor: '#FFFFFF' },
   dayText: {
     fontFamily: fonts.bold,
     fontSize: 11.5,
