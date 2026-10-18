@@ -8,26 +8,29 @@ import { AuthShell } from '@/components/auth/AuthShell';
 import { PhoneSignupFlow } from '@/components/auth/PhoneSignupFlow';
 import { RoleSelector } from '@/components/auth/RoleSelector';
 import { usePhoneSignup } from '@/components/auth/usePhoneSignup';
-import { DeliveryRegisterWizard } from '@/components/delivery/auth/RegisterWizard';
 import { formatAuthError } from '@/lib/auth/auth-error-copy';
 import { applyPhoneAuthSession } from '@/lib/auth/phone-session';
 import type { PartnerRole } from '@/lib/auth/types';
+import { markFreshRiderSignup } from '@/lib/delivery-partner/fresh-signup';
 import { resolvePostAuthRoute } from '@/lib/navigation/post-auth';
 import { useAuthStore } from '@/store/auth-store';
 
-function RestaurantPhoneSignup({
+function PartnerPhoneSignup({
   role,
   setRole,
   initialPhone,
+  inviteToken,
 }: {
   role: PartnerRole;
   setRole: (role: PartnerRole) => void;
   initialPhone?: string;
+  inviteToken?: string;
 }) {
   const router = useRouter();
-  const signup = usePhoneSignup({ role: 'restaurant', initialPhone });
+  const signup = usePhoneSignup({ role, initialPhone });
   const [handoff, setHandoff] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const next = role === 'delivery' ? 'rider setup' : 'restaurant setup';
 
   const create = async () => {
     setError(null);
@@ -37,14 +40,17 @@ function RestaurantPhoneSignup({
       const linked = result.linkedExistingAccount;
       setHandoff(
         linked
-          ? `This number already had a Tokajo account — restaurant access was added.${
+          ? `This number already had a Tokajo account. ${
+              role === 'delivery' ? 'Delivery' : 'Restaurant'
+            } access was added.${
               result.passwordSet ? '' : ' Your existing password is unchanged.'
-            } Opening restaurant setup…`
-          : 'Account created — opening restaurant setup…'
+            } Opening ${next}…`
+          : `Account created. Opening ${next}…`
       );
       await new Promise((resolve) => setTimeout(resolve, linked ? 2200 : 420));
-      await applyPhoneAuthSession(result, 'restaurant');
-      router.replace(await resolvePostAuthRoute('restaurant'));
+      if (role === 'delivery') markFreshRiderSignup(inviteToken);
+      await applyPhoneAuthSession(result, role);
+      router.replace(await resolvePostAuthRoute(role));
     } catch (err) {
       setHandoff(null);
       setError(formatAuthError(err, 'Could not open your new account. Sign in to continue.'));
@@ -55,11 +61,13 @@ function RestaurantPhoneSignup({
 
   return (
     <>
-      <RoleSelector value={role} onChange={setRole} disabled={signup.submitting} />
+      {!inviteToken ? (
+        <RoleSelector value={role} onChange={setRole} disabled={signup.submitting} />
+      ) : null}
       <AuthBanner type="error" message={error} />
       <PhoneSignupFlow
         signup={signup}
-        role="restaurant"
+        role={role}
         submitLabel="Create account"
         onSubmit={() => void create()}
       />
@@ -91,9 +99,7 @@ export function RegisterScreen() {
       title={isDelivery ? 'Join as Delivery Partner' : 'Create account'}
       subtitle={
         isDelivery
-          ? inviteToken
-            ? 'Validating your restaurant invitation and completing partner signup.'
-            : 'Verify your number, then complete the steps below to start delivering.'
+          ? 'Verify your mobile number to create your rider account. Address and vehicle come next.'
           : 'Verify your mobile number to create your restaurant partner account.'
       }
       showBack
@@ -106,11 +112,13 @@ export function RegisterScreen() {
         </View>
       }
     >
-      {isDelivery ? (
-        <DeliveryRegisterWizard initialPhone={initialPhone} />
-      ) : (
-        <RestaurantPhoneSignup role={role} setRole={setRole} initialPhone={initialPhone} />
-      )}
+      <PartnerPhoneSignup
+        key={isDelivery ? 'delivery' : 'restaurant'}
+        role={isDelivery ? 'delivery' : 'restaurant'}
+        setRole={setRole}
+        initialPhone={initialPhone}
+        inviteToken={inviteToken || undefined}
+      />
     </AuthShell>
   );
 }

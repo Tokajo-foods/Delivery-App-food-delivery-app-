@@ -1,109 +1,63 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Check, Lock, User } from 'lucide-react-native';
+import { CheckCircle2, User } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { AuthBanner } from '@/components/auth/AuthBanner';
 import { AuthField } from '@/components/auth/AuthField';
 import { PrimaryButton } from '@/components/auth/PrimaryButton';
-import { RoleSelector } from '@/components/auth/RoleSelector';
-import {
-  SignupContactVerify,
-  isStrongSignupPassword,
-  isValidSignupEmail,
-  isValidSignupPhone,
-} from '@/components/auth/SignupContactVerify';
 import { RegisterAddressStep } from '@/components/delivery/auth/RegisterAddressStep';
+import { RegisterInviteBanner } from '@/components/delivery/auth/RegisterInviteBanner';
+import { RegisterTermsStep } from '@/components/delivery/auth/RegisterTermsStep';
+import { RegisterVehicleStep } from '@/components/delivery/auth/RegisterVehicleStep';
+import {
+  EMPTY_RIDER_FORM,
+  REGISTER_STEPS,
+  hasRiderPin,
+  validateRiderStep,
+  type RiderProfileForm,
+} from '@/components/delivery/auth/register-wizard-form';
 import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
-import { formatAuthError } from '@/lib/auth/api';
+import { formatAuthError } from '@/lib/auth/auth-error-copy';
+import { maskPhone } from '@/lib/auth/phone-number';
 import { deliveryPartnerApi } from '@/lib/delivery-partner/api';
-import { partnerTrackingApi } from '@/lib/delivery-partner/tracking-api';
+import { clearFreshRiderSignup } from '@/lib/delivery-partner/fresh-signup';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
-import {
-  VEHICLE_TYPE_OPTIONS,
-  type PartnerInviteValidation,
-  type VehicleType,
-} from '@/lib/delivery-partner/types';
+import { partnerTrackingApi } from '@/lib/delivery-partner/tracking-api';
+import type { PartnerInviteValidation } from '@/lib/delivery-partner/types';
 import { getApiErrorMessage } from '@/lib/errors';
 import { markDeliveryPartnerSetupComplete } from '@/lib/navigation/post-auth';
 import { useAuthStore } from '@/store/auth-store';
 
-const STEPS = ['Personal', 'Address', 'Vehicle', 'Verification'] as const;
-
-type FormState = {
-  firstName: string;
-  lastName: string;
-  phone: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  address: string;
-  city: string;
-  state: string;
-  latitude: number | null;
-  longitude: number | null;
-  vehicleType: VehicleType | '';
-  vehicleNumber: string;
-  aadharNumber: string;
-  acceptedTerms: boolean;
-};
-
-const INITIAL: FormState = {
-  firstName: '',
-  lastName: '',
-  phone: '',
-  email: '',
-  password: '',
-  confirmPassword: '',
-  address: '',
-  city: '',
-  state: '',
-  latitude: null,
-  longitude: null,
-  vehicleType: '',
-  vehicleNumber: '',
-  aadharNumber: '',
-  acceptedTerms: false,
-};
-
 type Props = {
-  /** When true, account already exists — skip email/password and only finish partner profile. */
-  profileOnly?: boolean;
+  /** Restaurant fleet invite carried over from phone signup (falls back to `?token=`). */
+  inviteToken?: string;
 };
 
-export function DeliveryRegisterWizard({ profileOnly = false }: Props) {
+/** Signed-in rider: personal → address pin → vehicle → terms → POST /partners/register. */
+export function DeliveryRegisterWizard({ inviteToken: inviteProp }: Props) {
   const router = useRouter();
   const params = useLocalSearchParams<{ token?: string }>();
   const inviteToken = useMemo(() => {
-    const raw = params.token;
+    const raw = inviteProp ?? params.token;
     return typeof raw === 'string' ? raw.trim() : '';
-  }, [params.token]);
+  }, [inviteProp, params.token]);
 
-  const role = useAuthStore((s) => s.role);
-  const setRole = useAuthStore((s) => s.setRole);
-  const register = useAuthStore((s) => s.register);
-  const isLoading = useAuthStore((s) => s.isLoading);
   const authUser = useAuthStore((s) => s.user);
+  const verifiedPhone = authUser?.phone?.trim() ?? '';
 
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState<FormState>(() => ({
-    ...INITIAL,
+  const [form, setForm] = useState<RiderProfileForm>(() => ({
+    ...EMPTY_RIDER_FORM,
     firstName: authUser?.firstName ?? '',
     lastName: authUser?.lastName ?? '',
-    phone: authUser?.phone ?? '',
-    email: authUser?.email ?? '',
+    phone: verifiedPhone,
   }));
-  const [vehicleOpen, setVehicleOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(Boolean(inviteToken));
   const [invite, setInvite] = useState<PartnerInviteValidation | null>(null);
-  const [emailVerified, setEmailVerified] = useState(false);
-  const [phoneVerified, setPhoneVerified] = useState(false);
-
-  const inviteBlocked =
-    Boolean(inviteToken) && (inviteLoading || invite?.valid === false);
 
   useEffect(() => {
     if (!inviteToken) {
@@ -111,164 +65,67 @@ export function DeliveryRegisterWizard({ profileOnly = false }: Props) {
       setInviteLoading(false);
       return;
     }
-
     let cancelled = false;
     setInviteLoading(true);
-    setRole('delivery');
-
-    void (async () => {
-      try {
-        const result = await deliveryPartnerApi.validateInvite(inviteToken);
+    void deliveryPartnerApi
+      .validateInvite(inviteToken)
+      .then((result) => {
         if (cancelled) return;
         setInvite(result);
-
-        if (result.valid) {
-          setForm((prev) => ({
-            ...prev,
-            email: prev.email || result.inviteEmail || '',
-            phone: prev.phone || result.invitePhone || '',
-          }));
+        if (result.valid && result.invitePhone) {
+          setForm((prev) => ({ ...prev, phone: prev.phone || result.invitePhone || '' }));
         }
-      } catch (err) {
+      })
+      .catch((err) => {
         if (cancelled) return;
         setInvite({
           valid: false,
           token: inviteToken,
-          message: getApiErrorMessage(
-            err,
-            'Could not validate this invitation link.'
-          ),
+          message: getApiErrorMessage(err, 'Could not validate this invitation link.'),
         });
-      } finally {
+      })
+      .finally(() => {
         if (!cancelled) setInviteLoading(false);
-      }
-    })();
-
+      });
     return () => {
       cancelled = true;
     };
-  }, [inviteToken, setRole]);
+  }, [inviteToken]);
 
-  const patch = (partial: Partial<FormState>) =>
-    setForm((prev) => ({ ...prev, ...partial }));
-
-  const validateStep = (index: number): string | null => {
-    if (index === 0) {
-      if (form.firstName.trim().length < 2) return 'Enter your first name.';
-      if (!form.phone.trim()) return 'Phone number is required.';
-      if (!isValidSignupPhone(form.phone)) {
-        return 'Use E.164 phone format, e.g. +919876543210';
-      }
-      if (!profileOnly) {
-        if (!isValidSignupEmail(form.email.trim())) {
-          return 'Enter a valid email address.';
-        }
-        if (!emailVerified || !phoneVerified) {
-          return 'Verify required email/phone OTP before continuing.';
-        }
-        if (!isStrongSignupPassword(form.password)) {
-          return 'Password needs 8+ chars with upper, lower, digit, and symbol.';
-        }
-        if (form.password !== form.confirmPassword) {
-          return 'Passwords do not match.';
-        }
-      }
-      return null;
-    }
-    if (index === 1) {
-      if (
-        form.latitude == null ||
-        form.longitude == null ||
-        !Number.isFinite(form.latitude) ||
-        !Number.isFinite(form.longitude)
-      ) {
-        return 'Open the map and pin your exact home / base location.';
-      }
-      if (form.address.trim().length < 3) {
-        return 'Enter your address (or confirm the pin so it autofills).';
-      }
-      if (form.city.trim().length < 2) {
-        return 'City is required (autofills from the map pin).';
-      }
-      if (form.state.trim().length < 2) {
-        return 'State is required (autofills from the map pin).';
-      }
-      return null;
-    }
-    if (index === 2 && !form.vehicleType) {
-      return 'Select a vehicle type.';
-    }
-    if (index === 3 && !form.acceptedTerms) {
-      return 'Please agree to the Terms & Conditions.';
-    }
-    return null;
-  };
+  const patch = (partial: Partial<RiderProfileForm>) => setForm((prev) => ({ ...prev, ...partial }));
 
   const goNext = () => {
-    setError(null);
-    const message = validateStep(step);
-    if (message) {
-      setError(message);
-      return;
-    }
-    setVehicleOpen(false);
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    const message = validateRiderStep(step, form);
+    setError(message);
+    if (!message) setStep((s) => Math.min(s + 1, REGISTER_STEPS.length - 1));
   };
 
   const goPrev = () => {
     setError(null);
-    setVehicleOpen(false);
     setStep((s) => Math.max(s - 1, 0));
   };
 
   const complete = async () => {
     setError(null);
-    if (inviteToken && invite?.valid === false) {
-      setError(
-        invite.message ||
-          'This invitation is invalid. Ask the restaurant for a new invite link.'
-      );
-      return;
+    if (inviteToken && inviteLoading) return setError('Still validating your invitation. Please wait.');
+    for (let i = 0; i < REGISTER_STEPS.length; i += 1) {
+      const message = validateRiderStep(i, form);
+      if (message) {
+        setStep(i);
+        return setError(message);
+      }
     }
-    if (inviteToken && inviteLoading) {
-      setError('Still validating your invitation. Please wait.');
-      return;
-    }
-
-    const message = validateStep(3);
-    if (message) {
-      setError(message);
-      return;
-    }
-    if (!form.vehicleType) {
-      setError('Select a vehicle type.');
-      setStep(2);
-      return;
-    }
+    if (!form.vehicleType) return;
 
     setSubmitting(true);
     try {
-      if (!profileOnly) {
-        await register({
-          firstName: form.firstName.trim(),
-          lastName: form.lastName.trim() || undefined,
-          email: form.email.trim().toLowerCase(),
-          phone: form.phone.trim(),
-          password: form.password,
-          confirmPassword: form.confirmPassword,
-          role: 'delivery',
-        });
-      }
-
       let profile;
       try {
         profile = await deliveryPartnerApi.register({
           firstName: form.firstName.trim(),
           lastName: form.lastName.trim() || undefined,
           phone: form.phone.trim(),
-          email:
-            (form.email || authUser?.email || '').trim().toLowerCase() ||
-            undefined,
+          email: authUser?.email?.trim().toLowerCase() || undefined,
           address: form.address.trim() || undefined,
           city: form.city.trim() || undefined,
           state: form.state.trim() || undefined,
@@ -278,167 +135,62 @@ export function DeliveryRegisterWizard({ profileOnly = false }: Props) {
           vehicleNumber: form.vehicleNumber.trim() || undefined,
           aadharNumber: form.aadharNumber.trim() || undefined,
           acceptedTerms: form.acceptedTerms,
-          inviteToken: inviteToken || undefined,
+          inviteToken: invite?.valid ? inviteToken : undefined,
         });
       } catch (regErr) {
-        // Profile already linked to this account — treat as done.
         const existing = await deliveryPartnerApi.getMe().catch(() => null);
         if (!existing?.id) throw regErr;
         profile = existing;
       }
 
-      if (
-        form.latitude != null &&
-        form.longitude != null &&
-        Number.isFinite(form.latitude) &&
-        Number.isFinite(form.longitude)
-      ) {
-        // Resolve home zone + ensure pin is on the partner profile.
+      if (hasRiderPin(form)) {
         await partnerTrackingApi
           .saveHomeLocation({
-            latitude: form.latitude,
-            longitude: form.longitude,
+            latitude: form.latitude as number,
+            longitude: form.longitude as number,
             address:
-              [form.address.trim(), form.city.trim(), form.state.trim()]
-                .filter(Boolean)
-                .join(', ') || undefined,
+              [form.address.trim(), form.city.trim(), form.state.trim()].filter(Boolean).join(', ') ||
+              undefined,
           })
-          .catch(() => {
-            // Register already persisted lat/lng; zone resolve can retry later.
-          });
+          .catch(() => undefined);
       }
 
       await markDeliveryPartnerSetupComplete(profile.id);
-
-      if (profileOnly) {
-        router.replace(DELIVERY_ROUTES.home);
-        return;
-      }
-
-      const email = form.email.trim().toLowerCase();
-      await useAuthStore.getState().clearSession();
-      router.replace({
-        pathname: '/login',
-        params: { registered: '1', email, role: 'delivery' },
-      });
+      clearFreshRiderSignup();
+      router.replace(DELIVERY_ROUTES.home);
     } catch (err) {
-      setError(formatAuthError(err, 'Could not complete registration'));
+      setError(formatAuthError(err, 'Could not create your rider profile.'));
     } finally {
       setSubmitting(false);
     }
   };
 
-  const busy = submitting || isLoading || inviteLoading;
+  const busy = submitting || inviteLoading;
+  const isLast = step === REGISTER_STEPS.length - 1;
 
   return (
     <View style={{ gap: 12 }}>
-      {!profileOnly && !inviteToken ? (
-        <RoleSelector
-          value={role}
-          onChange={setRole}
-          disabled={busy}
-        />
-      ) : null}
-
-      <Text
-        style={{
-          color: authTheme.textMuted,
-          fontFamily: fonts.medium,
-          fontSize: 13,
-        }}
-      >
-        Step {step + 1} of {STEPS.length}: {STEPS[step]}
+      <Text style={{ color: authTheme.textMuted, fontFamily: fonts.medium, fontSize: 13 }}>
+        Step {step + 1} of {REGISTER_STEPS.length}: {REGISTER_STEPS[step]}
       </Text>
-
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        {STEPS.map((_, index) => (
+        {REGISTER_STEPS.map((label, index) => (
           <View
-            key={STEPS[index]}
+            key={label}
             style={{
               flex: 1,
               height: 4,
               borderRadius: 999,
-              backgroundColor:
-                index <= step ? authTheme.brand : '#E5E7EB',
+              backgroundColor: index <= step ? authTheme.brand : '#E5E7EB',
             }}
           />
         ))}
       </View>
 
-      {inviteToken ? (
-        inviteLoading ? (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 10,
-              paddingVertical: 8,
-            }}
-          >
-            <ActivityIndicator color={authTheme.brand} />
-            <Text
-              style={{
-                color: authTheme.textMuted,
-                fontFamily: fonts.medium,
-                fontSize: 13,
-              }}
-            >
-              Validating restaurant invitation…
-            </Text>
-          </View>
-        ) : invite?.valid ? (
-          <AuthBanner
-            type="success"
-            message={
-              invite.restaurantName
-                ? `Invite verified for ${invite.restaurantName}. Finish registration to join.`
-                : 'Restaurant invite verified — finish registration to accept.'
-            }
-          />
-        ) : (
-          <AuthBanner
-            type="error"
-            message={
-              invite?.message ||
-              'This invitation link is invalid or expired. Ask the restaurant for a new invite.'
-            }
-          />
-        )
-      ) : null}
-
+      {inviteToken ? <RegisterInviteBanner loading={inviteLoading} invite={invite} /> : null}
       <AuthBanner type="error" message={error} />
 
-      {inviteBlocked ? (
-        <View style={{ gap: 12, paddingVertical: 8 }}>
-          {!inviteLoading ? (
-            <>
-              <Text
-                style={{
-                  color: authTheme.textMuted,
-                  fontFamily: fonts.medium,
-                  fontSize: 13,
-                  lineHeight: 18,
-                }}
-              >
-                You can still register without an invite, or ask the restaurant
-                to send a fresh invitation email.
-              </Text>
-              <PrimaryButton
-                label="Register without invite"
-                onPress={() =>
-                  router.replace({
-                    pathname: '/register',
-                  })
-                }
-              />
-            </>
-          ) : null}
-        </View>
-      ) : null}
-
-      {!inviteBlocked ? (
-        <>
-          {step === 0 ? (
+      {step === 0 ? (
         <View>
           <View className="flex-row gap-3">
             <View className="flex-1">
@@ -461,7 +213,14 @@ export function DeliveryRegisterWizard({ profileOnly = false }: Props) {
               />
             </View>
           </View>
-          {profileOnly ? (
+          {verifiedPhone ? (
+            <View className="mb-2 flex-row items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-3">
+              <CheckCircle2 color="#16A34A" size={16} />
+              <Text className="flex-1 text-sm font-semibold text-green-700">
+                {maskPhone(verifiedPhone)} verified
+              </Text>
+            </View>
+          ) : (
             <AuthField
               label="Phone number *"
               placeholder="+919876543210"
@@ -469,39 +228,6 @@ export function DeliveryRegisterWizard({ profileOnly = false }: Props) {
               value={form.phone}
               onChangeText={(phone) => patch({ phone })}
             />
-          ) : (
-            <>
-              <SignupContactVerify
-                email={form.email}
-                phone={form.phone}
-                role="delivery"
-                onEmailChange={(email) => patch({ email })}
-                onPhoneChange={(phone) => patch({ phone })}
-                emailVerified={emailVerified}
-                phoneVerified={phoneVerified}
-                onEmailVerifiedChange={setEmailVerified}
-                onPhoneVerifiedChange={setPhoneVerified}
-                disabled={busy}
-              />
-              <AuthField
-                label="Password *"
-                icon={Lock}
-                placeholder="8+ chars, mixed case, digit, symbol"
-                secure
-                autofill="newPassword"
-                value={form.password}
-                onChangeText={(password) => patch({ password })}
-              />
-              <AuthField
-                label="Confirm password *"
-                icon={Lock}
-                placeholder="Re-enter password"
-                secure
-                autofill="newPassword"
-                value={form.confirmPassword}
-                onChangeText={(confirmPassword) => patch({ confirmPassword })}
-              />
-            </>
           )}
         </View>
       ) : null}
@@ -521,124 +247,35 @@ export function DeliveryRegisterWizard({ profileOnly = false }: Props) {
       ) : null}
 
       {step === 2 ? (
-        <View>
-          <Text className="mb-1.5 text-sm font-semibold text-secondary">
-            Vehicle type *
-          </Text>
-          <Pressable
-            onPress={() => setVehicleOpen((v) => !v)}
-            className="mb-3 h-12 justify-center rounded-xl border border-gray-200 bg-white px-3.5"
-          >
-            <Text
-              className={`text-[15px] ${
-                form.vehicleType ? 'text-secondary' : 'text-secondary-light'
-              }`}
-            >
-              {VEHICLE_TYPE_OPTIONS.find((o) => o.value === form.vehicleType)
-                ?.label ?? 'Select vehicle type'}
-            </Text>
-          </Pressable>
-          {vehicleOpen ? (
-            <View className="mb-4 overflow-hidden rounded-xl border border-gray-200">
-              {VEHICLE_TYPE_OPTIONS.map((option) => {
-                const active = option.value === form.vehicleType;
-                return (
-                  <Pressable
-                    key={option.value}
-                    onPress={() => {
-                      patch({ vehicleType: option.value });
-                      setVehicleOpen(false);
-                    }}
-                    className={`px-3.5 py-3 ${
-                      active ? 'bg-primary/10' : 'bg-white'
-                    }`}
-                  >
-                    <Text
-                      className={`text-sm ${
-                        active
-                          ? 'font-bold text-primary'
-                          : 'font-medium text-secondary'
-                      }`}
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          ) : null}
-          <AuthField
-            label="Vehicle number"
-            placeholder="DL-01-AB-1234"
-            autoCapitalize="characters"
-            value={form.vehicleNumber}
-            onChangeText={(vehicleNumber) => patch({ vehicleNumber })}
-          />
-        </View>
+        <RegisterVehicleStep
+          vehicleType={form.vehicleType}
+          vehicleNumber={form.vehicleNumber}
+          onChange={patch}
+        />
       ) : null}
 
       {step === 3 ? (
-        <View>
-          <View className="mb-4 flex-row items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-3">
-            <Check color="#16A34A" size={16} />
-            <Text className="flex-1 text-sm font-semibold text-green-700">
-              Almost there — agree to terms to complete registration.
-            </Text>
-          </View>
-          <AuthField
-            label="Aadhar number"
-            placeholder="1234-5678-9999"
-            keyboardType="number-pad"
-            value={form.aadharNumber}
-            onChangeText={(aadharNumber) => patch({ aadharNumber })}
-          />
-          <Pressable
-            onPress={() => patch({ acceptedTerms: !form.acceptedTerms })}
-            className="mt-1 flex-row items-start gap-3"
-          >
-            <View
-              className={`mt-0.5 h-5 w-5 items-center justify-center rounded border ${
-                form.acceptedTerms
-                  ? 'border-primary bg-primary'
-                  : 'border-gray-300 bg-white'
-              }`}
-            >
-              {form.acceptedTerms ? (
-                <Check color="#FFFFFF" size={12} />
-              ) : null}
-            </View>
-            <Text className="flex-1 text-sm leading-5 text-secondary-light">
-              I agree to the Terms & Conditions and Privacy Policy
-            </Text>
-          </Pressable>
-        </View>
+        <RegisterTermsStep
+          aadharNumber={form.aadharNumber}
+          acceptedTerms={form.acceptedTerms}
+          onChange={patch}
+        />
       ) : null}
 
       <View className="mt-2 flex-row gap-3">
         {step > 0 ? (
           <View className="flex-1">
-            <PrimaryButton
-              label="Previous"
-              variant="outline"
-              onPress={goPrev}
-              disabled={busy}
-            />
+            <PrimaryButton label="Previous" variant="outline" onPress={goPrev} disabled={busy} />
           </View>
         ) : null}
         <View className="flex-1">
-          {step < STEPS.length - 1 ? (
-            <PrimaryButton label="Next" onPress={goNext} disabled={busy} />
+          {isLast ? (
+            <PrimaryButton label="Complete profile" onPress={() => void complete()} loading={busy} />
           ) : (
-            <PrimaryButton
-              label="Complete Registration"
-              onPress={() => void complete()}
-              loading={busy}
-            />
+            <PrimaryButton label="Next" onPress={goNext} disabled={busy} />
           )}
         </View>
       </View>
-        </>
-      ) : null}
     </View>
   );
 }

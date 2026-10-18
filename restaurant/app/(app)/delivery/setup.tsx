@@ -8,6 +8,7 @@ import { PrimaryButton } from '@/components/auth/PrimaryButton';
 import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
 import { deliveryPartnerApi } from '@/lib/delivery-partner/api';
+import { peekFreshRiderSignup } from '@/lib/delivery-partner/fresh-signup';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
 import { markDeliveryPartnerSetupComplete } from '@/lib/navigation/post-auth';
 import { useAuthStore } from '@/store/auth-store';
@@ -21,8 +22,9 @@ export default function DeliverySetupRoute() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const clearSession = useAuthStore((s) => s.clearSession);
+  const [fresh] = useState(peekFreshRiderSignup);
   const [checking, setChecking] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(Boolean(fresh));
   const [hint, setHint] = useState<string | null>(null);
 
   const onRetry = async () => {
@@ -56,10 +58,15 @@ export default function DeliverySetupRoute() {
   if (showForm) {
     return (
       <AuthShell
-        title="New delivery profile"
-        subtitle="Only for first-time riders. Skip this if you already appear in the admin rider list."
+        title={fresh ? 'Finish your rider profile' : 'New delivery profile'}
+        subtitle={
+          fresh
+            ? 'Your account is ready. Add your base location and vehicle to start delivering.'
+            : 'Only for first-time riders. Skip this if you already appear in the admin rider list.'
+        }
       >
-        <DeliveryRegisterWizard profileOnly />
+        <DeliveryRegisterWizard inviteToken={fresh?.inviteToken} />
+        {fresh ? null : (
         <Pressable onPress={() => setShowForm(false)} style={{ marginTop: 8, padding: 8 }}>
           <Text
             style={{
@@ -72,6 +79,7 @@ export default function DeliverySetupRoute() {
             Back
           </Text>
         </Pressable>
+        )}
       </AuthShell>
     );
   }
