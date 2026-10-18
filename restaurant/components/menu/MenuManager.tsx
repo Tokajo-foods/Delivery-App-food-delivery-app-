@@ -77,11 +77,6 @@ const BULK_IMPORT_CAP = 500;
 
 type BulkPriceMode = 'set' | 'percent' | 'amount';
 
-function roundRupee(value: number) {
-  if (!Number.isFinite(value)) return 1;
-  return Math.max(1, Math.round(value));
-}
-
 function Field({
   label,
   value,
@@ -208,6 +203,7 @@ export function MenuManager() {
     mutations.updateCategorySchedule.isPending ||
     mutations.duplicateItem.isPending ||
     mutations.bulkUpdatePrices.isPending ||
+    mutations.adjustPrices.isPending ||
     mutations.reorderItems.isPending ||
     mutations.attachItemModifiers.isPending ||
     mutations.deleteItemImage.isPending ||
@@ -488,9 +484,26 @@ export function MenuManager() {
       return;
     }
 
-    const catalog = new Map<string, MenuItem>();
-    for (const item of items) catalog.set(item.id, item);
-    for (const item of displayedItems) catalog.set(item.id, item);
+    const resetBulk = (count: number) => {
+      setBulkPriceOpen(false);
+      setBulkPriceMode('set');
+      setBulkPrice('');
+      setBulkDiscount('');
+      setSelectedItemIds([]);
+      Alert.alert('Prices updated', `${count} dish${count === 1 ? '' : 'es'} now use the new price.`);
+    };
+
+    if (bulkPriceMode !== 'set') {
+      if (amount === 0) {
+        Alert.alert('Invalid value', 'Enter a change other than 0.');
+        return;
+      }
+      void mutations.adjustPrices
+        .mutateAsync({ itemIds: selectedItemIds, mode: bulkPriceMode, value: amount })
+        .then((result) => resetBulk(result.updated))
+        .catch((error) => fail('Could not update prices', error));
+      return;
+    }
 
     const discountRaw = bulkDiscount.trim();
     const setDiscount =
@@ -508,62 +521,15 @@ export function MenuManager() {
       return;
     }
 
-    const updates: Array<{
-      itemId: string;
-      price: number;
-      discountedPrice: number | null;
-    }> = [];
-
-    for (const itemId of selectedItemIds) {
-      const item = catalog.get(itemId);
-      if (!item) continue;
-
-      let nextPrice = item.price;
-      let nextOffer = item.discountPrice ?? null;
-
-      if (bulkPriceMode === 'set') {
-        nextPrice = roundRupee(amount);
-        nextOffer =
-          setDiscount == null || setDiscount === 0 ? null : roundRupee(setDiscount);
-      } else if (bulkPriceMode === 'percent') {
-        const factor = 1 + amount / 100;
-        nextPrice = roundRupee(item.price * factor);
-        nextOffer =
-          item.discountPrice != null
-            ? roundRupee(item.discountPrice * factor)
-            : null;
-      } else {
-        nextPrice = roundRupee(item.price + amount);
-        nextOffer =
-          item.discountPrice != null
-            ? roundRupee(item.discountPrice + amount)
-            : null;
-      }
-
-      if (nextOffer != null && nextOffer >= nextPrice) nextOffer = null;
-
-      updates.push({
-        itemId,
-        price: nextPrice,
-        discountedPrice: nextOffer,
-      });
-    }
-
-    if (!updates.length) {
-      Alert.alert('Nothing to update', 'Selected dishes could not be priced. Pull to refresh and try again.');
-      return;
-    }
+    const updates = selectedItemIds.map((itemId) => ({
+      itemId,
+      price: amount,
+      discountedPrice: setDiscount == null || setDiscount === 0 ? null : setDiscount,
+    }));
 
     void mutations.bulkUpdatePrices
       .mutateAsync(updates)
-      .then(() => {
-        setBulkPriceOpen(false);
-        setBulkPriceMode('set');
-        setBulkPrice('');
-        setBulkDiscount('');
-        setSelectedItemIds([]);
-        Alert.alert('Prices updated', `${updates.length} dish${updates.length === 1 ? '' : 'es'} now use the new price.`);
-      })
+      .then(() => resetBulk(updates.length))
       .catch((error) => fail('Could not update prices', error));
   };
 

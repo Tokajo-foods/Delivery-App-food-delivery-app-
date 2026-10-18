@@ -606,6 +606,12 @@ export function useMenuMutations(restaurantId: string) {
     onSuccess: () => invalidateMenu(queryClient, restaurantId),
   });
 
+  const adjustPrices = useMutation({
+    mutationFn: (body: { itemIds: string[]; mode: 'percent' | 'amount'; value: number }) =>
+      restaurantMenuApi.adjustPrices(restaurantId, body),
+    onSuccess: () => invalidateMenu(queryClient, restaurantId),
+  });
+
   const reorderItems = useMutation({
     mutationFn: ({
       itemIds,
@@ -649,6 +655,7 @@ export function useMenuMutations(restaurantId: string) {
     duplicateItem,
     deleteItemImage,
     bulkUpdatePrices,
+    adjustPrices,
     reorderItems,
     submitItemVerification,
     submitCategoryVerification,

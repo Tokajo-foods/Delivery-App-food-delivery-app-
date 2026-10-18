@@ -40,7 +40,7 @@ export function OfferPayoutHeader({
         {stacked ? `${stackCount ?? 2} orders together` : 'New order'}
       </Text>
       <Text style={styles.payout}>
-        {earnings ? formatInr(earnings.netTotal) : 'Earnings on accept'}
+        {earnings?.netTotal != null ? formatInr(earnings.netTotal) : 'Earnings on accept'}
       </Text>
       {offer.payout ? (
         <RiderPayoutLines

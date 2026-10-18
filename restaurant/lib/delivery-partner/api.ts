@@ -15,7 +15,6 @@ import {
 import { canFallbackToRest, socketErrorCopy } from '@/lib/delivery-partner/rider-ack';
 import { emitRiderEvent, isRiderSocketConnected } from '@/lib/delivery-partner/rider-gateway';
 import { toRejectReasonCode } from '@/lib/delivery-partner/rider-gateway-types';
-import { resolvePartnerDisplayEarning } from '@/lib/delivery-partner/partner-earnings';
 import { partnerTrackingApi } from '@/lib/delivery-partner/tracking-api';
 import type { LocationPingResult } from '@/lib/delivery-partner/tracking-types';
 import { normalizeDutyStatus } from '@/lib/delivery-partner/availability-types';
@@ -694,27 +693,7 @@ export function mapPartnerDelivery(raw: unknown): PartnerDelivery {
         'partnerEarning',
         'baseEarnings',
       ]);
-      const incentiveBonus = pickNumber(source, [
-        'incentiveBonus',
-        'incentive',
-        'bonus',
-      ]);
-      const deliveryFee = pickNumber(source, ['deliveryFee', 'fee']);
-      const tipAmount = pickNumber(source, ['tipAmount', 'tip']);
-      const fromBill = (() => {
-        const bill = asRecord(source.bill);
-        const partner = asRecord(bill.partner);
-        const net = pickNumber(partner, ['netEarnings', 'youEarn']);
-        const inc = pickNumber(partner, ['incentiveBonus']);
-        if (net != null) return net + (inc ?? incentiveBonus ?? 0);
-        return undefined;
-      })();
-      const tripPay = resolvePartnerDisplayEarning({
-        deliveryFee,
-        partnerEarnings,
-        incentiveBonus,
-        tipAmount,
-      });
+      const tripPay = pickNumber(source, ['netEarnings']);
       const credited = pickNumber(source, [
         'earningsCreditedAmount',
         'creditedAmount',
@@ -725,7 +704,7 @@ export function mapPartnerDelivery(raw: unknown): PartnerDelivery {
       if (isUnpaidTripStatus(status)) {
         return credited && credited > 0 ? credited : tripPay;
       }
-      return credited ?? fromBill ?? tripPay ?? partnerEarnings;
+      return credited ?? tripPay ?? partnerEarnings;
     })(),
     notes: pickString(source, ['notes', 'specialInstructions', 'instruction']),
     assignedAt: pickString(source, ['assignedAt']),

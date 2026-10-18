@@ -1132,6 +1132,22 @@ export const restaurantMenuApi = {
     }
   },
 
+  /** POST /restaurants/:id/items/bulk-price-adjust — server computes the new prices. */
+  adjustPrices: async (
+    restaurantId: string,
+    body: { itemIds: string[]; mode: 'percent' | 'amount'; value: number }
+  ): Promise<{ updated: number }> => {
+    try {
+      const res = await api.post<{ data?: { updated?: number } }>(
+        `${RESTAURANT_BASE}/${restaurantId}/items/bulk-price-adjust`,
+        body
+      );
+      return { updated: Number(res.data?.data?.updated ?? 0) };
+    } catch (error) {
+      throwMenuError(error, 'Failed to update prices');
+    }
+  },
+
   /** PUT /restaurants/:id/items/reorder */
   reorderItems: async (
     restaurantId: string,

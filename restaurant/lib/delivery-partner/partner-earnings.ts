@@ -8,7 +8,8 @@ export type PartnerTripPay = {
   basePay: number;
   incentive: number;
   tip: number;
-  netTotal: number;
+  /** Server final payout only; null until the payload carries it. */
+  netTotal: number | null;
   commissionPercent: number | null;
   showIncentive: boolean;
 };
@@ -57,22 +58,8 @@ export function resolvePartnerTripPay(input: {
     basePay,
     incentive,
     tip,
-    netTotal:
-      serverNet != null && Number.isFinite(serverNet)
-        ? serverNet
-        : Math.round((basePay + incentive + tip) * 100) / 100,
+    netTotal: serverNet != null && Number.isFinite(serverNet) ? serverNet : null,
     commissionPercent,
     showIncentive: incentive > 0,
   };
-}
-
-export function resolvePartnerDisplayEarning(input: {
-  deliveryFee?: number;
-  partnerEarnings?: number;
-  incentiveBonus?: number;
-  tipAmount?: number;
-  netTotal?: number;
-}): number | undefined {
-  const pay = resolvePartnerTripPay(input);
-  return pay?.netTotal;
 }

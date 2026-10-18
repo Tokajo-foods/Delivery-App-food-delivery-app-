@@ -68,6 +68,9 @@ export type EarningsPeriod = {
   deductions: number;
   totalDeliveries: number;
   onlineHours: number;
+  /** Server COD cash in hand for the period (UPI-settled excluded). */
+  codCollected?: number;
+  codOrders?: number;
 };
 
 export type PartnerEarningsSummary = {

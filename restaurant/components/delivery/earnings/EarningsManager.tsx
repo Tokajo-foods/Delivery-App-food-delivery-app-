@@ -15,10 +15,9 @@ function errorText(query: { isError: boolean; error: unknown; data?: unknown }, 
 
 /** Earnings today/week/month, COD collected, and the paid-trip passbook — all live queries. */
 export function PartnerEarningsManager() {
-  const { earnings, today, codDaily, codPeriods, codLoading, codPending, passbook, rows, total } =
+  const { earnings, today, codPeriods, codLoading, codPending, passbook, rows, total } =
     useEarningsData();
   const earningsError = errorText(earnings, 'Could not load earnings.');
-  const codError = earningsError ? null : errorText(codDaily, 'Could not load COD collected.');
 
   const loadMore = () => {
     if (passbook.hasNextPage && !passbook.isFetchingNextPage && !passbook.isError) {
@@ -40,8 +39,8 @@ export function PartnerEarningsManager() {
         periods={codPeriods}
         cashInHand={codPending.data?.cashInHand}
         loading={codLoading}
-        error={codError ?? (earningsError || !codPeriods ? 'Could not load COD collected.' : null)}
-        onRetry={() => void (codError ? codDaily.refetch() : earnings.refetch())}
+        error={earningsError || !codPeriods ? 'Could not load COD collected.' : null}
+        onRetry={() => void earnings.refetch()}
       />
       <PassbookHeader days={PASSBOOK_DAYS} total={total} />
     </View>

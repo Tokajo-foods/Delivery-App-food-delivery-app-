@@ -376,6 +376,8 @@ function mapPeriod(raw: unknown): EarningsPeriod {
       ]) ?? 0,
     onlineHours:
       pickNumber(record, ['onlineHours', 'hoursOnline', 'activeHours']) ?? 0,
+    codCollected: pickNumber(record, ['codCollected']),
+    codOrders: pickNumber(record, ['codOrders']),
   };
 }
 
