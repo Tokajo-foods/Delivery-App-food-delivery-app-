@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 
 import type { OwnerOrder } from '@/lib/dashboard/types';
 import { restaurantOrderKeys, syncDashboardFromOrders } from '@/lib/order/hooks';
+import { kitchenOrderStatus } from '@/lib/order/owner-api';
 
 export function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object'
@@ -35,8 +36,12 @@ export function mapIncomingOrder(
   fallbackStatus?: string
 ): Partial<OwnerOrder> & { id?: string } {
   const id = pickString(record, ['orderId', 'id', '_id']);
-  const status =
+  const rawStatus =
     pickString(record, ['status', 'orderStatus']) ?? fallbackStatus;
+  const status =
+    rawStatus && kitchenOrderStatus(rawStatus, record) === 'returned'
+      ? 'returned'
+      : rawStatus;
   const deliveryType = pickString(record, ['deliveryType', 'fulfillment']);
   const totalRaw = record.grandTotal ?? record.total;
   const total = typeof totalRaw === 'number' ? totalRaw : Number(totalRaw);

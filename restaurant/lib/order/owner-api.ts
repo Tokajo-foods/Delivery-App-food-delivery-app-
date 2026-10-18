@@ -391,6 +391,17 @@ export function normalizeOwnerOrderStatus(status?: string): string {
   return normalized;
 }
 
+/** RTO orders close as `cancelled` for the customer but the kitchen is paid — show `returned`. */
+export function kitchenOrderStatus(
+  status: string | undefined,
+  record: Record<string, unknown>
+): string {
+  const normalized = normalizeOwnerOrderStatus(status);
+  const returned =
+    record.returnedToRestaurant === true || Boolean(record.returnedToRestaurantAt);
+  return normalized === 'cancelled' && returned ? 'returned' : normalized;
+}
+
 export function mapOwnerOrder(data: Record<string, unknown>): OwnerOrder {
   const customer = asRecord(data.customer ?? data.user);
   const address = mapAddress(
@@ -450,8 +461,9 @@ export function mapOwnerOrder(data: Record<string, unknown>): OwnerOrder {
         data.orderId ??
         ''
     ),
-    status: normalizeOwnerOrderStatus(
-      String(data.status ?? data.orderStatus ?? 'pending')
+    status: kitchenOrderStatus(
+      String(data.status ?? data.orderStatus ?? 'pending'),
+      data
     ),
     items,
     total,

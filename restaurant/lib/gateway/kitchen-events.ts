@@ -86,7 +86,7 @@ export function applyKitchenSocketEvent(
           ? 'placed'
           : undefined;
     const mapped = mapIncomingOrder(record, fallback);
-    if (event === 'kitchen:order-cancelled') {
+    if (event === 'kitchen:order-cancelled' && mapped.status !== 'returned') {
       mapped.status = pickString(record, ['status']) ?? 'cancelled';
       mapped.rejectionReason =
         pickString(record, ['reason', 'cancellationReason']) ??
@@ -104,7 +104,11 @@ export function applyKitchenSocketEvent(
         queryKey: restaurantOrderKeys.scheduled(restaurantId),
       });
     }
-    if (mapped.status === 'delivered' || mapped.status === 'cancelled') {
+    if (
+      mapped.status === 'delivered' ||
+      mapped.status === 'cancelled' ||
+      mapped.status === 'returned'
+    ) {
       refreshEarnings(queryClient, restaurantId);
     }
     return;

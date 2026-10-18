@@ -47,6 +47,7 @@ const STATUS_RANK: Record<string, number> = {
   out_for_delivery: 4,
   delivered: 5,
   completed: 5,
+  returned: 4,
   cancelled: -1,
   rejected: -1,
 };
@@ -58,6 +59,7 @@ export function statusRank(status?: string | null) {
 export function displayStatus(status?: string | null) {
   const raw = String(status ?? '').trim();
   if (!raw) return 'Unknown';
+  if (raw === 'returned') return 'Returned · Paid';
   return raw
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -102,7 +104,9 @@ export function statusCaption(
   if (status === 'returning_to_restaurant') {
     return 'Rider is bringing the order back';
   }
-  if (status === 'returned') return 'Returned order received';
+  if (status === 'returned') {
+    return 'Returned to restaurant — food amount credited to your earnings';
+  }
   if (status === 'failed') return 'Return failed';
   if (status === 'delivered' && fulfillmentTone === 'pickup') {
     return 'Customer collected the order';

@@ -237,7 +237,13 @@ function patchKdsStatus(
     delayed: drop(board.delayed),
   };
   const updated = { ...found, status: nextStatus };
-  if (nextStatus === 'cancelled' || nextStatus === 'rejected') return next;
+  if (
+    nextStatus === 'cancelled' ||
+    nextStatus === 'rejected' ||
+    nextStatus === 'returned'
+  ) {
+    return next;
+  }
   if (nextStatus === 'ready') next.ready.unshift(updated);
   else if (nextStatus === 'preparing' || nextStatus === 'accepted') {
     next.preparing.unshift(updated);
