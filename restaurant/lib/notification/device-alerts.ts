@@ -36,13 +36,24 @@ function canUseNativeNotifications() {
 let notificationsModule: NotificationsModule | null | undefined;
 let handlerReady = false;
 let configured = false;
-let foregroundFilter: ((data: Record<string, unknown>) => boolean) | null = null;
+type ForegroundFilter = (data: Record<string, unknown>, meta: { remote: boolean }) => boolean;
+let foregroundFilter: ForegroundFilter | null = null;
+const claimedIds = new Set<string>();
 
 /** Return false to hide a push banner while the app is open (e.g. the offer popup already shows it). */
-export function setForegroundNotificationFilter(
-  filter: ((data: Record<string, unknown>) => boolean) | null
-): void {
+export function setForegroundNotificationFilter(filter: ForegroundFilter | null): void {
   foregroundFilter = filter;
+}
+
+/**
+ * Socket, remote push and inbox poll can all deliver the same inbox row.
+ * The first caller for an id wins; later callers must stay quiet.
+ */
+export function claimNotificationAlert(id: string | null | undefined): boolean {
+  if (!id) return true;
+  if (claimedIds.has(id)) return false;
+  claimedIds.add(id);
+  return true;
 }
 
 export function getNotificationsModule(): NotificationsModule | null {
@@ -70,7 +81,7 @@ function loadNotificationsModule(): NotificationsModule | null {
           if (remote && FOREGROUND_SILENT_KINDS.has(kind)) {
             return { shouldShowBanner: false, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: true };
           }
-          const show = foregroundFilter ? foregroundFilter(data) : true;
+          const show = foregroundFilter ? foregroundFilter(data, { remote }) : true;
           return {
             shouldShowBanner: show,
             shouldShowList: show,
@@ -110,15 +121,20 @@ export async function ensureDeviceNotificationReady(): Promise<boolean> {
   }
 }
 
-async function loadSeenIds(): Promise<Set<string>> {
+async function loadStoredSeenIds(): Promise<Set<string>> {
   try {
     const raw = await storageGetItem(SEEN_IDS_KEY);
-    if (!raw) return new Set();
-    const parsed = JSON.parse(raw) as string[];
+    const parsed = raw ? (JSON.parse(raw) as string[]) : [];
     return new Set(Array.isArray(parsed) ? parsed : []);
   } catch {
     return new Set();
   }
+}
+
+async function loadSeenIds(): Promise<Set<string>> {
+  const ids = await loadStoredSeenIds();
+  for (const id of claimedIds) ids.add(id);
+  return ids;
 }
 
 async function saveSeenIds(ids: Set<string>): Promise<void> {
@@ -187,8 +203,9 @@ export async function syncDeviceAlertsForNotifications(
   const ready = await ensureDeviceNotificationReady();
   if (!ready) return 0;
 
+  const stored = await loadStoredSeenIds();
+  const isFirstPass = stored.size === 0;
   const seen = await loadSeenIds();
-  const isFirstPass = seen.size === 0;
   let presented = 0;
 
   for (const item of items) {
@@ -196,6 +213,7 @@ export async function syncDeviceAlertsForNotifications(
     if (seen.has(item.id)) continue;
 
     seen.add(item.id);
+    claimedIds.add(item.id);
 
     if (isFirstPass) continue;
     if (item.isRead) continue;

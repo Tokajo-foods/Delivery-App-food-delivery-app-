@@ -19,7 +19,8 @@ import {
   setIncomingOffer,
 } from '@/lib/delivery-partner/offer-store';
 import type { RiderGatewayEvent } from '@/lib/delivery-partner/rider-gateway-types';
-import { presentDeviceNotification } from '@/lib/notification/device-alerts';
+import { claimNotificationAlert } from '@/lib/notification/device-alerts';
+import { isTypeAllowed } from '@/lib/notification/preferences';
 import {
   bumpUnreadCount,
   prependInboxNotification,
@@ -174,13 +175,15 @@ export function applyRiderSocketEvent(
       const data = asRecord(record.data);
       const kind = (pickString(data, ['kind']) ?? '').toLowerCase();
       const isKyc = kind.includes('kyc');
-      pushLiveToast({
-        title,
-        body,
-        tone: kind.includes('reject') ? 'warn' : 'info',
-      });
       const notificationId = pickString(record, ['notificationId', 'id']);
       const type = pickString(record, ['type']) ?? 'system';
+      if (claimNotificationAlert(notificationId) && isTypeAllowed(type)) {
+        pushLiveToast({
+          title,
+          body,
+          tone: kind.includes('reject') ? 'warn' : 'info',
+        });
+      }
       const createdAt =
         pickString(record, ['createdAt']) ?? new Date().toISOString();
       if (notificationId) {
@@ -194,14 +197,6 @@ export function applyRiderSocketEvent(
           data,
         });
       }
-      void presentDeviceNotification({
-        id: notificationId ?? `live-${Date.now()}`,
-        title,
-        body,
-        type,
-        isRead: false,
-        data,
-      });
       bumpUnreadCount(queryClient);
       invalidate(queryClient, notificationKeys.all);
       if (isKyc) {

@@ -73,8 +73,8 @@ export function PlatformAccountSection() {
     try {
       await saveRiderAlertPrefs(next);
       riderLoaded.current = true;
-      const saved = await updateNotifications.mutateAsync(next);
-      setLocal(saved.notifications);
+      // Delivery-service is what dispatch reads for riders; the account copy is a mirror.
+      await updateNotifications.mutateAsync(next).catch(() => undefined);
     } catch (err) {
       setLocal(previous);
       setPrefsError(
@@ -94,7 +94,8 @@ export function PlatformAccountSection() {
       key === 'push'
         ? {
             title: 'Turn off push alerts?',
-            body: 'Order and duty alerts will not show on this phone.',
+            body:
+              'Trip, earnings and account alerts will stop, and they will not be saved in your inbox. New delivery offers and calls still ring while you are online.',
           }
         : key === 'sms'
           ? {
@@ -131,7 +132,7 @@ export function PlatformAccountSection() {
             first
             icon={Bell}
             label="Push"
-            hint="New orders and duty alerts"
+            hint="Trip, earnings and account alerts"
             value={local.push}
             busy={savingKey === 'push'}
             onChange={(push) => requestChange('push', push)}

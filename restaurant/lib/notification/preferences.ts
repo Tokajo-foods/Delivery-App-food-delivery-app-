@@ -11,24 +11,33 @@ import { DEFAULT_NOTIFICATION_PREFERENCES } from '@/lib/notification/types';
 
 const PREFS_STORAGE_KEY = 'delivery.notification.preferences.v1';
 
+let cached: NotificationPreferences = { ...DEFAULT_NOTIFICATION_PREFERENCES };
+
+/** Sync read for the foreground push handler, which cannot await storage. */
+export function getCachedNotificationPreferences(): NotificationPreferences {
+  return cached;
+}
+
 export async function loadNotificationPreferences(): Promise<NotificationPreferences> {
   try {
     const raw = await storageGetItem(PREFS_STORAGE_KEY);
-    if (!raw) return { ...DEFAULT_NOTIFICATION_PREFERENCES };
-    const parsed = JSON.parse(raw) as Partial<NotificationPreferences>;
-    return {
-      ...DEFAULT_NOTIFICATION_PREFERENCES,
-      ...parsed,
-    };
+    const parsed = raw ? (JSON.parse(raw) as Partial<NotificationPreferences>) : {};
+    cached = { ...DEFAULT_NOTIFICATION_PREFERENCES, ...parsed };
   } catch {
-    return { ...DEFAULT_NOTIFICATION_PREFERENCES };
+    cached = { ...DEFAULT_NOTIFICATION_PREFERENCES };
   }
+  return { ...cached };
 }
 
 export async function saveNotificationPreferences(
   prefs: NotificationPreferences
 ): Promise<void> {
   await storageSetItem(PREFS_STORAGE_KEY, JSON.stringify(prefs));
+  cached = { ...prefs };
+}
+
+export function isTypeAllowed(type: string, prefs = cached): boolean {
+  return prefs[preferenceKeyForType(type)] !== false;
 }
 
 /** Map API notification type → preference category. */

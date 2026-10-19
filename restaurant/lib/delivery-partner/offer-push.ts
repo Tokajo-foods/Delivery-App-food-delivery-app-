@@ -12,9 +12,11 @@ import {
   type IncomingOffer,
 } from '@/lib/delivery-partner/offer-store';
 import {
+  claimNotificationAlert,
   getNotificationsModule,
   setForegroundNotificationFilter,
 } from '@/lib/notification/device-alerts';
+import { isTypeAllowed } from '@/lib/notification/preferences';
 
 const OFFER_KIND = 'rider_new_offer';
 /** Survives remounts so a cold-start tap is never handled twice in one app session. */
@@ -45,6 +47,15 @@ export function offerFromPushData(data: Record<string, unknown>): IncomingOffer 
   return offer;
 }
 
+/** Socket toast or the inbox poll may already have shown this row; in-app pop-up toggles still apply. */
+function allowForegroundRiderPush(data: Record<string, unknown>): boolean {
+  const style = String(data.pushStyle ?? '');
+  if (style === 'call' || style === 'call_cancel') return true;
+  const id = typeof data.notificationId === 'string' ? data.notificationId : null;
+  if (!claimNotificationAlert(id)) return false;
+  return isTypeAllowed(String(data.type ?? 'system'));
+}
+
 function readData(raw: unknown): Record<string, unknown> {
   return raw && typeof raw === 'object' && !Array.isArray(raw)
     ? (raw as Record<string, unknown>)
@@ -62,8 +73,8 @@ export function useRiderOfferPush(enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;
 
-    setForegroundNotificationFilter((data) => {
-      if (!isOfferPush(data)) return true;
+    setForegroundNotificationFilter((data, { remote }) => {
+      if (!isOfferPush(data)) return remote ? allowForegroundRiderPush(data) : true;
       const offer = offerFromPushData(data);
       if (offer && getIncomingOffer()?.deliveryId !== offer.deliveryId) {
         setIncomingOffer(offer);

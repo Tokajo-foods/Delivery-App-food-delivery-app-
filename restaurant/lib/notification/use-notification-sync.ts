@@ -1,19 +1,15 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 
-import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
+import { useRiderPushOpen } from '@/lib/delivery-partner/use-rider-push-open';
 import {
   isGloballyBackingOff,
   isRateLimitedError,
   noteRateLimited,
 } from '@/lib/live-query';
 import { notificationApi } from '@/lib/notification/api';
-import {
-  addNotificationOpenListener,
-  syncDeviceAlertsForNotifications,
-} from '@/lib/notification/device-alerts';
+import { syncDeviceAlertsForNotifications } from '@/lib/notification/device-alerts';
 import { notificationKeys } from '@/lib/notification/hooks';
 import {
   isNotificationAllowed,
@@ -32,7 +28,6 @@ const BACKOFF_POLL_MS = 75_000;
  */
 export function useDeliveryNotificationSync(enabled = true) {
   const queryClient = useQueryClient();
-  const router = useRouter();
   const token = useAuthStore((s) => s.token);
   const role = useAuthStore((s) => s.role);
   const lastCountRef = useRef<number | null>(null);
@@ -127,23 +122,12 @@ export function useDeliveryNotificationSync(enabled = true) {
       }
     });
 
-    const responseSub = addNotificationOpenListener((data) => {
-      // Offer taps open the accept popup on Orders (useRiderOfferPush).
-      if (data.kind === 'rider_new_offer') return;
-      const kind = String(data.kind ?? '').toLowerCase();
-      const screen = String(data.screen ?? '').toLowerCase();
-      if (screen === 'documents' || kind.includes('kyc')) {
-        router.push(DELIVERY_ROUTES.documents as never);
-        return;
-      }
-      router.push(DELIVERY_ROUTES.notifications as never);
-    });
-
     return () => {
       cancelled = true;
       if (timer) clearTimeout(timer);
       appSub.remove();
-      responseSub.remove();
     };
-  }, [enabled, token, role, queryClient, router]);
+  }, [enabled, token, role, queryClient]);
+
+  useRiderPushOpen(Boolean(enabled && token && role === 'delivery'));
 }

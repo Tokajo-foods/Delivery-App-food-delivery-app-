@@ -57,8 +57,8 @@ export function InAppAlertPrefsCard() {
         <Text style={styles.prefsTitle}>In-app pop-ups</Text>
       </View>
       <Text style={styles.prefsSubtitle}>
-        Choose which alerts pop up while the app is open on this phone. Every
-        update still lands in this inbox.
+        Choose which alerts pop up while the app is open on this phone. Updates
+        still land in this inbox while Push is on in Profile.
       </Text>
 
       {!ready ? (
