@@ -4,7 +4,7 @@ import {
   Power,
   X,
 } from 'lucide-react-native';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -22,6 +22,7 @@ import { useDeliveryHeaderScrollProps } from '@/components/delivery/shared/heade
 import { TripChatSheet } from '@/components/delivery/orders/TripChatSheet';
 import { DeliveryTripMap } from '@/components/delivery/orders/DeliveryTripMap';
 import { TripDetailSheet } from '@/components/delivery/orders/TripDetailSheet';
+import { useFocusTripParam } from '@/components/delivery/orders/use-focus-trip-param';
 import { BatchSequenceSheet } from '@/components/delivery/orders/BatchSequenceSheet';
 import { TripLifecycleBar, tripGeofenceState } from '@/components/delivery/orders/TripLifecycleBar';
 import { StopCallSheet } from '@/components/delivery/orders/stop-call-sheet';
@@ -205,6 +206,17 @@ export function PartnerOrdersManager() {
     () => historyRows.filter((row) => isPastDelivery(row.status)),
     [historyRows]
   );
+
+  const openFocusedTrip = useCallback((trip: PartnerDelivery, inHistory: boolean) => {
+    setTab(inHistory ? 'history' : 'active');
+    setDetailDelivery(trip);
+  }, []);
+  useFocusTripParam({
+    liveOrders,
+    pastOrders,
+    ready: !actives.isLoading && !active.isLoading && !history.isLoading,
+    openTrip: openFocusedTrip,
+  });
 
   const pendingBatchId = null;
   const pendingBatch = useDeliveryBatch(pendingBatchId ?? undefined, {

@@ -44,8 +44,11 @@ async function stopBackgroundGps(): Promise<void> {
 /** Must run before the session is revoked; lazy import avoids an auth-store ↔ push-api cycle. */
 async function unregisterPushBeforeLogout(): Promise<void> {
   try {
-    const { unregisterKitchenPush } = await import('@/lib/restaurant/kitchen-push-logout');
-    await unregisterKitchenPush();
+    const [{ unregisterKitchenPush }, { unregisterRiderPush }] = await Promise.all([
+      import('@/lib/restaurant/kitchen-push-logout'),
+      import('@/lib/delivery-partner/rider-push-logout'),
+    ]);
+    await Promise.allSettled([unregisterKitchenPush(), unregisterRiderPush()]);
   } catch {
     // Server drops dead tokens on the next send; logout must not block on this.
   }

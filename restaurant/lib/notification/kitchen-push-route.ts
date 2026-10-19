@@ -28,5 +28,21 @@ export function kitchenRouteForPush(data: Record<string, unknown>): Route {
   if (category === 'catalog_moderation') return '/menu';
   if (messageKind === 'admin_force_offline' || messageKind === 'admin_resume_online') return '/dashboard';
   if (orderId) return `/order/${encodeURIComponent(orderId)}`;
+
+  const k = kind.toLowerCase();
+  if (k.includes('review') || k.includes('rating')) return '/reviews';
+  if (k.includes('payout') || k.includes('settle') || k.includes('invoice')) return '/payouts';
+  if (k.includes('support') || k.includes('ticket')) return '/support';
+  if (k.includes('offer') || k.includes('promo')) return '/offers';
+  if (k.includes('order') || k.includes('kitchen')) return '/orders';
   return '/notifications';
+}
+
+/** Inbox rows carry the notification `type` beside `data`; route them exactly like the push. */
+export function kitchenRouteForInboxItem(item: {
+  type: string;
+  data?: Record<string, unknown> | null;
+}): Route {
+  const data = item.data ?? {};
+  return kitchenRouteForPush({ ...data, type: text(data.type) || item.type });
 }
