@@ -117,7 +117,7 @@
       "eas": {
         "projectId": "909628eb-e4ce-41be-a284-c1fbf7876c39"
       },
-      "apiUrl": "http://10.12.129.12:4000",
+      "apiUrl": "https://api.tokajofoods.com",
       "googleMapsApiKey": "",
       "googleWebClientId": "",
       "googleIosClientId": "",

@@ -18,7 +18,7 @@ module.exports = ({ config }) => {
     );
   }
   const apiUrl =
-    process.env.EXPO_PUBLIC_API_URL?.trim() || 'http://10.12.129.12:4000';
+    process.env.EXPO_PUBLIC_API_URL?.trim() || 'https://api.tokajofoods.com';
   const googleWebClientId =
     process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim() || '';
   const googleIosClientId =

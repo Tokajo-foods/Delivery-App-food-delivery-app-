@@ -77,7 +77,7 @@ npm start
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `EXPO_PUBLIC_API_URL` | Backend API base URL | `http://10.12.14.3:4000` |
+| `EXPO_PUBLIC_API_URL` | Backend API base URL | `https://api.tokajofoods.com` (production) · LAN IP like `http://192.168.x.x:4000` (local) |
 
 ---
 
