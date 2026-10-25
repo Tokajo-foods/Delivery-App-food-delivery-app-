@@ -33,11 +33,7 @@ export function useKitchenNotificationSync(enabled = true) {
   const runningRef = useRef(false);
 
   useEffect(() => {
-    const isKitchen =
-      role === 'restaurant' ||
-      role === 'restaurant_owner' ||
-      role === 'owner';
-    const active = Boolean(enabled && token && isKitchen && restaurantId);
+    const active = Boolean(enabled && token && role === 'restaurant' && restaurantId);
     if (!active) return;
 
     let cancelled = false;

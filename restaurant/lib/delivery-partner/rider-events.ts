@@ -177,7 +177,9 @@ export function applyRiderSocketEvent(
       const isKyc = kind.includes('kyc');
       const notificationId = pickString(record, ['notificationId', 'id']);
       const type = pickString(record, ['type']) ?? 'system';
-      if (claimNotificationAlert(notificationId) && isTypeAllowed(type)) {
+      const isOfferRow = kind === 'rider_new_offer';
+      const urgent = kind === 'sos_dispatched';
+      if (claimNotificationAlert(notificationId) && !isOfferRow && (urgent || isTypeAllowed(type))) {
         pushLiveToast({
           title,
           body,

@@ -1,14 +1,19 @@
-import axios from 'axios';
-
-import { api } from '@/lib/api';
 import type {
   AppNotification,
   NotificationChannelPreferences,
   NotificationListResult,
   NotificationPushDevice,
-  PaginationMeta,
   UnreadCountResult,
 } from '@/lib/notification/types';
+import {
+  asRecord,
+  extractList,
+  mapMeta,
+  mapNotification,
+  mapUnreadCount,
+  request,
+} from '@/lib/notification/notification-http';
+import { useAuthStore } from '@/store/auth-store';
 
 const NOTIFICATION_SERVICE = '/api/v1/notification-service';
 const DELIVERY_SERVICE = '/api/v1/delivery-service';
@@ -16,165 +21,11 @@ const DELIVERY_SERVICE = '/api/v1/delivery-service';
 const RIDER_INBOX = `${DELIVERY_SERVICE}/partners/me/notifications`;
 const NOTIFICATIONS_BASE = `${NOTIFICATION_SERVICE}/notifications`;
 
-type Envelope<T> = {
-  success?: boolean;
-  message?: string;
-  data?: T;
-  meta?: PaginationMeta;
-};
-
-async function request<T>(
-  path: string,
-  options: {
-    method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-    body?: unknown;
-  } = {}
-): Promise<Envelope<T>> {
-  const { method = 'GET', body } = options;
-  const isMutating = method !== 'GET';
-
-  try {
-    const response = await api.request<Envelope<T> | T>({
-      url: path,
-      method,
-      data: isMutating ? (body ?? {}) : body,
-      headers: isMutating
-        ? {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          }
-        : { Accept: 'application/json' },
-    });
-
-    const payload = response.data as Envelope<T> | T;
-    if (
-      payload &&
-      typeof payload === 'object' &&
-      ('data' in (payload as object) || 'success' in (payload as object))
-    ) {
-      return payload as Envelope<T>;
-    }
-
-    return { success: true, data: payload as T };
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (!error.response) {
-        throw new Error(
-          'Network request failed. Check your internet connection and try again.'
-        );
-      }
-
-      const data = error.response.data as
-        | { message?: string; error?: string }
-        | undefined;
-      const message =
-        data?.message ||
-        data?.error ||
-        `Request failed (${error.response.status})`;
-
-      if (message.toLowerCase().includes('csrf')) {
-        throw new Error(
-          'Security token expired. Close and reopen the app, then try again.'
-        );
-      }
-
-      throw new Error(message);
-    }
-
-    throw error;
-  }
+/** Delivery-service inbox routes are partner-only; kitchen sessions use notification-service. */
+function isRiderSession() {
+  return useAuthStore.getState().role === 'delivery';
 }
 
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object'
-    ? (value as Record<string, unknown>)
-    : {};
-}
-
-function extractList(data: unknown): Record<string, unknown>[] {
-  if (Array.isArray(data)) return data as Record<string, unknown>[];
-  if (!data || typeof data !== 'object') return [];
-  const record = data as Record<string, unknown>;
-  const nested =
-    record.notifications ??
-    record.items ??
-    record.results ??
-    record.docs ??
-    record.list ??
-    record.data ??
-    [];
-  if (Array.isArray(nested)) return nested as Record<string, unknown>[];
-  if (nested && typeof nested === 'object') return extractList(nested);
-  return [];
-}
-
-function mapNotification(raw: Record<string, unknown>): AppNotification {
-  const nestedData =
-    raw.data && typeof raw.data === 'object'
-      ? (raw.data as Record<string, unknown>)
-      : undefined;
-
-  const isReadRaw = raw.isRead ?? raw.read ?? raw.is_read ?? raw.seen;
-  const isRead =
-    typeof isReadRaw === 'boolean'
-      ? isReadRaw
-      : String(isReadRaw ?? '').toLowerCase() === 'true' ||
-        String(raw.status ?? '').toLowerCase() === 'read';
-
-  return {
-    id: String(raw.notificationId ?? raw._id ?? raw.id ?? ''),
-    title: String(raw.title ?? raw.subject ?? 'Notification'),
-    body: String(
-      raw.body ?? raw.message ?? raw.content ?? raw.description ?? ''
-    ),
-    type: String(raw.type ?? raw.category ?? 'system'),
-    isRead,
-    createdAt:
-      (raw.createdAt as string) ||
-      (raw.created_at as string) ||
-      (raw.timestamp as string) ||
-      undefined,
-    data: nestedData ?? (raw.payload as Record<string, unknown> | undefined),
-    imageUrl:
-      (raw.imageUrl as string) ||
-      (raw.image as string) ||
-      (raw.iconUrl as string) ||
-      undefined,
-  };
-}
-
-function mapUnreadCount(data: unknown): number {
-  if (typeof data === 'number') return data;
-  const record = asRecord(data);
-  const count =
-    record.count ??
-    record.unreadCount ??
-    record.unread ??
-    record.totalUnread ??
-    record.total;
-  return typeof count === 'number' ? count : Number(count) || 0;
-}
-
-function mapMeta(raw: unknown): PaginationMeta | undefined {
-  const record = asRecord(raw);
-  if (!Object.keys(record).length) return undefined;
-  const total = Number(record.total ?? record.totalCount ?? record.count);
-  const page = Number(record.page ?? record.currentPage);
-  const limit = Number(record.limit ?? record.perPage);
-  const totalPages = Number(record.totalPages ?? record.pages);
-  return {
-    total: Number.isFinite(total) ? total : undefined,
-    page: Number.isFinite(page) ? page : undefined,
-    limit: Number.isFinite(limit) ? limit : undefined,
-    totalPages: Number.isFinite(totalPages) ? totalPages : undefined,
-    hasNext:
-      typeof record.hasNext === 'boolean'
-        ? record.hasNext
-        : typeof record.hasMore === 'boolean'
-          ? record.hasMore
-          : undefined,
-  };
-}
 
 export const notificationApi = {
   /** GET /notifications?page=&limit=&unread=true */
@@ -189,9 +40,8 @@ export const notificationApi = {
     if (params?.unread) query.set('unread', 'true');
 
     const qs = query.toString();
-    const res = await request<unknown>(
-      `${RIDER_INBOX}${qs ? `?${qs}` : ''}`
-    );
+    const base = isRiderSession() ? RIDER_INBOX : NOTIFICATIONS_BASE;
+    const res = await request<unknown>(`${base}${qs ? `?${qs}` : ''}`);
 
     const dataRecord = asRecord(res.data);
     const meta =
@@ -214,25 +64,33 @@ export const notificationApi = {
   /** GET /notifications/unread-count */
   getUnreadCount: async (): Promise<UnreadCountResult> => {
     const res = await request<unknown>(
-      `${DELIVERY_SERVICE}/notifications/unread-count`
+      isRiderSession()
+        ? `${DELIVERY_SERVICE}/notifications/unread-count`
+        : `${NOTIFICATIONS_BASE}/unread-count`
     );
     return { count: mapUnreadCount(res.data) };
   },
 
   /** PUT /notifications/read-all */
   markAllRead: async (): Promise<void> => {
-    await request(`${RIDER_INBOX}/read-all`, { method: 'PUT' });
+    const base = isRiderSession() ? RIDER_INBOX : NOTIFICATIONS_BASE;
+    await request(`${base}/read-all`, { method: 'PUT' });
   },
 
-  /** DELETE /notifications/clear-all */
+  /**
+   * DELETE notification-service /notifications/clear-all.
+   * Delivery-service has no clear-all; for a rider session (x-user-role=delivery_partner)
+   * this removes the same personal + delivery_partner/all broadcast rows the rider inbox lists.
+   */
   clearAll: async (): Promise<void> => {
     await request(`${NOTIFICATIONS_BASE}/clear-all`, { method: 'DELETE' });
   },
 
   /** PUT /notifications/:id/read */
   markRead: async (id: string): Promise<AppNotification | null> => {
+    const base = isRiderSession() ? RIDER_INBOX : NOTIFICATIONS_BASE;
     const res = await request<Record<string, unknown>>(
-      `${RIDER_INBOX}/${encodeURIComponent(id)}/read`,
+      `${base}/${encodeURIComponent(id)}/read`,
       { method: 'PUT' }
     );
     if (!res.data || typeof res.data !== 'object') return null;
@@ -242,7 +100,9 @@ export const notificationApi = {
   /** DELETE /notifications/:id */
   deleteNotification: async (id: string): Promise<void> => {
     await request(
-      `${DELIVERY_SERVICE}/notifications/${encodeURIComponent(id)}`,
+      isRiderSession()
+        ? `${DELIVERY_SERVICE}/notifications/${encodeURIComponent(id)}`
+        : `${NOTIFICATIONS_BASE}/${encodeURIComponent(id)}`,
       { method: 'DELETE' }
     );
   },

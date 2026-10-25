@@ -131,7 +131,7 @@ export function useMarkNotificationRead() {
   return useInboxMutation<string>(
     (id) => notificationApi.markRead(id),
     (rows, id) => rows.map((row) => (row.id === id ? { ...row, isRead: true } : row)),
-    (count, before, after) => count - Math.max(1, unreadDropped(before, after))
+    (count, before, after) => count - unreadDropped(before, after)
   );
 }
 

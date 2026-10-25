@@ -53,6 +53,7 @@ function allowForegroundRiderPush(data: Record<string, unknown>): boolean {
   if (style === 'call' || style === 'call_cancel') return true;
   const id = typeof data.notificationId === 'string' ? data.notificationId : null;
   if (!claimNotificationAlert(id)) return false;
+  if (data.kind === 'sos_dispatched') return true;
   return isTypeAllowed(String(data.type ?? 'system'));
 }
 
