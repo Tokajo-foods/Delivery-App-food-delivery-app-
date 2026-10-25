@@ -1,0 +1,34 @@
+# EAS reads only this repo-root file (nested .gitignore rules are skipped on Windows).
+# Paths stay anchored to restaurant/ so restaurant/modules/*/android (local native code) is still uploaded.
+# .env (EXPO_PUBLIC_* only) and google-services.json are uploaded on purpose; eas.json env wins over .env.
+
+.git
+node_modules/
+.cursor/
+
+restaurant/android/
+restaurant/ios/
+restaurant/dist/
+restaurant/web-build/
+restaurant/.expo/
+restaurant/.kotlin/
+restaurant/expo-env.d.ts
+
+*.apk
+*.aab
+*.jks
+*.keystore
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+*.orig.*
+*.bak*
+*.tsbuildinfo
+.env*.local
+.metro-health-check*
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store

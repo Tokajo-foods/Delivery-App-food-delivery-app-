@@ -57,17 +57,30 @@ module.exports = ({ config }) => {
   const iosBundle = deliveryApp
     ? 'com.tokajofoods.delivery'
     : config.ios?.bundleIdentifier;
+  // Library-added permissions the app never uses (no alarm-triggered notifications, no shared-storage writes).
+  const unusedPermissions = [
+    'android.permission.SCHEDULE_EXACT_ALARM',
+    'android.permission.WRITE_EXTERNAL_STORAGE',
+  ];
   // Only the rider shares live location during a trip; Play rejects background location without that use.
   const riderOnlyPermissions = [
     'android.permission.ACCESS_BACKGROUND_LOCATION',
     'android.permission.FOREGROUND_SERVICE_LOCATION',
   ];
-  const blockedPermissions = restaurantApp ? riderOnlyPermissions : [];
+  const blockedPermissions = restaurantApp
+    ? [...unusedPermissions, ...riderOnlyPermissions]
+    : unusedPermissions;
   const appIcon = deliveryApp
     ? './assets/tokajo-delivery-logo.png'
     : restaurantApp
       ? './assets/tokajo-restaurant-logo.png'
       : config.icon;
+  // Launcher masks keep only the centre 66%; these copies hold the logo inside that safe zone.
+  const adaptiveIcon = deliveryApp
+    ? { foregroundImage: './assets/tokajo-delivery-adaptive.png', backgroundColor: '#FDD803' }
+    : restaurantApp
+      ? { foregroundImage: './assets/tokajo-restaurant-adaptive.png', backgroundColor: '#FDD501' }
+      : { foregroundImage: appIcon, backgroundColor: '#FFD100' };
 
   return {
     ...config,
@@ -92,19 +105,14 @@ module.exports = ({ config }) => {
       ...config.android,
       package: androidPackage,
       ...(googleServicesFile ? { googleServicesFile } : {}),
-      ...(blockedPermissions.length
-        ? {
-            permissions: (config.android?.permissions || []).filter(
-              (p) => !blockedPermissions.includes(p) && !blockedPermissions.includes(`android.permission.${p}`)
-            ),
-            blockedPermissions,
-          }
-        : {}),
+      permissions: (config.android?.permissions || []).filter(
+        (p) => !blockedPermissions.includes(p) && !blockedPermissions.includes(`android.permission.${p}`)
+      ),
+      blockedPermissions,
       usesCleartextTraffic: true,
       adaptiveIcon: {
         ...(config.android?.adaptiveIcon || {}),
-        foregroundImage: appIcon,
-        backgroundColor: '#FFD100',
+        ...adaptiveIcon,
       },
       config: {
         ...(config.android?.config || {}),

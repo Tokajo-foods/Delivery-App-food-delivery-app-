@@ -82,7 +82,6 @@
     },
     "android": {
       "package": "com.tokajofoods.restaurant",
-      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#F5C518",
         "foregroundImage": "./assets/tokajo-logo.png"
