@@ -57,10 +57,12 @@ module.exports = ({ config }) => {
   const iosBundle = deliveryApp
     ? 'com.tokajofoods.delivery'
     : config.ios?.bundleIdentifier;
-  // Library-added permissions the app never uses (no alarm-triggered notifications, no shared-storage writes).
+  // Template/library-added permissions the app never uses: no alarm-triggered notifications, no shared-storage
+  // writes, and overlay access is never requested from the user (declaring it alone grants nothing).
   const unusedPermissions = [
     'android.permission.SCHEDULE_EXACT_ALARM',
     'android.permission.WRITE_EXTERNAL_STORAGE',
+    'android.permission.SYSTEM_ALERT_WINDOW',
   ];
   // Only the rider shares live location during a trip; Play rejects background location without that use.
   const riderOnlyPermissions = [
