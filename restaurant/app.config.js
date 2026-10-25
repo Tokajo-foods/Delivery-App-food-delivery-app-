@@ -57,6 +57,12 @@ module.exports = ({ config }) => {
   const iosBundle = deliveryApp
     ? 'com.tokajofoods.delivery'
     : config.ios?.bundleIdentifier;
+  // Only the rider shares live location during a trip; Play rejects background location without that use.
+  const riderOnlyPermissions = [
+    'android.permission.ACCESS_BACKGROUND_LOCATION',
+    'android.permission.FOREGROUND_SERVICE_LOCATION',
+  ];
+  const blockedPermissions = restaurantApp ? riderOnlyPermissions : [];
   const appIcon = deliveryApp
     ? './assets/tokajo-delivery-logo.png'
     : restaurantApp
@@ -86,6 +92,14 @@ module.exports = ({ config }) => {
       ...config.android,
       package: androidPackage,
       ...(googleServicesFile ? { googleServicesFile } : {}),
+      ...(blockedPermissions.length
+        ? {
+            permissions: (config.android?.permissions || []).filter(
+              (p) => !blockedPermissions.includes(p) && !blockedPermissions.includes(`android.permission.${p}`)
+            ),
+            blockedPermissions,
+          }
+        : {}),
       usesCleartextTraffic: true,
       adaptiveIcon: {
         ...(config.android?.adaptiveIcon || {}),

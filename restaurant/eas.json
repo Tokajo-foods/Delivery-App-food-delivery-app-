@@ -24,15 +24,29 @@
       }
     },
     "production": {
+      "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.tokajofoods.com"
+        "EXPO_PUBLIC_API_URL": "https://api.tokajofoods.com",
+        "EXPO_PUBLIC_APP_VARIANT": "restaurant"
+      }
+    },
+    "production-rider": {
+      "extends": "production",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.tokajofoods.com",
+        "EXPO_PUBLIC_APP_VARIANT": "delivery"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "track": "alpha",
+        "releaseStatus": "draft"
+      }
+    }
   }
 }
