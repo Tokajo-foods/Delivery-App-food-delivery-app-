@@ -9,6 +9,7 @@ import {
   getInternetCall,
 } from '@/lib/call/api';
 import { keepCallOverLockScreen, releaseCallLockScreen } from '@/lib/call/android-call-alert';
+import { startCallOngoingService, stopCallOngoingService } from '@/lib/call/call-ongoing-service';
 import { getCall, roleLabel, useCallStore, type ActiveCall } from '@/lib/call/call-store';
 import { startRingback, stopCallTones } from '@/lib/call/call-tones';
 import { dismissIncomingCallNotification } from '@/lib/call/incoming-call-notify';
@@ -101,6 +102,7 @@ export async function startOutgoingCall(orderId: string, role: CallRole, fallbac
     const call = fromSession(session, 'out');
     if (call.peerName === roleLabel(role) && fallbackName) call.peerName = fallbackName;
     store().set({ call });
+    void startCallOngoingService(call.callId, call.peerName);
     void startRingback(true);
   } catch (err) {
     store().set({ notice: callErrorMessage(err) });
@@ -134,6 +136,7 @@ export async function acceptCall(callId: string, opts?: { fromNative?: boolean }
   bringAppToForeground();
   try {
     await ensureMicrophone();
+    void startCallOngoingService(callId, call.peerName);
     const session = await acceptInternetCall(callId);
     if (!session.token || !session.livekitUrl) throw new Error('Call audio is not ready. Try again.');
     await joinVoice(session.livekitUrl, session.token);
@@ -231,6 +234,7 @@ export async function finishCall(
   else reportNativeCallEnded(callId, opts.reason ?? END_REASON.remoteEnded);
   void dismissIncomingCallNotification();
   releaseCallLockScreen();
+  await stopCallOngoingService();
   await disconnectVoice();
   store().set({ call: null, busy: null, muted: false, speaker: false, notice: opts.notice ?? null });
 }

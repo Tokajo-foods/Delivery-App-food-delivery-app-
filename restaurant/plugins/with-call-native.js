@@ -2,7 +2,8 @@
  * Lock-screen calling that works when the app is closed.
  *
  * Android: USE_FULL_SCREEN_INTENT so the Notifee call alert can open the call screen over the
- * lock screen (the tokajo-call-lock module only arms that while a call is live).
+ * lock screen (the tokajo-call-lock module only arms that while a call is live), and a microphone
+ * foreground service so call audio survives the screen locking or the app going to background.
  *
  * iOS: PushKit VoIP registration at launch, and every VoIP push is reported to CallKit before
  * returning. iOS 13+ terminates apps that receive a VoIP push without reporting a call.
@@ -13,9 +14,32 @@ const { AndroidConfig, withAndroidManifest, withAppDelegate, withDangerousMod } 
 
 const MARK = '// tokajo-voip';
 
+const NOTIFEE_SERVICE = 'app.notifee.core.ForegroundService';
+
+/** Notifee ships its service as `shortService` (3 min cap); a call needs the microphone type. */
+function withCallForegroundService(manifest) {
+  manifest.manifest.$['xmlns:tools'] ??= 'http://schemas.android.com/tools';
+  const app = AndroidConfig.Manifest.getMainApplicationOrThrow(manifest);
+  app.service = (app.service ?? []).filter((s) => s.$['android:name'] !== NOTIFEE_SERVICE);
+  app.service.push({
+    $: {
+      'android:name': NOTIFEE_SERVICE,
+      'android:exported': 'false',
+      'android:foregroundServiceType': 'microphone',
+      'tools:replace': 'android:foregroundServiceType',
+    },
+  });
+  return manifest;
+}
+
 function withFullScreenIntent(config) {
   return withAndroidManifest(config, (cfg) => {
-    AndroidConfig.Permissions.ensurePermissions(cfg.modResults, ['android.permission.USE_FULL_SCREEN_INTENT']);
+    AndroidConfig.Permissions.ensurePermissions(cfg.modResults, [
+      'android.permission.USE_FULL_SCREEN_INTENT',
+      'android.permission.FOREGROUND_SERVICE',
+      'android.permission.FOREGROUND_SERVICE_MICROPHONE',
+    ]);
+    cfg.modResults = withCallForegroundService(cfg.modResults);
     return cfg;
   });
 }

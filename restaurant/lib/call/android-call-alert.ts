@@ -186,4 +186,4 @@ export async function initialCallAlertPress(): Promise<CallAlertPress | null> {
   return { action: id === CALL_ALERT_ACCEPT ? 'accept' : id === CALL_ALERT_DECLINE ? 'decline' : 'open', data };
 }
 
-export { canUseFullScreenIntent };
+export { canUseFullScreenIntent, load as loadCallNotifee };
