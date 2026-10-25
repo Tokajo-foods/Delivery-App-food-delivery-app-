@@ -44,3 +44,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Firebase Android config (contains API key) - keep local / EAS file env
+google-services.json
