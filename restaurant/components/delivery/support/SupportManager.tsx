@@ -35,6 +35,7 @@ import { authTheme, PARTNER_BOTTOM_NAV_INSET } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
 import { getApiErrorMessage } from '@/lib/errors';
 import { partnerSupportApi } from '@/lib/delivery-partner/support-api';
+import { LEGAL_CONTACT_EMAIL } from '@/lib/legal/urls';
 import {
   useCreateSupportTicket,
   usePartnerSupportHub,
@@ -207,7 +208,7 @@ export function PartnerSupportManager() {
   };
 
   const emailSupport = () => {
-    const email = contact?.email || 'support@tokajo.com';
+    const email = contact?.email || LEGAL_CONTACT_EMAIL;
     void Linking.openURL(`mailto:${email}`);
   };
 
@@ -331,7 +332,7 @@ export function PartnerSupportManager() {
                 icon={Mail}
                 iconColor="#7C3AED"
                 title="Email Support"
-                value={contact?.email || 'support@tokajo.com'}
+                value={contact?.email || LEGAL_CONTACT_EMAIL}
                 hint={contact?.emailHint || 'Response in a few hours'}
                 onPress={emailSupport}
               />

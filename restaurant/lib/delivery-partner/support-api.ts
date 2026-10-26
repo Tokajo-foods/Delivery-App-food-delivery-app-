@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import { api, assertApiBaseUrl } from '@/lib/api';
+import { LEGAL_CONTACT_EMAIL } from '@/lib/legal/urls';
 import { PartnerApiError } from '@/lib/errors';
 import { postMultipartWithFields } from '@/lib/multipart-upload';
 import {
@@ -27,11 +28,10 @@ export const USE_MOCK_PARTNER_SUPPORT = false;
 const ME = '/api/v1/delivery-service/partners/me/support';
 
 const STATIC_CONTACT: SupportHubData['contact'] = {
-  phone: '+911800000000',
   phoneLabel: 'Request callback',
   phoneHint: 'Ops will call you back',
-  email: 'support@tokajo.com',
-  emailHint: 'Usually within a few hours',
+  email: LEGAL_CONTACT_EMAIL,
+  emailHint: 'We aim to reply within 2 working days',
   chatAvailable: false,
   chatHint: 'Use tickets for written help',
 };
