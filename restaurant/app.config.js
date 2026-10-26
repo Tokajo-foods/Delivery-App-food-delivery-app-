@@ -9,6 +9,28 @@ const googleServicesFile =
   process.env.GOOGLE_SERVICES_JSON?.trim() ||
   (fs.existsSync(path.join(__dirname, 'google-services.json')) ? './google-services.json' : undefined);
 
+/** Play rejects cleartext. Allow it only when this build's API is explicitly http (local dev). */
+function usesCleartextTraffic(apiUrl) {
+  return apiUrl.startsWith('http://');
+}
+
+function pluginsWithCleartext(plugins, allowCleartext) {
+  return (plugins || []).map((plugin) => {
+    if (!Array.isArray(plugin) || plugin[0] !== 'expo-build-properties') return plugin;
+    const options = plugin[1] || {};
+    return [
+      'expo-build-properties',
+      {
+        ...options,
+        android: {
+          ...(options.android || {}),
+          usesCleartextTraffic: allowCleartext,
+        },
+      },
+    ];
+  });
+}
+
 /** Merges env into Expo config (API URL + Google Maps SDK keys + OAuth). */
 module.exports = ({ config }) => {
   const mapsKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() || '';
@@ -19,6 +41,7 @@ module.exports = ({ config }) => {
   }
   const apiUrl =
     process.env.EXPO_PUBLIC_API_URL?.trim() || 'https://api.tokajofoods.com';
+  const allowCleartext = usesCleartextTraffic(apiUrl);
   const googleWebClientId =
     process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim() || '';
   const googleIosClientId =
@@ -86,6 +109,7 @@ module.exports = ({ config }) => {
 
   return {
     ...config,
+    plugins: pluginsWithCleartext(config.plugins, allowCleartext),
     name: appName,
     scheme: appScheme,
     icon: appIcon,
@@ -111,7 +135,7 @@ module.exports = ({ config }) => {
         (p) => !blockedPermissions.includes(p) && !blockedPermissions.includes(`android.permission.${p}`)
       ),
       blockedPermissions,
-      usesCleartextTraffic: true,
+      usesCleartextTraffic: allowCleartext,
       adaptiveIcon: {
         ...(config.android?.adaptiveIcon || {}),
         ...adaptiveIcon,
