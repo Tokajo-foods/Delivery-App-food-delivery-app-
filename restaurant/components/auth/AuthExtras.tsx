@@ -1,7 +1,14 @@
+import { useRouter } from 'expo-router';
 import { Check } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
 import { BRAND_NAME } from '@/constants/theme';
+
+const LEGAL_LINKS = [
+  { label: 'Privacy', href: '/legal/privacy' },
+  { label: 'Terms', href: '/legal/terms' },
+  { label: 'Support', href: '/legal/support' },
+] as const;
 
 type CheckboxRowProps = {
   checked: boolean;
@@ -29,13 +36,21 @@ export function CheckboxRow({ checked, onToggle, label }: CheckboxRowProps) {
 }
 
 export function LegalFooter() {
+  const router = useRouter();
+
   return (
     <View className="mt-8 items-center gap-2.5">
       <View className="flex-row items-center gap-5">
-        {['Privacy', 'Terms', 'Support'].map((item) => (
-          <Text key={item} className="text-xs font-medium text-secondary-light">
-            {item}
-          </Text>
+        {LEGAL_LINKS.map((item) => (
+          <Pressable
+            key={item.href}
+            onPress={() => router.push(item.href)}
+            hitSlop={8}
+            accessibilityRole="link"
+            accessibilityLabel={item.label}
+          >
+            <Text className="text-xs font-semibold text-primary">{item.label}</Text>
+          </Pressable>
         ))}
       </View>
       <Text className="text-xs tracking-wide text-gray-400">

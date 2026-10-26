@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { AuthBanner } from '@/components/auth/AuthBanner';
+import { LegalFooter } from '@/components/auth/AuthExtras';
 import { AuthLoadingScreen } from '@/components/auth/AuthLoadingScreen';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { PhoneSignupFlow } from '@/components/auth/PhoneSignupFlow';
@@ -104,11 +105,14 @@ export function RegisterScreen() {
       }
       showBack
       footer={
-        <View className="flex-row items-center justify-center">
-          <Text className="text-sm text-secondary-light">Already a partner? </Text>
-          <Pressable onPress={() => router.replace('/login')} hitSlop={8}>
-            <Text className="text-sm font-bold text-primary">Sign in</Text>
-          </Pressable>
+        <View>
+          <View className="flex-row items-center justify-center">
+            <Text className="text-sm text-secondary-light">Already a partner? </Text>
+            <Pressable onPress={() => router.replace('/login')} hitSlop={8}>
+              <Text className="text-sm font-bold text-primary">Sign in</Text>
+            </Pressable>
+          </View>
+          <LegalFooter />
         </View>
       }
     >
