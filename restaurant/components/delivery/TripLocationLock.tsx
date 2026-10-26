@@ -23,8 +23,8 @@ const COPY: Record<LocationLockReason, { title: string; body: string; action: st
   },
   background: {
     title: 'Allow location all the time',
-    body: 'Set location to "Allow all the time" so the customer can follow you even when the app is closed.',
-    action: 'Open settings',
+    body: 'TOKAJO Delivery collects location data to share your live position with the customer during this delivery, even when the app is closed or not in use.',
+    action: 'Continue',
   },
 };
 

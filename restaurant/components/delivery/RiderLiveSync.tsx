@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import { IncomingOfferOverlay } from '@/components/delivery/orders/IncomingOfferOverlay';
+import { BackgroundLocationDisclosure } from '@/components/delivery/shared/BackgroundLocationDisclosure';
 import { useRiderOfferPush } from '@/lib/delivery-partner/offer-push';
 import { usePartnerPricingRules } from '@/lib/delivery-partner/pricing-hooks';
 import { usePartnerLocationSync } from '@/lib/delivery-partner/use-partner-location-sync';
@@ -29,5 +30,10 @@ export function RiderLiveSync() {
   }, [enabled]);
 
   if (!enabled) return null;
-  return <IncomingOfferOverlay />;
+  return (
+    <>
+      <BackgroundLocationDisclosure />
+      <IncomingOfferOverlay />
+    </>
+  );
 }

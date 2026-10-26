@@ -73,6 +73,10 @@ import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
 import { selectPartnerTodayStats } from '@/lib/delivery-partner/today-stats';
 import type { PartnerDelivery } from '@/lib/delivery-partner/types';
 import { askToEnableLocation } from '@/lib/delivery-partner/live-place';
+import {
+  BACKGROUND_LOCATION_DENIED_MESSAGE,
+  ensureBackgroundLocationPermission,
+} from '@/lib/delivery-partner/background-location-consent';
 import { getApiErrorCode, getApiErrorMessage } from '@/lib/errors';
 
 const LIVE_LOCATION_STORAGE_KEY = '@tokajo/partner-live-location';
@@ -190,8 +194,13 @@ export function DeliveryHomeScreen() {
 
   const onToggleOnline = () => {
     if (!isOnline) {
-      void askToEnableLocation().then((ready) => {
+      void askToEnableLocation().then(async (ready) => {
         if (!ready) return;
+        const allowed = await ensureBackgroundLocationPermission('online');
+        if (!allowed) {
+          Alert.alert('Location all the time', BACKGROUND_LOCATION_DENIED_MESSAGE);
+          return;
+        }
         continueToggleOnline();
       });
       return;

@@ -16,6 +16,7 @@ import {
   type BackgroundLocationMode,
   type QueuedFix,
 } from '@/lib/delivery-partner/background-location-policy';
+import { ensureBackgroundLocationPermission } from '@/lib/delivery-partner/background-location-consent';
 import { foregroundOwnsLocation } from '@/lib/delivery-partner/foreground-location-owner';
 import { partnerTrackingApi } from '@/lib/delivery-partner/tracking-api';
 import { getApiErrorCode } from '@/lib/errors';
@@ -42,7 +43,6 @@ let flushing = false;
 let startedMode: BackgroundLocationMode | null = null;
 /** After a swipe-kill the JS restarts with no React state, so the last ping decides the cadence. */
 let serverTripActive: boolean | null = null;
-const askedBackground = new Set<BackgroundLocationMode>();
 
 if (tasks) tasks.defineTask(TRIP_LOCATION_TASK, async ({ data, error }) => {
   if (error) return;
@@ -85,13 +85,8 @@ const MODE_OPTIONS: Record<BackgroundLocationMode, Location.LocationTaskOptions>
   },
 };
 
-async function hasBackgroundPermission(mode: BackgroundLocationMode): Promise<boolean> {
-  const current = await Location.getBackgroundPermissionsAsync();
-  if (current.status === 'granted') return true;
-  if (askedBackground.has(mode) || !current.canAskAgain) return false;
-  askedBackground.add(mode);
-  const next = await Location.requestBackgroundPermissionsAsync();
-  return next.status === 'granted';
+async function hasBackgroundPermission(): Promise<boolean> {
+  return ensureBackgroundLocationPermission('sync');
 }
 
 /**
@@ -113,7 +108,7 @@ export async function syncTripBackgroundLocation(
     serverTripActive = mode === 'trip';
     const foreground = await Location.getForegroundPermissionsAsync();
     if (foreground.status !== 'granted') return;
-    if (!(await hasBackgroundPermission(mode))) return;
+    if (!(await hasBackgroundPermission())) return;
     const started = await Location.hasStartedLocationUpdatesAsync(TRIP_LOCATION_TASK);
     if (started && startedMode === mode) return;
     if (started) await Location.stopLocationUpdatesAsync(TRIP_LOCATION_TASK);

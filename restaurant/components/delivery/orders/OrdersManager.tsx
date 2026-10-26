@@ -38,6 +38,10 @@ import {
   getGoOnlineBlocker,
 } from '@/lib/delivery-partner/go-online-guard';
 import {
+  BACKGROUND_LOCATION_DENIED_MESSAGE,
+  ensureBackgroundLocationPermission,
+} from '@/lib/delivery-partner/background-location-consent';
+import {
   deliveryStatusLabel,
   isAssignableStatus,
   isUnpaidTripStatus,
@@ -279,6 +283,14 @@ export function PartnerOrdersManager() {
         },
       ]);
       return;
+    }
+
+    if (next) {
+      const allowed = await ensureBackgroundLocationPermission('online');
+      if (!allowed) {
+        Alert.alert('Location all the time', BACKGROUND_LOCATION_DENIED_MESSAGE);
+        return;
+      }
     }
 
     setBusyLabel(next ? 'Going online…' : 'Going offline…');

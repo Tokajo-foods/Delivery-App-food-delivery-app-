@@ -2,6 +2,7 @@ import Constants from 'expo-constants';
 import * as Location from 'expo-location';
 import { Linking, Platform } from 'react-native';
 
+import { ensureBackgroundLocationPermission } from '@/lib/delivery-partner/background-location-consent';
 import { askToEnableLocation } from '@/lib/delivery-partner/live-place';
 import type { LocationLockReason } from '@/lib/delivery-partner/live-place-store';
 
@@ -25,17 +26,12 @@ export async function readLocationLock(onTrip: boolean): Promise<LocationLockRea
 /** Opens the system prompt that fixes `reason`, falling back to app settings. */
 export async function restoreLocationAccess(reason: LocationLockReason): Promise<boolean> {
   if (reason === 'services') return askToEnableLocation();
+  if (reason === 'background') return ensureBackgroundLocationPermission('online');
   try {
-    const current =
-      reason === 'permission'
-        ? await Location.getForegroundPermissionsAsync()
-        : await Location.getBackgroundPermissionsAsync();
+    const current = await Location.getForegroundPermissionsAsync();
     if (current.status === 'granted') return true;
     if (current.canAskAgain) {
-      const next =
-        reason === 'permission'
-          ? await Location.requestForegroundPermissionsAsync()
-          : await Location.requestBackgroundPermissionsAsync();
+      const next = await Location.requestForegroundPermissionsAsync();
       if (next.status === 'granted') return true;
     }
   } catch {
