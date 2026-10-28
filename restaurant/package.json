@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
-    "@config-plugins/react-native-callkeep": "^14.0.2",
+    "@config-plugins/react-native-callkeep": "12.0.0",
     "@config-plugins/react-native-webrtc": "^13.0.0",
     "@expo-google-fonts/manrope": "^0.4.2",
     "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
