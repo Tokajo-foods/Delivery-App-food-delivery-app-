@@ -11,6 +11,7 @@ import type { CodUpiQr } from '@/lib/delivery-partner/finance-types';
 import { useFinanceMutations } from '@/lib/delivery-partner/finance-hooks';
 import { deliveryPartnerKeys } from '@/lib/delivery-partner/hooks';
 import { pushLiveToast } from '@/lib/delivery-partner/live-toast-store';
+import { offerTripRating } from '@/lib/delivery-partner/trip-rating';
 import { PartnerApiError } from '@/lib/errors';
 import { formatInr } from '@/lib/format/money';
 
@@ -46,6 +47,7 @@ export function useDoorstepPay({
 
   const celebrate = (body: string) => {
     setPhase('done');
+    if (deliveryId) offerTripRating(deliveryId);
     pushLiveToast({ title: 'Delivery complete', body, tone: 'success' });
     void queryClient.invalidateQueries({ queryKey: deliveryPartnerKeys.all });
     setTimeout(() => onCompleted(), 900);

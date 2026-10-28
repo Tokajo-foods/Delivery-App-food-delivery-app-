@@ -47,6 +47,7 @@ import {
   type UnreachableChannel,
 } from '@/lib/delivery-partner/types';
 import { formatInr } from '@/lib/format/money';
+import { offerTripRating } from '@/lib/delivery-partner/trip-rating';
 
 type SheetKey =
   | 'pickup'
@@ -520,6 +521,7 @@ export function TripLifecycleBar({
       setSheet(null);
       setOtp('');
       setDropPhotoUri(null);
+      offerTripRating(delivery.id);
       Alert.alert(
         'Delivered',
         codDue

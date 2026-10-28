@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import { IncomingOfferOverlay } from '@/components/delivery/orders/IncomingOfferOverlay';
+import { TripRatingHost } from '@/components/delivery/orders/TripRatingHost';
 import { BackgroundLocationDisclosure } from '@/components/delivery/shared/BackgroundLocationDisclosure';
 import { useRiderOfferPush } from '@/lib/delivery-partner/offer-push';
 import { usePartnerPricingRules } from '@/lib/delivery-partner/pricing-hooks';
@@ -34,6 +35,7 @@ export function RiderLiveSync() {
     <>
       <BackgroundLocationDisclosure />
       <IncomingOfferOverlay />
+      <TripRatingHost />
     </>
   );
 }
