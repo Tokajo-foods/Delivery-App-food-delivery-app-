@@ -32,6 +32,17 @@ function withCallForegroundService(manifest) {
   return manifest;
 }
 
+/** CallKeep's default service label is "Wazo". Play and the phone UI should show this app. */
+function withCallServiceLabel(manifest, label) {
+  const app = AndroidConfig.Manifest.getMainApplicationOrThrow(manifest);
+  for (const service of app.service ?? []) {
+    if (service.$['android:name'] === 'io.wazo.callkeep.VoiceConnectionService') {
+      service.$['android:label'] = label;
+    }
+  }
+  return manifest;
+}
+
 function withFullScreenIntent(config) {
   return withAndroidManifest(config, (cfg) => {
     AndroidConfig.Permissions.ensurePermissions(cfg.modResults, [
@@ -40,6 +51,7 @@ function withFullScreenIntent(config) {
       'android.permission.FOREGROUND_SERVICE_MICROPHONE',
     ]);
     cfg.modResults = withCallForegroundService(cfg.modResults);
+    cfg.modResults = withCallServiceLabel(cfg.modResults, cfg.name || 'TOKAJO');
     return cfg;
   });
 }

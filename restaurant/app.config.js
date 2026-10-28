@@ -85,7 +85,11 @@ module.exports = ({ config }) => {
   const unusedPermissions = [
     'android.permission.SCHEDULE_EXACT_ALARM',
     'android.permission.WRITE_EXTERNAL_STORAGE',
+    'android.permission.READ_EXTERNAL_STORAGE',
     'android.permission.SYSTEM_ALERT_WINDOW',
+    'android.permission.CALL_PHONE',
+    'android.permission.READ_PHONE_STATE',
+    'android.permission.READ_PHONE_NUMBERS',
   ];
   // Only the rider shares live location during a trip; Play rejects background location without that use.
   const riderOnlyPermissions = [
