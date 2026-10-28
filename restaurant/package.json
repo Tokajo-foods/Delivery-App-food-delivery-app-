@@ -96,6 +96,7 @@
     "submit:play": "eas submit -p android --profile production --latest",
     "submit:play:restaurant": "eas submit -p android --profile production-restaurant --latest",
     "build:apk:local": "powershell -ExecutionPolicy Bypass -File ./scripts/build-from-short-path.ps1",
+    "build:aab:restaurant": "powershell -ExecutionPolicy Bypass -File ./scripts/build-from-short-path.ps1 -Variant restaurant -Configuration bundle",
     "build:restaurant": "powershell -ExecutionPolicy Bypass -File ./scripts/build-from-short-path.ps1 -Variant restaurant -Configuration debug",
     "build:delivery": "powershell -ExecutionPolicy Bypass -File ./scripts/build-from-short-path.ps1 -Variant delivery -Configuration debug"
   },
