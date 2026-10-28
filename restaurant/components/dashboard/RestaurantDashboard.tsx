@@ -235,6 +235,7 @@ export function RestaurantDashboard() {
             onPromosPress={() => router.replace('/offers')}
             onReviewsPress={() => router.push('/reviews')}
             onAnalyticsPress={() => router.push('/analytics')}
+            onFleetPress={() => router.push('/partners')}
           />
           <PendingOrdersSection
             orders={dashboard.pendingOrders}

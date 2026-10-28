@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { BarChart3, MessageSquareQuote, Tag, Wallet } from 'lucide-react-native';
+import { BarChart3, Bike, ChevronRight, MessageSquareQuote, Tag, Wallet } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { authTheme } from '@/constants/auth-theme';
@@ -11,6 +11,7 @@ type Props = {
   onPromosPress?: () => void;
   onAnalyticsPress?: () => void;
   onReviewsPress?: () => void;
+  onFleetPress?: () => void;
 };
 
 const ICON = '#EA4B14';
@@ -50,6 +51,7 @@ export function QuickActionsGrid({
   onPromosPress,
   onAnalyticsPress,
   onReviewsPress,
+  onFleetPress,
 }: Props) {
   const router = useRouter();
   const handlers: Record<string, (() => void) | undefined> = {
@@ -93,6 +95,23 @@ export function QuickActionsGrid({
           );
         })}
       </View>
+      {onFleetPress ? (
+        <Pressable
+          onPress={onFleetPress}
+          accessibilityRole="button"
+          accessibilityLabel="Your riders"
+          style={styles.fleetRow}
+        >
+          <View style={styles.iconWrap}>
+            <Bike color={ICON} size={20} strokeWidth={1.8} />
+          </View>
+          <View style={styles.fleetCopy}>
+            <Text style={styles.tileLabel}>Your riders</Text>
+            <Text style={styles.fleetHint}>Invite and manage your own delivery fleet</Text>
+          </View>
+          <ChevronRight color="#A8A29E" size={18} />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -100,6 +119,23 @@ export function QuickActionsGrid({
 const styles = StyleSheet.create({
   section: {
     gap: 10,
+  },
+  fleetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F1EAE3',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  fleetCopy: { flex: 1, gap: 2 },
+  fleetHint: {
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    color: authTheme.textMuted,
   },
   sectionTitle: {
     fontFamily: fonts.extraBold,
