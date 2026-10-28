@@ -17,6 +17,8 @@ type Props = {
   visible: boolean;
   deliveryId: string | null;
   amount?: number | null;
+  tripStatus?: string | null;
+  settledVia?: string | null;
   onClose: () => void;
   onCompleted: () => void;
 };
@@ -25,11 +27,20 @@ export function CodUpiSheet({
   visible,
   deliveryId,
   amount,
+  tripStatus,
+  settledVia,
   onClose,
   onCompleted,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const pay = useDoorstepPay({ visible, deliveryId, amount, onCompleted });
+  const pay = useDoorstepPay({
+    visible,
+    deliveryId,
+    amount,
+    tripStatus,
+    settledVia,
+    onCompleted,
+  });
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -66,8 +77,8 @@ export function CodUpiSheet({
                 {pay.due != null ? formatInr(pay.due) : '—'}
               </Text>
               <Text style={styles.body}>
-                This is the exact amount on the customer’s order. Ask them to scan and pay.
-                The trip completes on its own when the payment arrives.
+                Ask the customer to scan this code. It is the exact order amount, and the trip
+                finishes on its own when the payment is received.
               </Text>
 
               {pay.loadError ? <Text style={styles.error}>{pay.loadError}</Text> : null}
@@ -84,7 +95,10 @@ export function CodUpiSheet({
                   <Text style={styles.secondaryText}>Refresh QR</Text>
                 </Pressable>
               ) : pay.imageUrl ? (
-                <Text style={styles.hint}>Waiting for payment</Text>
+                <View style={styles.waiting}>
+                  <ActivityIndicator color="#EA4B14" size="small" />
+                  <Text style={styles.hint}>Waiting for payment</Text>
+                </View>
               ) : null}
 
               {pay.loadError ? (
@@ -93,12 +107,9 @@ export function CodUpiSheet({
                 </Pressable>
               ) : null}
 
-              <Pressable onPress={pay.onCash} style={styles.primary}>
-                <Text style={styles.primaryText}>Paid in cash</Text>
+              <Pressable onPress={pay.onCash} style={styles.secondary}>
+                <Text style={styles.secondaryText}>Paid in cash</Text>
               </Pressable>
-              <Text style={styles.hint}>
-                Use cash only when you have the notes. A QR payment still completes the trip by itself.
-              </Text>
             </>
           )}
         </View>

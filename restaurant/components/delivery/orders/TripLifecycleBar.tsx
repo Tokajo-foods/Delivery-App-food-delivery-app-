@@ -713,6 +713,8 @@ export function TripLifecycleBar({
       visible={showUpi}
       deliveryId={delivery.id}
       amount={delivery.amount}
+      tripStatus={status}
+      settledVia={delivery.settledVia}
       onClose={() => setShowUpi(false)}
       onCompleted={() => setShowUpi(false)}
     />

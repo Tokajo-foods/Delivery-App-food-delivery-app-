@@ -18,20 +18,23 @@ type Args = {
   visible: boolean;
   deliveryId: string | null;
   amount?: number | null;
+  tripStatus?: string | null;
+  settledVia?: string | null;
   onCompleted: () => void;
 };
-
-function qrImage(intent?: string, qrImageUrl?: string | null) {
-  if (qrImageUrl) return qrImageUrl;
-  if (!intent) return null;
-  return `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=12&data=${encodeURIComponent(intent)}`;
-}
 
 function errorCode(error: unknown) {
   return error instanceof PartnerApiError ? error.code : undefined;
 }
 
-export function useDoorstepPay({ visible, deliveryId, amount, onCompleted }: Args) {
+export function useDoorstepPay({
+  visible,
+  deliveryId,
+  amount,
+  tripStatus,
+  settledVia,
+  onCompleted,
+}: Args) {
   const queryClient = useQueryClient();
   const { createUpiQr } = useFinanceMutations();
   const [qr, setQr] = useState<CodUpiQr | null>(null);
@@ -39,6 +42,7 @@ export function useDoorstepPay({ visible, deliveryId, amount, onCompleted }: Arg
   const [phase, setPhase] = useState<'collect' | 'working' | 'done'>('collect');
   const [cashError, setCashError] = useState<string | null>(null);
   const finishing = useRef(false);
+  const refreshedExpiry = useRef<string | null>(null);
 
   const celebrate = (body: string) => {
     setPhase('done');
@@ -121,14 +125,20 @@ export function useDoorstepPay({ visible, deliveryId, amount, onCompleted }: Arg
     let stop = false;
     const watch = async () => {
       try {
-        const row = await deliveryPartnerApi.getDelivery(deliveryId);
+        const [row, order] = await Promise.all([
+          deliveryPartnerApi.getDelivery(deliveryId),
+          deliveryPartnerApi.getDeliveryOrderContext(deliveryId).catch(() => null),
+        ]);
         if (stop || finishing.current) return;
         if (row.status === 'delivered') {
           finishing.current = true;
           celebrate('Payment received. This trip is done.');
           return;
         }
-        if (row.status === 'at_customer' && (row.settledVia ?? '').toLowerCase() === 'upi') {
+        const paid =
+          (row.settledVia ?? '').toLowerCase() === 'upi'
+          || (order?.paymentStatus ?? '').toLowerCase() === 'paid';
+        if (paid && (row.status === 'at_customer' || tripStatus === 'at_customer')) {
           void finish('upi');
         }
       } catch {
@@ -142,7 +152,20 @@ export function useDoorstepPay({ visible, deliveryId, amount, onCompleted }: Arg
       clearInterval(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, deliveryId, phase]);
+  }, [visible, deliveryId, phase, tripStatus]);
+
+  useEffect(() => {
+    if (!visible || phase === 'done' || finishing.current) return;
+    if (tripStatus === 'delivered') {
+      finishing.current = true;
+      celebrate('Payment received. This trip is done.');
+      return;
+    }
+    if ((settledVia ?? '').toLowerCase() === 'upi') {
+      void finish('upi');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, tripStatus, settledVia]);
 
   const due = qr?.amount && qr.amount > 0 ? qr.amount : amount ?? null;
   const expired = Boolean(qr?.expiresAt && new Date(qr.expiresAt).getTime() <= Date.now());
@@ -162,6 +185,14 @@ export function useDoorstepPay({ visible, deliveryId, amount, onCompleted }: Arg
         setLoadError(formatFinanceError(error, 'Could not create the payment QR.'));
       });
   };
+
+  useEffect(() => {
+    if (!visible || !expired || !qr?.expiresAt || phase !== 'collect') return;
+    if (refreshedExpiry.current === qr.expiresAt) return;
+    refreshedExpiry.current = qr.expiresAt;
+    refreshQr();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, expired, qr?.expiresAt, phase]);
 
   const onCash = () => {
     const label = due != null ? formatInr(due) : 'the order amount';
@@ -183,7 +214,7 @@ export function useDoorstepPay({ visible, deliveryId, amount, onCompleted }: Arg
     loading: phase === 'working' || (createUpiQr.isPending && !qr && !loadError),
     due,
     expired,
-    imageUrl: qrImage(qr?.upiIntent, qr?.qrImageUrl),
+    imageUrl: qr?.qrImageUrl || null,
     refreshQr,
     onCash,
   };

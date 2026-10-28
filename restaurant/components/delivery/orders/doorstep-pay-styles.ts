@@ -56,7 +56,12 @@ export const doorstepPayStyles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     color: '#6B7280',
-    textAlign: 'center',
+  },
+  waiting: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   error: {
     fontFamily: fonts.medium,
