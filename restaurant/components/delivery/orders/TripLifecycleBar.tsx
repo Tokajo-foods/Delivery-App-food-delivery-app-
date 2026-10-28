@@ -209,12 +209,19 @@ export function TripLifecycleWithGeo({
  * on-the-way, drop OTP/POD/signature/deliver, plus cancel + report issue.
  */
 export function TripLifecycleBar({
-  delivery,
+  delivery: tripDelivery,
   geoBlocked,
   geoHint,
   hideCallActions = false,
 }: Props) {
   const mutations = useDeliveryOrderMutations();
+  const tripStatus = normalizeDeliveryStatus(tripDelivery.status);
+  const { delivery, orderContext } = useTripWithOrder(tripDelivery, {
+    live:
+      tripStatus === 'picked_up' ||
+      tripStatus === 'out_for_delivery' ||
+      tripStatus === 'at_customer',
+  });
   const status = normalizeDeliveryStatus(delivery.status);
   const step = resolveTripStep(delivery);
   const atRestaurant = status === 'arrived';
@@ -233,13 +240,14 @@ export function TripLifecycleBar({
     delivery.cancelRequiresNote === true || status === 'accepted';
   const canIssue = delivery.canReportIssue !== false && postAccept;
   const settledUpi = (delivery.settledVia ?? '').toLowerCase() === 'upi';
+  const isCod = isCodPayment(delivery.paymentMethod);
+  const codDue =
+    isCod && !settledUpi && delivery.amount != null && delivery.amount > 0
+      ? `${formatInr(delivery.amount)}`
+      : null;
+  const rtoEligible = status === 'out_for_delivery' || status === 'at_customer';
   const showCodUpi =
-    isCodPayment(delivery.paymentMethod) &&
-    (status === 'picked_up' ||
-      status === 'out_for_delivery' ||
-      status === 'at_customer') &&
-    !settledUpi &&
-    !delivery.cashCollected;
+    isCod && status === 'at_customer' && !settledUpi && !delivery.cashCollected;
 
   const [sheet, setSheet] = useState<SheetKey>(null);
   const [showUpi, setShowUpi] = useState(false);
@@ -370,6 +378,10 @@ export function TripLifecycleBar({
       mutations.reachedCustomer.mutateAsync(delivery.id)
     )
       .then(() => {
+        if (isCod && !delivery.cashCollected) {
+          setShowUpi(true);
+          return;
+        }
         setOtp('');
         setDropPhotoUri(delivery.proofPhotoUrl ?? null);
         setSheet('deliver');
@@ -430,20 +442,25 @@ export function TripLifecycleBar({
         },
       });
       setBusy('Picking up…');
-      await mutations.pickup.mutateAsync({
+      const picked = await mutations.pickup.mutateAsync({
         deliveryId: delivery.id,
         otp: code || undefined,
         photoUrl: proofUrl,
       });
-      setBusy('Heading to customer…');
-      try {
-        await mutations.onTheWay.mutateAsync(delivery.id);
-      } catch {
-        // Pickup often already sets OFD; this call is idempotent then.
-      }
       setSheet(null);
       setOtp('');
       setPickupPhotoUri(null);
+      if (normalizeDeliveryStatus(picked.status) === 'picked_up') {
+        setBusy('Heading to customer…');
+        try {
+          await mutations.onTheWay.mutateAsync(delivery.id);
+        } catch (error) {
+          Alert.alert(
+            'Picked up',
+            formatTripError(error, 'Tap “On the way to customer” to start the drop.')
+          );
+        }
+      }
     } catch (error) {
       Alert.alert(
         'Could not pick up',
@@ -503,7 +520,12 @@ export function TripLifecycleBar({
       setSheet(null);
       setOtp('');
       setDropPhotoUri(null);
-      Alert.alert('Delivered', 'Food handed over. The photo is on the customer order.');
+      Alert.alert(
+        'Delivered',
+        codDue
+          ? `Food handed over. ${codDue} cash is recorded as collected — remit it from Earnings.`
+          : 'Food handed over. The photo is on the customer order.'
+      );
     } catch (error) {
       Alert.alert('Could not complete', formatTripError(error, 'Enter the customer OTP and take the handover photo.'));
     } finally {
@@ -686,6 +708,16 @@ export function TripLifecycleBar({
     status !== 'picked_up' &&
     !atDrop;
 
+  const paySheet = (
+    <CodUpiSheet
+      visible={showUpi}
+      deliveryId={delivery.id}
+      amount={delivery.amount}
+      onClose={() => setShowUpi(false)}
+      onCompleted={() => setShowUpi(false)}
+    />
+  );
+
   if (
     status === 'assigned' ||
     status === 'delivered' ||
@@ -695,7 +727,7 @@ export function TripLifecycleBar({
     status === 'failed' ||
     status === 'returned'
   ) {
-    return null;
+    return paySheet;
   }
 
   return (
@@ -790,26 +822,21 @@ export function TripLifecycleBar({
             {[
               delivery.otpVerified ? 'OTP verified' : 'Customer OTP',
               delivery.proofPhotoUrl ? 'Handover photo saved' : 'Handover photo',
-              isCodPayment(delivery.paymentMethod)
+              isCod
                 ? settledUpi
-                  ? 'COD settled UPI'
-                  : 'COD — collect cash or UPI'
+                  ? 'COD paid by UPI — do not collect cash'
+                  : `COD — collect ${codDue ?? 'payment'} by cash or UPI`
                 : null,
             ]
               .filter(Boolean)
               .join(' · ')}
           </Text>
-          {showCodUpi ? (
-            <Pressable
-              onPress={() => setShowUpi(true)}
-              disabled={disabled}
-              style={styles.secondary}
-            >
-              <Text style={styles.secondaryText}>Collect UPI (platform QR)</Text>
-            </Pressable>
-          ) : null}
           <Pressable
             onPress={() => {
+              if (showCodUpi || settledUpi) {
+                setShowUpi(true);
+                return;
+              }
               setOtp(delivery.otpVerified ? otp : '');
               setDropPhotoUri(delivery.proofPhotoUrl ?? dropPhotoUri);
               setSheet('deliver');
@@ -817,7 +844,9 @@ export function TripLifecycleBar({
             disabled={primaryDisabled}
             style={[styles.primary, primaryDisabled && styles.disabled]}
           >
-            <Text style={styles.primaryText}>Hand over food</Text>
+            <Text style={styles.primaryText}>
+              {showCodUpi ? 'Collect payment' : settledUpi ? 'Payment received' : 'Hand over food'}
+            </Text>
           </Pressable>
         </View>
       ) : null}
@@ -826,15 +855,6 @@ export function TripLifecycleBar({
       status === 'out_for_delivery' ||
       status === 'at_customer' ? (
         <View style={styles.group}>
-          {showCodUpi && status !== 'at_customer' ? (
-            <Pressable
-              onPress={() => setShowUpi(true)}
-              disabled={disabled}
-              style={styles.secondary}
-            >
-              <Text style={styles.secondaryText}>Collect COD via UPI</Text>
-            </Pressable>
-          ) : null}
           {delivery.contactAttemptCount ? (
             <Text style={styles.waitText}>
               Customer contact {delivery.contactAttemptCount}×
@@ -845,6 +865,8 @@ export function TripLifecycleBar({
                 : ''}
             </Text>
           ) : null}
+          {rtoEligible ? (
+          <>
           <Pressable
             onPress={() => {
               setNote('');
@@ -883,6 +905,8 @@ export function TripLifecycleBar({
             <Text style={styles.waitText}>
               Wait {formatClock(rtoLeft)} before returning.
             </Text>
+          ) : null}
+          </>
           ) : null}
         </View>
       ) : null}
@@ -1074,7 +1098,9 @@ export function TripLifecycleBar({
             <Text style={styles.sub}>
               {sheet === 'cancel'
                 ? 'Cancel is only before you pick up the food. Three cancels in a day suspends your account for 3 hours.'
-                : 'This does not change trip status. Dispatch sees it on the timeline.'}
+                : rtoEligible || status === 'picked_up'
+                  ? 'You have the food. Reporting an issue now ends the drop — you must return the food to the restaurant to finish this trip.'
+                  : 'Saved on the trip timeline for support. Your trip continues as normal.'}
             </Text>
             <View style={styles.chips}>
               {(sheet === 'cancel' ? CANCEL_REASON_CODES : TRIP_ISSUE_CODES).map(
@@ -1254,11 +1280,7 @@ export function TripLifecycleBar({
           </View>
         </View>
       </Modal>
-      <CodUpiSheet
-        visible={showUpi}
-        deliveryId={delivery.id}
-        onClose={() => setShowUpi(false)}
-      />
+      {paySheet}
     </View>
   );
 }

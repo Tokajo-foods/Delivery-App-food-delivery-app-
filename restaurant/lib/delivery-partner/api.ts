@@ -647,13 +647,23 @@ export function mapPartnerDelivery(raw: unknown): PartnerDelivery {
     itemCount:
       pickNumber(source, ['itemCount', 'itemsCount', 'totalItems']) ??
       (Array.isArray(items) ? items.length : undefined),
-    amount: pickNumber(source, [
-      'amount',
-      'orderAmount',
-      'totalAmount',
-      'grandTotal',
-      'payableAmount',
-    ]),
+    amount: (() => {
+      const method = (
+        pickString(source, ['paymentMethod', 'paymentMode', 'paymentType']) ?? ''
+      ).toLowerCase();
+      const cod = pickNumber(source, ['codAmount']);
+      if ((method === 'cod' || method === 'pay_on_delivery') && cod != null && cod > 0) {
+        return cod;
+      }
+      return pickNumber(source, [
+        'amount',
+        'orderAmount',
+        'totalAmount',
+        'grandTotal',
+        'payableAmount',
+        'codAmount',
+      ]);
+    })(),
     currency: pickString(source, ['currency']) ?? 'INR',
     paymentMethod: pickString(source, [
       'paymentMethod',

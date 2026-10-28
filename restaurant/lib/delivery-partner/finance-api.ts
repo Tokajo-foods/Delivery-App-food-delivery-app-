@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import { API_BASE_URL, api, assertApiBaseUrl } from '@/lib/api';
+import { mapPartnerDelivery } from '@/lib/delivery-partner/api';
 import {
   mapCodLimit,
   mapCodPending,
@@ -219,6 +220,20 @@ export const partnerFinanceApi = {
       `${ME_BASE}/deliveries/${encodeURIComponent(deliveryId)}/cod/upi-qr`,
       { method: 'POST', body: {} }
     ).then(mapUpiQr);
+  },
+
+  collectDoorstepCash(deliveryId: string) {
+    return request<unknown>(
+      `${ME_BASE}/deliveries/${encodeURIComponent(deliveryId)}/cod/collect-cash`,
+      { method: 'POST', body: {} }
+    ).then(mapPartnerDelivery);
+  },
+
+  completeDoorstepUpi(deliveryId: string) {
+    return request<unknown>(
+      `${ME_BASE}/deliveries/${encodeURIComponent(deliveryId)}/cod/complete-upi`,
+      { method: 'POST', body: {} }
+    ).then(mapPartnerDelivery);
   },
 
   markCodUpi(deliveryId: string, txnRef: string, note?: string) {
