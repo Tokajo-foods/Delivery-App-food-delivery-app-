@@ -233,6 +233,19 @@ export type MenuItem = {
   pendingRevision?: CatalogPendingRevision | null;
   rejectionReason?: string | null;
   submittedAt?: string | null;
+  /** Platform food type (Pizza, Biryani…) customers browse by. */
+  foodCategoryId?: string | null;
+};
+
+/** GET /food-categories row. */
+export type FoodCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  iconKey: string | null;
+  imageUrl: string | null;
+  sortOrder: number;
+  source: 'platform' | 'restaurant';
 };
 
 export type CreateCategoryPayload = {
@@ -258,6 +271,10 @@ export type CreateMenuItemPayload = {
   spiceLevel?: SpiceLevel | string;
   tags?: string[] | string;
   imageUrl?: string;
+  /** Picked platform food type. Required on create unless foodCategoryName is set. */
+  foodCategoryId?: string;
+  /** "Other" food type typed by the owner; the server matches or creates it. */
+  foodCategoryName?: string;
 };
 
 export type UpdateMenuItemPayload = Partial<CreateMenuItemPayload>;

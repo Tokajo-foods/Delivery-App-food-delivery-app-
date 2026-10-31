@@ -2,13 +2,10 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import {
   Camera,
-  ChevronDown,
-  Clock3,
   Copy,
   FolderOpen,
   Layers,
   Plus,
-  Trash2,
   UtensilsCrossed,
   X,
 } from 'lucide-react-native';
@@ -24,7 +21,6 @@ import {
   StyleSheet,
   Switch,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 
@@ -40,8 +36,11 @@ import {
   MenuItemRow,
   ModifierLibraryModal,
   Timed86Modal,
-  VegMark,
 } from '@/components/menu/MenuExtras';
+import { ItemFormModal } from '@/components/menu/item-form/ItemFormModal';
+import type { ItemModalState } from '@/components/menu/item-form/item-form-types';
+import { Field } from '@/components/menu/MenuField';
+import { menuModalStyles } from '@/components/menu/menu-modal-styles';
 import { SubmitVerificationButton } from '@/components/menu/SubmitVerificationButton';
 import { authTheme, PARTNER_BOTTOM_NAV_INSET } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
@@ -49,7 +48,6 @@ import { getApiErrorMessage } from '@/lib/errors';
 import {
   useCategoryItems,
   useMenuCategories,
-  useMenuItem,
   useMenuItems,
   useMenuMutations,
   useMenuSearch,
@@ -58,7 +56,7 @@ import {
 } from '@/lib/restaurant/menu-hooks';
 import { restaurantMenuApi } from '@/lib/restaurant/menu-api';
 import { CSV_TEMPLATE, parseMenuCsv } from '@/lib/restaurant/menu-csv';
-import type { MenuCategory, MenuItem, ModifierGroup, SpiceLevel } from '@/lib/restaurant/types';
+import type { MenuCategory, MenuItem, ModifierGroup } from '@/lib/restaurant/types';
 import { formatInr } from '@/lib/format/money';
 
 type CategoryModalState =
@@ -66,52 +64,10 @@ type CategoryModalState =
   | { mode: 'edit'; category: MenuCategory }
   | null;
 
-type ItemModalState =
-  | { mode: 'create'; categoryId: string }
-  | { mode: 'edit'; item: MenuItem }
-  | null;
-
-const SPICE_OPTIONS: SpiceLevel[] = ['none', 'mild', 'medium', 'hot'];
 const BULK_PRICE_CAP = 200;
 const BULK_IMPORT_CAP = 500;
 
 type BulkPriceMode = 'set' | 'percent' | 'amount';
-
-function Field({
-  label,
-  value,
-  onChangeText,
-  placeholder,
-  multiline,
-  keyboardType,
-  required,
-}: {
-  label: string;
-  value: string;
-  onChangeText: (value: string) => void;
-  placeholder?: string;
-  multiline?: boolean;
-  keyboardType?: 'default' | 'numeric' | 'decimal-pad';
-  required?: boolean;
-}) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>
-        {label}
-        {required ? ' *' : ''}
-      </Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={authTheme.textDim}
-        multiline={multiline}
-        keyboardType={keyboardType}
-        style={[styles.input, multiline && styles.textarea]}
-      />
-    </View>
-  );
-}
 
 export function MenuManager() {
   const {
@@ -891,6 +847,8 @@ export function MenuManager() {
                   isAvailable: payload.isAvailable,
                   spiceLevel: payload.spiceLevel,
                   tags: payload.tags,
+                  foodCategoryId: payload.foodCategoryId,
+                  foodCategoryName: payload.foodCategoryName,
                 },
               });
               if (!created?.id) {
@@ -930,6 +888,8 @@ export function MenuManager() {
                 isVeg: payload.isVeg,
                 spiceLevel: payload.spiceLevel,
                 tags: payload.tags,
+                foodCategoryId: payload.foodCategoryId,
+                foodCategoryName: payload.foodCategoryName,
               },
             });
             if (
@@ -1400,507 +1360,6 @@ function CategoryFormModal({
   );
 }
 
-function ItemFormModal({
-  state,
-  restaurantId,
-  categories,
-  onClose,
-  onSubmit,
-  onSubmitVerification,
-  submitBusy,
-  onVariants,
-  onTimed86,
-  onDuplicate,
-  onDelete,
-  onUploadPhoto,
-  onRemovePhoto,
-}: {
-  state: ItemModalState;
-  restaurantId: string;
-  categories: MenuCategory[];
-  onClose: () => void;
-  onSubmit: (payload: {
-    categoryId: string;
-    name: string;
-    description?: string;
-    price: number;
-    discountPrice?: number;
-    isVeg?: boolean;
-    isAvailable?: boolean;
-    spiceLevel?: string;
-    tags?: string;
-    image?: { uri: string; name: string; type: string };
-  }) => Promise<void>;
-  onSubmitVerification?: () => void;
-  submitBusy?: boolean;
-  onVariants?: (item: MenuItem) => void;
-  onTimed86?: (item: MenuItem) => void;
-  onDuplicate?: () => void;
-  onDelete?: () => void;
-  onUploadPhoto?: (file: {
-    uri: string;
-    name: string;
-    type: string;
-  }) => Promise<void>;
-  onRemovePhoto?: () => Promise<void>;
-}) {
-  const editId = state?.mode === 'edit' ? state.item.id : null;
-  const itemQuery = useMenuItem(restaurantId, editId);
-  const liveItem =
-    state?.mode === 'edit' ? (itemQuery.data ?? state.item) : null;
-
-  const [categoryId, setCategoryId] = useState('');
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('');
-  const [discountPrice, setDiscountPrice] = useState('');
-  const [isVeg, setIsVeg] = useState(true);
-  const [isAvailable, setIsAvailable] = useState(true);
-  const [spiceLevel, setSpiceLevel] = useState<SpiceLevel>('mild');
-  const [tags, setTags] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [pendingImage, setPendingImage] = useState<{
-    uri: string;
-    name: string;
-    type: string;
-  } | null>(null);
-
-  const applyItem = (item: MenuItem) => {
-    setCategoryId(item.categoryId ?? '');
-    setName(item.name);
-    setDescription(item.description ?? '');
-    setPrice(String(item.price ?? ''));
-    setDiscountPrice(item.discountPrice != null ? String(item.discountPrice) : '');
-    setIsVeg(item.isVeg !== false);
-    setIsAvailable(item.isAvailable !== false);
-    setSpiceLevel(
-      (item.spiceLevel as SpiceLevel) &&
-        SPICE_OPTIONS.includes(item.spiceLevel as SpiceLevel)
-        ? (item.spiceLevel as SpiceLevel)
-        : 'mild'
-    );
-    setTags((item.tags ?? []).join(', '));
-  };
-
-  useEffect(() => {
-    if (!state) return;
-    setCategoryOpen(false);
-    setPendingImage(null);
-    if (state.mode === 'edit') {
-      applyItem(state.item);
-    } else {
-      setCategoryId(state.categoryId || categories[0]?.id || '');
-      setName('');
-      setDescription('');
-      setPrice('');
-      setDiscountPrice('');
-      setIsVeg(true);
-      setIsAvailable(true);
-      setSpiceLevel('mild');
-      setTags('');
-    }
-  }, [state, categories]);
-
-  useEffect(() => {
-    if (editId && itemQuery.data?.id === editId) {
-      applyItem(itemQuery.data);
-    }
-  }, [editId, itemQuery.isFetched]);
-
-  const selectedCategoryName =
-    categories.find((category) => category.id === categoryId)?.name ||
-    (state?.mode === 'edit' ? state.item.categoryName : undefined) ||
-    'Select category';
-
-  const photoUri = pendingImage?.uri || liveItem?.imageUrl;
-  const variantCount = liveItem?.modifierGroups?.length ?? 0;
-
-  const pickPhoto = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permission needed', 'Allow photo library access to upload dish photos.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.85,
-    });
-    if (result.canceled || !result.assets[0]) return;
-    const asset = result.assets[0];
-    const file = {
-      uri: asset.uri,
-      name: asset.fileName ?? `item-${Date.now()}.jpg`,
-      type: asset.mimeType ?? 'image/jpeg',
-    };
-    if (state?.mode === 'edit' && onUploadPhoto) {
-      setSaving(true);
-      try {
-        await onUploadPhoto(file);
-      } catch (error) {
-        Alert.alert('Upload failed', getApiErrorMessage(error));
-      } finally {
-        setSaving(false);
-      }
-      return;
-    }
-    setPendingImage(file);
-  };
-
-  return (
-    <Modal visible={Boolean(state)} animationType="slide" transparent>
-      <View style={styles.modalBackdrop}>
-        <ScrollView contentContainerStyle={styles.modalScroll}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {state?.mode === 'edit' ? 'Edit dish' : 'Add dish'}
-              </Text>
-              <Pressable onPress={onClose}>
-                <X color={authTheme.textMuted} size={20} />
-              </Pressable>
-            </View>
-
-            {state?.mode === 'edit' && itemQuery.isError ? (
-              <Text style={styles.previewErrorText}>
-                {getApiErrorMessage(itemQuery.error, 'Could not load this dish')}
-              </Text>
-            ) : null}
-            {state?.mode === 'edit' && itemQuery.isFetching && !itemQuery.data ? (
-              <ActivityIndicator color={authTheme.brand} style={{ marginBottom: 12 }} />
-            ) : null}
-
-            {state?.mode === 'edit' && liveItem ? (
-              <>
-                <CatalogStatusBadge
-                  catalogStatus={liveItem.catalogStatus}
-                  pendingRevision={liveItem.pendingRevision}
-                  rejectionReason={liveItem.rejectionReason}
-                />
-                {onSubmitVerification ? (
-                  <SubmitVerificationButton
-                    catalogStatus={liveItem.catalogStatus}
-                    pendingRevision={liveItem.pendingRevision}
-                    rejectionReason={liveItem.rejectionReason}
-                    busy={submitBusy}
-                    onPress={onSubmitVerification}
-                  />
-                ) : null}
-              </>
-            ) : null}
-
-            <Pressable style={styles.dishPhoto} onPress={() => void pickPhoto()} disabled={saving}>
-              {photoUri ? (
-                <Image source={{ uri: photoUri }} style={styles.dishPhotoImg} contentFit="cover" />
-              ) : (
-                <>
-                  <Camera color={authTheme.textDim} size={22} />
-                  <Text style={styles.dishPhotoHint}>Add dish photo</Text>
-                </>
-              )}
-            </Pressable>
-            {state?.mode === 'edit' && liveItem?.imageUrl && onRemovePhoto ? (
-              <Pressable
-                onPress={() => {
-                  Alert.alert('Remove photo?', 'Customers will see no dish image.', [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Remove',
-                      style: 'destructive',
-                      onPress: () =>
-                        void onRemovePhoto().catch((error) =>
-                          Alert.alert('Could not remove', getApiErrorMessage(error))
-                        ),
-                    },
-                  ]);
-                }}
-                style={{ alignItems: 'center', marginBottom: 12 }}
-              >
-                <Text style={styles.modalCancelText}>Remove photo</Text>
-              </Pressable>
-            ) : null}
-
-            <Text style={styles.fieldLabel}>Veg / Non-veg</Text>
-            <View style={styles.vegPickRow}>
-              <Pressable
-                style={[styles.vegPick, isVeg && styles.vegPickOn]}
-                onPress={() => setIsVeg(true)}
-              >
-                <VegMark veg />
-                <Text style={styles.vegPickText}>Veg</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.vegPick, !isVeg && styles.vegPickNon]}
-                onPress={() => setIsVeg(false)}
-              >
-                <VegMark veg={false} />
-                <Text style={styles.vegPickText}>Non-veg</Text>
-              </Pressable>
-            </View>
-
-            <Text style={styles.fieldLabel}>
-              Category{state?.mode === 'create' ? ' *' : ''}
-            </Text>
-            {state?.mode === 'create' ? (
-              <View style={styles.dropdownWrap}>
-                <Pressable
-                  style={styles.dropdownTrigger}
-                  onPress={() => setCategoryOpen((open) => !open)}
-                >
-                  <Text
-                    style={[
-                      styles.dropdownValue,
-                      !categoryId && styles.dropdownPlaceholder,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {selectedCategoryName}
-                  </Text>
-                  <ChevronDown
-                    color={authTheme.textMuted}
-                    size={18}
-                    style={{
-                      transform: [{ rotate: categoryOpen ? '180deg' : '0deg' }],
-                    }}
-                  />
-                </Pressable>
-                {categoryOpen ? (
-                  <View style={styles.dropdownList}>
-                    {categories.length === 0 ? (
-                      <Text style={styles.dropdownEmpty}>
-                        No categories yet. Create one first.
-                      </Text>
-                    ) : (
-                      categories.map((category) => {
-                        const active = category.id === categoryId;
-                        return (
-                          <Pressable
-                            key={category.id}
-                            style={[
-                              styles.dropdownOption,
-                              active && styles.dropdownOptionOn,
-                            ]}
-                            onPress={() => {
-                              setCategoryId(category.id);
-                              setCategoryOpen(false);
-                            }}
-                          >
-                            <Text
-                              style={[
-                                styles.dropdownOptionText,
-                                active && styles.dropdownOptionTextOn,
-                              ]}
-                              numberOfLines={1}
-                            >
-                              {category.name}
-                            </Text>
-                          </Pressable>
-                        );
-                      })
-                    )}
-                  </View>
-                ) : null}
-              </View>
-            ) : (
-              <View style={[styles.dropdownTrigger, styles.dropdownReadonly]}>
-                <Text style={styles.dropdownValue} numberOfLines={1}>
-                  {selectedCategoryName}
-                </Text>
-              </View>
-            )}
-
-            <Field
-              label="Item Name"
-              required
-              value={name}
-              onChangeText={setName}
-              placeholder="e.g., Margherita Pizza"
-            />
-            <Field
-              label="Description"
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Describe this item"
-              multiline
-            />
-            <View style={styles.row2}>
-              <View style={{ flex: 1 }}>
-                <Field
-                  label="Price (₹)"
-                  required
-                  value={price}
-                  onChangeText={setPrice}
-                  placeholder="299"
-                  keyboardType="decimal-pad"
-                />
-              </View>
-              <View style={{ width: 12 }} />
-              <View style={{ flex: 1 }}>
-                <Field
-                  label="Offer price (₹)"
-                  value={discountPrice}
-                  onChangeText={setDiscountPrice}
-                  placeholder="Optional"
-                  keyboardType="decimal-pad"
-                />
-              </View>
-            </View>
-
-            <View style={styles.switchRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>In stock</Text>
-                <Text style={styles.fieldHint}>
-                  Off 86’s this dish. Use the clock for a timed sold-out.
-                </Text>
-              </View>
-              <Switch
-                value={isAvailable}
-                onValueChange={setIsAvailable}
-                trackColor={{ true: '#BBF7D0', false: '#FECACA' }}
-                thumbColor={isAvailable ? '#15803D' : '#B91C1C'}
-              />
-            </View>
-            {state?.mode === 'edit' && liveItem && onTimed86 ? (
-              <Pressable style={styles.variantBtn} onPress={() => onTimed86(liveItem)}>
-                <Clock3 color={authTheme.brand} size={16} />
-                <Text style={styles.variantBtnText}>
-                  {isAvailable ? 'Mark sold out until…' : 'Sold out · change 86 window'}
-                </Text>
-              </Pressable>
-            ) : null}
-
-            {state?.mode === 'edit' && liveItem && onVariants ? (
-              <Pressable style={styles.variantBtn} onPress={() => onVariants(liveItem)}>
-                <Layers color={authTheme.brand} size={16} />
-                <Text style={styles.variantBtnText}>
-                  {variantCount
-                    ? `${variantCount} customisation group(s)`
-                    : 'Add Size / crust / toppings'}
-                </Text>
-              </Pressable>
-            ) : null}
-
-            {state?.mode === 'edit' && (onDuplicate || onDelete) ? (
-              <View style={styles.dishToolRow}>
-                {onDuplicate ? (
-                  <Pressable style={styles.dishToolBtn} onPress={onDuplicate}>
-                    <Copy color={authTheme.textMuted} size={15} />
-                    <Text style={styles.dishToolText}>Copy dish</Text>
-                  </Pressable>
-                ) : null}
-                {onDelete ? (
-                  <Pressable style={styles.dishToolBtn} onPress={onDelete}>
-                    <Trash2 color="#B91C1C" size={15} />
-                    <Text style={[styles.dishToolText, { color: '#B91C1C' }]}>
-                      Delete
-                    </Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            ) : null}
-
-            <Text style={styles.fieldLabel}>Spice Level</Text>
-            <View style={styles.spiceRow}>
-              {SPICE_OPTIONS.map((option) => (
-                <Pressable
-                  key={option}
-                  style={[
-                    styles.spiceChip,
-                    spiceLevel === option && styles.spiceChipOn,
-                  ]}
-                  onPress={() => setSpiceLevel(option)}
-                >
-                  <Text
-                    style={[
-                      styles.spiceChipText,
-                      spiceLevel === option && styles.spiceChipTextOn,
-                    ]}
-                  >
-                    {option}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-
-            <Field
-              label="Tags (comma-separated)"
-              value={tags}
-              onChangeText={setTags}
-              placeholder="bestseller, cheese"
-            />
-
-            <View style={styles.modalActions}>
-              <Pressable style={styles.modalCancel} onPress={onClose}>
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                style={styles.modalPrimary}
-                disabled={
-                  saving ||
-                  !name.trim() ||
-                  !price.trim() ||
-                  (state?.mode === 'create' && !categoryId)
-                }
-                onPress={() => {
-                  const parsedPrice = Number(price);
-                  const parsedDiscount =
-                    discountPrice.trim() === ''
-                      ? undefined
-                      : Number(discountPrice);
-                  if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-                    Alert.alert('Invalid price', 'Enter a price greater than 0.');
-                    return;
-                  }
-                  if (
-                    parsedDiscount != null &&
-                    Number.isFinite(parsedDiscount) &&
-                    parsedDiscount >= parsedPrice
-                  ) {
-                    Alert.alert(
-                      'Offer price',
-                      'Offer price must be less than the original price.'
-                    );
-                    return;
-                  }
-                  if (state?.mode === 'create' && !categoryId) {
-                    Alert.alert('Select category', 'Choose a category for this item.');
-                    return;
-                  }
-                  setSaving(true);
-                  void onSubmit({
-                    categoryId:
-                      categoryId ||
-                      (state?.mode === 'edit' ? state.item.categoryId ?? '' : ''),
-                    name: name.trim(),
-                    description: description.trim() || undefined,
-                    price: parsedPrice,
-                    discountPrice: Number.isFinite(parsedDiscount)
-                      ? parsedDiscount
-                      : undefined,
-                    isVeg,
-                    isAvailable,
-                    spiceLevel,
-                    tags: tags.trim() || undefined,
-                    image: pendingImage ?? undefined,
-                  }).finally(() => setSaving(false));
-                }}
-              >
-                {saving ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.modalPrimaryText}>
-                    {state?.mode === 'edit' ? 'Save dish' : 'Add dish'}
-                  </Text>
-                )}
-              </Pressable>
-            </View>
-          </View>
-        </ScrollView>
-      </View>
-    </Modal>
-  );
-}
-
 function BulkImportModal({
   open,
   categories,
@@ -2186,7 +1645,7 @@ function ImageUploadModal({
   );
 }
 
-const styles = StyleSheet.create({
+const screenStyles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: '#FFF7F2',
@@ -2753,281 +2212,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(122,14,34,0.1)',
   },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(15,23,42,0.45)',
-    justifyContent: 'flex-end',
-  },
-  modalScroll: {
-    flexGrow: 1,
-    justifyContent: 'flex-end',
-  },
-  modalCard: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 18,
-    paddingBottom: 28,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  modalTitle: {
-    color: authTheme.text,
-    fontSize: 18,
-    fontFamily: fonts.extraBold,
-  },
-  dishPhoto: {
-    height: 140,
-    borderRadius: 16,
-    backgroundColor: authTheme.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-  },
-  dishPhotoImg: { width: '100%', height: '100%' },
-  dishPhotoHint: {
-    marginTop: 6,
-    color: authTheme.textMuted,
-    fontFamily: fonts.medium,
-    fontSize: 12,
-  },
-  vegPickRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
-  vegPick: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-    borderRadius: 12,
-    paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
-  },
-  vegPickOn: { borderColor: '#15803D', backgroundColor: '#F0FDF4' },
-  vegPickNon: { borderColor: '#B91C1C', backgroundColor: '#FEF2F2' },
-  vegPickText: { color: authTheme.text, fontFamily: fonts.bold, fontSize: 13 },
-  variantBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-    backgroundColor: authTheme.surface,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginBottom: 12,
-  },
-  variantBtnText: { color: authTheme.text, fontFamily: fonts.medium, fontSize: 13, flex: 1 },
-  dishToolRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  dishToolBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-    borderRadius: 12,
-    paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
-  },
-  dishToolText: { color: authTheme.text, fontFamily: fonts.bold, fontSize: 13 },
-  priceModeRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  priceModeChip: {
-    flex: 1,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-    paddingVertical: 8,
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  priceModeChipOn: {
-    borderColor: authTheme.brand,
-    backgroundColor: authTheme.brandSoft,
-  },
-  priceModeChipText: {
-    color: authTheme.textMuted,
-    fontFamily: fonts.bold,
-    fontSize: 12,
-  },
-  priceModeChipTextOn: { color: authTheme.brand },
-  field: { marginBottom: 12 },
-  fieldLabel: {
-    color: authTheme.text,
-    fontSize: 13,
-    fontFamily: fonts.semiBold,
-    marginBottom: 6,
-  },
-  fieldHint: {
-    color: authTheme.textMuted,
-    fontSize: 12,
-    fontFamily: fonts.medium,
-    marginBottom: 10,
-    lineHeight: 16,
-  },
-  dropdownWrap: {
-    marginBottom: 12,
-    zIndex: 20,
-  },
-  dropdownTrigger: {
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  dropdownValue: {
-    flex: 1,
-    color: authTheme.text,
-    fontSize: 14,
-    fontFamily: fonts.medium,
-  },
-  dropdownPlaceholder: {
-    color: authTheme.textDim,
-  },
-  dropdownList: {
-    marginTop: 6,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  dropdownEmpty: {
-    padding: 12,
-    color: authTheme.textMuted,
-    fontSize: 13,
-    fontFamily: fonts.medium,
-  },
-  dropdownOption: {
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E2E8F0',
-  },
-  dropdownOptionOn: {
-    backgroundColor: '#FDF2F4',
-  },
-  dropdownOptionText: {
-    color: authTheme.text,
-    fontSize: 14,
-    fontFamily: fonts.medium,
-  },
-  dropdownOptionTextOn: {
-    color: authTheme.brand,
-    fontFamily: fonts.semiBold,
-  },
-  dropdownReadonly: {
-    marginBottom: 12,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    color: authTheme.text,
-    fontSize: 14,
-    fontFamily: fonts.medium,
-  },
-  textarea: {
-    minHeight: 88,
-    textAlignVertical: 'top',
-  },
-  row2: { flexDirection: 'row' },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  spiceRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 12,
-  },
-  spiceChip: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
-  },
-  spiceChipOn: {
-    backgroundColor: authTheme.brandSoft,
-    borderColor: authTheme.brand,
-  },
-  spiceChipText: {
-    color: authTheme.textMuted,
-    fontSize: 12,
-    fontFamily: fonts.semiBold,
-    textTransform: 'capitalize',
-  },
-  spiceChipTextOn: { color: authTheme.brand },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
-  },
-  modalCancel: {
-    flex: 1,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-  },
-  modalCancelText: {
-    color: authTheme.text,
-    fontSize: 13,
-    fontFamily: fonts.bold,
-  },
-  modalSecondary: {
-    flex: 1,
-    borderRadius: 12,
-    backgroundColor: '#1E293B',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-  },
-  modalSecondaryText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontFamily: fonts.bold,
-  },
-  modalPrimary: {
-    flex: 1,
-    borderRadius: 12,
-    backgroundColor: authTheme.brand,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    minHeight: 46,
-  },
-  modalPrimaryText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontFamily: fonts.bold,
-  },
   hintBox: {
     backgroundColor: '#FFF7ED',
     borderRadius: 12,
@@ -3127,11 +2311,6 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
   },
-  previewErrorText: {
-    color: '#B91C1C',
-    fontSize: 12,
-    fontFamily: fonts.medium,
-  },
   uploadBox: {
     borderWidth: 1,
     borderStyle: 'dashed',
@@ -3155,3 +2334,5 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
   },
 });
+
+const styles = { ...screenStyles, ...menuModalStyles };

@@ -80,6 +80,16 @@ function extractError(error: unknown, fallback: string) {
   return fallback;
 }
 
+/** A typed "Other" name wins over a picked id; the server resolves either. */
+function foodCategoryRef(
+  payload: Pick<CreateMenuItemPayload, 'foodCategoryId' | 'foodCategoryName'>
+): { foodCategoryId?: string; foodCategoryName?: string } {
+  const name = payload.foodCategoryName?.trim();
+  if (name) return { foodCategoryName: name };
+  if (payload.foodCategoryId) return { foodCategoryId: payload.foodCategoryId };
+  return {};
+}
+
 function throwMenuError(error: unknown, fallback: string): never {
   throw new PartnerApiError(extractError(error, fallback), getApiErrorCode(error));
 }
@@ -338,6 +348,10 @@ function mapItem(
       undefined,
     categoryId: categoryIdRaw || undefined,
     categoryName: categoryName || undefined,
+    foodCategoryId:
+      extractId(asRecord(row.foodCategoryId) ?? undefined) ||
+      (typeof row.foodCategoryId === 'string' ? row.foodCategoryId : '') ||
+      null,
     isVeg:
       row.isVeg !== undefined
         ? Boolean(row.isVeg)
@@ -749,6 +763,7 @@ export const restaurantMenuApi = {
         ...(payload.discountPrice != null
           ? { discountedPrice: payload.discountPrice }
           : {}),
+        ...foodCategoryRef(payload),
       };
       const res = await api.post<Envelope<Record<string, unknown>>>(
         `${RESTAURANT_BASE}/${restaurantId}/categories/${categoryId}/items`,
@@ -783,6 +798,7 @@ export const restaurantMenuApi = {
       if (payload.discountPrice !== undefined) {
         body.discountedPrice = payload.discountPrice;
       }
+      Object.assign(body, foodCategoryRef(payload));
 
       const res = await api.put<Envelope<Record<string, unknown>>>(
         `${RESTAURANT_BASE}/${restaurantId}/items/${itemId}`,

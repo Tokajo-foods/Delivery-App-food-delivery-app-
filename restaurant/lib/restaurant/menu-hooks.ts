@@ -12,6 +12,7 @@ import {
   useAppIsActive,
 } from '@/lib/live-query';
 import { useMyRestaurantId } from '@/lib/order/hooks';
+import { foodCategoryKeys } from '@/lib/restaurant/food-categories-hooks';
 import { restaurantMenuApi } from '@/lib/restaurant/menu-api';
 import type {
   AttachModifiersPayload,
@@ -435,7 +436,12 @@ export function useMenuMutations(restaurantId: string) {
       categoryId: string;
       payload: CreateMenuItemPayload;
     }) => restaurantMenuApi.createItem(restaurantId, categoryId, payload),
-    onSuccess: () => invalidateMenu(queryClient, restaurantId),
+    onSuccess: (_item, { payload }) => {
+      if (payload.foodCategoryName) {
+        void queryClient.invalidateQueries({ queryKey: foodCategoryKeys.all });
+      }
+      return invalidateMenu(queryClient, restaurantId);
+    },
   });
 
   const updateItem = useMutation({
@@ -446,7 +452,12 @@ export function useMenuMutations(restaurantId: string) {
       itemId: string;
       payload: UpdateMenuItemPayload;
     }) => restaurantMenuApi.updateItem(restaurantId, itemId, payload),
-    onSuccess: () => invalidateMenu(queryClient, restaurantId),
+    onSuccess: (_item, { payload }) => {
+      if (payload.foodCategoryName) {
+        void queryClient.invalidateQueries({ queryKey: foodCategoryKeys.all });
+      }
+      return invalidateMenu(queryClient, restaurantId);
+    },
   });
 
   const deleteItem = useMutation({
