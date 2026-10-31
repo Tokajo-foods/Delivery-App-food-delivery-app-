@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 
 import { FoodCategoryPicker } from '@/components/menu/item-form/FoodCategoryPicker';
+import { ItemAddonsSection } from '@/components/menu/item-form/ItemAddonsSection';
 import { ItemEditTools } from '@/components/menu/item-form/ItemEditTools';
 import { ItemPhotoField } from '@/components/menu/item-form/ItemPhotoField';
 import {
@@ -17,12 +18,15 @@ import { Field } from '@/components/menu/MenuField';
 import { menuModalStyles as styles } from '@/components/menu/menu-modal-styles';
 import { authTheme } from '@/constants/auth-theme';
 import { getApiErrorMessage } from '@/lib/errors';
+import { findKitchenCategoryByName } from '@/lib/restaurant/ensure-kitchen-category';
+import { useFoodCategories } from '@/lib/restaurant/food-categories-hooks';
 import { useMenuItem } from '@/lib/restaurant/menu-hooks';
-import type { MenuItem } from '@/lib/restaurant/types';
+import type { MenuCategory, MenuItem } from '@/lib/restaurant/types';
 
 export function ItemFormModal({
   state,
   restaurantId,
+  kitchenCategories,
   onClose,
   onSubmit,
   onVariants,
@@ -34,6 +38,7 @@ export function ItemFormModal({
 }: {
   state: ItemModalState;
   restaurantId: string;
+  kitchenCategories: MenuCategory[];
   onClose: () => void;
   onSubmit: (payload: ItemFormPayload) => Promise<void>;
   onVariants?: (item: MenuItem) => void;
@@ -52,6 +57,16 @@ export function ItemFormModal({
     fetched: itemQuery.isFetched,
   });
   const [saving, setSaving] = useState(false);
+  const foodQuery = useFoodCategories();
+  const foodLabel = form.foodType.other
+    ? form.foodType.otherName.trim()
+    : foodQuery.data?.find((row) => row.id === form.foodType.id)?.name ??
+      liveItem?.categoryName ??
+      '';
+  const kitchenCategory =
+    findKitchenCategoryByName(kitchenCategories, foodLabel) ??
+    kitchenCategories.find((row) => row.id === liveItem?.categoryId) ??
+    null;
 
   const onPhotoPicked = async (file: ItemPhotoFile) => {
     if (!liveItem || !onUploadPhoto) {
@@ -173,6 +188,18 @@ export function ItemFormModal({
                 );
               })}
             </View>
+
+            <ItemAddonsSection
+              restaurantId={restaurantId}
+              kitchenCategory={kitchenCategory}
+              foodLabel={foodLabel}
+              selectedIds={form.addonGroupIds}
+              attached={liveItem?.modifierGroups ?? []}
+              drafts={form.newAddons}
+              disabled={saving}
+              onToggle={form.toggleAddon}
+              onDraftsChange={form.setNewAddons}
+            />
 
             <Field label="Tags (comma-separated)" value={form.tags} onChangeText={form.setTags} placeholder="bestseller, cheese" />
 

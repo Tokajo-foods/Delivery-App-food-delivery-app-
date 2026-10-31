@@ -5,6 +5,7 @@ import {
   EMPTY_FOOD_TYPE,
   SPICE_OPTIONS,
   type FoodTypeValue,
+  type ItemAddonDraft,
   type ItemFormPayload,
   type ItemModalState,
   type ItemPhotoFile,
@@ -38,6 +39,8 @@ export function useItemForm({
   const [foodType, setFoodType] = useState<FoodTypeValue>(EMPTY_FOOD_TYPE);
   const [savedFoodTypeId, setSavedFoodTypeId] = useState('');
   const [pendingImage, setPendingImage] = useState<ItemPhotoFile | null>(null);
+  const [addonGroupIds, setAddonGroupIds] = useState<string[]>([]);
+  const [newAddons, setNewAddons] = useState<ItemAddonDraft[]>([]);
 
   const applyItem = (item: MenuItem) => {
     setName(item.name);
@@ -50,6 +53,10 @@ export function useItemForm({
     setTags((item.tags ?? []).join(', '));
     setFoodType({ ...EMPTY_FOOD_TYPE, id: item.foodCategoryId ?? '' });
     setSavedFoodTypeId(item.foodCategoryId ?? '');
+    setAddonGroupIds(
+      (item.modifierGroups ?? []).map((g) => g.id).filter(Boolean)
+    );
+    setNewAddons([]);
   };
 
   useEffect(() => {
@@ -73,6 +80,8 @@ export function useItemForm({
         : EMPTY_FOOD_TYPE
     );
     setSavedFoodTypeId('');
+    setAddonGroupIds([]);
+    setNewAddons([]);
   }, [state]);
 
   useEffect(() => {
@@ -124,8 +133,19 @@ export function useItemForm({
       spiceLevel,
       tags: tags.trim() || undefined,
       image: pendingImage ?? undefined,
+      addonGroupIds,
+      newAddons,
       ...foodRef,
     };
+  };
+
+  const toggleAddon = (groupId: string, on: boolean) => {
+    setAddonGroupIds((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(groupId);
+      else next.delete(groupId);
+      return [...next];
+    });
   };
 
   return {
@@ -140,6 +160,9 @@ export function useItemForm({
     tags, setTags,
     foodType, setFoodType,
     pendingImage, setPendingImage,
+    addonGroupIds,
+    newAddons, setNewAddons,
+    toggleAddon,
     canSubmit,
     buildPayload,
   };

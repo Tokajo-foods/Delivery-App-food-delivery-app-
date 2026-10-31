@@ -24,6 +24,17 @@ export type ItemFormPayload = {
   foodCategoryId?: string;
   foodCategoryName?: string;
   image?: ItemPhotoFile;
+  /** Category add-on groups ticked for this dish. */
+  addonGroupIds?: string[];
+  /** New groups created on the form before a kitchen section exists. */
+  newAddons?: ItemAddonDraft[];
+};
+
+export type ItemAddonDraft = {
+  name: string;
+  isRequired: boolean;
+  maxSelect: number;
+  options: Array<{ name: string; price: number }>;
 };
 
 export const SPICE_OPTIONS: SpiceLevel[] = ['none', 'mild', 'medium', 'hot'];

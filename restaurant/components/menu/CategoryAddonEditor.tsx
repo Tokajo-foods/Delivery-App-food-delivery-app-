@@ -26,14 +26,17 @@ type CategoryAddonEditorProps = {
   restaurantId: string;
   category: MenuCategory;
   editing: ModifierGroup | null;
+  /** When false, return the draft without calling the API (dish not saved yet). */
+  persist?: boolean;
   onCancel: () => void;
-  onSaved: () => void;
+  onSaved: (group: ModifierGroup) => void;
 };
 
 export function CategoryAddonEditor({
   restaurantId,
   category,
   editing,
+  persist = true,
   onCancel,
   onSaved,
 }: CategoryAddonEditorProps) {
@@ -77,28 +80,42 @@ export function CategoryAddonEditor({
       return;
     }
     const max = Math.max(1, Number(maxSelect) || 1);
+    const optionRows = cleaned.map((o) => ({
+      name: o.name,
+      price: Math.max(0, o.price),
+      isAvailable: true,
+    }));
+    if (!persist) {
+      onSaved({
+        id: '',
+        name: trimmed,
+        categoryId: null,
+        isRequired: required,
+        minSelect: required ? 1 : 0,
+        maxSelect: max,
+        options: optionRows.map((o, i) => ({ id: `draft-${i}`, ...o })),
+      });
+      return;
+    }
     const payload: CreateModifierGroupPayload = {
       name: trimmed,
       categoryId: category.id,
       isRequired: required,
       minSelect: required ? 1 : 0,
       maxSelect: max,
-      options: cleaned.map((o) => ({
-        name: o.name,
-        price: Math.max(0, o.price),
-        isAvailable: true,
-      })),
+      options: optionRows,
     };
     try {
       if (editing) {
-        await mutations.updateModifierGroup.mutateAsync({
+        const updated = await mutations.updateModifierGroup.mutateAsync({
           groupId: editing.id,
           payload,
         });
+        onSaved(updated);
       } else {
-        await mutations.createModifierGroup.mutateAsync(payload);
+        const created = await mutations.createModifierGroup.mutateAsync(payload);
+        onSaved(created);
       }
-      onSaved();
     } catch (err) {
       setError(getApiErrorMessage(err, 'Could not save add-on'));
     }

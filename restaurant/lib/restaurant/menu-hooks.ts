@@ -306,11 +306,15 @@ export function useUnavailableIds(restaurantId: string) {
   });
 }
 
-export function useModifierGroups(restaurantId: string, categoryId?: string) {
+export function useModifierGroups(
+  restaurantId: string,
+  categoryId?: string,
+  enabled = true
+) {
   return useQuery({
     queryKey: menuKeys.modifiers(restaurantId, categoryId),
     queryFn: () => restaurantMenuApi.listModifierGroups(restaurantId, categoryId),
-    enabled: Boolean(restaurantId),
+    enabled: Boolean(restaurantId) && enabled,
     staleTime: 30_000,
   });
 }

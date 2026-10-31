@@ -58,6 +58,7 @@ import {
   useUnavailableIds,
 } from '@/lib/restaurant/menu-hooks';
 import { restaurantMenuApi } from '@/lib/restaurant/menu-api';
+import { persistItemAddons } from '@/lib/restaurant/persist-item-addons';
 import { CSV_TEMPLATE, parseMenuCsv } from '@/lib/restaurant/menu-csv';
 import type { MenuCategory, MenuItem, ModifierGroup } from '@/lib/restaurant/types';
 import { formatInr } from '@/lib/format/money';
@@ -742,6 +743,7 @@ export function MenuManager() {
       <ItemFormModal
         state={itemModal}
         restaurantId={restaurantId}
+        kitchenCategories={categories}
         onClose={() => setItemModal(null)}
         onVariants={openModifiers}
         onTimed86={(item) => setTimed86Item(item)}
@@ -816,17 +818,37 @@ export function MenuManager() {
                   isAvailable: false,
                 });
               }
+              await persistItemAddons({
+                kitchenCategoryId: kitchen.id,
+                itemId: created.id,
+                selectedGroupIds: payload.addonGroupIds ?? [],
+                drafts: payload.newAddons ?? [],
+                createGroup: (body) => mutations.createModifierGroup.mutateAsync(body),
+                attach: (id, groupIds) =>
+                  mutations.attachItemModifiers.mutateAsync({
+                    itemId: id,
+                    payload: { attachments: groupIds.map((groupId) => ({ groupId })) },
+                  }),
+              });
               setSelectedCategoryId(
                 saved.foodCategoryId || payload.foodCategoryId || null
               );
               setItemModal({ mode: 'edit', item: saved });
-              Alert.alert(
-                'Dish added',
-                'Add a photo and Size/crust variants if customers should see them.'
-              );
+              Alert.alert('Dish added', 'Customers will see the add-ons you ticked.');
               return;
             }
             const itemId = itemModal.item.id;
+            const foodName =
+              payload.foodCategoryName?.trim() ||
+              foodCategories.find((row) => row.id === payload.foodCategoryId)?.name ||
+              itemModal.item.categoryName ||
+              'Menu';
+            const kitchen =
+              findKitchenCategoryByName(categories, foodName) ??
+              (itemModal.item.categoryId
+                ? categories.find((row) => row.id === itemModal.item.categoryId)
+                : undefined) ??
+              (await mutations.createCategory.mutateAsync({ name: foodName }));
             await mutations.updateItem.mutateAsync({
               itemId,
               payload: {
@@ -848,6 +870,20 @@ export function MenuManager() {
               await mutations.setAvailability.mutateAsync({
                 itemId,
                 isAvailable: payload.isAvailable,
+              });
+            }
+            if (kitchen?.id) {
+              await persistItemAddons({
+                kitchenCategoryId: kitchen.id,
+                itemId,
+                selectedGroupIds: payload.addonGroupIds ?? [],
+                drafts: payload.newAddons ?? [],
+                createGroup: (body) => mutations.createModifierGroup.mutateAsync(body),
+                attach: (id, groupIds) =>
+                  mutations.attachItemModifiers.mutateAsync({
+                    itemId: id,
+                    payload: { attachments: groupIds.map((groupId) => ({ groupId })) },
+                  }),
               });
             }
             setItemModal(null);
