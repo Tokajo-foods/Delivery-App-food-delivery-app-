@@ -217,7 +217,7 @@ export function FinanceManager() {
         title="Finance"
         subtitle={
           restaurantName
-            ? `${restaurantName} · 15-day settlement hold after delivery`
+            ? `${restaurantName} · withdraw completed earnings anytime`
             : 'Wallet, withdrawals, settlements, and fees'
         }
         showBack

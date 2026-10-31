@@ -5,6 +5,7 @@ import { refreshInboxQueries } from '@/lib/notification/inbox-list-patch';
 import { restaurantOrderKeys } from '@/lib/order/hooks';
 import type { KitchenKdsBoard } from '@/lib/order/owner-api';
 import { earningsKeys } from '@/lib/restaurant/earnings-keys';
+import { financeKeys } from '@/lib/restaurant/finance-hooks';
 
 import {
   asRecord,
@@ -19,11 +20,16 @@ export type { KitchenInboundEvent };
 
 /** Wallet credit lands shortly after the status sync, so refetch once more after a beat. */
 function refreshEarnings(queryClient: QueryClient, restaurantId: string) {
-  const invalidate = () =>
+  const invalidate = () => {
     void queryClient.invalidateQueries({
       queryKey: earningsKeys.restaurant(restaurantId),
       refetchType: 'active',
     });
+    void queryClient.invalidateQueries({
+      queryKey: financeKeys.restaurant(restaurantId),
+      refetchType: 'active',
+    });
+  };
   invalidate();
   setTimeout(invalidate, 3_000);
 }

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { restaurantFinanceApi } from '@/lib/restaurant/finance-api';
+import { earningsKeys } from '@/lib/restaurant/earnings-keys';
 import {
   LIVE_INTERVALS,
   liveRefetchInterval,
@@ -207,9 +208,13 @@ export function useWithdrawRestaurantEarnings() {
       if (!restaurantId) throw new Error('Restaurant is not loaded yet');
       return restaurantFinanceApi.requestWithdraw(restaurantId, input);
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      queryClient.setQueryData(financeKeys.wallet(restaurantId), result.wallet);
       void queryClient.invalidateQueries({
         queryKey: financeKeys.restaurant(restaurantId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: earningsKeys.restaurant(restaurantId),
       });
     },
   });
