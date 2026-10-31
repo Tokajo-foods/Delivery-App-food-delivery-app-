@@ -57,15 +57,15 @@ function formatDateTime(iso?: string | null) {
 function channelLabel(txn: RestaurantWalletTxn): string {
   const method = String(txn.paymentMethod ?? '').toLowerCase();
   const type = String(txn.deliveryType ?? '').toLowerCase();
-  if (method === 'cod' || method === 'pay_at_counter' || method === 'cash') {
-    return type === 'pickup' ? 'COD takeaway · store collected' : 'COD · store collected';
+  if (txn.withdrawable === false || method === 'pay_at_counter' || method === 'counter') {
+    return 'Pay at counter · not withdrawable';
   }
-  if (txn.withdrawable === false) return 'Store collected · not withdrawable';
-  if (type === 'pickup') return 'Online takeaway';
+  if (type === 'pickup') return method === 'cod' ? 'Takeaway' : 'Online takeaway';
+  if (method === 'cod') return 'COD delivery';
   if (method === 'upi' || method === 'card' || method === 'wallet') {
     return 'Online delivery';
   }
-  return 'Paid to Tokajo';
+  return 'Completed order';
 }
 
 function txnTitle(txn: RestaurantWalletTxn): string {

@@ -42,10 +42,9 @@ export function SettlementSummaryStrip({
     <View style={styles.wrap}>
       <Text style={styles.title}>Earnings overview</Text>
       <Text style={styles.hint}>
-        Completed delivery, COD, and online takeaway orders count as earnings.
-        Pay-at-counter and COD stay in the list — they are not withdrawable
-        because Tokajo never collected that cash. Withdraw only the amount
-        customers paid Tokajo online.
+        Every completed delivery, COD, and online takeaway order counts as
+        earnings and can be withdrawn. Pay-at-counter / dine-in cash stays in
+        the list only — it is not withdrawable.
       </Text>
       <View style={styles.grid}>
         <Cell

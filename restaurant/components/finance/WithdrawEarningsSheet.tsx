@@ -78,8 +78,8 @@ export function WithdrawEarningsSheet({ visible, available, onClose }: Props) {
         <View style={styles.sheet}>
           <Text style={styles.title}>Request earnings</Text>
           <Text style={styles.copy}>
-            Available now {formatCurrency(available)}. Enter the amount you want
-            and the UPI id that should receive it. Razorpay sends the payout.
+            Available now {formatCurrency(available)} from completed orders
+            (not pay-at-counter). Enter the amount and UPI id. Razorpay sends it.
           </Text>
           <Text style={styles.label}>Amount (₹)</Text>
           <TextInput
