@@ -38,10 +38,22 @@ type Envelope<T> = {
   };
 };
 
+function idOf(value: unknown): string {
+  if (value == null) return '';
+  if (typeof value === 'string' || typeof value === 'number') {
+    const text = String(value).trim();
+    return text && text !== '[object Object]' ? text : '';
+  }
+  if (typeof value !== 'object') return '';
+  const rec = value as Record<string, unknown>;
+  const nested = rec._id ?? rec.id ?? rec.$oid ?? rec.oid;
+  if (nested != null && nested !== value) return idOf(nested);
+  return '';
+}
+
 function extractId(data: Record<string, unknown> | undefined) {
   if (!data) return '';
-  const raw = data._id ?? data.id ?? data.categoryId ?? data.itemId;
-  return raw != null && String(raw).trim() ? String(raw) : '';
+  return idOf(data._id ?? data.id ?? data.categoryId ?? data.itemId);
 }
 
 function extractError(error: unknown, fallback: string) {
@@ -311,7 +323,7 @@ function mapItem(
     asRecord(row.category) ?? asRecord(row.menuCategory) ?? null;
 
   const categoryIdRaw =
-    (row.categoryId != null ? String(row.categoryId) : '') ||
+    idOf(row.categoryId) ||
     extractId(categoryObj ?? undefined) ||
     (typeof row.category === 'string' ? row.category : '') ||
     fallbackCategory?.id ||
@@ -346,10 +358,7 @@ function mapItem(
       undefined,
     categoryId: categoryIdRaw || undefined,
     categoryName: categoryName || undefined,
-    foodCategoryId:
-      extractId(asRecord(row.foodCategoryId) ?? undefined) ||
-      (typeof row.foodCategoryId === 'string' ? row.foodCategoryId : '') ||
-      null,
+    foodCategoryId: idOf(row.foodCategoryId) || null,
     isVeg:
       row.isVeg !== undefined
         ? Boolean(row.isVeg)

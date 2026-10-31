@@ -207,7 +207,7 @@ async function loadFullMenu(restaurantId: string): Promise<FullMenu> {
   ]);
 
   let items = menu.items;
-  if (!itemsLookValid(items)) {
+  if (!itemsLookValid(items) || items.some((item) => !item.foodCategoryId)) {
     const flatItems = await restaurantMenuApi
       .getItems(restaurantId)
       .catch(() => [] as MenuItem[]);

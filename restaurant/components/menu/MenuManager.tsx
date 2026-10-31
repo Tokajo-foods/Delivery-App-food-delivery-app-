@@ -117,9 +117,13 @@ export function MenuManager() {
   const allItems = itemsQuery.data ?? [];
   const items = useMemo(() => {
     if (!selectedCategoryId) return allItems;
-    const food = selectedCategory ?? { id: selectedCategoryId, name: '' };
+    const food =
+      selectedCategory ??
+      foodCategories.find((category) => category.id === selectedCategoryId) ??
+      categories.find((category) => category.id === selectedCategoryId) ??
+      { id: selectedCategoryId, name: '' };
     return allItems.filter((item) => itemMatchesFoodCategory(item, food));
-  }, [allItems, selectedCategory, selectedCategoryId]);
+  }, [allItems, selectedCategory, selectedCategoryId, foodCategories, categories]);
   const mutations = useMenuMutations(restaurantId);
   const searchQuery = useMenuSearch(restaurantId, search);
   const unavailableQuery = useUnavailableIds(restaurantId);
