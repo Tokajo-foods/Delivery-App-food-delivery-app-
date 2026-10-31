@@ -22,7 +22,7 @@ function mapFoodCategory(row: Record<string, unknown>): FoodCategory | null {
 }
 
 export const foodCategoriesApi = {
-  /** GET /food-categories — active platform food types, sorted for the picker. */
+  /** GET /food-categories — same list as the customer home category row. */
   list: async (): Promise<FoodCategory[]> => {
     try {
       const res = await api.get<Envelope<Record<string, unknown>[]>>(FOOD_CATEGORIES_PATH);

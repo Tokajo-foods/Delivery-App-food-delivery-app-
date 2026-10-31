@@ -3,7 +3,6 @@ import * as ImagePicker from 'expo-image-picker';
 import {
   Camera,
   Copy,
-  FolderOpen,
   Layers,
   Plus,
   UtensilsCrossed,
@@ -45,8 +44,12 @@ import { SubmitVerificationButton } from '@/components/menu/SubmitVerificationBu
 import { authTheme, PARTNER_BOTTOM_NAV_INSET } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
 import { getApiErrorMessage } from '@/lib/errors';
+import { useFoodCategories } from '@/lib/restaurant/food-categories-hooks';
 import {
-  useCategoryItems,
+  findKitchenCategoryByName,
+  itemMatchesFoodCategory,
+} from '@/lib/restaurant/ensure-kitchen-category';
+import {
   useMenuCategories,
   useMenuItems,
   useMenuMutations,
@@ -79,8 +82,10 @@ export function MenuManager() {
     restaurantName,
     error: categoriesError,
   } = useMenuCategories();
+  const foodCategoriesQuery = useFoodCategories(Boolean(restaurantId));
+  const foodCategories = foodCategoriesQuery.data ?? [];
 
-  /** null = All items (same default as the customer website) */
+  /** null = All items; id is a customer home food category */
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   const [categoryModal, setCategoryModal] = useState<CategoryModalState>(null);
@@ -104,16 +109,16 @@ export function MenuManager() {
   const selectedCategory =
     selectedCategoryId == null
       ? null
-      : categories.find((category) => category.id === selectedCategoryId) ?? null;
+      : foodCategories.find((category) => category.id === selectedCategoryId) ?? null;
   const viewingAll = selectedCategoryId == null;
 
-  const itemsQuery = useMenuItems(selectedCategoryId);
-  const categoryItemsQuery = useCategoryItems(restaurantId, selectedCategoryId);
-  const menuItems = itemsQuery.data ?? [];
-  const items =
-    selectedCategoryId && categoryItemsQuery.isSuccess
-      ? (categoryItemsQuery.data ?? [])
-      : menuItems;
+  const itemsQuery = useMenuItems(null);
+  const allItems = itemsQuery.data ?? [];
+  const items = useMemo(() => {
+    if (!selectedCategoryId) return allItems;
+    const food = selectedCategory ?? { id: selectedCategoryId, name: '' };
+    return allItems.filter((item) => itemMatchesFoodCategory(item, food));
+  }, [allItems, selectedCategory, selectedCategoryId]);
   const mutations = useMenuMutations(restaurantId);
   const searchQuery = useMenuSearch(restaurantId, search);
   const unavailableQuery = useUnavailableIds(restaurantId);
@@ -121,7 +126,7 @@ export function MenuManager() {
   const soldOutIdList = unavailableQuery.data?.itemIds;
   const soldOutIds = useMemo(() => new Set(soldOutIdList ?? []), [soldOutIdList]);
   const searching = search.trim().length >= 2;
-  const canReorder = Boolean(selectedCategoryId) && !searching && !soldOutOnly;
+  const canReorder = false;
   const displayedItems = useMemo(() => {
     const source = searching ? (searchQuery.data ?? []) : items;
     if (!soldOutOnly) return source;
@@ -129,16 +134,6 @@ export function MenuManager() {
       (item) => item.isAvailable === false || soldOutIds.has(item.id)
     );
   }, [searching, searchQuery.data, items, soldOutOnly, soldOutIds]);
-
-  useEffect(() => {
-    if (
-      selectedCategoryId &&
-      categories.length &&
-      !categories.some((category) => category.id === selectedCategoryId)
-    ) {
-      setSelectedCategoryId(null);
-    }
-  }, [categories, selectedCategoryId]);
 
   useEffect(() => {
     setSelectedItemIds([]);
@@ -167,16 +162,14 @@ export function MenuManager() {
 
   const itemCountByCategory = useMemo(() => {
     const map = new Map<string, number>();
-    for (const category of categories) {
-      if (typeof category.itemCount === 'number') {
-        map.set(category.id, category.itemCount);
-      }
-    }
-    if (selectedCategoryId) {
-      map.set(selectedCategoryId, items.length);
+    for (const category of foodCategories) {
+      map.set(
+        category.id,
+        allItems.filter((item) => itemMatchesFoodCategory(item, category)).length
+      );
     }
     return map;
-  }, [categories, items.length, selectedCategoryId]);
+  }, [foodCategories, allItems]);
 
   const fail = (title: string, error: unknown) => {
     Alert.alert(title, getApiErrorMessage(error));
@@ -481,14 +474,15 @@ export function MenuManager() {
     );
   }
 
-  const allCount = viewingAll
-    ? items.length
-    : categories.reduce((sum, category) => sum + (category.itemCount ?? 0), 0);
+  const allCount = allItems.length;
   const itemsLoading = searching
     ? searchQuery.isFetching && displayedItems.length === 0
-    : selectedCategoryId
-      ? categoryItemsQuery.isLoading && !categoryItemsQuery.data
-      : itemsQuery.isLoading;
+    : itemsQuery.isLoading;
+  const openCreateDish = () =>
+    setItemModal({
+      mode: 'create',
+      foodCategoryId: selectedCategoryId ?? undefined,
+    });
 
   return (
     <View style={styles.screen}>
@@ -506,10 +500,10 @@ export function MenuManager() {
         search={search}
         onSearch={setSearch}
         onImport={() => setBulkOpen(true)}
-        onAddCategory={() => setCategoryModal({ mode: 'create' })}
-        importDisabled={!categories.length}
-        categoriesLoading={categoriesLoading}
-        categories={categories}
+        onAddItem={openCreateDish}
+        importDisabled={!restaurantId}
+        categoriesLoading={foodCategoriesQuery.isLoading}
+        categories={foodCategories}
         selectedCategoryId={selectedCategoryId}
         allCount={allCount}
         itemCountByCategory={itemCountByCategory}
@@ -517,7 +511,6 @@ export function MenuManager() {
           setCategoryMenuId(null);
           setSelectedCategoryId(categoryId);
         }}
-        onCategoryMenu={setCategoryMenuId}
         soldOutCount={unavailableQuery.data?.itemIds?.length ?? 0}
         soldOutOnly={soldOutOnly}
         onToggleSoldOut={() => setSoldOutOnly((value) => !value)}
@@ -525,7 +518,7 @@ export function MenuManager() {
 
       <FlatList
         style={styles.scroll}
-        data={categories.length > 0 ? displayedItems : []}
+        data={displayedItems}
         keyExtractor={(item) => item.id}
         extraData={selectedItemIds}
         contentContainerStyle={styles.content}
@@ -538,12 +531,12 @@ export function MenuManager() {
             refreshing={
               isRefetching ||
               itemsQuery.isRefetching ||
-              categoryItemsQuery.isRefetching
+              foodCategoriesQuery.isRefetching
             }
             onRefresh={() => {
               void refetch();
               void itemsQuery.refetch();
-              void categoryItemsQuery.refetch();
+              void foodCategoriesQuery.refetch();
               void unavailableQuery.refetch();
               void modifiersQuery.refetch();
               if (searching) void searchQuery.refetch();
@@ -561,24 +554,17 @@ export function MenuManager() {
                 </Text>
               </View>
             ) : null}
-            {categories.length === 0 && !categoriesLoading ? (
-              <View style={styles.emptyCard}>
-                <FolderOpen color="#A8A29E" size={26} />
-                <Text style={styles.emptyTitle}>No categories yet</Text>
-                <Text style={styles.emptyText}>
-                  Create your first category to start adding menu items.
+            {foodCategoriesQuery.isError ? (
+              <View style={styles.errorCard}>
+                <Text style={styles.errorText}>
+                  {getApiErrorMessage(
+                    foodCategoriesQuery.error,
+                    'Could not load home categories'
+                  )}
                 </Text>
-                <Pressable
-                  style={[styles.primaryBtn, { alignSelf: 'center', marginTop: 12 }]}
-                  onPress={() => setCategoryModal({ mode: 'create' })}
-                >
-                  <Plus color="#FFFFFF" size={16} />
-                  <Text style={styles.primaryBtnText}>Add Category</Text>
-                </Pressable>
               </View>
             ) : null}
-            {categories.length > 0 ? (
-              <>
+            <>
                 <View style={styles.sectionHead}>
                   <Text style={styles.sectionTitle} numberOfLines={1}>
                     {searching
@@ -601,17 +587,7 @@ export function MenuManager() {
                     ) : null}
                     <Pressable
                       style={styles.greenBtn}
-                      onPress={() => {
-                        const categoryId = selectedCategory?.id ?? categories[0]?.id;
-                        if (!categoryId) {
-                          Alert.alert(
-                            'Add a category first',
-                            'Create a category before adding items.'
-                          );
-                          return;
-                        }
-                        setItemModal({ mode: 'create', categoryId });
-                      }}
+                      onPress={openCreateDish}
                     >
                       <Plus color="#1C1917" size={16} />
                       <Text style={styles.greenBtnText}>Add item</Text>
@@ -622,16 +598,6 @@ export function MenuManager() {
                   <View style={styles.errorCard}>
                     <Text style={styles.errorText}>
                       {getApiErrorMessage(searchQuery.error, 'Search failed')}
-                    </Text>
-                  </View>
-                ) : null}
-                {categoryItemsQuery.isError ? (
-                  <View style={styles.errorCard}>
-                    <Text style={styles.errorText}>
-                      {getApiErrorMessage(
-                        categoryItemsQuery.error,
-                        'Could not load dishes for this category'
-                      )}
                     </Text>
                   </View>
                 ) : null}
@@ -683,11 +649,10 @@ export function MenuManager() {
                   </Text>
                 ) : null}
               </>
-            ) : null}
           </View>
         }
         ListEmptyComponent={
-          categories.length === 0 || categoriesLoading ? null : itemsLoading ? (
+          itemsLoading ? (
             <ActivityIndicator color={authTheme.brand} style={{ marginVertical: 24 }} />
           ) : (
             <View style={styles.emptyCard}>
@@ -778,7 +743,6 @@ export function MenuManager() {
       <ItemFormModal
         state={itemModal}
         restaurantId={restaurantId}
-        categories={categories}
         onClose={() => setItemModal(null)}
         onVariants={openModifiers}
         onTimed86={(item) => setTimed86Item(item)}
@@ -812,8 +776,18 @@ export function MenuManager() {
           if (!itemModal) return;
           try {
             if (itemModal.mode === 'create') {
+              const foodName =
+                payload.foodCategoryName?.trim() ||
+                foodCategories.find((row) => row.id === payload.foodCategoryId)?.name ||
+                'Menu';
+              const kitchen =
+                findKitchenCategoryByName(categories, foodName) ??
+                (await mutations.createCategory.mutateAsync({ name: foodName }));
+              if (!kitchen?.id) {
+                throw new Error('Could not save the category for this dish.');
+              }
               const created = await mutations.createItem.mutateAsync({
-                categoryId: payload.categoryId,
+                categoryId: kitchen.id,
                 payload: {
                   name: payload.name,
                   description: payload.description,
@@ -842,10 +816,12 @@ export function MenuManager() {
                   isAvailable: false,
                 });
               }
-              setSelectedCategoryId(payload.categoryId);
               const fresh = await restaurantMenuApi
                 .getItem(restaurantId, created.id)
                 .catch(() => created);
+              setSelectedCategoryId(
+                fresh.foodCategoryId || payload.foodCategoryId || null
+              );
               setItemModal({ mode: 'edit', item: fresh });
               Alert.alert(
                 'Dish added',
@@ -887,7 +863,7 @@ export function MenuManager() {
       <BulkImportModal
         open={bulkOpen}
         categories={categories}
-        defaultCategoryId={selectedCategoryId ?? categories[0]?.id ?? null}
+        defaultCategoryId={categories[0]?.id ?? null}
         onClose={() => setBulkOpen(false)}
         onImport={async (categoryId, parsed) => {
           const categoryName =

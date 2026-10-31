@@ -9,7 +9,7 @@ import {
   type ItemModalState,
   type ItemPhotoFile,
 } from '@/components/menu/item-form/item-form-types';
-import type { MenuCategory, MenuItem, SpiceLevel } from '@/lib/restaurant/types';
+import type { MenuItem, SpiceLevel } from '@/lib/restaurant/types';
 
 function toSpice(value: MenuItem['spiceLevel']): SpiceLevel {
   return SPICE_OPTIONS.includes(value as SpiceLevel) ? (value as SpiceLevel) : 'mild';
@@ -17,19 +17,16 @@ function toSpice(value: MenuItem['spiceLevel']): SpiceLevel {
 
 export function useItemForm({
   state,
-  categories,
   fetchedItem,
   fetched,
 }: {
   state: ItemModalState;
-  categories: MenuCategory[];
   fetchedItem: MenuItem | undefined;
   fetched: boolean;
 }) {
   const isCreate = state?.mode === 'create';
   const editId = state?.mode === 'edit' ? state.item.id : null;
 
-  const [categoryId, setCategoryId] = useState('');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -43,7 +40,6 @@ export function useItemForm({
   const [pendingImage, setPendingImage] = useState<ItemPhotoFile | null>(null);
 
   const applyItem = (item: MenuItem) => {
-    setCategoryId(item.categoryId ?? '');
     setName(item.name);
     setDescription(item.description ?? '');
     setPrice(String(item.price ?? ''));
@@ -63,7 +59,6 @@ export function useItemForm({
       applyItem(state.item);
       return;
     }
-    setCategoryId(state.categoryId || categories[0]?.id || '');
     setName('');
     setDescription('');
     setPrice('');
@@ -72,17 +67,20 @@ export function useItemForm({
     setIsAvailable(true);
     setSpiceLevel('mild');
     setTags('');
-    setFoodType(EMPTY_FOOD_TYPE);
+    setFoodType(
+      state.foodCategoryId
+        ? { id: state.foodCategoryId, other: false, otherName: '' }
+        : EMPTY_FOOD_TYPE
+    );
     setSavedFoodTypeId('');
-  }, [state, categories]);
+  }, [state]);
 
   useEffect(() => {
     if (editId && fetchedItem?.id === editId) applyItem(fetchedItem);
   }, [editId, fetched]);
 
-  const canSubmit = Boolean(name.trim() && price.trim() && (!isCreate || categoryId));
+  const canSubmit = Boolean(name.trim() && price.trim());
 
-  /** Validates and returns the payload, or alerts and returns null. */
   const buildPayload = (): ItemFormPayload | null => {
     const parsedPrice = Number(price);
     const parsedDiscount = discountPrice.trim() === '' ? undefined : Number(discountPrice);
@@ -94,19 +92,15 @@ export function useItemForm({
       Alert.alert('Offer price', 'Offer price must be less than the original price.');
       return null;
     }
-    if (isCreate && !categoryId) {
-      Alert.alert('Select category', 'Choose a menu category for this item.');
-      return null;
-    }
     const otherName = foodType.other ? foodType.otherName.trim() : '';
     if (foodType.other && !otherName) {
-      Alert.alert('Food type', 'Type the food type, for example Momos.');
+      Alert.alert('Category', 'Type the category name, for example Momos.');
       return null;
     }
-    if (isCreate && !foodType.id && !otherName) {
+    if (!foodType.id && !otherName) {
       Alert.alert(
-        'Pick a food type',
-        'Choose what kind of dish this is (Pizza, Biryani…) so customers can find it.'
+        'Select category',
+        'Choose a category from the list, or Other if it is not there yet.'
       );
       return null;
     }
@@ -117,7 +111,6 @@ export function useItemForm({
         : {};
 
     return {
-      categoryId: categoryId || (state?.mode === 'edit' ? state.item.categoryId ?? '' : ''),
       name: name.trim(),
       description: description.trim() || undefined,
       price: parsedPrice,
@@ -133,7 +126,6 @@ export function useItemForm({
 
   return {
     isCreate,
-    categoryId, setCategoryId,
     name, setName,
     description, setDescription,
     price, setPrice,

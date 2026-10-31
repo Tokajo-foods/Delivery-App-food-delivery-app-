@@ -1,5 +1,6 @@
+import { ChevronDown } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { foodCategoryPickerStyles as styles } from '@/components/menu/item-form/food-category-picker-styles';
 import type { FoodTypeValue } from '@/components/menu/item-form/item-form-types';
@@ -8,9 +9,7 @@ import { authTheme } from '@/constants/auth-theme';
 import { getApiErrorMessage } from '@/lib/errors';
 import { useFoodCategories } from '@/lib/restaurant/food-categories-hooks';
 
-const MAX_CHIPS = 18;
-
-/** Platform food type (Pizza, Biryani…) the dish is listed under for customers. */
+/** Home-page food categories plus Other (typed name creates the category via API). */
 export function FoodCategoryPicker({
   value,
   onChange,
@@ -21,36 +20,29 @@ export function FoodCategoryPicker({
   required: boolean;
 }) {
   const query = useFoodCategories();
+  const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const list = query.data ?? [];
 
-  const chips = useMemo(() => {
+  const options = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const rows = (q ? list.filter((c) => c.name.toLowerCase().includes(q)) : list).slice(
-      0,
-      MAX_CHIPS
-    );
-    const selected = list.find((c) => c.id === value.id);
-    return selected && !rows.includes(selected) ? [selected, ...rows] : rows;
-  }, [list, search, value.id]);
+    const rows = q ? list.filter((c) => c.name.toLowerCase().includes(q)) : list;
+    return rows;
+  }, [list, search]);
 
-  const savedTypeMissing =
-    Boolean(value.id) && !value.other && query.isSuccess && !list.some((c) => c.id === value.id);
+  const selected = list.find((c) => c.id === value.id);
+  const label = value.other
+    ? value.otherName.trim()
+      ? `Other · ${value.otherName.trim()}`
+      : 'Other'
+    : selected?.name || 'Select category';
 
   return (
     <View style={styles.wrap}>
-      <Text style={menuModalStyles.fieldLabel}>Food type{required ? ' *' : ''}</Text>
-      <Text style={styles.hint}>Customers find this dish under this type on the home screen.</Text>
-
-      {list.length > MAX_CHIPS ? (
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search food types"
-          placeholderTextColor={authTheme.textDim}
-          style={styles.search}
-        />
-      ) : null}
+      <Text style={menuModalStyles.fieldLabel}>Category{required ? ' *' : ''}</Text>
+      <Text style={styles.hint}>
+        Same categories as the customer home screen. Choose Other if yours is missing.
+      </Text>
 
       {query.isLoading ? (
         <ActivityIndicator color={authTheme.brand} style={{ marginBottom: 8 }} />
@@ -58,46 +50,108 @@ export function FoodCategoryPicker({
       {query.isError ? (
         <Pressable onPress={() => void query.refetch()}>
           <Text style={styles.error}>
-            {getApiErrorMessage(query.error, 'Could not load food types')}
+            {getApiErrorMessage(query.error, 'Could not load categories')}
           </Text>
           <Text style={styles.retry}>Tap to retry, or choose Other below.</Text>
         </Pressable>
       ) : null}
-      {savedTypeMissing ? (
-        <Text style={styles.status}>The saved food type is no longer offered. Pick another.</Text>
-      ) : null}
-      {query.isSuccess && search.trim() && chips.length === 0 ? (
-        <Text style={styles.status}>No match. Choose Other and type it.</Text>
-      ) : null}
 
-      <View style={styles.chips}>
-        {chips.map((category) => {
-          const active = !value.other && value.id === category.id;
-          return (
-            <Pressable
-              key={category.id}
-              style={[styles.chip, active && styles.chipOn]}
-              onPress={() => onChange({ id: category.id, other: false, otherName: '' })}
-            >
-              <Text style={[styles.chipText, active && styles.chipTextOn]}>{category.name}</Text>
-            </Pressable>
-          );
-        })}
+      <View style={menuModalStyles.dropdownWrap}>
         <Pressable
-          style={[styles.chip, value.other && styles.chipOn]}
-          onPress={() =>
-            onChange({ ...value, other: true, otherName: value.otherName || search.trim() })
-          }
+          style={menuModalStyles.dropdownTrigger}
+          onPress={() => setOpen((wasOpen) => !wasOpen)}
         >
-          <Text style={[styles.chipText, value.other && styles.chipTextOn]}>Other</Text>
+          <Text
+            style={[
+              menuModalStyles.dropdownValue,
+              !value.other && !value.id && menuModalStyles.dropdownPlaceholder,
+            ]}
+            numberOfLines={1}
+          >
+            {label}
+          </Text>
+          <ChevronDown
+            color={authTheme.textMuted}
+            size={18}
+            style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}
+          />
         </Pressable>
+        {open ? (
+          <View style={menuModalStyles.dropdownList}>
+            {list.length > 12 ? (
+              <TextInput
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Search categories"
+                placeholderTextColor={authTheme.textDim}
+                style={styles.search}
+              />
+            ) : null}
+            <ScrollView nestedScrollEnabled style={styles.dropdownScroll} keyboardShouldPersistTaps="handled">
+              {query.isSuccess && options.length === 0 ? (
+                <Text style={menuModalStyles.dropdownEmpty}>No match. Choose Other and type it.</Text>
+              ) : (
+                options.map((category) => {
+                  const active = !value.other && value.id === category.id;
+                  return (
+                    <Pressable
+                      key={category.id}
+                      style={[
+                        menuModalStyles.dropdownOption,
+                        active && menuModalStyles.dropdownOptionOn,
+                      ]}
+                      onPress={() => {
+                        onChange({ id: category.id, other: false, otherName: '' });
+                        setOpen(false);
+                        setSearch('');
+                      }}
+                    >
+                      <Text
+                        style={[
+                          menuModalStyles.dropdownOptionText,
+                          active && menuModalStyles.dropdownOptionTextOn,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {category.name}
+                      </Text>
+                    </Pressable>
+                  );
+                })
+              )}
+              <Pressable
+                style={[
+                  menuModalStyles.dropdownOption,
+                  value.other && menuModalStyles.dropdownOptionOn,
+                ]}
+                onPress={() => {
+                  onChange({
+                    ...value,
+                    other: true,
+                    otherName: value.otherName || search.trim(),
+                  });
+                  setOpen(false);
+                }}
+              >
+                <Text
+                  style={[
+                    menuModalStyles.dropdownOptionText,
+                    value.other && menuModalStyles.dropdownOptionTextOn,
+                  ]}
+                >
+                  Other
+                </Text>
+              </Pressable>
+            </ScrollView>
+          </View>
+        ) : null}
       </View>
 
       {value.other ? (
         <TextInput
           value={value.otherName}
-          onChangeText={(otherName) => onChange({ ...value, otherName })}
-          placeholder="e.g. Momos"
+          onChangeText={(otherName) => onChange({ ...value, other: true, otherName })}
+          placeholder="Type the category name, e.g. Momos"
           placeholderTextColor={authTheme.textDim}
           maxLength={120}
           autoFocus

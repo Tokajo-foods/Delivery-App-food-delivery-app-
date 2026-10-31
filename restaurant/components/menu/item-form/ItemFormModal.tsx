@@ -5,7 +5,6 @@ import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Switch, Text, V
 import { FoodCategoryPicker } from '@/components/menu/item-form/FoodCategoryPicker';
 import { ItemEditTools } from '@/components/menu/item-form/ItemEditTools';
 import { ItemPhotoField } from '@/components/menu/item-form/ItemPhotoField';
-import { ItemSectionDropdown } from '@/components/menu/item-form/ItemSectionDropdown';
 import {
   SPICE_OPTIONS,
   type ItemFormPayload,
@@ -19,12 +18,11 @@ import { menuModalStyles as styles } from '@/components/menu/menu-modal-styles';
 import { authTheme } from '@/constants/auth-theme';
 import { getApiErrorMessage } from '@/lib/errors';
 import { useMenuItem } from '@/lib/restaurant/menu-hooks';
-import type { MenuCategory, MenuItem } from '@/lib/restaurant/types';
+import type { MenuItem } from '@/lib/restaurant/types';
 
 export function ItemFormModal({
   state,
   restaurantId,
-  categories,
   onClose,
   onSubmit,
   onVariants,
@@ -36,7 +34,6 @@ export function ItemFormModal({
 }: {
   state: ItemModalState;
   restaurantId: string;
-  categories: MenuCategory[];
   onClose: () => void;
   onSubmit: (payload: ItemFormPayload) => Promise<void>;
   onVariants?: (item: MenuItem) => void;
@@ -51,7 +48,6 @@ export function ItemFormModal({
   const liveItem = state?.mode === 'edit' ? (itemQuery.data ?? state.item) : null;
   const form = useItemForm({
     state,
-    categories,
     fetchedItem: itemQuery.data,
     fetched: itemQuery.isFetched,
   });
@@ -125,17 +121,10 @@ export function ItemFormModal({
               </Pressable>
             </View>
 
-            <ItemSectionDropdown
-              editable={form.isCreate}
-              categories={categories}
-              value={form.categoryId}
-              fallbackName={state?.mode === 'edit' ? state.item.categoryName : undefined}
-              onChange={form.setCategoryId}
-            />
             <FoodCategoryPicker
               value={form.foodType}
               onChange={form.setFoodType}
-              required={form.isCreate}
+              required
             />
 
             <Field label="Item Name" required value={form.name} onChangeText={form.setName} placeholder="e.g., Margherita Pizza" />

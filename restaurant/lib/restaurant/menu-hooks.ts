@@ -436,10 +436,8 @@ export function useMenuMutations(restaurantId: string) {
       categoryId: string;
       payload: CreateMenuItemPayload;
     }) => restaurantMenuApi.createItem(restaurantId, categoryId, payload),
-    onSuccess: (_item, { payload }) => {
-      if (payload.foodCategoryName) {
-        void queryClient.invalidateQueries({ queryKey: foodCategoryKeys.all });
-      }
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: foodCategoryKeys.all });
       return invalidateMenu(queryClient, restaurantId);
     },
   });
@@ -452,10 +450,8 @@ export function useMenuMutations(restaurantId: string) {
       itemId: string;
       payload: UpdateMenuItemPayload;
     }) => restaurantMenuApi.updateItem(restaurantId, itemId, payload),
-    onSuccess: (_item, { payload }) => {
-      if (payload.foodCategoryName) {
-        void queryClient.invalidateQueries({ queryKey: foodCategoryKeys.all });
-      }
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: foodCategoryKeys.all });
       return invalidateMenu(queryClient, restaurantId);
     },
   });

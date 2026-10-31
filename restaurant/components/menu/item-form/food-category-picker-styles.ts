@@ -45,4 +45,5 @@ export const foodCategoryPickerStyles = StyleSheet.create({
   error: { color: '#B91C1C', fontSize: 12, fontFamily: fonts.medium, marginBottom: 6 },
   retry: { color: authTheme.brand, fontSize: 12, fontFamily: fonts.bold, marginBottom: 8 },
   otherInput: { marginTop: 8, marginBottom: 0 },
+  dropdownScroll: { maxHeight: 240 },
 });

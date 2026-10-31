@@ -1,12 +1,4 @@
-import {
-  Clock3,
-  FileUp,
-  MoreVertical,
-  Plus,
-  Search,
-  UtensilsCrossed,
-  X,
-} from 'lucide-react-native';
+import { FileUp, Plus, Search, UtensilsCrossed, X } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -20,21 +12,21 @@ import {
 
 import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
-import type { MenuCategory } from '@/lib/restaurant/types';
+
+type BrowserCategory = { id: string; name: string };
 
 type Props = {
   search: string;
   onSearch: (value: string) => void;
   onImport: () => void;
-  onAddCategory: () => void;
+  onAddItem: () => void;
   importDisabled?: boolean;
   categoriesLoading?: boolean;
-  categories: MenuCategory[];
+  categories: BrowserCategory[];
   selectedCategoryId: string | null;
   allCount: number;
   itemCountByCategory: Map<string, number>;
   onSelectCategory: (categoryId: string | null) => void;
-  onCategoryMenu: (categoryId: string) => void;
   soldOutCount: number;
   soldOutOnly: boolean;
   onToggleSoldOut: () => void;
@@ -70,7 +62,7 @@ export function MenuBrowserBar({
   search,
   onSearch,
   onImport,
-  onAddCategory,
+  onAddItem,
   importDisabled,
   categoriesLoading,
   categories,
@@ -78,7 +70,6 @@ export function MenuBrowserBar({
   allCount,
   itemCountByCategory,
   onSelectCategory,
-  onCategoryMenu,
   soldOutCount,
   soldOutOnly,
   onToggleSoldOut,
@@ -108,7 +99,7 @@ export function MenuBrowserBar({
         <IconButton label="Import" onPress={onImport} disabled={importDisabled}>
           <FileUp color="#44403C" size={16} />
         </IconButton>
-        <IconButton label="Add category" onPress={onAddCategory} primary>
+        <IconButton label="Add dish" onPress={onAddItem} primary>
           <Plus color="#FFFFFF" size={16} />
         </IconButton>
       </View>
@@ -116,7 +107,7 @@ export function MenuBrowserBar({
       {categoriesLoading ? (
         <ActivityIndicator color={authTheme.brand} style={styles.loader} />
       ) : categories.length === 0 ? (
-        <Text style={styles.hint}>Add a category, then add dishes.</Text>
+        <Text style={styles.hint}>Categories will appear here. Add a dish to get started.</Text>
       ) : (
         <ScrollView
           horizontal
@@ -144,14 +135,11 @@ export function MenuBrowserBar({
           </Pressable>
           {categories.map((category) => {
             const active = category.id === selectedCategoryId;
-            const hidden = category.isActive === false;
-            const scheduled = Boolean(category.schedule?.periods?.length);
             return (
               <Pressable
                 key={category.id}
                 onPress={() => onSelectCategory(category.id)}
-                onLongPress={() => onCategoryMenu(category.id)}
-                style={[styles.chip, active && styles.chipOn, hidden && !active && styles.hidden]}
+                style={[styles.chip, active && styles.chipOn]}
               >
                 <Text style={[styles.chipText, active && styles.chipTextOn]} numberOfLines={1}>
                   {category.name}
@@ -159,19 +147,6 @@ export function MenuBrowserBar({
                 <Text style={[styles.chipCount, active && styles.chipCountOn]}>
                   {itemCountByCategory.get(category.id) ?? 0}
                 </Text>
-                {scheduled ? (
-                  <Clock3 color={active ? '#EA4B14' : '#78716C'} size={12} />
-                ) : null}
-                {hidden ? (
-                  <Text style={[styles.chipCount, active && styles.chipCountOn]}>Off</Text>
-                ) : null}
-                <Pressable
-                  hitSlop={8}
-                  onPress={() => onCategoryMenu(category.id)}
-                  accessibilityLabel={`${category.name} actions`}
-                >
-                  <MoreVertical color={active ? '#EA4B14' : '#A8A29E'} size={14} />
-                </Pressable>
               </Pressable>
             );
           })}
@@ -281,5 +256,4 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontFamily: fonts.bold,
   },
-  hidden: { opacity: 0.55 },
 });

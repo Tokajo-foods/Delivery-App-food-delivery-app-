@@ -1,19 +1,18 @@
 import type { MenuItem, SpiceLevel } from '@/lib/restaurant/types';
 
 export type ItemModalState =
-  | { mode: 'create'; categoryId: string }
+  | { mode: 'create'; foodCategoryId?: string }
   | { mode: 'edit'; item: MenuItem }
   | null;
 
 export type ItemPhotoFile = { uri: string; name: string; type: string };
 
-/** Picked platform id, or a typed name when the owner chose "Other". */
+/** Home-page category id, or a typed name when the owner chose Other. */
 export type FoodTypeValue = { id: string; other: boolean; otherName: string };
 
 export const EMPTY_FOOD_TYPE: FoodTypeValue = { id: '', other: false, otherName: '' };
 
 export type ItemFormPayload = {
-  categoryId: string;
   name: string;
   description?: string;
   price: number;

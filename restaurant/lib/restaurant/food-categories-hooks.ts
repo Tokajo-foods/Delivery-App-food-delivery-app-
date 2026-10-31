@@ -6,7 +6,7 @@ export const foodCategoryKeys = {
   all: ['food-categories'] as const,
 };
 
-/** Platform food types for the dish form. Refetched after an "Other" type is saved. */
+/** Customer home categories for the menu chips and dish form. */
 export function useFoodCategories(enabled = true) {
   return useQuery({
     queryKey: foodCategoryKeys.all,
