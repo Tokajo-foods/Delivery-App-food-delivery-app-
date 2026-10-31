@@ -10,7 +10,7 @@ import {
   UtensilsCrossed,
   X,
 } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -63,7 +63,7 @@ import {
   kitchenTimeline,
   money,
   nextKitchenAction,
-  kitchenCancelStillOpen,
+  canKitchenCancel,
   kitchenHandoverCopy,
   kitchenHandoverErrorCopy,
   orderPlacedLabel,
@@ -256,12 +256,6 @@ export function OrderDetailScreen({ orderId }: Props) {
   const address = order ? addressText(order) : '';
   const cooking =
     order?.status === 'accepted' || order?.status === 'preparing';
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!cooking) return;
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [cooking]);
   const tripStatus = `${order?.deliveryTripStatus ?? rider?.status ?? ''}`.toLowerCase();
   const riderEnRoute =
     Boolean(rider?.assigned) &&
@@ -276,9 +270,7 @@ export function OrderDetailScreen({ orderId }: Props) {
     riderEnRoute &&
     riderSinceMs > 0 &&
     Date.now() - riderSinceMs >= riderNoShowWaitMs;
-  const cancelWindowOpen = kitchenCancelStillOpen(order?.createdAt, now);
-  const canKitchenCancel = (cooking && cancelWindowOpen) || riderNoShowReady;
-  const cancelClosed = cooking && !cancelWindowOpen;
+  const kitchenCancelOpen = canKitchenCancel(order);
   const canDelay =
     cooking || order?.status === 'ready';
   const canPrint = Boolean(order) && statusRank(order?.status ?? 'pending') >= 0;
@@ -490,7 +482,7 @@ export function OrderDetailScreen({ orderId }: Props) {
               }
             />
 
-            {(cooking || canDelay || canPrint || canKitchenCancel) ? (
+            {(cooking || canDelay || canPrint || kitchenCancelOpen) ? (
               <View style={styles.card}>
                 <Text style={styles.cardTitle}>Kitchen</Text>
                 <View style={styles.toolGrid}>
@@ -529,32 +521,18 @@ export function OrderDetailScreen({ orderId }: Props) {
                       <Text style={styles.toolText}>Item 86</Text>
                     </Pressable>
                   ) : null}
-                  {cooking || riderNoShowReady ? (
+                  {kitchenCancelOpen ? (
                     <Pressable
-                      disabled={cancelClosed}
-                      onPress={() => {
-                        if (cancelClosed) return;
-                        setCancelOpen(true);
-                      }}
-                      style={[styles.tool, cancelClosed && styles.toolDisabled]}
+                      onPress={() => setCancelOpen(true)}
+                      style={styles.tool}
                     >
-                      <Ban color={cancelClosed ? '#A8A29E' : authTheme.error} size={16} />
-                      <Text
-                        style={[
-                          styles.toolText,
-                          { color: cancelClosed ? '#A8A29E' : authTheme.error },
-                        ]}
-                      >
+                      <Ban color={authTheme.error} size={16} />
+                      <Text style={[styles.toolText, { color: authTheme.error }]}>
                         Cancel
                       </Text>
                     </Pressable>
                   ) : null}
                 </View>
-                {cancelClosed ? (
-                  <Text style={styles.muted}>
-                    Cancel is closed. It stays available for 3 minutes after the order is placed.
-                  </Text>
-                ) : null}
                 {order?.status === 'ready' &&
                 rider?.assigned &&
                 !riderNoShowReady &&
@@ -820,7 +798,7 @@ export function OrderDetailScreen({ orderId }: Props) {
         copy={
           riderNoShowReady
             ? 'Rider is assigned but has not reached the store. Add a remark explaining why you are cancelling.'
-            : 'Use this after you’ve already accepted. Prepaid orders are refunded when payment-service allows it.'
+            : 'You can cancel this order at any time before it is delivered. If the customer paid online or by wallet, a refund is started immediately.'
         }
         confirmLabel="Cancel order"
         onClose={() => setCancelOpen(false)}
