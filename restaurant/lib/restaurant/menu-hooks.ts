@@ -53,17 +53,15 @@ type FullMenu = {
   items: MenuItem[];
 };
 
-async function invalidateMenu(
+function invalidateMenu(
   queryClient: ReturnType<typeof useQueryClient>,
   restaurantId: string
 ) {
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: menuKeys.restaurant(restaurantId) }),
-    queryClient.invalidateQueries({
-      queryKey: dashboardKeys.stats(),
-      refetchType: 'none',
-    }),
-  ]);
+  void queryClient.invalidateQueries({ queryKey: menuKeys.restaurant(restaurantId) });
+  void queryClient.invalidateQueries({
+    queryKey: dashboardKeys.stats(),
+    refetchType: 'none',
+  });
 }
 
 function mergeCategories(
@@ -438,7 +436,7 @@ export function useMenuMutations(restaurantId: string) {
     }) => restaurantMenuApi.createItem(restaurantId, categoryId, payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: foodCategoryKeys.all });
-      return invalidateMenu(queryClient, restaurantId);
+      invalidateMenu(queryClient, restaurantId);
     },
   });
 
@@ -452,7 +450,7 @@ export function useMenuMutations(restaurantId: string) {
     }) => restaurantMenuApi.updateItem(restaurantId, itemId, payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: foodCategoryKeys.all });
-      return invalidateMenu(queryClient, restaurantId);
+      invalidateMenu(queryClient, restaurantId);
     },
   });
 

@@ -27,7 +27,7 @@ export function ItemPhotoField({
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      quality: 0.85,
+      quality: 0.7,
     });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];

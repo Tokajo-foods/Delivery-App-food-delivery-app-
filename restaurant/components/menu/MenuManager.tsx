@@ -803,25 +803,23 @@ export function MenuManager() {
               if (!created?.id) {
                 throw new Error('Dish was created but no id came back. Pull to refresh.');
               }
+              let saved = created;
               if (payload.image) {
-                await mutations.uploadImage.mutateAsync({
+                saved = await mutations.uploadImage.mutateAsync({
                   itemId: created.id,
                   file: payload.image,
                 });
               }
               if (payload.isAvailable === false) {
-                await mutations.setAvailability.mutateAsync({
+                saved = await mutations.setAvailability.mutateAsync({
                   itemId: created.id,
                   isAvailable: false,
                 });
               }
-              const fresh = await restaurantMenuApi
-                .getItem(restaurantId, created.id)
-                .catch(() => created);
               setSelectedCategoryId(
-                fresh.foodCategoryId || payload.foodCategoryId || null
+                saved.foodCategoryId || payload.foodCategoryId || null
               );
-              setItemModal({ mode: 'edit', item: fresh });
+              setItemModal({ mode: 'edit', item: saved });
               Alert.alert(
                 'Dish added',
                 'Add a photo and Size/crust variants if customers should see them.'

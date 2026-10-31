@@ -2,10 +2,8 @@ import axios from 'axios';
 
 import { api } from '@/lib/api';
 import { PartnerApiError, getApiErrorCode } from '@/lib/errors';
-import {
-  postMultipartWithFieldFallback,
-  type UploadFilePart,
-} from '@/lib/multipart-upload';
+import { toUploadableImage } from '@/lib/media/to-uploadable-image';
+import { postMultipartFile, type UploadFilePart } from '@/lib/multipart-upload';
 import type {
   AttachModifiersPayload,
   AvailabilityPayload,
@@ -862,10 +860,11 @@ export const restaurantMenuApi = {
     file: UploadFilePart
   ): Promise<MenuItem> => {
     try {
-      const data = await postMultipartWithFieldFallback(
+      const compact = await toUploadableImage(file.uri, file.name, file.type);
+      const data = await postMultipartFile(
         `${RESTAURANT_BASE}/${restaurantId}/items/${itemId}/image`,
-        file,
-        ['image', 'file', 'photo', 'itemImage']
+        'photo',
+        compact
       );
       return mapItem({ ...data, _id: data._id ?? itemId, id: data.id ?? itemId });
     } catch (error) {
