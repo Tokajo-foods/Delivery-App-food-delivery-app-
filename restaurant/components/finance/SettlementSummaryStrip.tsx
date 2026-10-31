@@ -42,25 +42,26 @@ export function SettlementSummaryStrip({
     <View style={styles.wrap}>
       <Text style={styles.title}>Earnings overview</Text>
       <Text style={styles.hint}>
-        Delivered orders credit your wallet after platform commission. Request
-        any remaining amount to UPI anytime. Weekly settlements still clear
-        after a {HOLD_DAYS}-day hold if you do not withdraw.
+        Completed delivery, COD, and online takeaway orders count as earnings.
+        Pay-at-counter and COD stay in the list — they are not withdrawable
+        because Tokajo never collected that cash. Withdraw only the amount
+        customers paid Tokajo online.
       </Text>
       <View style={styles.grid}>
         <Cell
-          label="Earned (after fee)"
+          label="Earned (completed)"
           value={formatCurrency(wallet.lifetimeCredited)}
+        />
+        <Cell
+          label="Collected at store"
+          value={formatCurrency(wallet.collectedAtStore ?? 0)}
         />
         <Cell
           label="Taken / settled"
           value={formatCurrency(wallet.settled ?? settled)}
         />
         <Cell
-          label="Remaining"
-          value={formatCurrency(wallet.remaining ?? remaining)}
-        />
-        <Cell
-          label="Available now"
+          label="Available to withdraw"
           value={formatCurrency(wallet.available ?? remaining)}
         />
       </View>

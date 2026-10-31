@@ -410,6 +410,7 @@ export const restaurantFinanceApi = {
         available: pickNumber(raw, ['available', 'balance']),
         settled: pickNumber(raw, ['settled', 'lifetimeDebited']),
         remaining: pickNumber(raw, ['remaining', 'balance']),
+        collectedAtStore: pickNumber(raw, ['collectedAtStore']),
       };
     } catch (error) {
       throwFinanceError(error, 'Failed to load wallet');
@@ -461,6 +462,9 @@ export const restaurantFinanceApi = {
               ? pickNumber(raw, ['commissionRate'])
               : null,
           description: String(raw.description ?? ''),
+          withdrawable: raw.withdrawable !== false,
+          paymentMethod: raw.paymentMethod ? String(raw.paymentMethod) : null,
+          deliveryType: raw.deliveryType ? String(raw.deliveryType) : null,
           createdAt: raw.createdAt ? String(raw.createdAt) : undefined,
         };
       });
@@ -547,6 +551,7 @@ export const restaurantFinanceApi = {
           available: pickNumber(walletRaw, ['available', 'balance']),
           settled: pickNumber(walletRaw, ['settled', 'lifetimeDebited']),
           remaining: pickNumber(walletRaw, ['remaining', 'balance']),
+          collectedAtStore: pickNumber(walletRaw, ['collectedAtStore']),
         },
         refundedToWallet: raw.refundedToWallet === true,
       };

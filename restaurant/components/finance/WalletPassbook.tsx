@@ -54,15 +54,33 @@ function formatDateTime(iso?: string | null) {
   });
 }
 
+function channelLabel(txn: RestaurantWalletTxn): string {
+  const method = String(txn.paymentMethod ?? '').toLowerCase();
+  const type = String(txn.deliveryType ?? '').toLowerCase();
+  if (method === 'cod' || method === 'pay_at_counter' || method === 'cash') {
+    return type === 'pickup' ? 'COD takeaway · store collected' : 'COD · store collected';
+  }
+  if (txn.withdrawable === false) return 'Store collected · not withdrawable';
+  if (type === 'pickup') return 'Online takeaway';
+  if (method === 'upi' || method === 'card' || method === 'wallet') {
+    return 'Online delivery';
+  }
+  return 'Paid to Tokajo';
+}
+
 function txnTitle(txn: RestaurantWalletTxn): string {
   if (txn.type === 'payout_debit') {
     return txn.payoutId
-      ? `Bank payout · ${txn.payoutId.slice(-6).toUpperCase()}`
-      : 'Bank payout';
+      ? `Withdrawal · ${txn.payoutId.slice(-6).toUpperCase()}`
+      : 'Withdrawal';
   }
-  if (txn.orderNumber) return `Order #${txn.orderNumber}`;
-  if (txn.orderId) return `Order · ${txn.orderId.slice(-6)}`;
-  return txn.description || 'Wallet entry';
+  const ref = txn.orderNumber
+    ? `Order #${txn.orderNumber}`
+    : txn.orderId
+      ? `Order · ${txn.orderId.slice(-6)}`
+      : txn.description || 'Wallet entry';
+  if (txn.type === 'order_credit') return `${ref} · ${channelLabel(txn)}`;
+  return ref;
 }
 
 function txnTypeLabel(type: string): string {

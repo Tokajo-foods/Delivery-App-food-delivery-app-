@@ -83,6 +83,7 @@ export type RestaurantWallet = {
   available: number;
   settled: number;
   remaining: number;
+  collectedAtStore: number;
 };
 
 export type RestaurantWalletTxnType =
@@ -102,6 +103,9 @@ export type RestaurantWalletTxn = {
   grossAmount?: number | null;
   commissionAmount?: number | null;
   commissionRate?: number | null;
+  withdrawable?: boolean;
+  paymentMethod?: string | null;
+  deliveryType?: string | null;
   description: string;
   createdAt?: string;
 };
