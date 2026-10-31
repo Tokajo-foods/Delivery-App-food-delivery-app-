@@ -7,6 +7,7 @@ import { riderRouteForNotification } from '@/lib/delivery-partner/rider-notifica
 import { notificationApi } from '@/lib/notification/api';
 import { getNotificationsModule } from '@/lib/notification/device-alerts';
 import { notificationKeys } from '@/lib/notification/hooks';
+import { claimPushResponse, markLaunchPushSettled } from '@/lib/notification/launch-push';
 
 /** Survives remounts so a cold-start tap is never handled twice in one app session. */
 const handledResponses = new Set<string>();
@@ -38,12 +39,13 @@ export function useRiderPushOpen(enabled: boolean) {
     const Notifications = getNotificationsModule();
     if (!Notifications) return;
 
-    const open = (response: PushResponse) => {
+    const open = async (response: PushResponse) => {
       const key = `${response.notification.request.identifier}:${response.actionIdentifier}`;
-      if (handledResponses.has(key)) return;
+      if (handledResponses.has(key)) return false;
+      if (!(await claimPushResponse(key))) return false;
       handledResponses.add(key);
       const data = readData(response.notification.request.content.data);
-      if (ownedElsewhere(data)) return;
+      if (ownedElsewhere(data)) return false;
 
       const notificationId = typeof data.notificationId === 'string' ? data.notificationId : '';
       if (notificationId) {
@@ -54,15 +56,23 @@ export function useRiderPushOpen(enabled: boolean) {
       }
       const href = riderRouteForNotification(String(data.type ?? ''), data);
       router.push((href ?? DELIVERY_ROUTES.notifications) as never);
+      return true;
     };
 
     let alive = true;
     void Notifications.getLastNotificationResponseAsync()
-      .then((response) => {
-        if (alive && response) open(response);
+      .then(async (response) => {
+        if (!alive) return;
+        const opened = response ? await open(response) : false;
+        markLaunchPushSettled(opened);
+        if (response) {
+          await Notifications.clearLastNotificationResponseAsync?.().catch(() => undefined);
+        }
       })
-      .catch(() => undefined);
-    const sub = Notifications.addNotificationResponseReceivedListener(open);
+      .catch(() => markLaunchPushSettled(false));
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      void open(response);
+    });
 
     return () => {
       alive = false;

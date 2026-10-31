@@ -11,6 +11,7 @@ import { HoursDriftPrompt } from '@/components/dashboard/HoursDriftPrompt';
 import { KitchenNewOrderAlerts } from '@/components/dashboard/KitchenNewOrderAlerts';
 import { KitchenOrderRinger } from '@/components/dashboard/KitchenOrderRinger';
 import { KitchenPushRouter } from '@/components/dashboard/KitchenPushRouter';
+import { PartnerLaunchHome } from '@/components/dashboard/PartnerLaunchHome';
 import { CallHost } from '@/components/call/CallHost';
 import { RiderLiveSync } from '@/components/delivery/RiderLiveSync';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
@@ -21,6 +22,10 @@ import {
 import { useAuthStore } from '@/store/auth-store';
 
 type Gate = 'loading' | 'restaurant-setup' | 'delivery-setup' | 'ready';
+
+export const unstable_settings = {
+  initialRouteName: 'dashboard',
+};
 
 /**
  * Auth + portal gate for signed-in screens.
@@ -267,6 +272,7 @@ export default function AppLayout() {
           <KitchenNewOrderAlerts />
           <KitchenOrderRinger />
           <KitchenPushRouter />
+          <PartnerLaunchHome role="restaurant" />
           <HoursDriftPrompt />
           <CallHost viewer="restaurant" />
         </>
@@ -274,6 +280,7 @@ export default function AppLayout() {
       {gate === 'ready' && effectiveRole === 'delivery' ? (
         <>
           <RiderLiveSync />
+          <PartnerLaunchHome role="delivery" />
           <CallHost viewer="rider" />
         </>
       ) : null}

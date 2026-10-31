@@ -41,6 +41,7 @@ const RESTAURANT_PORTAL_SEGMENTS = new Set([
   'analytics',
   'staff',
   'account',
+  'notifications',
 ]);
 
 /** Delivery-partner portal route segments under (app). */
