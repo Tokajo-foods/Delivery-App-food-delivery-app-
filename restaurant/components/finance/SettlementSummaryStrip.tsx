@@ -5,8 +5,6 @@ import { fonts } from '@/constants/typography';
 import { formatCurrency } from '@/lib/dashboard/format';
 import type { RestaurantWallet } from '@/lib/restaurant/finance-types';
 
-const HOLD_DAYS = 15;
-
 type BankSnap = {
   accountMasked?: string;
   ifsc?: string;
@@ -17,34 +15,24 @@ type BankSnap = {
 type Props = {
   wallet?: RestaurantWallet | null;
   bank?: BankSnap;
-  oldestCreditAt?: string | null;
 };
 
-function addDays(iso: string, days: number) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
-/** Settled vs remaining + 15-day due + bank — same truth as admin desk. */
+/** Earned / settled / remaining — same numbers as the wallet API. */
 export function SettlementSummaryStrip({
   wallet,
   bank,
-  oldestCreditAt,
 }: Props) {
   if (!wallet) return null;
-  const settled = wallet.lifetimeDebited ?? 0;
-  const remaining = wallet.balance ?? 0;
-  const due = oldestCreditAt ? addDays(oldestCreditAt, HOLD_DAYS) : null;
+  const settled = wallet.settled ?? wallet.lifetimeDebited ?? 0;
+  const remaining = wallet.available ?? wallet.remaining ?? wallet.balance ?? 0;
 
   return (
     <View style={styles.wrap}>
       <Text style={styles.title}>Earnings overview</Text>
       <Text style={styles.hint}>
-        Every completed delivery, COD, and online takeaway order counts as
-        earnings and can be withdrawn. Pay-at-counter / dine-in cash stays in
-        the list only — it is not withdrawable.
+        Withdraw completed earnings anytime. Delivery COD, online delivery, and
+        online takeaway add to remaining. Pay-at-counter / dine-in cash is
+        earned only — it is not withdrawable.
       </Text>
       <View style={styles.grid}>
         <Cell
@@ -57,22 +45,16 @@ export function SettlementSummaryStrip({
         />
         <Cell
           label="Taken / settled"
-          value={formatCurrency(wallet.settled ?? settled)}
+          value={formatCurrency(settled)}
         />
         <Cell
-          label="Available to withdraw"
-          value={formatCurrency(wallet.available ?? remaining)}
+          label="Remaining"
+          value={formatCurrency(remaining)}
         />
       </View>
       <Text style={styles.meta}>
-        Next settlement due:{' '}
-        {due
-          ? due.toLocaleDateString('en-IN', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })
-          : 'When eligible credits clear the hold'}
+        Remaining updates as soon as you request a withdrawal or a completed
+        order is credited.
       </Text>
       {bank ? (
         <Text style={styles.meta}>

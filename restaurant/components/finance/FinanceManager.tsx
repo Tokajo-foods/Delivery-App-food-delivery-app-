@@ -301,7 +301,6 @@ export function FinanceManager() {
           <View style={styles.list}>
             <SettlementSummaryStrip
               wallet={wallet.data}
-              oldestCreditAt={txnList.find((t) => t.amount > 0)?.createdAt}
               bank={
                 bank.data
                   ? {
@@ -361,8 +360,8 @@ export function FinanceManager() {
               <Banknote color={authTheme.textDim} size={36} />
               <Text style={styles.emptyTitle}>No settlements yet</Text>
               <Text style={styles.muted}>
-                Settlements appear after delivered orders clear the 15-day hold
-                and finance closes the cycle.
+                Cycle settlements are a history of closed periods. Request
+                earnings anytime from the Wallet tab.
               </Text>
             </View>
           )
