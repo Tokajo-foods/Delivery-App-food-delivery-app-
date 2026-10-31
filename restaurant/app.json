@@ -66,7 +66,8 @@
         }
       ],
       "./plugins/with-call-native",
-      "./plugins/with-native-firebase"
+      "./plugins/with-native-firebase",
+      "./plugins/with-notifee-repo"
     ],
     "ios": {
       "supportsTablet": true,
