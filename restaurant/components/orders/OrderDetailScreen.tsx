@@ -657,10 +657,15 @@ export function OrderDetailScreen({ orderId }: Props) {
               )}
             </View>
 
-            {order.specialInstructions ? (
+            {order.specialInstructions || order.cutlery ? (
               <View style={styles.card}>
                 <Text style={styles.cardTitle}>Instructions</Text>
-                <Text style={styles.fieldValue}>{order.specialInstructions}</Text>
+                {order.cutlery ? (
+                  <Text style={styles.fieldValue}>Include cutlery</Text>
+                ) : null}
+                {order.specialInstructions ? (
+                  <Text style={styles.fieldValue}>{order.specialInstructions}</Text>
+                ) : null}
               </View>
             ) : null}
 

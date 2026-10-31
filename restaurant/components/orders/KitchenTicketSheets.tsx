@@ -317,6 +317,9 @@ export function KotPreviewSheet({ result, onClose }: KotProps) {
               {line.modifiers?.length ? ` (${line.modifiers.join(', ')})` : ''}
             </Text>
           ))}
+          {result.ticket.cutlery ? (
+            <Text style={styles.copy}>Include cutlery</Text>
+          ) : null}
           {result.ticket.specialInstructions ? (
             <Text style={styles.copy}>{result.ticket.specialInstructions}</Text>
           ) : null}

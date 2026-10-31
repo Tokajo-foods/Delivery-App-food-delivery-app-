@@ -163,6 +163,7 @@ export type KotPrintResult = {
     restaurantName?: string;
     items: KotLine[];
     specialInstructions?: string;
+    cutlery?: boolean;
     deliveryType?: string;
   };
 };
@@ -504,10 +505,10 @@ export function mapOwnerOrder(data: Record<string, unknown>): OwnerOrder {
     discount,
     grandTotal: explicitTotal,
     bill: serverBill,
-    specialInstructions:
-      String(
-        data.specialInstructions ?? data.instructions ?? data.notes ?? ''
-      ).trim() || undefined,
+    specialInstructions: [data.specialInstructions, data.notes]
+      .map((value) => (typeof value === 'string' ? value.trim() : ''))
+      .find(Boolean) || undefined,
+    cutlery: data.cutlery === true ? true : undefined,
     deliveryAddress: address,
     rejectionReason:
       String(
@@ -836,6 +837,7 @@ function mapKot(raw: unknown): KotPrintResult {
       restaurantName: optionalString(ticket.restaurantName),
       items,
       specialInstructions: optionalString(ticket.specialInstructions),
+      cutlery: ticket.cutlery === true,
       deliveryType: optionalString(ticket.deliveryType),
     },
   };

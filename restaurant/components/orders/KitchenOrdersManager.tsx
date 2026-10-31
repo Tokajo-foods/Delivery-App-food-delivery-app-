@@ -914,6 +914,14 @@ function OrderTicket({
         </View>
       </View>
 
+      {order.cutlery || order.specialInstructions ? (
+        <Text style={styles.ticketNote} numberOfLines={2}>
+          {[order.cutlery ? 'Include cutlery' : null, order.specialInstructions]
+            .filter(Boolean)
+            .join(' · ')}
+        </Text>
+      ) : null}
+
       {showHandover ? (
         <Pressable
           onPress={(event) => event.stopPropagation()}
@@ -1166,6 +1174,14 @@ const styles = StyleSheet.create({
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  ticketNote: {
+    marginTop: -6,
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: '#9A3412',
   },
   iconBox: {
     width: 44,

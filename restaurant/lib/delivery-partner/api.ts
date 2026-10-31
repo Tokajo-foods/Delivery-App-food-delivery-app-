@@ -13,6 +13,7 @@ import {
   partnerAvailabilityApi,
 } from '@/lib/delivery-partner/availability-api';
 import { canFallbackToRest, socketErrorCopy } from '@/lib/delivery-partner/rider-ack';
+import { toUploadableImage } from '@/lib/delivery-partner/doc-upload-file';
 import { emitRiderEvent, isRiderSocketConnected } from '@/lib/delivery-partner/rider-gateway';
 import { toRejectReasonCode } from '@/lib/delivery-partner/rider-gateway-types';
 import { partnerTrackingApi } from '@/lib/delivery-partner/tracking-api';
@@ -716,7 +717,8 @@ export function mapPartnerDelivery(raw: unknown): PartnerDelivery {
       }
       return credited ?? tripPay ?? partnerEarnings;
     })(),
-    notes: pickString(source, ['notes', 'specialInstructions', 'instruction']),
+    notes: pickString(source, ['dropInstructions', 'notes']),
+    contactlessDelivery: pickBool(source, ['contactlessDelivery']) === true,
     assignedAt: pickString(source, ['assignedAt']),
     acceptedAt: pickString(source, ['acceptedAt']),
     arrivedAt: pickString(source, ['arrivedAt']),
@@ -1239,14 +1241,12 @@ async function request<T>(
   }
 }
 
+/** Exact RegisterPartnerSchema / RegisterWithInviteSchema fields. */
 function toRegisterBody(payload: DeliveryPartnerRegisterPayload) {
   const body: Record<string, unknown> = {
     firstName: payload.firstName.trim(),
     phone: payload.phone.trim(),
     vehicleType: payload.vehicleType,
-    acceptedTerms: payload.acceptedTerms,
-    agreeToTerms: payload.acceptedTerms,
-    termsAccepted: payload.acceptedTerms,
   };
 
   if (payload.lastName?.trim()) body.lastName = payload.lastName.trim();
@@ -1266,17 +1266,9 @@ function toRegisterBody(payload: DeliveryPartnerRegisterPayload) {
   if (payload.vehicleNumber?.trim()) {
     body.vehicleNumber = payload.vehicleNumber.trim().toUpperCase();
   }
-  if (payload.aadharNumber?.trim()) {
-    const digits = payload.aadharNumber.replace(/\D/g, '');
-    body.aadharNumber = digits;
-    body.aadhaarNumber = digits;
-  }
-  if (payload.inviteToken?.trim()) {
-    const token = payload.inviteToken.trim();
-    body.inviteToken = token;
-    body.token = token;
-    body.invitationToken = token;
-  }
+  if (payload.vehicleModel?.trim()) body.vehicleModel = payload.vehicleModel.trim();
+  if (payload.vehicleColor?.trim()) body.vehicleColor = payload.vehicleColor.trim();
+  if (payload.inviteToken?.trim()) body.token = payload.inviteToken.trim();
 
   return body;
 }
@@ -1373,80 +1365,22 @@ async function prepareJpegFile(
   };
 }
 
-/**
- * Profile photo → POST /partners/me/documents only
- * (same route as KYC; delivery-service has no /profile-photo route).
- */
-async function uploadPartnerProfilePhoto(
-  sourceUri: string,
-  fileName?: string
+/** POST /partners/me/documents — multipart `document` + `docType` (KYC and profile photo). */
+async function uploadKycFile(
+  payload: UploadPartnerDocumentPayload
 ): Promise<DeliveryPartnerProfile> {
-  const filePart = await prepareJpegFile(sourceUri, fileName);
-
-  const attempts: Array<{
-    fields: Record<string, string>;
-    files: Array<{ fieldName: string; file: UploadFilePart }>;
-  }> = [
-    // Exact KYC upload shape that Documents screen uses
-    {
-      fields: { docType: 'profilePhoto', type: 'profilePhoto' },
-      files: [
-        { fieldName: 'photo', file: filePart },
-        { fieldName: 'file', file: { ...filePart } },
-      ],
-    },
-    // Single file field if dual-file is rejected
-    {
-      fields: { docType: 'profilePhoto', type: 'profilePhoto' },
-      files: [{ fieldName: 'photo', file: filePart }],
-    },
-  ];
-
-  let lastError: Error | null = null;
-
-  for (const attempt of attempts) {
-    try {
-      const uploaded = await postMultipartWithFields(
-        `${ME_BASE}/documents`,
-        attempt
-      );
-      const mapped = mapPartner(uploaded);
-      if (mapped.id || mapped.photoUrl) return mapped;
-      const refreshed = await deliveryPartnerApi.getMe();
-      if (refreshed) return refreshed;
-      return mapped;
-    } catch (error) {
-      lastError =
-        error instanceof Error
-          ? error
-          : new Error('Profile photo upload failed');
-      const message = lastError.message.toLowerCase();
-      if (
-        message.includes('authentication') ||
-        message.includes('unauthorized') ||
-        message.includes('csrf') ||
-        message.includes('forbidden') ||
-        message.includes('log in')
-      ) {
-        throw lastError;
-      }
-      // Don't keep retrying hard server failures that aren't field-related
-      if (
-        message.includes('internal server error') ||
-        message.includes('route not found') ||
-        message.includes('cannot post')
-      ) {
-        throw lastError;
-      }
-    }
-  }
-
-  throw (
-    lastError ??
-    new Error(
-      'Could not upload profile photo. Try a smaller JPG from your gallery.'
-    )
+  const file = await toUploadableImage(
+    payload.uri,
+    payload.fileName ?? `${payload.docType}-${Date.now()}`,
+    payload.mimeType
   );
+  const uploaded = await postMultipartWithFields(`${ME_BASE}/documents`, {
+    fields: { docType: payload.docType },
+    files: [{ fieldName: 'document', file }],
+  });
+  const mapped = mapPartner(uploaded);
+  if (mapped.id) return mapped;
+  return (await deliveryPartnerApi.getMe()) ?? mapped;
 }
 
 async function getCurrentPartnerCoords(): Promise<PartnerGpsCoords> {
@@ -2844,38 +2778,17 @@ export const deliveryPartnerApi = {
     return mapMaskedCall(res.data ?? res, 'restaurant');
   },
 
-  /**
-   * Gallery images are converted to JPEG first (HEIC/content:// crash servers).
-   */
+  /** Photos are re-encoded as JPEG (≤ 2000 px) before upload — server limit is 5 MB. */
   uploadDocument: async (
     payload: UploadPartnerDocumentPayload
   ): Promise<DeliveryPartnerProfile> => {
-    if (!payload.docType) throw new Error('Document type is required.');
-    if (!payload.uri?.trim()) throw new Error('Please select a document image.');
-
-    if (payload.docType === 'profilePhoto') {
-      return uploadPartnerProfilePhoto(payload.uri, payload.fileName);
+    if (!payload.docType) {
+      throw new PartnerApiError('Document type is required.', 'DOC_TYPE_REQUIRED');
     }
-
-    const filePart = await prepareJpegFile(
-      payload.uri,
-      payload.fileName ?? `${payload.docType}-${Date.now()}.jpg`
-    );
-
-    const uploaded = await postMultipartWithFields(`${ME_BASE}/documents`, {
-      fields: {
-        docType: payload.docType,
-        type: payload.docType,
-      },
-      files: [
-        { fieldName: 'photo', file: filePart },
-        { fieldName: 'file', file: { ...filePart } },
-      ],
-    });
-
-    const mapped = mapPartner(uploaded);
-    if (mapped.id) return mapped;
-    return (await deliveryPartnerApi.getMe()) ?? mapped;
+    if (!payload.uri?.trim()) {
+      throw new PartnerApiError('Please select a document image.', 'NO_FILE');
+    }
+    return uploadKycFile(payload);
   },
 
   /**

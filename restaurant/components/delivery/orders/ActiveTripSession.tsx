@@ -24,6 +24,7 @@ import { OrderCallPanel } from '@/components/call/OrderCallPanel';
 import { DeliveryTripMap } from '@/components/delivery/orders/DeliveryTripMap';
 import { TripChatSheet } from '@/components/delivery/orders/TripChatSheet';
 import { TripDetailSheet } from '@/components/delivery/orders/TripDetailSheet';
+import { useTripWithOrder } from '@/components/delivery/orders/use-trip-order';
 import {
   TripLifecycleBar,
   tripGeofenceState,
@@ -127,6 +128,7 @@ function mergeDelivery(
     returnArrivedAt: extra.returnArrivedAt ?? base.returnArrivedAt,
     paymentMethod: extra.paymentMethod || base.paymentMethod,
     notes: extra.notes || base.notes,
+    contactlessDelivery: extra.contactlessDelivery ?? base.contactlessDelivery,
   };
 }
 
@@ -228,7 +230,9 @@ function ActiveTripBody({
     live: true,
     intervalMs: 3_000,
   });
-  const delivery = mergeDelivery(seed, detail.data);
+  const { delivery } = useTripWithOrder(mergeDelivery(seed, detail.data), {
+    live: true,
+  });
   const status = normalizeDeliveryStatus(delivery.status);
   const phase = tripPhase(status);
   const copy = phaseCopy(delivery);
@@ -368,12 +372,17 @@ function ActiveTripBody({
       ? delivery.rtoFee
       : delivery.earning;
   const earn = money(earnAmount, delivery.currency);
-  const amount = money(delivery.amount, delivery.currency);
+  const cod = isCodPayment(delivery.paymentMethod);
+  const codSettled = (delivery.settledVia ?? '').toLowerCase() === 'upi';
+  const codDue = cod && !codSettled ? money(delivery.amount, delivery.currency) : null;
+  const amount = phase !== 'return' && codDue ? `Collect ${codDue}` : null;
   const payLabel =
     phase === 'return'
       ? 'No COD'
-      : isCodPayment(delivery.paymentMethod)
-        ? 'COD'
+      : cod
+        ? codSettled
+          ? 'COD · paid by UPI'
+          : 'COD'
         : delivery.paymentMethod
           ? 'Prepaid'
           : null;
@@ -539,9 +548,14 @@ function ActiveTripBody({
                   </Text>
                 </View>
               ) : null}
-              {delivery.notes ? (
-                <Text style={styles.notes} numberOfLines={2}>
-                  Note: {delivery.notes}
+              {phase === 'customer' && (delivery.contactlessDelivery || delivery.notes) ? (
+                <Text style={styles.notes} numberOfLines={3}>
+                  {delivery.contactlessDelivery ? 'Leave at the door' : `Note: ${delivery.notes}`}
+                  {delivery.contactlessDelivery &&
+                  delivery.notes &&
+                  !/leave at (the )?door/i.test(delivery.notes)
+                    ? `\n${delivery.notes}`
+                    : ''}
                 </Text>
               ) : null}
             </View>

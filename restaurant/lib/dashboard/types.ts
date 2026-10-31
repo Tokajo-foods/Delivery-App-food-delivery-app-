@@ -47,6 +47,8 @@ export type OwnerOrder = {
   /** Customer payable total when kitchen fields are thin (KDS cards). */
   grandTotal?: number;
   specialInstructions?: string;
+  /** Customer asked for cutlery. Leave-at-door is for the rider, not this ticket. */
+  cutlery?: boolean;
   deliveryAddress?: OwnerOrderAddress;
   rejectionReason?: string;
   scheduledFor?: string;

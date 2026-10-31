@@ -241,6 +241,8 @@ export type PartnerDelivery = {
   payout?: RiderPayout | null;
   earning?: number;
   notes?: string;
+  /** Customer asked the rider to leave the order at the door. */
+  contactlessDelivery?: boolean;
   assignedAt?: string;
   acceptedAt?: string;
   arrivedAt?: string;
