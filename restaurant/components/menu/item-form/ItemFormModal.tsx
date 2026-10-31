@@ -2,7 +2,6 @@ import { X } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 
-import { CatalogStatusBadge } from '@/components/menu/CatalogStatusBadge';
 import { FoodCategoryPicker } from '@/components/menu/item-form/FoodCategoryPicker';
 import { ItemEditTools } from '@/components/menu/item-form/ItemEditTools';
 import { ItemPhotoField } from '@/components/menu/item-form/ItemPhotoField';
@@ -17,7 +16,6 @@ import { useItemForm } from '@/components/menu/item-form/use-item-form';
 import { VegMark } from '@/components/menu/MenuExtras';
 import { Field } from '@/components/menu/MenuField';
 import { menuModalStyles as styles } from '@/components/menu/menu-modal-styles';
-import { SubmitVerificationButton } from '@/components/menu/SubmitVerificationButton';
 import { authTheme } from '@/constants/auth-theme';
 import { getApiErrorMessage } from '@/lib/errors';
 import { useMenuItem } from '@/lib/restaurant/menu-hooks';
@@ -29,8 +27,6 @@ export function ItemFormModal({
   categories,
   onClose,
   onSubmit,
-  onSubmitVerification,
-  submitBusy,
   onVariants,
   onTimed86,
   onDuplicate,
@@ -43,8 +39,6 @@ export function ItemFormModal({
   categories: MenuCategory[];
   onClose: () => void;
   onSubmit: (payload: ItemFormPayload) => Promise<void>;
-  onSubmitVerification?: () => void;
-  submitBusy?: boolean;
   onVariants?: (item: MenuItem) => void;
   onTimed86?: (item: MenuItem) => void;
   onDuplicate?: () => void;
@@ -104,25 +98,6 @@ export function ItemFormModal({
             ) : null}
             {liveItem && itemQuery.isFetching && !itemQuery.data ? (
               <ActivityIndicator color={authTheme.brand} style={{ marginBottom: 12 }} />
-            ) : null}
-
-            {liveItem ? (
-              <>
-                <CatalogStatusBadge
-                  catalogStatus={liveItem.catalogStatus}
-                  pendingRevision={liveItem.pendingRevision}
-                  rejectionReason={liveItem.rejectionReason}
-                />
-                {onSubmitVerification ? (
-                  <SubmitVerificationButton
-                    catalogStatus={liveItem.catalogStatus}
-                    pendingRevision={liveItem.pendingRevision}
-                    rejectionReason={liveItem.rejectionReason}
-                    busy={submitBusy}
-                    onPress={onSubmitVerification}
-                  />
-                ) : null}
-              </>
             ) : null}
 
             <ItemPhotoField

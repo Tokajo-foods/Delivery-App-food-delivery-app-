@@ -163,7 +163,6 @@ export function MenuManager() {
     mutations.reorderItems.isPending ||
     mutations.attachItemModifiers.isPending ||
     mutations.deleteItemImage.isPending ||
-    mutations.submitItemVerification.isPending ||
     mutations.submitCategoryVerification.isPending;
 
   const itemCountByCategory = useMemo(() => {
@@ -181,21 +180,6 @@ export function MenuManager() {
 
   const fail = (title: string, error: unknown) => {
     Alert.alert(title, getApiErrorMessage(error));
-  };
-
-  const submitItemForVerification = (item: MenuItem) => {
-    void mutations.submitItemVerification
-      .mutateAsync(item.id)
-      .then((updated) => {
-        if (itemModal?.mode === 'edit' && itemModal.item.id === item.id) {
-          setItemModal({ mode: 'edit', item: { ...itemModal.item, ...updated } });
-        }
-        Alert.alert(
-          'Submitted',
-          'Ops will review this dish before customers see the content.'
-        );
-      })
-      .catch((error) => fail('Could not submit', error));
   };
 
   const submitCategoryForVerification = (category: MenuCategory) => {
@@ -734,7 +718,6 @@ export function MenuManager() {
               soldOut={soldOutIds.has(item.id)}
               canMoveUp={orderIndex > 0}
               canMoveDown={orderIndex >= 0 && orderIndex < items.length - 1}
-              submitBusy={mutations.submitItemVerification.isPending}
               onSelect={() => toggleSelect(item.id)}
               onToggleStock={() => toggleStock(item)}
               onEdit={() => setItemModal({ mode: 'edit', item })}
@@ -743,7 +726,6 @@ export function MenuManager() {
               onCustomisations={() => openModifiers(item)}
               onTimed86={() => setTimed86Item(item)}
               onDelete={() => confirmDeleteItem(item)}
-              onSubmitVerification={() => submitItemForVerification(item)}
               onMoveUp={canReorder ? () => moveItem(item.id, 'up') : undefined}
               onMoveDown={canReorder ? () => moveItem(item.id, 'down') : undefined}
             />
@@ -797,13 +779,7 @@ export function MenuManager() {
         state={itemModal}
         restaurantId={restaurantId}
         categories={categories}
-        submitBusy={mutations.submitItemVerification.isPending}
         onClose={() => setItemModal(null)}
-        onSubmitVerification={
-          itemModal?.mode === 'edit'
-            ? () => submitItemForVerification(itemModal.item)
-            : undefined
-        }
         onVariants={openModifiers}
         onTimed86={(item) => setTimed86Item(item)}
         onDuplicate={

@@ -86,7 +86,6 @@ export function MenuItemRow({
   soldOut,
   canMoveUp,
   canMoveDown,
-  submitBusy,
   onSelect,
   onToggleStock,
   onEdit,
@@ -95,7 +94,6 @@ export function MenuItemRow({
   onCustomisations,
   onTimed86,
   onDelete,
-  onSubmitVerification,
   onMoveUp,
   onMoveDown,
 }: {
@@ -104,7 +102,6 @@ export function MenuItemRow({
   soldOut: boolean;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
-  submitBusy?: boolean;
   onSelect: () => void;
   onToggleStock: () => void;
   onEdit: () => void;
@@ -113,7 +110,6 @@ export function MenuItemRow({
   onCustomisations: () => void;
   onTimed86: () => void;
   onDelete: () => void;
-  onSubmitVerification?: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
 }) {
@@ -147,12 +143,6 @@ export function MenuItemRow({
             money(item.price)
           )}
         </Text>
-        <CatalogStatusBadge
-          compact
-          catalogStatus={item.catalogStatus}
-          pendingRevision={item.pendingRevision}
-          rejectionReason={item.rejectionReason}
-        />
         {!inStock ? (
           <Text style={styles.soldMeta} numberOfLines={1}>
             {item.unavailableReason || 'Sold out'}
@@ -163,15 +153,6 @@ export function MenuItemRow({
                 })}`
               : ''}
           </Text>
-        ) : null}
-        {onSubmitVerification ? (
-          <SubmitVerificationButton
-            catalogStatus={item.catalogStatus}
-            pendingRevision={item.pendingRevision}
-            rejectionReason={item.rejectionReason}
-            busy={submitBusy}
-            onPress={onSubmitVerification}
-          />
         ) : null}
         <View style={styles.itemActions}>
           {onMoveUp ? (
