@@ -38,16 +38,60 @@ function native() {
   return { m, auth: m.getAuth() };
 }
 
+/** Native never settles without a foreground activity; the browser reCAPTCHA fallback needs headroom. */
+const SEND_TIMEOUT_MS = 120_000;
+/** Instant verification signs in natively; the JS auth state can trail the send promise. */
+const AUTO_SIGN_IN_WAIT_MS = 5_000;
+
+function withTimeout<T>(task: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(Object.assign(new Error('Sending the OTP timed out'), { code: 'auth/timeout' })),
+      ms
+    );
+    task.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
+
+function waitForPhoneUser(m: NativeAuthModule, phoneE164: string, ms: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    let done = false;
+    let unsubscribe: (() => void) | null = null;
+    const finish = (ok: boolean) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      unsubscribe?.();
+      resolve(ok);
+    };
+    const timer = setTimeout(() => finish(false), ms);
+    unsubscribe = m.onAuthStateChanged(m.getAuth(), (user) => {
+      if (user?.phoneNumber === phoneE164) finish(true);
+    });
+    if (done) unsubscribe();
+  });
+}
+
 /** Sends the SMS. Resolves a verificationId, or `NATIVE_AUTO_VERIFIED` when Android auto-signed in. */
 export async function startNativePhoneOtp(phoneE164: string, forceResend: boolean): Promise<string> {
   const { m, auth } = native();
   if (auth.currentUser) await m.signOut(auth);
-  const result = await m.signInWithPhoneNumber(auth, phoneE164, undefined, forceResend);
+  // RNFB's modular wrapper forwards its 3rd argument as the native `forceResend` flag on Android.
+  const send = m.signInWithPhoneNumber(auth, phoneE164, forceResend as never);
+  const result = await withTimeout(send, SEND_TIMEOUT_MS);
   if (auth.currentUser?.phoneNumber === phoneE164) return NATIVE_AUTO_VERIFIED;
-  if (!result.verificationId) {
-    throw Object.assign(new Error('No verification id'), { code: 'auth/missing-verification-id' });
-  }
-  return result.verificationId;
+  if (result.verificationId) return result.verificationId;
+  if (await waitForPhoneUser(m, phoneE164, AUTO_SIGN_IN_WAIT_MS)) return NATIVE_AUTO_VERIFIED;
+  throw Object.assign(new Error('No verification id'), { code: 'auth/missing-verification-id' });
 }
 
 export async function confirmNativePhoneOtp(verificationId: string, code: string): Promise<string> {

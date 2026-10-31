@@ -12,6 +12,7 @@ const FIREBASE_COPY: Record<string, string> = {
   'auth/session-expired': 'This OTP expired. Request a new one.',
   'auth/network-request-failed':
     'Network error while talking to Firebase. Check your internet and try again.',
+  'auth/timeout': 'Sending the OTP took too long. Check your internet and try again.',
   'auth/captcha-check-failed': 'Security check failed. Request the OTP again.',
   'auth/invalid-app-credential': 'Security check failed. Request the OTP again.',
   'auth/operation-not-allowed':
