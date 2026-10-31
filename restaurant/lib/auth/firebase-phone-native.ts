@@ -32,7 +32,7 @@ function native() {
   const m = loadNative();
   if (!m) {
     throw Object.assign(new Error('Native Firebase is not available in this build.'), {
-      code: 'PHONE_OTP_CLIENT_NOT_CONFIGURED',
+      code: 'FIREBASE_CLIENT_NOT_CONFIGURED',
     });
   }
   return { m, auth: m.getAuth() };

@@ -1,14 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import type { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useOtpCountdown } from '@/components/auth/useOtpCountdown';
 import {
-  firebasePhoneErrorMessage,
+  describeFirebaseError,
+  FIREBASE_CLIENT_NOT_CONFIGURED_MESSAGE,
+  getFirebaseErrorCode,
   isWrongOtpError,
   requiresNewOtp,
 } from '@/lib/auth/firebase-errors';
 import {
   confirmFirebasePhoneOtp,
   getFirebaseVerifiedPhone,
+  getFirebaseWebConfig,
   getFreshIdToken,
   isFirebasePhoneConfigured,
   NATIVE_AUTO_VERIFIED,
@@ -49,7 +53,10 @@ function verifiedSessionFor(initialPhone?: string): string | null {
 
 /** Firebase phone OTP state machine: phone → SMS code → verified ID token. */
 export function useFirebasePhoneOtp(options: Options = {}) {
+  const recaptchaRef = useRef<FirebaseRecaptchaVerifierModal>(null);
+  const firebaseConfig = useMemo(() => getFirebaseWebConfig(), []);
   const native = nativePhoneAuthAvailable();
+  const clientReady = isFirebasePhoneConfigured();
   /** Set once a sign-in for the current SMS is owned (typed code or auto) so the watcher can't race it. */
   const signInClaimedRef = useRef(false);
   const cooldown = useOtpCountdown();
@@ -92,8 +99,13 @@ export function useFirebasePhoneOtp(options: Options = {}) {
       setError('Enter a valid 10-digit mobile number (or the full +country number).');
       return;
     }
-    if (!isFirebasePhoneConfigured()) {
-      setError('Phone OTP is not configured in this build.');
+    if (!clientReady) {
+      setError(FIREBASE_CLIENT_NOT_CONFIGURED_MESSAGE);
+      return;
+    }
+    const verifier = recaptchaRef.current;
+    if (!native && !verifier) {
+      setError('Security check is still loading. Try again in a moment.');
       return;
     }
     setBusy('send');
@@ -106,7 +118,7 @@ export function useFirebasePhoneOtp(options: Options = {}) {
         }
       }
       signInClaimedRef.current = false;
-      const id = await startFirebasePhoneOtp(e164, null, { forceResend });
+      const id = await startFirebasePhoneOtp(e164, verifier, { forceResend });
       if (id === NATIVE_AUTO_VERIFIED) {
         markAutoVerified(e164);
         options.onSent?.(e164);
@@ -121,7 +133,12 @@ export function useFirebasePhoneOtp(options: Options = {}) {
       setInfo(`OTP sent to ${maskPhone(e164)}.`);
       options.onSent?.(e164);
     } catch (err) {
-      setError(firebasePhoneErrorMessage(err, 'Could not send the OTP.'));
+      const message = describeFirebaseError(err, 'Could not send the OTP.');
+      const fbCode = getFirebaseErrorCode(err);
+      if (fbCode === 'auth/invalid-phone-number' || fbCode === 'auth/missing-phone-number') {
+        setStage('phone');
+      }
+      setError(message);
     } finally {
       setBusy(null);
     }
@@ -173,7 +190,7 @@ export function useFirebasePhoneOtp(options: Options = {}) {
           setVerificationId(null);
           cooldown.clear();
         }
-        setError(firebasePhoneErrorMessage(err, 'Could not verify the OTP.'));
+        setError(describeFirebaseError(err, 'Could not verify the OTP.'));
       }
       return null;
     } finally {
@@ -189,7 +206,7 @@ export function useFirebasePhoneOtp(options: Options = {}) {
       const idToken = await getFreshIdToken();
       if (idToken && phone) return { idToken, phone };
     } catch (err) {
-      setError(firebasePhoneErrorMessage(err, 'Could not refresh phone verification.'));
+      setError(describeFirebaseError(err, 'Could not refresh phone verification.'));
       return null;
     }
     restart('Your phone verification ended. Resend the OTP and verify again.');
@@ -221,7 +238,10 @@ export function useFirebasePhoneOtp(options: Options = {}) {
   };
 
   return {
+    recaptchaRef,
+    firebaseConfig,
     native,
+    clientReady,
     stage,
     phone,
     phoneInput,

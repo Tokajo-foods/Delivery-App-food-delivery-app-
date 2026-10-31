@@ -1,3 +1,4 @@
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { CheckCircle2, MessageSquareCode, Smartphone } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
@@ -37,6 +38,15 @@ export function PhoneOtpStep({
 
   return (
     <View>
+      {otp.clientReady && !otp.native ? (
+        <FirebaseRecaptchaVerifierModal
+          ref={otp.recaptchaRef}
+          firebaseConfig={otp.firebaseConfig}
+          attemptInvisibleVerification
+          title="Quick security check"
+          cancelLabel="Cancel"
+        />
+      ) : null}
       <AuthBanner type="error" message={availability.unavailable} />
       {availability.loadError && !blocked ? (
         <Pressable onPress={availability.retry} hitSlop={8} className="mb-3">

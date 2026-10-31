@@ -7,7 +7,8 @@ const android = require(
 );
 
 /**
- * Android-only native Firebase: phone OTP via Play Integrity (no reCAPTCHA modal).
+ * Android native Firebase: phone OTP via Play Integrity (no in-app reCAPTCHA on native builds).
+ * Expo Go / web use the JS SDK + FirebaseRecaptchaVerifierModal when EXPO_PUBLIC_FIREBASE_* is set.
  * iOS excludes RNFB in package.json `expo.autolinking.ios.exclude`; use a native iOS build when enabled.
  */
  */

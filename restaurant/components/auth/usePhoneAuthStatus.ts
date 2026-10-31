@@ -4,6 +4,7 @@ import {
   FIREBASE_NOT_CONFIGURED_COPY,
   formatAuthError,
 } from '@/lib/auth/auth-error-copy';
+import { FIREBASE_CLIENT_NOT_CONFIGURED_MESSAGE } from '@/lib/auth/firebase-errors';
 import { isFirebasePhoneConfigured } from '@/lib/auth/firebase-phone';
 import { phoneAuthApi } from '@/lib/auth/phone-auth-api';
 import type { PhoneAuthStatus } from '@/lib/auth/types';
@@ -59,7 +60,7 @@ export function usePhoneAuthStatus(): PhoneAuthAvailability {
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
   const unavailable = !clientReady
-    ? 'Phone OTP is not configured in this build.'
+    ? FIREBASE_CLIENT_NOT_CONFIGURED_MESSAGE
     : serverMissing
       ? FIREBASE_NOT_CONFIGURED_COPY
       : null;
