@@ -1,4 +1,3 @@
-import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { CheckCircle2, MessageSquareCode, Smartphone } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
@@ -9,7 +8,6 @@ import { PrimaryButton } from '@/components/auth/PrimaryButton';
 import type { FirebasePhoneOtp } from '@/components/auth/useFirebasePhoneOtp';
 import type { PhoneAuthAvailability } from '@/components/auth/usePhoneAuthStatus';
 import { theme } from '@/constants/theme';
-import { getFirebaseWebConfig } from '@/lib/auth/firebase-phone';
 import { maskPhone } from '@/lib/auth/phone-number';
 
 type Props = {
@@ -39,14 +37,6 @@ export function PhoneOtpStep({
 
   return (
     <View>
-      {!blocked && !otp.native ? (
-        <FirebaseRecaptchaVerifierModal
-          ref={otp.recaptchaRef}
-          firebaseConfig={getFirebaseWebConfig()}
-          attemptInvisibleVerification
-        />
-      ) : null}
-
       <AuthBanner type="error" message={availability.unavailable} />
       {availability.loadError && !blocked ? (
         <Pressable onPress={availability.retry} hitSlop={8} className="mb-3">

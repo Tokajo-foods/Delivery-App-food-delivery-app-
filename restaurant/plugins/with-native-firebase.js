@@ -7,9 +7,9 @@ const android = require(
 );
 
 /**
- * Android-only native Firebase: phone OTP via Play Integrity, no reCAPTCHA. iOS excludes RNFB
- * in package.json `expo.autolinking.ios.exclude` and keeps the web reCAPTCHA verifier; enabling
- * it there needs GoogleService-Info.plist, static frameworks and the RNFB iOS plugin steps.
+ * Android-only native Firebase: phone OTP via Play Integrity (no reCAPTCHA modal).
+ * iOS excludes RNFB in package.json `expo.autolinking.ios.exclude`; use a native iOS build when enabled.
+ */
  */
 module.exports = function withNativeFirebase(config) {
   return withPlugins(config, [

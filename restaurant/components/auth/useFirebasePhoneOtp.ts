@@ -1,4 +1,3 @@
-import type { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useOtpCountdown } from '@/components/auth/useOtpCountdown';
@@ -50,7 +49,6 @@ function verifiedSessionFor(initialPhone?: string): string | null {
 
 /** Firebase phone OTP state machine: phone → SMS code → verified ID token. */
 export function useFirebasePhoneOtp(options: Options = {}) {
-  const recaptchaRef = useRef<FirebaseRecaptchaVerifierModal>(null);
   const native = nativePhoneAuthAvailable();
   /** Set once a sign-in for the current SMS is owned (typed code or auto) so the watcher can't race it. */
   const signInClaimedRef = useRef(false);
@@ -98,11 +96,6 @@ export function useFirebasePhoneOtp(options: Options = {}) {
       setError('Phone OTP is not configured in this build.');
       return;
     }
-    const verifier = recaptchaRef.current;
-    if (!native && !verifier) {
-      setError('Security check is still loading. Try again in a moment.');
-      return;
-    }
     setBusy('send');
     try {
       if (options.precheck && !skipPrecheck) {
@@ -113,7 +106,7 @@ export function useFirebasePhoneOtp(options: Options = {}) {
         }
       }
       signInClaimedRef.current = false;
-      const id = await startFirebasePhoneOtp(e164, verifier, { forceResend });
+      const id = await startFirebasePhoneOtp(e164, null, { forceResend });
       if (id === NATIVE_AUTO_VERIFIED) {
         markAutoVerified(e164);
         options.onSent?.(e164);
@@ -228,7 +221,6 @@ export function useFirebasePhoneOtp(options: Options = {}) {
   };
 
   return {
-    recaptchaRef,
     native,
     stage,
     phone,

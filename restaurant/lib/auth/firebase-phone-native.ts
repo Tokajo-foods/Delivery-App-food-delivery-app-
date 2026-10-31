@@ -38,7 +38,7 @@ function native() {
   return { m, auth: m.getAuth() };
 }
 
-/** Native never settles without a foreground activity; the browser reCAPTCHA fallback needs headroom. */
+/** Long timeout so slow networks / Play Integrity checks can finish before we fail. */
 const SEND_TIMEOUT_MS = 120_000;
 /** Instant verification signs in natively; the JS auth state can trail the send promise. */
 const AUTO_SIGN_IN_WAIT_MS = 5_000;

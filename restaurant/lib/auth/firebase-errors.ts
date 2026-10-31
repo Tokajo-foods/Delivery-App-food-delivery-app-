@@ -23,7 +23,7 @@ const FIREBASE_COPY: Record<string, string> = {
     'This app version is not registered for phone sign-in yet. Ask ops to add its SHA-256 in Firebase.',
   'auth/unauthorized-domain':
     'This build’s domain is not authorised in Firebase. Ask ops to add it under Authorized domains.',
-  ERR_FIREBASE_RECAPTCHA_CANCEL: 'Security check was cancelled. Tap Send OTP to try again.',
+  ERR_FIREBASE_SECURITY_CANCEL: 'Security check was cancelled. Tap Send OTP to try again.',
 };
 
 /** Codes where the current verification id is dead and a new SMS is required. */
@@ -42,8 +42,8 @@ function firebaseCode(error: unknown): string {
   return '';
 }
 
-export function isRecaptchaCancelled(error: unknown): boolean {
-  if (firebaseCode(error) === 'ERR_FIREBASE_RECAPTCHA_CANCEL') return true;
+export function isPhoneSecurityCheckCancelled(error: unknown): boolean {
+  if (firebaseCode(error) === 'ERR_FIREBASE_SECURITY_CANCEL') return true;
   const message = error instanceof Error ? error.message.toLowerCase() : '';
   return message.includes('cancelled by user') || message.includes('canceled by user');
 }
@@ -56,9 +56,9 @@ export function requiresNewOtp(error: unknown): boolean {
   return RESEND_REQUIRED.has(firebaseCode(error));
 }
 
-/** Firebase / reCAPTCHA / client-config error → owner-facing copy. */
+/** Firebase phone-auth error → owner-facing copy. */
 export function firebasePhoneErrorMessage(error: unknown, fallback: string): string {
-  if (isRecaptchaCancelled(error)) return FIREBASE_COPY.ERR_FIREBASE_RECAPTCHA_CANCEL;
+  if (isPhoneSecurityCheckCancelled(error)) return FIREBASE_COPY.ERR_FIREBASE_SECURITY_CANCEL;
   const code = firebaseCode(error);
   if (FIREBASE_COPY[code]) return FIREBASE_COPY[code];
   return formatAuthError(error, fallback);
