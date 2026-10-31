@@ -54,12 +54,12 @@ export default function RestaurantSetupScreen() {
                     label="Register Restaurant"
                     onPress={() =>
                       void setup.submit(
-                        serviceHealth.data?.ok,
+                        serviceHealth.data?.ok !== false,
                         serviceHealth.data?.message
                       )
                     }
                     loading={setup.busy}
-                    disabled={serviceHealth.data?.ok === false}
+                    disabled={setup.busy}
                   />
                 )}
               </View>

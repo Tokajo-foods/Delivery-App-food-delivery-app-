@@ -88,12 +88,8 @@ export function RestaurantDashboard() {
     duty.data.isOnline === true;
 
   const headerDuty = {
-    dutyLabel:
-      serviceHealth.data && !serviceHealth.data.ok
-        ? 'Kitchen unavailable'
-        : dutyLabel,
-    dutyOnline:
-      serviceHealth.data && !serviceHealth.data.ok ? false : dutyOnline,
+    dutyLabel,
+    dutyOnline,
   };
 
   const displayName =

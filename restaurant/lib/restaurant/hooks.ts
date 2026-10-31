@@ -47,8 +47,9 @@ export function useRestaurantServiceHealth(enabled = true) {
     queryKey: restaurantOutletKeys.health(),
     queryFn: () => restaurantOwnerApi.getServiceHealth(),
     enabled,
-    staleTime: 30_000,
-    retry: false,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    retry: 1,
   });
 }
 

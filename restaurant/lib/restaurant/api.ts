@@ -456,42 +456,48 @@ export const restaurantOwnerApi = {
 
   /** GET /health + GET /health/ready */
   getServiceHealth: async (): Promise<RestaurantServiceHealth> => {
+    const pingLive = () =>
+      api.get<Record<string, unknown>>(`${RESTAURANT_SERVICE}/health`, {
+        timeout: 8000,
+      });
+    let live;
     try {
-      const live = await api.get<Record<string, unknown>>(
-        `${RESTAURANT_SERVICE}/health`,
-        { timeout: 8000 }
-      );
-      const liveOk =
-        live.status < 400 &&
-        String(live.data?.status ?? 'ok').toLowerCase() !== 'down';
-      if (!liveOk) {
-        return { ok: false, ready: false, message: 'Restaurant service is down' };
-      }
+      live = await pingLive();
+    } catch {
       try {
-        const ready = await api.get<Record<string, unknown>>(
-          `${RESTAURANT_SERVICE}/health/ready`,
-          { timeout: 8000, validateStatus: () => true }
-        );
-        const readyOk = ready.status < 400;
-        const checks = ready.data?.checks as
-          | { mongo?: string; redis?: string }
-          | undefined;
-        const message = readyOk
-          ? undefined
-          : `Kitchen database is not ready (${checks?.mongo ?? 'mongo'} / ${checks?.redis ?? 'redis'}).`;
-        return { ok: true, ready: readyOk, message };
+        live = await pingLive();
       } catch {
         return {
-          ok: true,
+          ok: false,
           ready: false,
-          message: 'Restaurant service is up but not ready yet.',
+          message: 'Cannot reach restaurant-service. Try again shortly.',
         };
       }
+    }
+    const liveOk =
+      live.status < 400 &&
+      String(live.data?.status ?? 'ok').toLowerCase() !== 'down';
+    if (!liveOk) {
+      return { ok: false, ready: false, message: 'Restaurant service is down' };
+    }
+    try {
+      const ready = await api.get<Record<string, unknown>>(
+        `${RESTAURANT_SERVICE}/health/ready`,
+        { timeout: 8000, validateStatus: () => true }
+      );
+      const readyOk = ready.status < 400;
+      const checks = ready.data?.checks as
+        | { mongo?: string; redis?: string }
+        | undefined;
+      const message = readyOk
+        ? undefined
+        : `Kitchen database is not ready (${checks?.mongo ?? 'mongo'} / ${checks?.redis ?? 'redis'}).`;
+      return { ok: true, ready: readyOk, message };
     } catch {
       return {
-        ok: false,
+        ok: true,
         ready: false,
-        message: 'Cannot reach restaurant-service. Try again shortly.',
+        message: 'Restaurant service is up but not ready yet.',
       };
     }
   },
