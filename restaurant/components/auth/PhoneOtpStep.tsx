@@ -39,7 +39,7 @@ export function PhoneOtpStep({
 
   return (
     <View>
-      {!blocked ? (
+      {!blocked && !otp.native ? (
         <FirebaseRecaptchaVerifierModal
           ref={otp.recaptchaRef}
           firebaseConfig={getFirebaseWebConfig()}

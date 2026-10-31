@@ -18,6 +18,8 @@ const FIREBASE_COPY: Record<string, string> = {
     'Phone sign-in is disabled in Firebase. Ask ops to enable the Phone provider.',
   'auth/app-not-authorized':
     'This app is not authorised for Firebase phone sign-in. Ask ops to check the Firebase project.',
+  'auth/missing-client-identifier':
+    'This app version is not registered for phone sign-in yet. Ask ops to add its SHA-256 in Firebase.',
   'auth/unauthorized-domain':
     'This build’s domain is not authorised in Firebase. Ask ops to add it under Authorized domains.',
   ERR_FIREBASE_RECAPTCHA_CANCEL: 'Security check was cancelled. Tap Send OTP to try again.',

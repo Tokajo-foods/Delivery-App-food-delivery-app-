@@ -8,7 +8,17 @@ import {
   type Auth,
 } from 'firebase/auth';
 
+import {
+  confirmNativePhoneOtp,
+  getNativeFreshIdToken,
+  getNativeVerifiedPhone,
+  nativePhoneAuthAvailable,
+  signOutNative,
+  startNativePhoneOtp,
+} from '@/lib/auth/firebase-phone-native';
 import { PartnerApiError } from '@/lib/errors';
+
+export { NATIVE_AUTO_VERIFIED, nativePhoneAuthAvailable } from '@/lib/auth/firebase-phone-native';
 
 type Extra = {
   firebaseApiKey?: string;
@@ -44,16 +54,20 @@ export function getFirebaseWebConfig() {
   };
 }
 
-export function isFirebasePhoneConfigured(): boolean {
+function isWebConfigComplete(): boolean {
   const c = getFirebaseWebConfig();
   return Boolean(c.apiKey && c.projectId && c.appId && c.authDomain);
+}
+
+export function isFirebasePhoneConfigured(): boolean {
+  return nativePhoneAuthAvailable() || isWebConfigComplete();
 }
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 
 export function getFirebaseAuth(): Auth {
-  if (!isFirebasePhoneConfigured()) {
+  if (!isWebConfigComplete()) {
     throw new PartnerApiError(
       'Phone OTP is not configured in this build.',
       'PHONE_OTP_CLIENT_NOT_CONFIGURED'
@@ -67,15 +81,24 @@ export function getFirebaseAuth(): Auth {
   return auth!;
 }
 
+type WebVerifier = { type: string; verify: () => Promise<string> };
+
 /**
- * Start Firebase phone OTP. `applicationVerifier` comes from FirebaseRecaptchaVerifierModal.
+ * Start Firebase phone OTP. Native builds skip reCAPTCHA (verifier unused) and may resolve
+ * `NATIVE_AUTO_VERIFIED`; web/Expo Go need the FirebaseRecaptchaVerifierModal verifier.
  */
 export async function startFirebasePhoneOtp(
   phoneE164: string,
-  applicationVerifier: { type: string; verify: () => Promise<string> }
+  applicationVerifier: WebVerifier | null,
+  { forceResend = false }: { forceResend?: boolean } = {}
 ): Promise<string> {
-  const authInstance = getFirebaseAuth();
-  const provider = new PhoneAuthProvider(authInstance);
+  if (nativePhoneAuthAvailable()) return startNativePhoneOtp(phoneE164, forceResend);
+  if (!applicationVerifier) {
+    throw Object.assign(new Error('Security check is still loading.'), {
+      code: 'auth/missing-app-credential',
+    });
+  }
+  const provider = new PhoneAuthProvider(getFirebaseAuth());
   return provider.verifyPhoneNumber(phoneE164, applicationVerifier as never);
 }
 
@@ -84,6 +107,7 @@ export async function confirmFirebasePhoneOtp(
   verificationId: string,
   code: string
 ): Promise<string> {
+  if (nativePhoneAuthAvailable()) return confirmNativePhoneOtp(verificationId, code);
   const authInstance = getFirebaseAuth();
   const credential = PhoneAuthProvider.credential(verificationId, code);
   const result = await signInWithCredential(authInstance, credential);
@@ -92,13 +116,15 @@ export async function confirmFirebasePhoneOtp(
 
 /** E.164 number of the phone verified in this app session, if any. */
 export function getFirebaseVerifiedPhone(): string | null {
-  if (!isFirebasePhoneConfigured()) return null;
+  if (nativePhoneAuthAvailable()) return getNativeVerifiedPhone();
+  if (!isWebConfigComplete()) return null;
   return getFirebaseAuth().currentUser?.phoneNumber ?? null;
 }
 
 /** Force-refreshed ID token for retries; null when the Firebase session ended. */
 export async function getFreshIdToken(): Promise<string | null> {
-  if (!isFirebasePhoneConfigured()) return null;
+  if (nativePhoneAuthAvailable()) return getNativeFreshIdToken();
+  if (!isWebConfigComplete()) return null;
   const user = getFirebaseAuth().currentUser;
   if (!user) return null;
   return user.getIdToken(true);
@@ -106,7 +132,8 @@ export async function getFreshIdToken(): Promise<string | null> {
 
 /** Drop the Firebase session once the backend issued its own `_sid`. */
 export async function signOutFirebase(): Promise<void> {
-  if (!isFirebasePhoneConfigured() || !app) return;
+  if (nativePhoneAuthAvailable()) return signOutNative();
+  if (!isWebConfigComplete() || !app) return;
   try {
     await signOut(getFirebaseAuth());
   } catch {

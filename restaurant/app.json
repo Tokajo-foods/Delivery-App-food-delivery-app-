@@ -65,7 +65,8 @@
           }
         }
       ],
-      "./plugins/with-call-native"
+      "./plugins/with-call-native",
+      "./plugins/with-native-firebase"
     ],
     "ios": {
       "supportsTablet": true,

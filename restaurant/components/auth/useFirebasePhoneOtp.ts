@@ -1,5 +1,5 @@
 import type { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useOtpCountdown } from '@/components/auth/useOtpCountdown';
 import {
@@ -12,9 +12,12 @@ import {
   getFirebaseVerifiedPhone,
   getFreshIdToken,
   isFirebasePhoneConfigured,
+  NATIVE_AUTO_VERIFIED,
+  nativePhoneAuthAvailable,
   signOutFirebase,
   startFirebasePhoneOtp,
 } from '@/lib/auth/firebase-phone';
+import { watchNativePhoneSignIn } from '@/lib/auth/firebase-phone-native';
 import { maskPhone, toE164Phone } from '@/lib/auth/phone-number';
 
 export const MAX_WRONG_OTP = 5;
@@ -48,6 +51,9 @@ function verifiedSessionFor(initialPhone?: string): string | null {
 /** Firebase phone OTP state machine: phone → SMS code → verified ID token. */
 export function useFirebasePhoneOtp(options: Options = {}) {
   const recaptchaRef = useRef<FirebaseRecaptchaVerifierModal>(null);
+  const native = nativePhoneAuthAvailable();
+  /** Set once a sign-in for the current SMS is owned (typed code or auto) so the watcher can't race it. */
+  const signInClaimedRef = useRef(false);
   const cooldown = useOtpCountdown();
   const [resumed] = useState(() =>
     options.resume === false ? null : verifiedSessionFor(options.initialPhone)
@@ -64,7 +70,23 @@ export function useFirebasePhoneOtp(options: Options = {}) {
 
   const setCode = (value: string) => setCodeState(value.replace(/\D/g, '').slice(0, 6));
 
-  const send = async ({ skipPrecheck = false } = {}) => {
+  const markAutoVerified = useCallback((target: string) => {
+    if (signInClaimedRef.current) return;
+    signInClaimedRef.current = true;
+    setPhone(target);
+    setVerificationId(null);
+    setCodeState('');
+    setError(null);
+    setStage('verified');
+    setInfo(`${maskPhone(target)} verified automatically.`);
+  }, []);
+
+  useEffect(() => {
+    if (!native || stage !== 'code' || !phone) return;
+    return watchNativePhoneSignIn(phone, () => markAutoVerified(phone));
+  }, [native, stage, phone, markAutoVerified]);
+
+  const send = async ({ skipPrecheck = false, forceResend = false } = {}) => {
     setError(null);
     setInfo(null);
     const e164 = toE164Phone(phoneInput);
@@ -77,7 +99,7 @@ export function useFirebasePhoneOtp(options: Options = {}) {
       return;
     }
     const verifier = recaptchaRef.current;
-    if (!verifier) {
+    if (!native && !verifier) {
       setError('Security check is still loading. Try again in a moment.');
       return;
     }
@@ -90,7 +112,13 @@ export function useFirebasePhoneOtp(options: Options = {}) {
           return;
         }
       }
-      const id = await startFirebasePhoneOtp(e164, verifier);
+      signInClaimedRef.current = false;
+      const id = await startFirebasePhoneOtp(e164, verifier, { forceResend });
+      if (id === NATIVE_AUTO_VERIFIED) {
+        markAutoVerified(e164);
+        options.onSent?.(e164);
+        return;
+      }
       setVerificationId(id);
       setPhone(e164);
       setStage('code');
@@ -108,7 +136,10 @@ export function useFirebasePhoneOtp(options: Options = {}) {
 
   const resend = async () => {
     if (cooldown.active || busy) return;
-    await send({ skipPrecheck: Boolean(phone) && toE164Phone(phoneInput) === phone });
+    await send({
+      skipPrecheck: Boolean(phone) && toE164Phone(phoneInput) === phone,
+      forceResend: true,
+    });
   };
 
   const verify = async (override?: string): Promise<PhoneOtpVerified | null> => {
@@ -122,6 +153,8 @@ export function useFirebasePhoneOtp(options: Options = {}) {
       setError('Enter the 6-digit OTP.');
       return null;
     }
+    if (signInClaimedRef.current) return null;
+    signInClaimedRef.current = true;
     setBusy('verify');
     try {
       const idToken = await confirmFirebasePhoneOtp(verificationId, value);
@@ -129,6 +162,7 @@ export function useFirebasePhoneOtp(options: Options = {}) {
       setInfo(null);
       return { idToken, phone };
     } catch (err) {
+      signInClaimedRef.current = false;
       setCodeState('');
       if (isWrongOtpError(err)) {
         const next = wrongCodes + 1;
@@ -195,6 +229,7 @@ export function useFirebasePhoneOtp(options: Options = {}) {
 
   return {
     recaptchaRef,
+    native,
     stage,
     phone,
     phoneInput,
