@@ -61,6 +61,14 @@ function throwFinanceError(error: unknown, fallback: string): never {
       err.code = 'PAYMENT_SERVICE_UNAVAILABLE';
       throw err;
     }
+    if (code === 'STAFF_PERMISSION_DENIED') {
+      const err = new Error(
+        data?.message || 'Only the restaurant owner can withdraw earnings. (STAFF_PERMISSION_DENIED)'
+      ) as Error & { status?: number; code?: string };
+      err.status = 403;
+      err.code = 'STAFF_PERMISSION_DENIED';
+      throw err;
+    }
     if (code === 'INSUFFICIENT_WALLET_BALANCE') {
       const err = new Error(
         data?.message || 'Not enough earnings to withdraw. (INSUFFICIENT_WALLET_BALANCE)'

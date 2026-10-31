@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { RestaurantPageHeader } from '@/components/dashboard/RestaurantPageHeader';
+import { WithdrawEarningsSheet } from '@/components/finance/WithdrawEarningsSheet';
 import { authTheme, PARTNER_BOTTOM_NAV_INSET } from '@/constants/auth-theme';
 import { useEarningsSummary } from '@/lib/restaurant/earnings-hooks';
 import type { EarningsPeriod } from '@/lib/restaurant/earnings-types';
@@ -18,7 +19,10 @@ import { PassbookView } from './PassbookView';
 export function EarningsManager() {
   const [view, setView] = useState<EarningsView>('earnings');
   const [period, setPeriod] = useState<EarningsPeriod>('today');
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
   const summary = useEarningsSummary();
+  const remaining =
+    summary.data?.remaining ?? summary.data?.available ?? summary.data?.balance ?? 0;
 
   const totals = summary.data?.periods[period];
   const deltaPercent = useMemo(
@@ -29,7 +33,7 @@ export function EarningsManager() {
 
   return (
     <View style={styles.screen}>
-      <RestaurantPageHeader title="Earnings" subtitle="Net of platform fee · IST" showBack>
+      <RestaurantPageHeader title="Earnings" subtitle="Withdraw remaining anytime · IST" showBack>
         <View style={styles.controls}>
           <EarningsViewToggle value={view} onChange={setView} />
           <PeriodTabs value={period} onChange={setPeriod} />
@@ -54,7 +58,10 @@ export function EarningsManager() {
             <EarningsHero
               period={period}
               totals={totals}
-              balance={summary.data?.balance}
+              balance={remaining}
+              settled={summary.data?.settled}
+              canWithdraw={remaining >= 1}
+              onWithdraw={() => setWithdrawOpen(true)}
               deltaPercent={deltaPercent}
               loading={summary.isLoading || summary.restaurantLoading}
               refreshing={summary.isFetching && !summary.isLoading}
@@ -67,10 +74,15 @@ export function EarningsManager() {
         <PassbookView
           period={period}
           totals={totals}
-          balance={summary.data?.balance}
+          balance={remaining}
           onRefreshSummary={refreshSummary}
         />
       )}
+      <WithdrawEarningsSheet
+        visible={withdrawOpen}
+        available={remaining}
+        onClose={() => setWithdrawOpen(false)}
+      />
     </View>
   );
 }

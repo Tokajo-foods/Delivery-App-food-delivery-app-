@@ -43,6 +43,11 @@ export type EarningsSummary = {
   restaurantId: string;
   generatedAt: string;
   balance: number;
+  available: number;
+  remaining: number;
+  settled: number;
+  lifetimeCredited: number;
+  collectedAtStore: number;
   commissionPercent: number;
   periods: Record<EarningsPeriod, EarningsPeriodTotals>;
   daily: EarningsDay[];

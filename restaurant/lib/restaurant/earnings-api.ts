@@ -123,7 +123,12 @@ export const restaurantEarningsApi = {
       return {
         restaurantId: String(data.restaurantId ?? restaurantId),
         generatedAt: String(data.generatedAt ?? new Date().toISOString()),
-        balance: num(data.balance),
+        balance: num(data.available ?? data.remaining ?? data.balance),
+        available: num(data.available ?? data.remaining ?? data.balance),
+        remaining: num(data.remaining ?? data.available ?? data.balance),
+        settled: num(data.settled),
+        lifetimeCredited: num(data.lifetimeCredited),
+        collectedAtStore: num(data.collectedAtStore),
         commissionPercent: num(data.commissionPercent),
         periods: Object.fromEntries(
           PERIODS.map((p) => [p, mapPeriod(periods[p], p)])

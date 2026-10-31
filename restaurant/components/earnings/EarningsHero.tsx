@@ -1,5 +1,5 @@
 import { Bike, Landmark, RotateCcw, TrendingDown, TrendingUp, Wallet } from 'lucide-react-native';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
@@ -12,6 +12,9 @@ type Props = {
   period: EarningsPeriod;
   totals?: EarningsPeriodTotals;
   balance?: number;
+  settled?: number;
+  canWithdraw?: boolean;
+  onWithdraw?: () => void;
   deltaPercent: number | null;
   loading: boolean;
   refreshing: boolean;
@@ -30,6 +33,9 @@ export function EarningsHero({
   period,
   totals,
   balance,
+  settled,
+  canWithdraw,
+  onWithdraw,
   deltaPercent,
   loading,
   refreshing,
@@ -113,7 +119,7 @@ export function EarningsHero({
         <View style={styles.walletCol}>
           <View style={styles.walletHead}>
             <Wallet color={authTheme.brand} size={14} strokeWidth={2.2} />
-            <Text style={styles.walletLabel}>Wallet</Text>
+            <Text style={styles.walletLabel}>Remaining</Text>
           </View>
           <Text style={styles.walletValue}>{formatCurrency(balance ?? 0)}</Text>
         </View>
@@ -121,11 +127,20 @@ export function EarningsHero({
         <View style={styles.walletCol}>
           <View style={styles.walletHead}>
             <Landmark color="#1D4ED8" size={14} strokeWidth={2.2} />
-            <Text style={styles.walletLabel}>Paid to bank</Text>
+            <Text style={styles.walletLabel}>Settled</Text>
           </View>
-          <Text style={styles.walletValue}>{formatCurrency(totals?.payouts ?? 0)}</Text>
+          <Text style={styles.walletValue}>{formatCurrency(settled ?? 0)}</Text>
         </View>
       </View>
+      {onWithdraw ? (
+        <Pressable
+          disabled={!canWithdraw}
+          onPress={onWithdraw}
+          style={[styles.withdraw, !canWithdraw && styles.withdrawOff]}
+        >
+          <Text style={styles.withdrawText}>Request earnings</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -185,4 +200,13 @@ const styles = StyleSheet.create({
   walletHead: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   walletLabel: { fontFamily: fonts.medium, fontSize: 12, color: authTheme.textMuted },
   walletValue: { fontFamily: fonts.extraBold, fontSize: 16, color: authTheme.text, letterSpacing: -0.3 },
+  withdraw: {
+    marginTop: 12,
+    borderRadius: 12,
+    backgroundColor: authTheme.brand,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  withdrawOff: { opacity: 0.4 },
+  withdrawText: { fontFamily: fonts.semiBold, fontSize: 14, color: '#FFFFFF' },
 });
