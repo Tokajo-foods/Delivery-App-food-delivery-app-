@@ -114,7 +114,11 @@ export function useItemForm({
       name: name.trim(),
       description: description.trim() || undefined,
       price: parsedPrice,
-      discountPrice: Number.isFinite(parsedDiscount) ? parsedDiscount : undefined,
+      discountPrice: Number.isFinite(parsedDiscount)
+        ? parsedDiscount
+        : isCreate
+          ? undefined
+          : null,
       isVeg,
       isAvailable,
       spiceLevel,

@@ -265,7 +265,7 @@ export type CreateMenuItemPayload = {
   name: string;
   description?: string;
   price: number;
-  discountPrice?: number;
+  discountPrice?: number | null;
   isVeg?: boolean;
   isAvailable?: boolean;
   spiceLevel?: SpiceLevel | string;

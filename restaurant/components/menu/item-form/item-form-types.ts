@@ -16,7 +16,7 @@ export type ItemFormPayload = {
   name: string;
   description?: string;
   price: number;
-  discountPrice?: number;
+  discountPrice?: number | null;
   isVeg?: boolean;
   isAvailable?: boolean;
   spiceLevel?: string;
