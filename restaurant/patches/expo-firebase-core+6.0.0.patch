@@ -12,3 +12,16 @@ index 9bda09b..bcc3896 100644
  
    compileOptions {
      sourceCompatibility JavaVersion.VERSION_11
+diff --git a/node_modules/expo-firebase-core/build/FirebaseCore.js b/node_modules/expo-firebase-core/build/FirebaseCore.js
+index 859ef61..e18ddc9 100644
+--- a/node_modules/expo-firebase-core/build/FirebaseCore.js
++++ b/node_modules/expo-firebase-core/build/FirebaseCore.js
+@@ -1,8 +1,5 @@
+ import ExpoFirebaseCore from './ExpoFirebaseCore';
+ import { getDefaultWebOptions } from './FirebaseOptions';
+-if (!ExpoFirebaseCore) {
+-    console.warn('No native ExpoFirebaseCore module found, are you sure the expo-firebase-core module is linked properly?');
+-}
+ // @needsAudit
+ /**
+  * Name of the default Firebase app (e.g. `[DEFAULT]`).

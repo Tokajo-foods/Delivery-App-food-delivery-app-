@@ -4,6 +4,7 @@ import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/auth/PrimaryButton';
 import { hoursDriftStyles as styles } from '@/components/dashboard/hours-drift-prompt-styles';
+import { authTheme } from '@/constants/auth-theme';
 import { getApiErrorMessage } from '@/lib/errors';
 import { useMyRestaurantId } from '@/lib/order/hooks';
 import {

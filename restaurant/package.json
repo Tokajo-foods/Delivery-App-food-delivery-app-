@@ -76,7 +76,10 @@
   "overrides": {
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "expo-asset": "12.0.13"
+    "expo-asset": "12.0.13",
+    "expo-firebase-core": {
+      "expo-constants": "$expo-constants"
+    }
   },
   "scripts": {
     "postinstall": "patch-package",
