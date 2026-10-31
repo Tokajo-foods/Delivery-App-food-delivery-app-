@@ -844,10 +844,9 @@ function mapKot(raw: unknown): KotPrintResult {
 }
 
 function mapMoneyOutcome(raw: unknown, fallbackId: string): KitchenMoneyOutcome {
-  const rec = extractOrder(raw);
-  const orderRaw = rec.order ?? rec;
-  const order = mapOwnerOrder(extractOrder(orderRaw));
-  const removed = extractList(rec.removedItems).map((row) => ({
+  const envelope = asRecord(raw);
+  const order = mapOwnerOrder(extractOrder(envelope.order ?? envelope));
+  const removed = extractList(envelope.removedItems).map((row) => ({
     itemId: String(row.itemId ?? row._id ?? row.id ?? ''),
     name: String(row.name ?? 'Item'),
     quantity: Number(row.quantity ?? 1) || 1,
@@ -855,16 +854,16 @@ function mapMoneyOutcome(raw: unknown, fallbackId: string): KitchenMoneyOutcome 
   }));
   return {
     order: order.id ? order : { ...order, id: fallbackId },
-    refundAmount: Number(rec.refundAmount ?? 0) || 0,
-    refundIssued: rec.refundIssued === true,
-    refundId: optionalString(rec.refundId) ?? null,
-    refundError: optionalString(rec.refundError) ?? null,
-    customerNotified: rec.customerNotified === true,
-    deliveryCancelled: rec.deliveryCancelled === true,
+    refundAmount: Number(envelope.refundAmount ?? 0) || 0,
+    refundIssued: envelope.refundIssued === true,
+    refundId: optionalString(envelope.refundId) ?? null,
+    refundError: optionalString(envelope.refundError) ?? null,
+    customerNotified: envelope.customerNotified === true,
+    deliveryCancelled: envelope.deliveryCancelled === true,
     removedItems: removed.length ? removed : undefined,
-    previousTotal: optionalNumber(rec.previousTotal),
-    newTotal: optionalNumber(rec.newTotal, rec.grandTotal),
-    codAmountSynced: rec.codAmountSynced === true,
+    previousTotal: optionalNumber(envelope.previousTotal),
+    newTotal: optionalNumber(envelope.newTotal, envelope.grandTotal),
+    codAmountSynced: envelope.codAmountSynced === true,
   };
 }
 
