@@ -500,7 +500,6 @@ export function MenuManager() {
         search={search}
         onSearch={setSearch}
         onImport={() => setBulkOpen(true)}
-        onAddItem={openCreateDish}
         importDisabled={!restaurantId}
         categoriesLoading={foodCategoriesQuery.isLoading}
         categories={foodCategories}

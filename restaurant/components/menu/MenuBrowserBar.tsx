@@ -1,4 +1,4 @@
-import { FileUp, Plus, Search, UtensilsCrossed, X } from 'lucide-react-native';
+import { FileUp, Search, UtensilsCrossed, X } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -19,7 +19,6 @@ type Props = {
   search: string;
   onSearch: (value: string) => void;
   onImport: () => void;
-  onAddItem: () => void;
   importDisabled?: boolean;
   categoriesLoading?: boolean;
   categories: BrowserCategory[];
@@ -36,13 +35,11 @@ function IconButton({
   label,
   onPress,
   disabled,
-  primary,
   children,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
-  primary?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -51,7 +48,7 @@ function IconButton({
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={[styles.iconBtn, primary && styles.iconBtnPrimary, disabled && styles.disabled]}
+      style={[styles.iconBtn, disabled && styles.disabled]}
     >
       {children}
     </Pressable>
@@ -62,7 +59,6 @@ export function MenuBrowserBar({
   search,
   onSearch,
   onImport,
-  onAddItem,
   importDisabled,
   categoriesLoading,
   categories,
@@ -98,9 +94,6 @@ export function MenuBrowserBar({
         </View>
         <IconButton label="Import" onPress={onImport} disabled={importDisabled}>
           <FileUp color="#44403C" size={16} />
-        </IconButton>
-        <IconButton label="Add dish" onPress={onAddItem} primary>
-          <Plus color="#FFFFFF" size={16} />
         </IconButton>
       </View>
 
@@ -196,10 +189,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#F1EAE3',
-  },
-  iconBtnPrimary: {
-    backgroundColor: authTheme.brand,
-    borderColor: authTheme.brand,
   },
   disabled: { opacity: 0.4 },
   loader: { alignSelf: 'flex-start', marginVertical: 6 },
