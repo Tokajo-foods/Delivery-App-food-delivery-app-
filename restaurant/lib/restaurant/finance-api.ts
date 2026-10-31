@@ -61,6 +61,33 @@ function throwFinanceError(error: unknown, fallback: string): never {
       err.code = 'PAYMENT_SERVICE_UNAVAILABLE';
       throw err;
     }
+    if (code === 'INSUFFICIENT_WALLET_BALANCE') {
+      const err = new Error(
+        data?.message || 'Not enough earnings to withdraw. (INSUFFICIENT_WALLET_BALANCE)'
+      ) as Error & { status?: number; code?: string };
+      err.status = 409;
+      err.code = 'INSUFFICIENT_WALLET_BALANCE';
+      throw err;
+    }
+    if (code === 'INVALID_UPI') {
+      const err = new Error(
+        data?.message || 'Enter a valid UPI id. (INVALID_UPI)'
+      ) as Error & { status?: number; code?: string };
+      err.status = 422;
+      err.code = 'INVALID_UPI';
+      throw err;
+    }
+    if (code === 'PAYOUT_GATEWAY_UNAVAILABLE' || code === 'PAYOUT_GATEWAY_DECLINED') {
+      const err = new Error(
+        data?.message
+        || (code === 'PAYOUT_GATEWAY_UNAVAILABLE'
+          ? 'Payouts are temporarily unavailable. Try again shortly.'
+          : 'UPI payout was declined. Check the UPI id and try again.')
+      ) as Error & { status?: number; code?: string };
+      err.status = error.response.status;
+      err.code = code;
+      throw err;
+    }
     if (code === 'PAYOUT_NOT_FOUND') {
       const err = new Error(
         'This settlement was not found. (PAYOUT_NOT_FOUND)'
@@ -117,6 +144,12 @@ function mapPayout(raw: Record<string, unknown>): RestaurantPayout | null {
     status: String(raw.status ?? 'pending'),
     bankLast4: last4(raw.bankAccountNo ?? raw.accountNumber),
     ifscCode: typeof raw.ifscCode === 'string' ? raw.ifscCode : undefined,
+    upiId:
+      typeof raw.upiId === 'string'
+        ? raw.upiId
+        : typeof raw.bankAccountNo === 'string' && String(raw.bankAccountNo).includes('@')
+          ? String(raw.bankAccountNo)
+          : undefined,
     paidAt,
     failureReason:
       typeof raw.failureReason === 'string' && raw.failureReason.trim()
@@ -374,6 +407,9 @@ export const restaurantFinanceApi = {
         lastCreditedAt: raw.lastCreditedAt ? String(raw.lastCreditedAt) : null,
         lastDebitedAt: raw.lastDebitedAt ? String(raw.lastDebitedAt) : null,
         commissionPercent: pickNumber(raw, ['commissionPercent']),
+        available: pickNumber(raw, ['available', 'balance']),
+        settled: pickNumber(raw, ['settled', 'lifetimeDebited']),
+        remaining: pickNumber(raw, ['remaining', 'balance']),
       };
     } catch (error) {
       throwFinanceError(error, 'Failed to load wallet');
@@ -471,6 +507,51 @@ export const restaurantFinanceApi = {
       };
     } catch (error) {
       throwFinanceError(error, 'Failed to export wallet passbook');
+    }
+  },
+
+  requestWithdraw: async (
+    restaurantId: string,
+    input: { amount: number; upiId: string; idempotencyKey?: string }
+  ): Promise<{
+    payout: RestaurantPayout;
+    wallet: RestaurantWallet;
+    refundedToWallet: boolean;
+  }> => {
+    try {
+      const res = await api.post<Envelope<unknown>>(
+        `${RESTAURANT_BASE}/${restaurantId}/wallet/withdraw`,
+        input,
+        { timeout: 25_000 }
+      );
+      const raw = asRecord(res.data?.data) ?? asRecord(res.data) ?? {};
+      const payoutRaw = asRecord(raw.payout) ?? raw;
+      const walletRaw = asRecord(raw.wallet) ?? {};
+      const payout = mapPayout(payoutRaw);
+      if (!payout) throw new Error('Withdrawal did not return a payout');
+      return {
+        payout,
+        wallet: {
+          restaurantId: String(walletRaw.restaurantId ?? restaurantId),
+          balance: pickNumber(walletRaw, ['balance']),
+          currency: String(walletRaw.currency ?? 'INR'),
+          lifetimeCredited: pickNumber(walletRaw, ['lifetimeCredited']),
+          lifetimeDebited: pickNumber(walletRaw, ['lifetimeDebited']),
+          lastCreditedAt: walletRaw.lastCreditedAt
+            ? String(walletRaw.lastCreditedAt)
+            : null,
+          lastDebitedAt: walletRaw.lastDebitedAt
+            ? String(walletRaw.lastDebitedAt)
+            : null,
+          commissionPercent: pickNumber(walletRaw, ['commissionPercent']),
+          available: pickNumber(walletRaw, ['available', 'balance']),
+          settled: pickNumber(walletRaw, ['settled', 'lifetimeDebited']),
+          remaining: pickNumber(walletRaw, ['remaining', 'balance']),
+        },
+        refundedToWallet: raw.refundedToWallet === true,
+      };
+    } catch (error) {
+      throwFinanceError(error, 'Failed to request withdrawal');
     }
   },
 };

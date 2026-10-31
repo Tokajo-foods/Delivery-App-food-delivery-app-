@@ -20,12 +20,15 @@ import {
 import { RestaurantPageHeader } from '@/components/dashboard/RestaurantPageHeader';
 import { SettlementSummaryStrip } from '@/components/finance/SettlementSummaryStrip';
 import { WalletPassbook } from '@/components/finance/WalletPassbook';
+import { WalletWithdrawals } from '@/components/finance/WalletWithdrawals';
+import { WithdrawEarningsSheet } from '@/components/finance/WithdrawEarningsSheet';
 import { authTheme, PARTNER_BOTTOM_NAV_INSET } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
 import { formatCurrency } from '@/lib/dashboard/format';
 import {
   useRestaurantCommission,
   useRestaurantInvoices,
+  useRestaurantPayouts,
   useRestaurantSettlement,
   useRestaurantSettlements,
   useRestaurantWallet,
@@ -148,6 +151,7 @@ export function FinanceManager() {
     'all' | 'order_credit' | 'payout_debit' | 'adjustment'
   >('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
 
   const wallet = useRestaurantWallet();
   const bank = useRestaurantBank(wallet.restaurantId || undefined);
@@ -155,6 +159,7 @@ export function FinanceManager() {
     tab === 'wallet' ? page : 1,
     ledgerFilter
   );
+  const withdrawals = useRestaurantPayouts(1);
   const payouts = useRestaurantSettlements(tab === 'payouts' ? page : 1);
   const invoices = useRestaurantInvoices(tab === 'invoices' ? page : 1);
   const commission = useRestaurantCommission();
@@ -179,7 +184,7 @@ export function FinanceManager() {
       : listQuery.isLoading && !listQuery.data);
   const refreshing =
     tab === 'wallet'
-      ? wallet.isRefetching || walletTxns.isRefetching
+      ? wallet.isRefetching || walletTxns.isRefetching || withdrawals.isRefetching
       : listQuery.isRefetching;
   const hasNext =
     tab === 'fees' ? false : (listQuery.data as { hasNext?: boolean } | undefined)?.hasNext ?? false;
@@ -200,6 +205,7 @@ export function FinanceManager() {
     if (tab === 'wallet') {
       void wallet.refetch();
       void walletTxns.refetch();
+      void withdrawals.refetch();
       return;
     }
     void listQuery.refetch();
@@ -212,7 +218,7 @@ export function FinanceManager() {
         subtitle={
           restaurantName
             ? `${restaurantName} · 15-day settlement hold after delivery`
-            : 'Wallet, settlements, and fees'
+            : 'Wallet, withdrawals, settlements, and fees'
         }
         showBack
         hideProfile
@@ -307,6 +313,18 @@ export function FinanceManager() {
                   : null
               }
             />
+            <Pressable
+              disabled={(wallet.data?.available ?? wallet.data?.balance ?? 0) < 1}
+              onPress={() => setWithdrawOpen(true)}
+              style={[
+                styles.retry,
+                (wallet.data?.available ?? wallet.data?.balance ?? 0) < 1
+                  && styles.disabled,
+              ]}
+            >
+              <Text style={styles.retryText}>Request earnings</Text>
+            </Pressable>
+            <WalletWithdrawals items={withdrawals.data?.items ?? []} />
             <WalletPassbook
               restaurantId={wallet.restaurantId}
               wallet={wallet.data}
@@ -496,6 +514,11 @@ export function FinanceManager() {
           </View>
         </View>
       </Modal>
+      <WithdrawEarningsSheet
+        visible={withdrawOpen}
+        available={wallet.data?.available ?? wallet.data?.balance ?? 0}
+        onClose={() => setWithdrawOpen(false)}
+      />
     </View>
   );
 }

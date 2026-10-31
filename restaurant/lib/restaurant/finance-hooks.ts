@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { restaurantFinanceApi } from '@/lib/restaurant/finance-api';
 import {
@@ -195,4 +195,22 @@ export function useRestaurantWalletTransactions(
     restaurantId,
     restaurantName: restaurantQuery.data?.name,
   };
+}
+
+export function useWithdrawRestaurantEarnings() {
+  const restaurantQuery = useMyRestaurantId();
+  const restaurantId = restaurantQuery.data?.id ?? '';
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { amount: number; upiId: string; idempotencyKey?: string }) => {
+      if (!restaurantId) throw new Error('Restaurant is not loaded yet');
+      return restaurantFinanceApi.requestWithdraw(restaurantId, input);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: financeKeys.restaurant(restaurantId),
+      });
+    },
+  });
 }

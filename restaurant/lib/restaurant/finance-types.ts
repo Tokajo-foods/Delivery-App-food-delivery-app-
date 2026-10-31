@@ -19,6 +19,7 @@ export type RestaurantPayout = {
   status: PayoutStatus | string;
   bankLast4?: string;
   ifscCode?: string;
+  upiId?: string;
   paidAt?: string | null;
   failureReason?: string | null;
   createdAt?: string;
@@ -79,6 +80,9 @@ export type RestaurantWallet = {
   lastCreditedAt: string | null;
   lastDebitedAt?: string | null;
   commissionPercent: number;
+  available: number;
+  settled: number;
+  remaining: number;
 };
 
 export type RestaurantWalletTxnType =

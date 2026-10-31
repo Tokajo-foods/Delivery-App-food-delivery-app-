@@ -36,31 +36,33 @@ export function SettlementSummaryStrip({
   if (!wallet) return null;
   const settled = wallet.lifetimeDebited ?? 0;
   const remaining = wallet.balance ?? 0;
-  const beforeCommission =
-    wallet.lifetimeCredited +
-    (wallet.commissionPercent
-      ? (wallet.lifetimeCredited * wallet.commissionPercent) / (100 - wallet.commissionPercent)
-      : 0);
   const due = oldestCreditAt ? addDays(oldestCreditAt, HOLD_DAYS) : null;
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.title}>Settlement overview</Text>
+      <Text style={styles.title}>Earnings overview</Text>
       <Text style={styles.hint}>
-        Delivered orders credit your wallet after platform commission. Payouts
-        clear after a {HOLD_DAYS}-day hold from completion.
+        Delivered orders credit your wallet after platform commission. Request
+        any remaining amount to UPI anytime. Weekly settlements still clear
+        after a {HOLD_DAYS}-day hold if you do not withdraw.
       </Text>
       <View style={styles.grid}>
         <Cell
-          label="Sales (est. gross)"
-          value={formatCurrency(beforeCommission || wallet.lifetimeCredited)}
-        />
-        <Cell
-          label="After commission"
+          label="Earned (after fee)"
           value={formatCurrency(wallet.lifetimeCredited)}
         />
-        <Cell label="Settled" value={formatCurrency(settled)} />
-        <Cell label="Remaining" value={formatCurrency(remaining)} />
+        <Cell
+          label="Taken / settled"
+          value={formatCurrency(wallet.settled ?? settled)}
+        />
+        <Cell
+          label="Remaining"
+          value={formatCurrency(wallet.remaining ?? remaining)}
+        />
+        <Cell
+          label="Available now"
+          value={formatCurrency(wallet.available ?? remaining)}
+        />
       </View>
       <Text style={styles.meta}>
         Next settlement due:{' '}
