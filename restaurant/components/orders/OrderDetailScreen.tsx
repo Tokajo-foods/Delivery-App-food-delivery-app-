@@ -175,7 +175,7 @@ export function OrderDetailScreen({ orderId }: Props) {
       }
     }
     try {
-      const updated = await updateStatus.mutateAsync({
+      await updateStatus.mutateAsync({
         orderId: order.id,
         action,
         prepTime: payload?.prepTime,
@@ -184,14 +184,6 @@ export function OrderDetailScreen({ orderId }: Props) {
       });
       setRejectOpen(false);
       setAcceptOpen(false);
-
-      if (
-        action === 'ready' &&
-        (updated.fulfillmentTone ?? order.fulfillmentTone) === 'delivery' &&
-        restaurantId
-      ) {
-        setAssignOpen(true);
-      }
     } catch (error) {
       Alert.alert('Could not update order', getApiErrorMessage(error));
     }

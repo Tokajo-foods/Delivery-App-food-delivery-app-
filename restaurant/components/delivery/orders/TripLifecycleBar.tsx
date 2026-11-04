@@ -16,6 +16,7 @@ import { fonts } from '@/constants/typography';
 import { OrderCallPanel } from '@/components/call/OrderCallPanel';
 import { CodUpiSheet } from '@/components/delivery/orders/CodUpiSheet';
 import { FoodProofSheet } from '@/components/delivery/orders/FoodProofSheet';
+import { useTripWithOrder } from '@/components/delivery/orders/use-trip-order';
 import {
   deliveryPartnerApi,
   nextDeliveryAction,

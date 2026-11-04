@@ -48,7 +48,7 @@ const OFFER_TYPE_OPTIONS: { key: OfferDiscountType; label: string }[] = [
   { key: 'bogo', label: 'BOGO' },
 ];
 
-function formatDateInput(value?: string) {
+function formatDateInput(value?: string | Date) {
   return formatOfferDate(value);
 }
 

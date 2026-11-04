@@ -41,14 +41,11 @@ export function shouldClearOffer(error: unknown) {
 function validPair(
   lat?: number | null,
   lng?: number | null
-): lat is number {
-  return (
-    lat != null &&
-    lng != null &&
-    Number.isFinite(lat) &&
-    Number.isFinite(lng) &&
-    !(lat === 0 && lng === 0)
-  );
+): [number, number] | null {
+  if (lat == null || lng == null) return null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat === 0 && lng === 0) return null;
+  return [lat, lng];
 }
 
 export function resolvePickupKm(
@@ -56,16 +53,10 @@ export function resolvePickupKm(
   riderLat?: number | null,
   riderLng?: number | null
 ) {
-  if (
-    validPair(riderLat, riderLng) &&
-    validPair(offer.restaurantLat, offer.restaurantLng)
-  ) {
-    return haversineKm(
-      riderLat,
-      riderLng,
-      offer.restaurantLat,
-      offer.restaurantLng
-    );
+  const rider = validPair(riderLat, riderLng);
+  const store = validPair(offer.restaurantLat, offer.restaurantLng);
+  if (rider && store) {
+    return haversineKm(rider[0], rider[1], store[0], store[1]);
   }
   if (offer.pickupDistanceKm != null && offer.pickupDistanceKm > 0) {
     return offer.pickupDistanceKm;
@@ -74,16 +65,10 @@ export function resolvePickupKm(
 }
 
 export function resolveDropKm(offer: IncomingOffer) {
-  if (
-    validPair(offer.restaurantLat, offer.restaurantLng) &&
-    validPair(offer.dropLat, offer.dropLng)
-  ) {
-    return haversineKm(
-      offer.restaurantLat,
-      offer.restaurantLng,
-      offer.dropLat,
-      offer.dropLng
-    );
+  const store = validPair(offer.restaurantLat, offer.restaurantLng);
+  const drop = validPair(offer.dropLat, offer.dropLng);
+  if (store && drop) {
+    return haversineKm(store[0], store[1], drop[0], drop[1]);
   }
   if (offer.dropDistanceKm != null && offer.dropDistanceKm > 0) {
     return offer.dropDistanceKm;

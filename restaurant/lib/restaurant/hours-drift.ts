@@ -129,7 +129,8 @@ function nearestOutsideSlot(
     }
   });
 
-  return best ? { kind: best.kind, slotIndex: best.slotIndex } : null;
+  const found = best as { kind: 'early' | 'late'; slotIndex: number } | null;
+  return found ? { kind: found.kind, slotIndex: found.slotIndex } : null;
 }
 
 export function detectHoursDrift(input: {

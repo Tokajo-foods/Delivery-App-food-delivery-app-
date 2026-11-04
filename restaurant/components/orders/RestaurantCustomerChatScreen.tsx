@@ -101,8 +101,6 @@ export function RestaurantCustomerChatScreen() {
     }
   };
 
-  const incoming = calls.live?.direction === 'in' && calls.live.state === 'ringing';
-
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
@@ -120,18 +118,6 @@ export function RestaurantCustomerChatScreen() {
       </View>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      {calls.live ? (
-        <View style={styles.live}>
-          <Text style={styles.liveText}>
-            {incoming ? `${title} is calling` : calls.live.state === 'accepted' ? 'On a call' : 'Calling…'}
-          </Text>
-          {incoming ? (
-            <Pressable onPress={() => void calls.accept()}><Text style={styles.liveAction}>Accept</Text></Pressable>
-          ) : (
-            <Pressable onPress={() => void calls.hangup()}><Text style={styles.liveAction}>End</Text></Pressable>
-          )}
-        </View>
-      ) : null}
 
       <ScrollView
         ref={scrollRef}
@@ -222,12 +208,6 @@ const styles = StyleSheet.create({
   name: { fontFamily: fonts.bold, fontSize: 16, color: authTheme.text },
   presence: { marginTop: 1, fontFamily: fonts.regular, fontSize: 12, color: authTheme.textMuted },
   error: { marginHorizontal: 14, marginTop: 8, color: '#B91C1C', fontFamily: fonts.regular, fontSize: 13 },
-  live: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    margin: 12, padding: 12, borderRadius: 12, backgroundColor: '#111827',
-  },
-  liveText: { color: '#FFFFFF', fontFamily: fonts.medium, fontSize: 14 },
-  liveAction: { color: '#FFB088', fontFamily: fonts.bold, fontSize: 14 },
   thread: { padding: 14, gap: 8, flexGrow: 1 },
   empty: {
     alignSelf: 'center', marginTop: 24, color: authTheme.textMuted,

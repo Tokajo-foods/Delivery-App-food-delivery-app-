@@ -240,7 +240,7 @@ export function IncomingOfferOverlay() {
 
   if (!offer) return null;
 
-  const urgent = seconds <= 10 || offer.expiring;
+  const urgent = seconds <= 10 || Boolean(offer.expiring);
   const pickup =
     offer.restaurantLat != null &&
     offer.restaurantLng != null &&

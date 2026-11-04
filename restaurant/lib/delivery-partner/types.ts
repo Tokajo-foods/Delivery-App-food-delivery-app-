@@ -51,6 +51,8 @@ export type DeliveryPartnerRegisterPayload = {
   longitude?: number;
   vehicleType: VehicleType;
   vehicleNumber?: string;
+  vehicleModel?: string;
+  vehicleColor?: string;
   aadharNumber?: string;
   acceptedTerms: boolean;
   inviteToken?: string;
@@ -336,6 +338,7 @@ export type TripOrderContext = {
       deliveryFee: number;
       tipAmount: number;
       codCollect: number | null;
+      netEarnings?: number;
       lines: Array<{ key: string; label: string; amount: number; sign: 'add' | 'subtract' }>;
     };
     customer: {
