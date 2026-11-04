@@ -1,51 +1,30 @@
 /**
- * Partner restaurants DTOs.
- * Screen currently uses mock data (`USE_MOCK_PARTNER_RESTAURANTS`).
- * Same shapes map from GET /partners/me/restaurants when the API is ready.
+ * Restaurants the rider has picked up from, aggregated client-side from
+ * GET /partners/me/deliveries (past trips) + per-trip order-context for names.
  */
 
-export type PartnerRestaurantStatus = 'active' | 'inactive' | string;
-
-export type PartnerRestaurant = {
-  id: string;
-  name: string;
-  status?: PartnerRestaurantStatus;
-  /** Area / locality line, e.g. "Connaught Place, Delhi" */
-  location?: string;
-  city?: string;
+export type RiderRestaurantStat = {
+  restaurantId: string;
+  /** From GET /partners/me/deliveries/:id/order-context; undefined when lookup failed. */
+  name?: string;
   phone?: string;
-  distanceKm?: number;
-  /** Pre-formatted daily order range from API, e.g. "12-18" */
-  dailyOrdersLabel?: string;
-  dailyOrdersMin?: number;
-  dailyOrdersMax?: number;
-  dailyOrdersAvg?: number;
-  rating?: number;
-  lastOrderAt?: string;
-  /** Relative / display string if API sends it (e.g. "Today, 2:30 PM") */
-  lastOrderLabel?: string;
-  tags?: string[];
-  cuisine?: string[];
-  menuUrl?: string;
-  restaurantId?: string;
-  isTopPerformer?: boolean;
-  ordersCount?: number;
-  raw?: Record<string, unknown>;
+  lat?: number;
+  lng?: number;
+  deliveredTrips: number;
+  returnedTrips: number;
+  /** cancelled / failed / reassigned — no trip pay. */
+  unpaidTrips: number;
+  /** Sum of trip pay on delivered + returned trips. */
+  earned: number;
+  lastTripAt?: string;
+  latestDeliveryId: string;
 };
 
-export type PartnerRestaurantsSummary = {
-  totalRestaurants?: number;
-  activeRestaurants?: number;
-  /** Pre-formatted avg daily orders across partners, e.g. "48-92" */
-  avgDailyOrdersLabel?: string;
-  avgDailyOrdersMin?: number;
-  avgDailyOrdersMax?: number;
-  avgDailyOrders?: number;
-  avgRating?: number;
-};
-
-export type PartnerRestaurantsResult = {
-  restaurants: PartnerRestaurant[];
-  summary: PartnerRestaurantsSummary;
-  topPerformers: PartnerRestaurant[];
+export type RiderRestaurantsResult = {
+  windowDays: number;
+  restaurants: RiderRestaurantStat[];
+  totalPaidTrips: number;
+  totalEarned: number;
+  /** True when history had more trips than the client scans. */
+  partial: boolean;
 };

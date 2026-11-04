@@ -144,14 +144,21 @@ export function useDeliveryDetail(
   });
 }
 
-export function useTripOrderContext(deliveryId?: string, enabled = true) {
+export function useTripOrderContext(
+  deliveryId?: string,
+  enabled = true,
+  options?: { live?: boolean }
+) {
   const id = deliveryId?.trim() ?? '';
+  const isActive = useAppIsActive();
+  const live = options?.live ?? false;
   return useQuery({
     queryKey: [...deliveryPartnerKeys.delivery(id), 'order-context'],
     queryFn: () => deliveryPartnerApi.getDeliveryOrderContext(id),
     enabled: enabled && Boolean(id),
-    staleTime: 30_000,
-    gcTime: 5 * 60_000,
+    ...(live
+      ? riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryHistoryTrail)
+      : { staleTime: 30_000, gcTime: 5 * 60_000 }),
     retry: keepRetrying,
   });
 }

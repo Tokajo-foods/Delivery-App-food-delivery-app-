@@ -307,9 +307,11 @@ export function PartnerIncentivesManager() {
         </View>
         <View style={styles.heroRight}>
           <Gift color="#EA4B14" size={22} />
-          <Text style={styles.heroMeta}>
-            {rewards.data?.pointsPerDelivery ?? 10} pts / delivered trip
-          </Text>
+          {rewards.data?.pointsPerDelivery ? (
+            <Text style={styles.heroMeta}>
+              {rewards.data.pointsPerDelivery} pts / delivered trip
+            </Text>
+          ) : null}
         </View>
       </View>
 
@@ -508,7 +510,9 @@ export function PartnerIncentivesManager() {
                 <Medal color="#EA4B14" size={20} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.meTitle}>
-                    Your rank #{board.data.me.rank ?? '—'}
+                    {board.data.me.rank
+                      ? `Your rank #${board.data.me.rank}`
+                      : 'Not ranked on this board yet'}
                   </Text>
                   <Text style={styles.meMeta}>
                     Score {board.data.me.score ?? 0}
@@ -556,12 +560,18 @@ export function PartnerIncentivesManager() {
               ))}
             </StateBlock>
             {boardZoneError ? (
-              <Pressable
-                onPress={() => router.push(DELIVERY_ROUTES.home)}
-                style={styles.retry}
-              >
-                <Text style={styles.retryText}>Set zone on Home</Text>
-              </Pressable>
+              <>
+                <Text style={styles.sectionHint}>
+                  Your zone is set automatically when you go online inside a
+                  delivery zone.
+                </Text>
+                <Pressable
+                  onPress={() => router.push(DELIVERY_ROUTES.home)}
+                  style={styles.retry}
+                >
+                  <Text style={styles.retryText}>Go online on Home</Text>
+                </Pressable>
+              </>
             ) : null}
           </>
         ) : null}

@@ -1,14 +1,19 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { RotateCcw } from 'lucide-react-native';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Switch, Text, View } from 'react-native';
 
 import { BreakTimePanel } from '@/components/delivery/home/BreakTimePanel';
 import { dutyStyles as styles } from '@/components/delivery/home/duty-control-styles';
+import { partnerAvailabilityKeys } from '@/lib/delivery-partner/availability-hooks';
 import {
   breakExtendMinutes,
   breakSecondsLeft,
+  DEFAULT_BREAK_MINUTES,
   formatDutyKm,
   formatMinutes,
+  MAX_BREAK_MINUTES,
+  MAX_BREAK_MINUTES_PER_DAY,
   type PartnerBreakPolicy,
   type PartnerDutyStatus,
   type PartnerDutyStatusSnapshot,
@@ -44,6 +49,13 @@ function clockFromIso(iso?: string | null) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return null;
   return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+}
+
+function formatCountdown(totalSeconds: number) {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const mm = Math.floor(s / 60);
+  const ss = String(s % 60).padStart(2, '0');
+  return `${mm}:${ss}`;
 }
 
 function statusCopy(status: PartnerDutyStatus | undefined, onDuty: boolean) {
@@ -91,20 +103,19 @@ export function DutyControlCard({
   const onBreak = dutyStatus === 'on_break' || Boolean(snapshot?.break?.active);
   const onWayToHub = dutyStatus === 'on_way_to_hub';
   const copy = statusCopy(dutyStatus, isOnDuty);
-  const maxMinutes = Math.max(
-    0,
-    Math.min(
-      policy?.maxSingleMinutes ?? snapshot?.break?.maxSingleMinutes ?? 60,
-      snapshot?.break?.minutesRemainingToday ?? policy?.maxMinutesPerDay ?? 60,
-    ),
-  );
-  const defaultMinutes = Math.min(
-    policy?.defaultMinutes ?? snapshot?.break?.defaultMinutes ?? 15,
-    maxMinutes || 15,
-  );
+  const maxSingleMinutes =
+    policy?.maxSingleMinutes ?? snapshot?.break?.maxSingleMinutes ?? MAX_BREAK_MINUTES;
+  const remainingTodayMinutes =
+    snapshot?.break?.minutesRemainingToday ??
+    policy?.maxMinutesPerDay ??
+    MAX_BREAK_MINUTES_PER_DAY;
+  const defaultMinutes =
+    policy?.defaultMinutes ?? snapshot?.break?.defaultMinutes ?? DEFAULT_BREAK_MINUTES;
   const extendBy = breakExtendMinutes(snapshot?.break, policy);
 
+  const queryClient = useQueryClient();
   const [tick, setTick] = useState(0);
+  const expiredRefetched = useRef<string | null>(null);
 
   useEffect(() => {
     if (!onBreak) return;
@@ -116,6 +127,15 @@ export function DutyControlCard({
     void tick;
     return breakSecondsLeft(snapshot?.break);
   }, [snapshot?.break, tick]);
+
+  const breakKey = snapshot?.break?.expiresAt ?? null;
+  useEffect(() => {
+    if (!onBreak || secondsLeft == null || secondsLeft > 0) return;
+    if (expiredRefetched.current === breakKey) return;
+    expiredRefetched.current = breakKey;
+    void queryClient.invalidateQueries({ queryKey: partnerAvailabilityKeys.status() });
+    void queryClient.invalidateQueries({ queryKey: partnerAvailabilityKeys.dutySummary() });
+  }, [onBreak, secondsLeft, breakKey, queryClient]);
 
   const breakWindow = onBreak
     ? [clockFromIso(snapshot?.break?.startedAt), clockFromIso(snapshot?.break?.expiresAt)]
@@ -158,28 +178,44 @@ export function DutyControlCard({
 
         {onBreak ? (
           <View style={styles.breakBlock}>
-            <Text style={styles.breakLabel}>
-              {breakWindow || 'Break in progress'}
-              {secondsLeft != null ? ` · ${Math.ceil(secondsLeft / 60)} min left` : ''}
-            </Text>
-            <Pressable onPress={onEndBreak} disabled={breakBusy} style={styles.endBtn}>
-              {breakBusy ? (
-                <ActivityIndicator color="#C2410C" size="small" />
-              ) : (
-                <Text style={styles.endBtnText}>End break</Text>
-              )}
-            </Pressable>
-            {extendBy > 0 ? (
-              <Pressable onPress={() => onExtendBreak(extendBy)} disabled={breakBusy}>
-                <Text style={styles.note}>Add {extendBy} min</Text>
+            <View style={styles.breakHead}>
+              <Text style={styles.breakLabel}>{breakWindow || 'Break in progress'}</Text>
+              {secondsLeft != null ? (
+                <Text style={styles.countdown}>
+                  {secondsLeft > 0 ? formatCountdown(secondsLeft) : 'Ending…'}
+                </Text>
+              ) : null}
+            </View>
+            <View style={styles.timeRow}>
+              <Pressable
+                onPress={onEndBreak}
+                disabled={breakBusy}
+                style={[styles.endBtn, { flex: 1 }]}
+              >
+                {breakBusy ? (
+                  <ActivityIndicator color="#C2410C" size="small" />
+                ) : (
+                  <Text style={styles.endBtnText}>End break</Text>
+                )}
               </Pressable>
-            ) : null}
+              {extendBy > 0 ? (
+                <Pressable
+                  onPress={() => onExtendBreak(extendBy)}
+                  disabled={breakBusy}
+                  style={[styles.timeBtn, { justifyContent: 'center' }]}
+                >
+                  <Text style={styles.timeValue}>+{extendBy} min</Text>
+                </Pressable>
+              ) : null}
+            </View>
+            <Text style={styles.note}>New orders are paused until you end the break.</Text>
           </View>
         ) : null}
 
         {isOnDuty && !onDelivery && !onBreak ? (
           <BreakTimePanel
-            maxMinutes={maxMinutes}
+            maxSingleMinutes={maxSingleMinutes}
+            remainingTodayMinutes={remainingTodayMinutes}
             defaultMinutes={defaultMinutes}
             busy={breakBusy}
             onStart={onStartBreak}

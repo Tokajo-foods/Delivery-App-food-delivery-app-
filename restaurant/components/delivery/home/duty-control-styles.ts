@@ -70,21 +70,30 @@ export const dutyStyles = StyleSheet.create({
   timeRow: { flexDirection: 'row', gap: 8 },
   timeBtn: {
     flex: 1,
+    alignItems: 'center',
     backgroundColor: '#FFF7F2',
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFF7F2',
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
-  timeCaption: {
-    color: '#94A3B8',
-    fontFamily: fonts.medium,
-    fontSize: 11,
+  timeBtnActive: {
+    borderColor: '#EA4B14',
+    backgroundColor: '#FFEDE3',
   },
   timeValue: {
-    marginTop: 2,
     color: '#0F172A',
     fontFamily: fonts.bold,
     fontSize: 15,
+  },
+  timeValueActive: {
+    color: '#C2410C',
+  },
+  countdown: {
+    color: '#C2410C',
+    fontFamily: fonts.extraBold,
+    fontSize: 22,
   },
   startBtn: {
     alignItems: 'center',

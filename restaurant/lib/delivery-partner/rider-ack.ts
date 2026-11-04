@@ -66,7 +66,7 @@ export function socketErrorCopy(code?: string): string | undefined {
     case 'INVALID_OTP':
       return 'That OTP is incorrect. Try again.';
     case 'PROOF_REQUIRED':
-      return 'Add the delivery OTP or a proof photo to complete.';
+      return 'Take a delivery photo at the door, then complete.';
     case 'RTO_ATTEMPTS_MAX':
       return 'Contact attempts used up. Return the order or mark it failed.';
     case 'RTO_ATTEMPTS_REQUIRED':
@@ -180,9 +180,59 @@ export function socketErrorCopy(code?: string): string | undefined {
   }
 }
 
+function tripErrorCopy(code?: string): string | undefined {
+  switch (code) {
+    case 'FORBIDDEN':
+      return 'This trip is no longer assigned to you.';
+    case 'OTP_REQUIRED':
+      return 'Enter the 4-digit OTP from the customer.';
+    case 'PICKUP_PROOF_REQUIRED':
+      return 'Take a parcel photo at the restaurant before pickup.';
+    case 'PROOF_FILE_REQUIRED':
+    case 'NO_FILE':
+      return 'The photo did not attach. Retake it and try again.';
+    case 'RETURN_REQUIRED':
+      return 'Food is already picked up. Return it to the restaurant to close this trip.';
+    case 'DELIVERY_ALREADY_COMPLETE':
+      return 'This order is already completed.';
+    case 'ORDER_SERVICE_UNAVAILABLE':
+      return 'Order details are temporarily unavailable. Pull to retry.';
+    case 'ORDER_NOT_FOUND':
+      return 'Order details were not found for this trip.';
+    case 'MOCK_LOCATION':
+      return 'Mock GPS detected. Turn it off to continue the trip.';
+    case 'ROUTE_PINS_MISSING':
+      return 'Route is unavailable — pickup or drop pin is missing.';
+    case 'MAPS_UNAVAILABLE':
+      return 'Maps are unavailable right now. Use the address to navigate.';
+    case 'INVALID_CHAT':
+      return 'Type a message (up to 500 characters).';
+    case 'TEMPLATE_NOT_FOUND':
+      return 'That quick reply is no longer available.';
+    case 'RATE_LIMITED':
+      return 'Too many attempts. Wait a moment and try again.';
+    default:
+      return undefined;
+  }
+}
+
+/** Server geofence messages include the live distance, which is more useful than generic copy. */
+function geofenceMessage(error: unknown): string | undefined {
+  const message = error instanceof Error ? error.message.trim() : '';
+  return /\d+\s*m\b/.test(message) ? message : undefined;
+}
+
 export function formatTripError(error: unknown, fallback: string): string {
   const code = getApiErrorCode(error);
-  return socketErrorCopy(code) || getApiErrorMessage(error, fallback);
+  if (code === 'GEOFENCE_NOT_MET' || code === 'OUTSIDE_GEOFENCE') {
+    const precise = geofenceMessage(error);
+    if (precise) return precise;
+  }
+  return (
+    tripErrorCopy(code) ||
+    socketErrorCopy(code) ||
+    getApiErrorMessage(error, fallback)
+  );
 }
 
 export function formatRtoError(
@@ -191,8 +241,9 @@ export function formatRtoError(
 ): string {
   const code = getApiErrorCode(error);
   if (code === 'GEOFENCE_NOT_MET' || code === 'OUTSIDE_GEOFENCE') {
-    return 'You must be at the restaurant (150 m).';
+    return geofenceMessage(error) ?? 'Move closer to the restaurant, then try again.';
   }
+  if (code === 'OTP_REQUIRED') return 'Enter the 4-digit kitchen return OTP.';
   if (code === 'RTO_TIMER_ACTIVE') {
     const wait =
       remainingSeconds != null && remainingSeconds > 0

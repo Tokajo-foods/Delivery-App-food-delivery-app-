@@ -77,6 +77,7 @@ export function useCurrentIncentives(enabled = true) {
 }
 
 export function useIncentiveHistory(enabled = true) {
+  const isActive = useAppIsActive();
   return useInfiniteQuery({
     queryKey: partnerIncentivesKeys.history(),
     queryFn: ({ pageParam }) =>
@@ -88,6 +89,8 @@ export function useIncentiveHistory(enabled = true) {
     getNextPageParam: (last) => (last.hasNext ? last.page + 1 : undefined),
     enabled,
     staleTime: 20_000,
+    refetchInterval: liveRefetchInterval(LIVE_INTERVALS.deliveryAnalytics * 4, isActive),
+    refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   });
 }

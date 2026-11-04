@@ -1,37 +1,34 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { deliveryPartnerKeys } from '@/lib/delivery-partner/hooks';
-import { partnerRestaurantsApi } from '@/lib/delivery-partner/restaurants-api';
+import {
+  RIDER_RESTAURANTS_WINDOW_DAYS,
+  riderRestaurantsApi,
+} from '@/lib/delivery-partner/restaurants-api';
 import {
   LIVE_INTERVALS,
-  liveRefetchInterval,
+  riderLiveQueryOptions,
   useAppIsActive,
 } from '@/lib/live-query';
 
-export const partnerRestaurantsKeys = {
-  all: [...deliveryPartnerKeys.all, 'restaurants'] as const,
-  list: () => [...partnerRestaurantsKeys.all, 'list'] as const,
+/** Under `deliveries` so trip socket events (rider-events) refresh it too. */
+export const riderRestaurantsKeys = {
+  list: (days: number) =>
+    [...deliveryPartnerKeys.all, 'deliveries', 'by-restaurant', days] as const,
 };
 
-/**
- * Partner restaurants list.
- * Uses mock data until USE_MOCK_PARTNER_RESTAURANTS is flipped off.
- */
-export function usePartnerRestaurants(enabled = true) {
+export function useRiderRestaurants(
+  windowDays = RIDER_RESTAURANTS_WINDOW_DAYS,
+  enabled = true
+) {
   const isActive = useAppIsActive();
 
   return useQuery({
-    queryKey: partnerRestaurantsKeys.list(),
-    queryFn: () => partnerRestaurantsApi.getRestaurants(),
+    queryKey: riderRestaurantsKeys.list(windowDays),
+    queryFn: () => riderRestaurantsApi.getRestaurants(windowDays),
     enabled,
-    staleTime: LIVE_INTERVALS.deliveryRestaurants / 2,
-    refetchInterval: liveRefetchInterval(
-      LIVE_INTERVALS.deliveryRestaurants,
-      isActive
-    ),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    ...riderLiveQueryOptions(isActive, LIVE_INTERVALS.deliveryRestaurants),
+    staleTime: 30_000,
     placeholderData: (previous) => previous,
   });
 }

@@ -239,8 +239,8 @@ function mapPerformance(raw: unknown): PartnerPerformance {
       const tier = asRecord(source.tier);
       const code = pickString(tier, ['code', 'tier']);
       const label = pickString(tier, ['label', 'name']);
-      if (!code && !label) return undefined;
-      return { code: (code ?? 'bronze').toLowerCase(), label: label ?? code ?? 'Bronze' };
+      if (!code) return undefined;
+      return { code: code.toLowerCase(), label: label ?? code };
     })(),
     zoneRank: (() => {
       const rank = asRecord(source.zoneRank);
@@ -628,10 +628,10 @@ export function formatCurrency(amount?: number, currency = 'INR') {
   return formatMoney(amount, currency) ?? formatInr(amount);
 }
 
+/** Delivery-service rates are already percentages (0–100); 1 means 1%, not 100%. */
 export function formatPercent(value: number) {
   if (!Number.isFinite(value)) return '0%';
-  const n = value > 0 && value <= 1 ? value * 100 : value;
-  return `${n.toFixed(1)}%`;
+  return `${value.toFixed(1)}%`;
 }
 
 export function formatRating(value: number) {

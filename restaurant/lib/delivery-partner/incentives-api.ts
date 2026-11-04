@@ -414,8 +414,8 @@ export async function getRewards(): Promise<RewardBalance> {
     points: pickNumber(data, ['points', 'balance', 'availablePoints']),
     lifetimeEarned: pickNumber(data, ['lifetimeEarned', 'earned', 'totalEarned']),
     redeemed: pickNumber(data, ['redeemed', 'spent', 'totalRedeemed']),
-    pointsPerDelivery: pickNumber(data, ['pointsPerDelivery'], 10),
-    currency: pickString(data, ['currency']) ?? 'INR',
+    pointsPerDelivery: pickNumber(data, ['pointsPerDelivery']),
+    currency: pickString(data, ['currency']) ?? 'POINTS',
   };
 }
 
@@ -505,7 +505,7 @@ export async function getLeaderboard(input: {
     periodTo: pickString(data, ['periodTo']),
     me: me
       ? {
-          rank: pickNumber(me, ['rank']),
+          rank: typeof me.rank === 'number' && me.rank > 0 ? me.rank : undefined,
           score: pickNumber(me, ['score']),
           totalRiders: pickNumber(me, ['totalRiders', 'total']),
         }

@@ -144,15 +144,19 @@ async function request<T>(
 
 function mapBreak(raw: unknown): PartnerBreakInfo {
   const record = asRecord(raw);
+  const maxMinutesPerDay =
+    pickNumber(record, ['maxMinutesPerDay']) ?? MAX_BREAK_MINUTES_PER_DAY;
+  const minutesUsedToday = pickNumber(record, ['minutesUsedToday', 'usedToday']) ?? 0;
   return {
     active: pickBool(record, ['active', 'isActive', 'onBreak']) ?? false,
     startedAt: pickString(record, ['startedAt', 'startAt']) ?? null,
     expiresAt: pickString(record, ['expiresAt', 'endsAt']) ?? null,
     elapsedMinutes: pickNumber(record, ['elapsedMinutes', 'elapsed']) ?? 0,
-    minutesUsedToday: pickNumber(record, ['minutesUsedToday', 'usedToday']) ?? 0,
+    minutesUsedToday,
     minutesRemainingToday:
-      pickNumber(record, ['minutesRemainingToday', 'remainingToday']) ?? 0,
-    maxMinutesPerDay: pickNumber(record, ['maxMinutesPerDay']) ?? MAX_BREAK_MINUTES_PER_DAY,
+      pickNumber(record, ['minutesRemainingToday', 'remainingToday']) ??
+      Math.max(0, maxMinutesPerDay - minutesUsedToday),
+    maxMinutesPerDay,
     maxSingleMinutes: pickNumber(record, ['maxSingleMinutes']) ?? MAX_BREAK_MINUTES,
     defaultMinutes: pickNumber(record, ['defaultMinutes']) ?? DEFAULT_BREAK_MINUTES,
   };
@@ -549,10 +553,12 @@ export const DUTY_ERROR_COPY: Record<string, string> = {
   ACTIVE_DELIVERY: 'Complete your active delivery before changing duty status.',
   PARTNER_OFFLINE: 'Go online before starting a break.',
   ALREADY_ON_BREAK: 'You are already on a break.',
-  BREAK_TOO_EARLY: 'Go online, then start your break from the duty card.',
-  BREAK_LIMIT_EXCEEDED: 'You have used today’s break allowance.',
-  BREAK_MAX_REACHED: 'This break cannot be extended further.',
-  NOT_ON_BREAK: 'You are not on a break.',
+  BREAK_TOO_EARLY: 'Stay online a few more minutes before taking a break.',
+  BREAK_LIMIT_EXCEEDED: 'Not enough break time left today. Pick a shorter break.',
+  BREAK_MAX_REACHED: 'This break is already at the maximum length.',
+  NOT_ON_BREAK: 'Your break has already ended. You are back online.',
+  POLICY_NOT_ACCEPTED: 'Accept the rider policy before going online.',
+  GEOFENCE_NOT_MET: 'Move closer to the pin, then try again.',
   LOCATION_REQUIRED: 'GPS is required. Allow location and try again.',
   GEOFENCE_MISS: 'Move closer to the pin, then try again.',
   HUB_NOT_FOUND: 'This hub is closed or no longer available.',
@@ -577,12 +583,14 @@ export function formatDutyError(error: unknown, fallback: string): string {
     error instanceof PartnerApiError
       ? error.code
       : getApiErrorCode(error);
-  if (code === 'PARTNER_SUSPENDED') {
-    const suspended =
-      error instanceof Error && error.message.trim()
-        ? error.message.trim()
-        : DUTY_ERROR_COPY.PARTNER_SUSPENDED;
-    return suspended;
+  if (
+    code === 'PARTNER_SUSPENDED' ||
+    code === 'BREAK_TOO_EARLY' ||
+    code === 'BREAK_LIMIT_EXCEEDED'
+  ) {
+    const serverMessage =
+      error instanceof Error && error.message.trim() ? error.message.trim() : '';
+    return serverMessage || DUTY_ERROR_COPY[code];
   }
   if (code && DUTY_ERROR_COPY[code]) return DUTY_ERROR_COPY[code];
   const message =

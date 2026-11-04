@@ -212,9 +212,11 @@ api.interceptors.response.use(
       return api(original);
     }
 
+    const code = String(error.response?.data?.code ?? '');
     if (
       original &&
       !original._authLogout &&
+      !code.startsWith('FIREBASE_') &&
       isAuthFailure(status, String(message))
     ) {
       original._authLogout = true;
