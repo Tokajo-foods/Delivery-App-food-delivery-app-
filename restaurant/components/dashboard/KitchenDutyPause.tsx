@@ -1,4 +1,5 @@
-import { Pressable, Text, View, type ReactNode } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import type { ReactNode } from 'react';
 
 import type { PauseReasonCode } from '@/lib/restaurant/types';
 

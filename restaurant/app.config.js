@@ -31,6 +31,22 @@ function pluginsWithCleartext(plugins, allowCleartext) {
   });
 }
 
+function pluginName(entry) {
+  return Array.isArray(entry) ? entry[0] : entry;
+}
+
+/** Store / preview AABs must not ship expo-dev-client (Play closed testing). */
+function pluginsForStoreBuild(plugins) {
+  const profile = (process.env.EAS_BUILD_PROFILE || '').trim();
+  const storeLike =
+    profile === 'production'
+    || profile === 'production-restaurant'
+    || profile === 'production-rider'
+    || profile === 'preview';
+  if (!storeLike) return plugins || [];
+  return (plugins || []).filter((p) => pluginName(p) !== 'expo-dev-client');
+}
+
 /** Merges env into Expo config (API URL + Google Maps SDK keys + OAuth). */
 module.exports = ({ config }) => {
   const mapsKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() || '';
@@ -113,7 +129,7 @@ module.exports = ({ config }) => {
 
   return {
     ...config,
-    plugins: pluginsWithCleartext(config.plugins, allowCleartext),
+    plugins: pluginsForStoreBuild(pluginsWithCleartext(config.plugins, allowCleartext)),
     name: appName,
     scheme: appScheme,
     icon: appIcon,

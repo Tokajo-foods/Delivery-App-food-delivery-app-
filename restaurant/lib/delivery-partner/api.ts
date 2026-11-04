@@ -769,7 +769,6 @@ export function mapPartnerDelivery(raw: unknown): PartnerDelivery {
     returnVerifiedAt: pickString(source, ['returnVerifiedAt']),
     returnedAt: pickString(source, ['returnedAt']),
     rtoFee: pickNumber(source, ['rtoFee']) ?? 0,
-    incentiveBonus: pickNumber(source, ['incentiveBonus']),
     canFail: pickBool(source, ['canFail']),
     failedAt: pickString(source, ['failedAt']),
     failReasonCode: pickString(source, ['failReasonCode']),

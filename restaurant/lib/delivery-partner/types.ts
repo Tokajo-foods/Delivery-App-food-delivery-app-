@@ -282,7 +282,6 @@ export type PartnerDelivery = {
   returnedAt?: string;
   /** Quoted/paid RTO fee. 0 until returning/returned. */
   rtoFee?: number;
-  incentiveBonus?: number;
   canFail?: boolean;
   failedAt?: string;
   failReasonCode?: string;
