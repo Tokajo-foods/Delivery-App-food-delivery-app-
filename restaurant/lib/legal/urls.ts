@@ -1,11 +1,11 @@
-import { API_BASE_URL } from '@/lib/api';
+const SITE = 'https://tokajofoods.com';
 
-/** Public HTML pages on the API gateway. No login. */
+/** Public pages on the company website. Play Console lists the same URLs. */
 export const LEGAL_URLS = {
-  privacy: `${API_BASE_URL}/legal/privacy-policy`,
-  terms: `${API_BASE_URL}/legal/terms`,
-  support: `${API_BASE_URL}/legal/support`,
-  deleteAccount: `${API_BASE_URL}/legal/delete-account`,
+  privacy: `${SITE}/privacy`,
+  terms: `${SITE}/terms`,
+  support: `${SITE}/contact`,
+  deleteAccount: `${SITE}/delete-account`,
 } as const;
 
 export const LEGAL_CONTACT_EMAIL = 'support@tokajofoods.com';
