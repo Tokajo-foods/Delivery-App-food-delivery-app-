@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   wrap: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: authTheme.border,
+    borderColor: authTheme.cardBorder,
     backgroundColor: authTheme.surface,
     padding: 14,
     gap: 8,

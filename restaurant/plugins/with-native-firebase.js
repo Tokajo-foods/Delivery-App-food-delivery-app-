@@ -11,7 +11,6 @@ const android = require(
  * Expo Go / web use the JS SDK + FirebaseRecaptchaVerifierModal when EXPO_PUBLIC_FIREBASE_* is set.
  * iOS excludes RNFB in package.json `expo.autolinking.ios.exclude`; use a native iOS build when enabled.
  */
- */
 module.exports = function withNativeFirebase(config) {
   return withPlugins(config, [
     android.withBuildscriptDependency,

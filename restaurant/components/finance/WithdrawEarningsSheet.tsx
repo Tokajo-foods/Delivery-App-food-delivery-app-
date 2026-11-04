@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   label: { marginTop: 6, fontFamily: fonts.medium, fontSize: 12, color: authTheme.textMuted },
   input: {
     borderWidth: 1,
-    borderColor: authTheme.border,
+    borderColor: authTheme.cardBorder,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
