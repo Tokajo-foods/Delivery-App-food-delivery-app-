@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
   ActivityIndicator,
@@ -62,6 +62,7 @@ import {
   resolveOrderTotal,
   shortOrderId,
   statusTone,
+  acceptWindowLabel,
   type KitchenTicketAction,
 } from '@/lib/order/ui';
 
@@ -137,13 +138,8 @@ function formatSlot(iso?: string) {
   });
 }
 
-function acceptWindow(iso?: string) {
-  if (!iso) return null;
-  const ms = new Date(iso).getTime() - Date.now();
-  if (!Number.isFinite(ms)) return null;
-  if (ms <= 0) return 'Accept overdue';
-  const mins = Math.max(1, Math.ceil(ms / 60_000));
-  return mins === 1 ? '1 min to accept' : `${mins} min to accept`;
+function acceptWindow(iso?: string, nowMs?: number) {
+  return acceptWindowLabel(iso, nowMs ?? Date.now());
 }
 
 function incomingMatches(order: OwnerOrder, filter: IncomingFilter) {
@@ -216,6 +212,42 @@ export function KitchenOrdersManager() {
     incomingMatches(order, incomingFilter)
   );
   const reasons = reasonsQuery.data ?? [];
+
+  const [acceptClock, setAcceptClock] = useState(() => Date.now());
+  const hasPendingAccept = useMemo(
+    () =>
+      [...board.new, ...incoming, ...scheduled].some(
+        (order) =>
+          order.status === 'placed'
+          || order.status === 'pending'
+          || order.status === 'pending_payment',
+      ),
+    [board.new, incoming, scheduled],
+  );
+
+  useEffect(() => {
+    if (!hasPendingAccept) return;
+    const tick = setInterval(() => setAcceptClock(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, [hasPendingAccept]);
+
+  useEffect(() => {
+    if (!hasPendingAccept || !restaurantId) return;
+    const overdue = [...board.new, ...incoming].some(
+      (order) =>
+        order.status === 'placed'
+        && order.acceptBy
+        && new Date(order.acceptBy).getTime() <= acceptClock,
+    );
+    if (!overdue) return;
+    const refetch = setInterval(() => {
+      void queryClient.invalidateQueries({
+        queryKey: restaurantOrderKeys.restaurant(restaurantId),
+        refetchType: 'active',
+      });
+    }, 5000);
+    return () => clearInterval(refetch);
+  }, [acceptClock, board.new, hasPendingAccept, incoming, queryClient, restaurantId]);
 
   const activeQuery =
     tab === 'board'
@@ -512,6 +544,7 @@ export function KitchenOrdersManager() {
                       empty=""
                       orders={board.new}
                       busy={laneBusy}
+                      acceptClock={acceptClock}
                       onOpen={openOrder}
                       onAction={handleTicketAction}
                       onReject={openReject}
@@ -607,6 +640,7 @@ export function KitchenOrdersManager() {
                     key={order.id}
                     order={order}
                     busy={laneBusy}
+                    acceptClock={acceptClock}
                     onOpen={() => openOrder(order)}
                     onAction={(action) => void handleTicketAction(order, action)}
                     onReject={() => openReject(order)}
@@ -744,6 +778,7 @@ function Lane({
   empty,
   orders,
   busy,
+  acceptClock,
   onOpen,
   onAction,
   onReject,
@@ -754,6 +789,7 @@ function Lane({
   empty: string;
   orders: OwnerOrder[];
   busy: boolean;
+  acceptClock?: number;
   onOpen: (order: OwnerOrder) => void;
   onAction: (order: OwnerOrder, action: KitchenTicketAction) => void;
   onReject: (order: OwnerOrder) => void;
@@ -775,6 +811,7 @@ function Lane({
             key={`${tone}-${order.id}`}
             order={order}
             busy={busy}
+            acceptClock={acceptClock}
             onOpen={() => onOpen(order)}
             onAction={(action) => onAction(order, action)}
             onReject={() => onReject(order)}
@@ -790,6 +827,7 @@ function OrderTicket({
   busy,
   scheduled,
   history,
+  acceptClock,
   onOpen,
   onAction,
   onReject,
@@ -798,6 +836,7 @@ function OrderTicket({
   busy: boolean;
   scheduled?: boolean;
   history?: boolean;
+  acceptClock?: number;
   onOpen: () => void;
   onAction?: (action: KitchenTicketAction) => void;
   onReject?: () => void;
@@ -817,7 +856,7 @@ function OrderTicket({
   );
   const action = history ? null : nextKitchenAction(order);
   const ActionIcon = action?.Icon;
-  const windowLabel = acceptWindow(order.acceptBy);
+  const windowLabel = acceptWindow(order.acceptBy, acceptClock);
   const showReject = Boolean(onReject && canReject(order) && !history);
   const showHandover =
     !history &&

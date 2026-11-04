@@ -94,12 +94,31 @@ export function statusTone(status?: string | null) {
   };
 }
 
+export function acceptWindowLabel(acceptBy?: string | null, nowMs = Date.now()) {
+  if (!acceptBy) return null;
+  const ms = new Date(acceptBy).getTime() - nowMs;
+  if (!Number.isFinite(ms)) return null;
+  if (ms <= 0) return 'Auto-cancelling…';
+  const totalSec = Math.ceil(ms / 1000);
+  if (totalSec < 120) {
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
+    return mins > 0
+      ? `Accept in ${mins}:${String(secs).padStart(2, '0')}`
+      : `Accept in ${secs}s`;
+  }
+  const mins = Math.max(1, Math.ceil(totalSec / 60));
+  return mins === 1 ? '1 min to accept' : `${mins} min to accept`;
+}
+
 export function statusCaption(
   status: string,
   fulfillmentTone?: OwnerOrder['fulfillmentTone']
 ) {
   if (status === 'pending_payment') return 'Awaiting Payment Confirmation';
-  if (status === 'pending' || status === 'placed') return 'Waiting for restaurant acceptance';
+  if (status === 'pending' || status === 'placed') {
+    return 'Accept within 5 minutes or the order cancels automatically';
+  }
   if (status === 'accepted') return 'Order accepted — start preparing';
   if (status === 'preparing') return 'Kitchen is preparing this order';
   if (status === 'ready' && fulfillmentTone === 'pickup') {
