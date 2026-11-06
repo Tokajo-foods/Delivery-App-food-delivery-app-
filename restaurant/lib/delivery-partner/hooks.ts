@@ -885,16 +885,6 @@ export function useDeliveryOrderMutations() {
     },
   });
 
-  const callCustomer = useMutation({
-    mutationFn: (deliveryId: string) =>
-      deliveryPartnerApi.callCustomer(deliveryId),
-  });
-
-  const callRestaurant = useMutation({
-    mutationFn: (deliveryId: string) =>
-      deliveryPartnerApi.callRestaurant(deliveryId),
-  });
-
   return {
     setOnline,
     accept,
@@ -920,8 +910,6 @@ export function useDeliveryOrderMutations() {
     returnToRestaurant,
     completeReturn,
     failTrip,
-    callCustomer,
-    callRestaurant,
     invalidateAll,
   };
 }

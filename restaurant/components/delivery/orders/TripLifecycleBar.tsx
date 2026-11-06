@@ -293,9 +293,7 @@ export function TripLifecycleBar({
     mutations.customerUnreachable.isPending ||
     mutations.returnToRestaurant.isPending ||
     mutations.completeReturn.isPending ||
-    mutations.failTrip.isPending ||
-    mutations.callCustomer.isPending ||
-    mutations.callRestaurant.isPending;
+    mutations.failTrip.isPending;
 
   const disabled = mutating || Boolean(busy);
   const rtoStep =

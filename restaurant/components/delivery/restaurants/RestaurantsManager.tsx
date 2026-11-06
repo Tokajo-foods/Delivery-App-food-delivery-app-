@@ -1,4 +1,4 @@
-import { MapPin, Navigation, Phone } from 'lucide-react-native';
+import { MapPin, Navigation } from 'lucide-react-native';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -20,11 +20,6 @@ import { formatLastTrip } from '@/lib/delivery-partner/restaurants-api';
 import { useRiderRestaurants } from '@/lib/delivery-partner/restaurants-hooks';
 import type { RiderRestaurantStat } from '@/lib/delivery-partner/restaurants-types';
 import { getApiErrorMessage } from '@/lib/errors';
-
-function callPhone(phone: string) {
-  const digits = phone.replace(/[^\d+]/g, '');
-  if (digits) void Linking.openURL(`tel:${digits}`);
-}
 
 function openMaps(lat: number, lng: number) {
   const url =
@@ -55,7 +50,6 @@ function MetricCell({ label, value }: { label: string; value: string }) {
 function RestaurantCard({ restaurant }: { restaurant: RiderRestaurantStat }) {
   const lastTrip = formatLastTrip(restaurant.lastTripAt);
   const hasPin = restaurant.lat != null && restaurant.lng != null;
-  const { phone } = restaurant;
 
   return (
     <View style={styles.card}>
@@ -77,27 +71,17 @@ function RestaurantCard({ restaurant }: { restaurant: RiderRestaurantStat }) {
         </View>
       </View>
 
-      {phone || hasPin ? (
+      {hasPin ? (
         <View style={styles.actionsRow}>
-          {phone ? (
-            <Pressable onPress={() => callPhone(phone)} style={styles.actionHit}>
-              <View style={styles.secondaryBtn}>
-                <Phone color={authTheme.text} size={15} />
-                <Text style={styles.secondaryText}>Call</Text>
-              </View>
-            </Pressable>
-          ) : null}
-          {hasPin ? (
-            <Pressable
-              onPress={() => openMaps(restaurant.lat!, restaurant.lng!)}
-              style={styles.actionHit}
-            >
-              <View style={styles.primaryBtn}>
-                <Navigation color="#FFFFFF" size={15} />
-                <Text style={styles.primaryText}>Directions</Text>
-              </View>
-            </Pressable>
-          ) : null}
+          <Pressable
+            onPress={() => openMaps(restaurant.lat!, restaurant.lng!)}
+            style={styles.actionHit}
+          >
+            <View style={styles.primaryBtn}>
+              <Navigation color="#FFFFFF" size={15} />
+              <Text style={styles.primaryText}>Directions</Text>
+            </View>
+          </Pressable>
         </View>
       ) : null}
     </View>
@@ -263,16 +247,6 @@ const styles = StyleSheet.create({
   metricValue: { fontFamily: fonts.semiBold, fontSize: 13, color: authTheme.text },
   actionsRow: { flexDirection: 'row', gap: 8 },
   actionHit: { flex: 1 },
-  secondaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: authTheme.bgSoft,
-  },
-  secondaryText: { fontFamily: fonts.semiBold, fontSize: 13, color: authTheme.text },
   primaryBtn: {
     flexDirection: 'row',
     alignItems: 'center',

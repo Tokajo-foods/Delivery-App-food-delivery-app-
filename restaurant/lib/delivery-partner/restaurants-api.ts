@@ -15,9 +15,9 @@ const PAGE_LIMIT = 100;
 const MAX_PAGES = 5;
 const NAME_LOOKUP_CONCURRENCY = 4;
 
-type RestaurantContact = { name?: string; phone?: string };
+type RestaurantContact = { name?: string };
 
-/** Restaurant names/phones rarely change; keep per session to avoid repeat order-context calls. */
+/** Restaurant names rarely change; keep per session to avoid repeat order-context calls. */
 const contactCache = new Map<string, RestaurantContact>();
 
 function tripTime(d: PartnerDelivery): string | undefined {
@@ -106,10 +106,7 @@ async function resolveContacts(rows: RiderRestaurantStat[]) {
         const ctx = await deliveryPartnerApi.getDeliveryOrderContext(row.latestDeliveryId);
         const name = ctx.restaurantName?.trim();
         if (name) {
-          contactCache.set(row.restaurantId, {
-            name,
-            phone: ctx.restaurantPhone?.trim() || undefined,
-          });
+          contactCache.set(row.restaurantId, { name });
         }
       } catch {
         // Name stays undefined; the card shows "Name unavailable" and retries next refresh.
@@ -122,7 +119,6 @@ async function resolveContacts(rows: RiderRestaurantStat[]) {
   for (const row of rows) {
     const contact = contactCache.get(row.restaurantId);
     row.name = contact?.name;
-    row.phone = contact?.phone;
   }
 }
 

@@ -115,16 +115,6 @@ export type KitchenRider = {
   message?: string;
 };
 
-export type KitchenMaskedCall = {
-  callId?: string;
-  orderId: string;
-  deliveryId?: string | null;
-  status?: string;
-  toMasked?: string;
-  virtualNumberMasked?: string;
-  provider?: string;
-};
-
 export type KitchenPartnerRating = {
   ratingId?: string;
   orderId: string;
@@ -1019,21 +1009,6 @@ function mapRider(raw: unknown, fallbackOrderId: string): KitchenRider {
   };
 }
 
-function mapMaskedCall(raw: unknown, fallbackOrderId: string): KitchenMaskedCall {
-  const rec = extractOrder(raw);
-  return {
-    callId: optionalString(rec.callId ?? rec.id ?? rec._id),
-    orderId: optionalString(rec.orderId) ?? fallbackOrderId,
-    deliveryId: optionalString(rec.deliveryId) ?? null,
-    status: optionalString(rec.status),
-    toMasked: optionalString(rec.toMasked ?? rec.customerMasked ?? rec.phoneMasked),
-    virtualNumberMasked: optionalString(
-      rec.virtualNumberMasked ?? rec.fromMasked
-    ),
-    provider: optionalString(rec.provider),
-  };
-}
-
 function mapPartnerRating(
   raw: unknown,
   fallbackOrderId: string,
@@ -1547,26 +1522,6 @@ export const restaurantOrderApi = {
         }
       }
       throw errorMessage(error, 'Unable to load assigned rider');
-    }
-  },
-
-  /** POST /restaurants/:id/orders/:orderId/call-customer */
-  callCustomer: async (
-    restaurantId: string,
-    orderId: string
-  ): Promise<KitchenMaskedCall> => {
-    try {
-      const response = await api.post<Envelope<unknown>>(
-        kitchenPath(
-          restaurantId,
-          `/orders/${encodeURIComponent(orderId)}/call-customer`
-        ),
-        {},
-        { timeout: 20_000 }
-      );
-      return mapMaskedCall(response.data?.data ?? response.data, orderId);
-    } catch (error) {
-      throw errorMessage(error, 'Unable to start masked call');
     }
   },
 

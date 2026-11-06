@@ -34,7 +34,6 @@ import type {
   DeliveryPartnerRegisterPayload,
   DeliveryTimeline,
   FailDeliveryPayload,
-  MaskedCallResult,
   PartnerBatch,
   PartnerBatchMember,
   PartnerBatchStop,
@@ -1642,25 +1641,6 @@ function mapDeliveryChatThread(
   };
 }
 
-function mapMaskedCall(raw: unknown, target: string): MaskedCallResult {
-  const record = asRecord(raw);
-  return {
-    callId:
-      pickString(record, ['callId', 'id', '_id']) ?? `${target}-${Date.now()}`,
-    deliveryId: pickString(record, ['deliveryId']) ?? '',
-    orderId: pickString(record, ['orderId']),
-    target: pickString(record, ['target']) ?? target,
-    status: pickString(record, ['status']) ?? 'initiated',
-    toMasked: pickString(record, ['toMasked', 'destinationMasked']),
-    virtualNumberMasked: pickString(record, [
-      'virtualNumberMasked',
-      'fromMasked',
-    ]),
-    provider: pickString(record, ['provider']),
-    createdAt: pickString(record, ['createdAt']),
-  };
-}
-
 export const deliveryPartnerApi = {
   /**
    * GET /partners/invite/validate — public invite check (email link).
@@ -2755,26 +2735,6 @@ export const deliveryPartnerApi = {
       );
     }
     return mapped;
-  },
-
-  /** POST /partners/me/deliveries/:id/call/customer */
-  callCustomer: async (deliveryId: string): Promise<MaskedCallResult> => {
-    const id = deliveryId.trim();
-    const res = await request<unknown>(
-      `${ME_BASE}/deliveries/${encodeURIComponent(id)}/call/customer`,
-      { method: 'POST', body: {} }
-    );
-    return mapMaskedCall(res.data ?? res, 'customer');
-  },
-
-  /** POST /partners/me/deliveries/:id/call/restaurant */
-  callRestaurant: async (deliveryId: string): Promise<MaskedCallResult> => {
-    const id = deliveryId.trim();
-    const res = await request<unknown>(
-      `${ME_BASE}/deliveries/${encodeURIComponent(id)}/call/restaurant`,
-      { method: 'POST', body: {} }
-    );
-    return mapMaskedCall(res.data ?? res, 'restaurant');
   },
 
   /** Photos are re-encoded as JPEG (≤ 2000 px) before upload — server limit is 5 MB. */

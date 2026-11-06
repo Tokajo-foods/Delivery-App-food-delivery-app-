@@ -7,7 +7,6 @@ export type RiderRestaurantStat = {
   restaurantId: string;
   /** From GET /partners/me/deliveries/:id/order-context; undefined when lookup failed. */
   name?: string;
-  phone?: string;
   lat?: number;
   lng?: number;
   deliveredTrips: number;

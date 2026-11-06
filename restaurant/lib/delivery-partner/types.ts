@@ -547,18 +547,6 @@ export type DeliveryChatThread = {
   messages: DeliveryChatMessage[];
 };
 
-export type MaskedCallResult = {
-  callId: string;
-  deliveryId: string;
-  orderId?: string;
-  target: string;
-  status?: string;
-  toMasked?: string;
-  virtualNumberMasked?: string;
-  provider?: string;
-  createdAt?: string;
-};
-
 export type TripNavStep = {
   instruction: string;
   distanceMeters?: number;

@@ -841,11 +841,6 @@ export function useKitchenTicketMutations(restaurantId?: string) {
     },
   });
 
-  const callCustomer = useMutation({
-    mutationFn: (orderId: string) =>
-      restaurantOrderApi.callCustomer(requireId(), orderId),
-  });
-
   const ratePartner = useMutation({
     mutationFn: (input: {
       orderId: string;
@@ -890,7 +885,6 @@ export function useKitchenTicketMutations(restaurantId?: string) {
     completeTakeaway,
     confirmHandover,
     handToRider,
-    callCustomer,
     ratePartner,
     manualAssign,
     isPending:
