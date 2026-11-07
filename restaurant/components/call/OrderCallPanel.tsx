@@ -101,7 +101,7 @@ function PersonRow({
           style={[styles.primary, (!row.virtualNumber || busy) && styles.disabled]}
         >
           <Phone color="#FFFFFF" size={14} strokeWidth={2.4} />
-          <Text style={styles.primaryText}>{phoneBusy ? 'Calling…' : 'Phone'}</Text>
+          <Text style={styles.primaryText}>{phoneBusy ? 'Opening…' : 'Phone'}</Text>
         </Pressable>
         <Pressable
           disabled={!row.internetAvailable || Boolean(busy)}

@@ -170,7 +170,7 @@ export function RestaurantCustomerChatScreen() {
                 void calls.dial('customer');
               }}
             >
-              <Text style={styles.choiceText}>Normal call</Text>
+              <Text style={styles.choiceText}>Phone call</Text>
             </Pressable>
             <Pressable
               style={styles.choice}

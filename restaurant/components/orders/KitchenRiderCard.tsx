@@ -54,8 +54,8 @@ export function KitchenRiderCard({
 
   const openCallChoices = () => {
     Alert.alert(riderName, 'Choose how to call', [
+      { text: 'Phone call', onPress: () => void calls.dial('rider') },
       { text: 'Internet call', onPress: () => void calls.startInternet('rider', riderName) },
-      { text: 'Normal call', onPress: () => void calls.dial('rider') },
       { text: 'Cancel', style: 'cancel' },
     ]);
   };
