@@ -118,7 +118,7 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
           style={{ maxHeight: Math.round(screenH * 0.78) }}
         >
             <View className="bg-white rounded-t-[40px] px-6 pt-6 pb-4">
-              <View className="mb-6">
+              <View className="mb-5">
                 <Text
                   style={{
                     color: '#020617',
@@ -186,7 +186,7 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
                 labelAccessory={null}
               />
 
-              <View className="flex-row items-center justify-between mb-5 mt-1">
+              <View className="flex-row items-center justify-between mb-4">
                 <CheckboxRow
                   checked={keepLoggedIn}
                   onToggle={() => setKeepLoggedIn((v) => !v)}
@@ -199,7 +199,7 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
                 </Pressable>
               </View>
 
-              <View className="mt-3 gap-6">
+              <View className="mt-2 gap-5">
                 <SwipeToLogin busy={busy} onConfirm={() => void handleLogin()} />
 
                 <Pressable
