@@ -97,7 +97,7 @@ export function LegalDocumentScreen({
             accessibilityRole="link"
             accessibilityLabel={`Email ${LEGAL_CONTACT_EMAIL}`}
           >
-            <Mail color="#111827" size={14} />
+            <Mail color={authTheme.brand} size={14} />
             <View style={styles.mailCopy}>
               <Text style={styles.mailAddress}>{LEGAL_CONTACT_EMAIL}</Text>
               <Text style={styles.mailHint}>Reply within 2 working days</Text>
@@ -108,7 +108,8 @@ export function LegalDocumentScreen({
         {sections.map((section, index) => (
           <View key={section.heading} style={styles.section}>
             <Text style={styles.heading}>
-              {index + 1}. {section.heading}
+              <Text style={styles.headingIndex}>{index + 1}. </Text>
+              {section.heading}
             </Text>
             {section.clauses.map((clause) => (
               <Text key={clause.lead} style={styles.paragraph}>
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     fontSize: 10,
     letterSpacing: 0.6,
-    color: '#64748B',
+    color: authTheme.brand,
   },
   heroTitle: {
     marginTop: 4,
@@ -198,7 +199,7 @@ const styles = StyleSheet.create({
   mailAddress: {
     fontFamily: fonts.bold,
     fontSize: 12,
-    color: '#111827',
+    color: authTheme.brand,
   },
   mailHint: {
     marginTop: 1,
@@ -213,6 +214,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     fontSize: 12,
     color: '#111827',
+  },
+  headingIndex: {
+    color: authTheme.brand,
   },
   lead: {
     fontFamily: fonts.bold,
@@ -235,7 +239,7 @@ const styles = StyleSheet.create({
   linkText: {
     fontFamily: fonts.semiBold,
     fontSize: 11,
-    color: '#111827',
+    color: authTheme.brand,
     textDecorationLine: 'underline',
   },
   url: {
