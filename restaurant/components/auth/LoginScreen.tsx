@@ -116,7 +116,7 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
         <ScrollView
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          style={{ maxHeight: Math.round(screenH * 0.718) }}
+          style={{ maxHeight: Math.round(screenH * 0.62) }}
         >
             <View className="bg-white rounded-t-[40px] px-6 pt-6 pb-12">
               <View className="mb-5">
@@ -223,7 +223,7 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
             </View>
         </ScrollView>
         <Pressable
-          onPress={() => router.push({ pathname: '/register', params: { role } })}
+          onPressIn={() => router.push({ pathname: '/register', params: { role } })}
           accessibilityRole="button"
           accessibilityLabel="Create an account"
           style={styles.createAccount}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
   Easing,
@@ -19,6 +19,7 @@ export function AuthSlideSheet({ children, onDismissed }: Props) {
   const translateY = useRef(new Animated.Value(height)).current;
   const closing = useRef(false);
   const onDismissedRef = useRef(onDismissed);
+  const [sheetHeight, setSheetHeight] = useState(0);
   onDismissedRef.current = onDismissed;
 
   useEffect(() => {
@@ -43,15 +44,22 @@ export function AuthSlideSheet({ children, onDismissed }: Props) {
     });
   };
 
+  const dismissHeight = Math.max(0, height - sheetHeight);
+
   return (
-    <View style={styles.fill}>
+    <View style={styles.fill} pointerEvents="box-none">
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Back to Get Started"
         onPress={dismiss}
-        style={styles.dismiss}
+        style={[styles.dismiss, { height: dismissHeight }]}
       />
       <Animated.View
+        onLayout={(event) => {
+          const next = Math.round(event.nativeEvent.layout.height);
+          setSheetHeight((current) => (current === next ? current : next));
+        }}
+        pointerEvents="auto"
         style={[styles.sheet, { transform: [{ translateY }] }]}
       >
         {children}
@@ -63,11 +71,16 @@ export function AuthSlideSheet({ children, onDismissed }: Props) {
 const styles = StyleSheet.create({
   fill: {
     ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
   },
   dismiss: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
   },
   sheet: {
-    elevation: 12,
+    zIndex: 2,
+    elevation: 16,
   },
 });
