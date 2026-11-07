@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import {
   Alert,
   Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,10 +15,15 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { authTheme } from '@/constants/auth-theme';
-import { fonts } from '@/constants/typography';
 import { BRAND_NAME } from '@/constants/theme';
 import type { LegalSection } from '@/lib/legal/urls';
 import { LEGAL_CONTACT_EMAIL } from '@/lib/legal/urls';
+
+const legalFont = Platform.select({
+  ios: 'Georgia',
+  android: 'serif',
+  default: 'Georgia',
+});
 
 type Props = {
   title: string;
@@ -105,12 +111,15 @@ export function LegalDocumentScreen({
           </Pressable>
         ) : null}
 
-        {sections.map((section) => (
+        {sections.map((section, index) => (
           <View key={section.heading} style={styles.section}>
-            <Text style={styles.heading}>{section.heading}</Text>
-            {section.body.map((paragraph) => (
-              <Text key={paragraph} style={styles.paragraph}>
-                {paragraph}
+            <Text style={styles.heading}>
+              {index + 1}. {section.heading}
+            </Text>
+            {section.clauses.map((clause) => (
+              <Text key={clause.lead} style={styles.paragraph}>
+                <Text style={styles.lead}>{clause.lead} </Text>
+                {clause.text}
               </Text>
             ))}
           </View>
@@ -151,36 +160,35 @@ const styles = StyleSheet.create({
   topTitle: {
     flex: 1,
     marginLeft: 4,
-    fontFamily: fonts.semiBold,
-    fontSize: 15,
-    color: authTheme.text,
+    fontFamily: legalFont,
+    fontSize: 14,
+    color: '#111827',
   },
-  content: { paddingHorizontal: 20, paddingTop: 18 },
+  content: { paddingHorizontal: 22, paddingTop: 20 },
   kicker: {
-    fontFamily: fonts.semiBold,
-    fontSize: 11,
-    letterSpacing: 0.4,
-    color: authTheme.brand,
+    fontFamily: legalFont,
+    fontSize: 10,
+    letterSpacing: 0.8,
+    color: '#6B7280',
   },
   heroTitle: {
-    marginTop: 4,
-    fontFamily: fonts.bold,
-    fontSize: 20,
-    letterSpacing: -0.2,
-    color: authTheme.text,
+    marginTop: 6,
+    fontFamily: legalFont,
+    fontSize: 18,
+    color: '#111827',
   },
   summary: {
-    marginTop: 6,
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    lineHeight: 19,
-    color: authTheme.textMuted,
+    marginTop: 8,
+    fontFamily: legalFont,
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#374151',
   },
   updated: {
     marginTop: 8,
-    fontFamily: fonts.medium,
+    fontFamily: legalFont,
     fontSize: 11,
-    color: authTheme.textDim,
+    color: '#6B7280',
   },
   mailCard: {
     marginTop: 16,
@@ -194,45 +202,56 @@ const styles = StyleSheet.create({
   },
   mailCopy: { flex: 1 },
   mailAddress: {
-    fontFamily: fonts.semiBold,
-    fontSize: 13,
-    color: authTheme.text,
+    fontFamily: legalFont,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#111827',
   },
   mailHint: {
     marginTop: 2,
-    fontFamily: fonts.regular,
+    fontFamily: legalFont,
     fontSize: 11,
-    color: authTheme.textMuted,
+    color: '#6B7280',
   },
   section: {
-    marginTop: 18,
-    paddingTop: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: authTheme.cardBorder,
+    marginTop: 16,
   },
   heading: {
-    fontFamily: fonts.semiBold,
-    fontSize: 14,
-    color: authTheme.text,
+    fontFamily: legalFont,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  lead: {
+    fontFamily: legalFont,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#111827',
   },
   paragraph: {
     marginTop: 6,
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    lineHeight: 19,
-    color: authTheme.textMuted,
+    fontFamily: legalFont,
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#374151',
   },
-  linkBtn: { marginTop: 22, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: authTheme.cardBorder },
+  linkBtn: {
+    marginTop: 20,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#E5E7EB',
+  },
   linkText: {
-    fontFamily: fonts.semiBold,
-    fontSize: 13,
-    color: authTheme.brand,
+    fontFamily: legalFont,
+    fontSize: 12,
+    color: '#111827',
+    textDecorationLine: 'underline',
   },
   url: {
     marginTop: 3,
-    fontFamily: fonts.regular,
+    fontFamily: legalFont,
     fontSize: 11,
     lineHeight: 16,
-    color: authTheme.textDim,
+    color: '#6B7280',
   },
 });

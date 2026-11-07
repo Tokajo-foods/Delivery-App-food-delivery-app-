@@ -10,7 +10,13 @@ export const LEGAL_URLS = {
 
 export const LEGAL_CONTACT_EMAIL = 'support@tokajofoods.com';
 
+export type LegalClause = {
+  /** Short bold label, such as "Orders." */
+  lead: string;
+  text: string;
+};
+
 export type LegalSection = {
   heading: string;
-  body: string[];
+  clauses: LegalClause[];
 };
