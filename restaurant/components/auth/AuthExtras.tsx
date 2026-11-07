@@ -39,8 +39,8 @@ export function LegalFooter() {
   const router = useRouter();
 
   return (
-    <View className="mt-[28.1px] items-center gap-[10.7px]">
-      <View className="flex-row items-center gap-[20.4px]">
+    <View className="mt-[27.8px] items-center gap-[10.6px]">
+      <View className="flex-row items-center gap-[20.2px]">
         {LEGAL_LINKS.map((item) => (
           <Pressable
             key={item.href}
