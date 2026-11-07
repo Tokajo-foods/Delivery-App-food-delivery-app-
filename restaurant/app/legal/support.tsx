@@ -6,7 +6,8 @@ export default function SupportScreen() {
   return (
     <LegalDocumentScreen
       title="Support"
-      updated="Updated 26 October 2026"
+      updated="Updated 8 November 2026"
+      summary="Help with orders, documents, payouts, and your restaurant account."
       publicUrl={LEGAL_URLS.support}
       sections={SUPPORT_SECTIONS}
       email

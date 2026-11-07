@@ -6,7 +6,8 @@ export default function PrivacyPolicyScreen() {
   return (
     <LegalDocumentScreen
       title="Privacy Policy"
-      updated="Effective 26 October 2026"
+      updated="Effective 8 November 2026"
+      summary="How the restaurant app uses outlet, order, and account information."
       publicUrl={LEGAL_URLS.privacy}
       sections={PRIVACY_SECTIONS}
     />

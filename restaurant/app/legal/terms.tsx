@@ -6,7 +6,8 @@ export default function TermsScreen() {
   return (
     <LegalDocumentScreen
       title="Terms of Use"
-      updated="Effective 26 October 2026"
+      updated="Effective 8 November 2026"
+      summary="The rules for listing your kitchen, taking orders, and getting paid."
       publicUrl={LEGAL_URLS.terms}
       sections={TERMS_SECTIONS}
     />
