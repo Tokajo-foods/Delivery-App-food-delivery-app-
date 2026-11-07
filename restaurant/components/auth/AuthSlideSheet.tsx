@@ -52,11 +52,15 @@ export function AuthSlideSheet({ children, onDismissed }: Props) {
         style={StyleSheet.absoluteFill}
       />
       <Animated.View
-        pointerEvents="box-none"
-        style={[
-          StyleSheet.absoluteFillObject,
-          { justifyContent: 'flex-end', transform: [{ translateY }] },
-        ]}
+        pointerEvents="auto"
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 2,
+          transform: [{ translateY }],
+        }}
       >
         {children}
       </Animated.View>

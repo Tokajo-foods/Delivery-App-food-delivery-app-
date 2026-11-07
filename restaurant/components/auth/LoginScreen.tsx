@@ -216,19 +216,18 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
                   </Text>
                 </Pressable>
 
-                <View className="flex-row items-center justify-center py-1">
-                  <Text className="text-[15px] text-secondary">
+                <Pressable
+                  onPress={() => router.push({ pathname: '/register', params: { role } })}
+                  hitSlop={12}
+                  accessibilityRole="link"
+                  accessibilityLabel="Create an account"
+                  className="items-center py-2"
+                >
+                  <Text className="text-center text-[15px] text-secondary">
                     Don't have an account?{' '}
+                    <Text className="font-bold text-[#EA4B14]">Create an account</Text>
                   </Text>
-                  <Pressable
-                    onPress={() => router.push('/register')}
-                    hitSlop={10}
-                  >
-                    <Text className="text-[15px] font-bold text-[#EA4B14]">
-                      Create an account
-                    </Text>
-                  </Pressable>
-                </View>
+                </Pressable>
               </View>
 
               <LegalFooter />
