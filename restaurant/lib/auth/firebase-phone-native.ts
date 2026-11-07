@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 
 type NativeAuthModule = typeof import('@react-native-firebase/auth');
 
@@ -7,11 +7,24 @@ export const NATIVE_AUTO_VERIFIED = '__native_auto_verified__';
 
 let nativeModule: NativeAuthModule | null | undefined;
 
+/**
+ * True only when this binary actually linked RNFB.
+ * Requiring the package without the native module throws during module init, and Metro
+ * reports that as a fatal redbox even when the require sits inside try/catch.
+ */
+function nativeFirebaseLinked(): boolean {
+  try {
+    return NativeModules.RNFBAppModule != null;
+  } catch {
+    return false;
+  }
+}
+
 /** RNFB is only usable in builds that linked it and found google-services config. */
 function loadNative(): NativeAuthModule | null {
   if (nativeModule !== undefined) return nativeModule;
   nativeModule = null;
-  if (Platform.OS === 'web') return nativeModule;
+  if (Platform.OS === 'web' || !nativeFirebaseLinked()) return nativeModule;
   try {
     const { getApps } = require('@react-native-firebase/app') as typeof import('@react-native-firebase/app');
     if (getApps().length > 0) {
