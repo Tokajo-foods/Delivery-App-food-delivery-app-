@@ -151,7 +151,7 @@ export function AuthField({
   const managerProps = useMemo(() => autofillProps(autofill), [autofill]);
 
   return (
-    <View className="mb-4">
+    <View className="mb-5">
       <View className="mb-1.5 flex-row items-center justify-between">
         <Text className="text-sm font-semibold text-secondary">{label}</Text>
         {labelAccessory}

@@ -39,7 +39,7 @@ export function LegalFooter() {
   const router = useRouter();
 
   return (
-    <View className="mt-6 items-center gap-2.5">
+    <View className="mt-8 items-center gap-3">
       <View className="flex-row items-center gap-5">
         {LEGAL_LINKS.map((item) => (
           <Pressable
