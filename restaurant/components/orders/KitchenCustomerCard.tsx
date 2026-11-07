@@ -38,12 +38,12 @@ export function KitchenCustomerCard({
   const openCallChoices = () => {
     Alert.alert(customerName, 'Choose how to call', [
       {
-        text: 'Internet call',
-        onPress: () => void calls.startInternet('customer', customerName),
+        text: 'Phone call',
+        onPress: () => void calls.dial('customer'),
       },
       {
-        text: 'Normal call',
-        onPress: () => void calls.dial('customer'),
+        text: 'Internet call',
+        onPress: () => void calls.startInternet('customer', customerName),
       },
       { text: 'Cancel', style: 'cancel' },
     ]);

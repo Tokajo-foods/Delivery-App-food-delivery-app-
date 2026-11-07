@@ -35,7 +35,7 @@ export function StopCallSheet({
           {notice ? <Text style={styles.notice}>{notice}</Text> : null}
           <Pressable style={styles.row} onPress={onNormal}>
             <Phone color="#EA4B14" size={18} />
-            <Text style={styles.rowText}>Normal call</Text>
+            <Text style={styles.rowText}>Phone call</Text>
           </Pressable>
           <Pressable style={styles.row} onPress={onInternet}>
             <Video color="#EA4B14" size={18} />
