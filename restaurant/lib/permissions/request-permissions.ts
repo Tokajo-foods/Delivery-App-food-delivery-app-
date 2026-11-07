@@ -15,16 +15,22 @@ async function requestNotifications(): Promise<PermissionStatus> {
 async function requestMicrophone(): Promise<PermissionStatus> {
   if (Platform.OS === 'web') return 'granted';
   if (Platform.OS === 'android') {
-    const result = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, {
-      title: 'Microphone for in-app calls',
-      message:
-        'TOKAJO uses the microphone only during an in-app order call. Your mobile number stays hidden.',
-      buttonPositive: 'Allow',
-      buttonNegative: 'Not now',
-    });
+    const already = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+    if (already) return 'granted';
+    const result = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
     return result === PermissionsAndroid.RESULTS.GRANTED ? 'granted' : 'denied';
   }
   const webrtc = await import('@livekit/react-native-webrtc');
+  try {
+    const current = await webrtc.permissions.query({ name: 'microphone' });
+    const state =
+      current && typeof current === 'object' && 'state' in current
+        ? String((current as { state: unknown }).state)
+        : String(current);
+    if (state === 'granted') return 'granted';
+  } catch {
+    // Fall through and let the system dialog decide.
+  }
   const result: unknown = await webrtc.permissions.request({ name: 'microphone' });
   const status =
     result && typeof result === 'object' && 'status' in result

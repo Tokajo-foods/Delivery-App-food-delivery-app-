@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 
 import { permissionIds } from '@/lib/permissions/catalog';
@@ -18,6 +18,8 @@ export function useAppPermissions() {
   const [rows, setRows] = useState<PermissionSnapshot[]>([]);
   const [loading, setLoading] = useState(Platform.OS !== 'web');
   const [requesting, setRequesting] = useState(false);
+  const prompted = useRef(new Set<PermissionId>());
+  const running = useRef(false);
 
   const refresh = useCallback(async () => {
     if (Platform.OS === 'web') {
@@ -73,6 +75,28 @@ export function useAppPermissions() {
     }
   }, [includeRiderBackground, refresh]);
 
+  /** System Allow dialogs only. Already-granted permissions are skipped. */
+  const promptMissing = useCallback(async () => {
+    if (Platform.OS === 'web' || running.current) return;
+    running.current = true;
+    setRequesting(true);
+    try {
+      const next = await snapshotAppPermissions({ includeRiderBackground });
+      setRows(next);
+      for (const row of next) {
+        if (row.status === 'granted' || prompted.current.has(row.id)) continue;
+        prompted.current.add(row.id);
+        await requestAppPermission(row.id);
+      }
+      const after = await snapshotAppPermissions({ includeRiderBackground });
+      setRows(after);
+    } finally {
+      running.current = false;
+      setRequesting(false);
+      setLoading(false);
+    }
+  }, [includeRiderBackground]);
+
   return {
     rows,
     loading,
@@ -81,6 +105,7 @@ export function useAppPermissions() {
     refresh,
     requestOne,
     requestAll,
+    promptMissing,
     needsGate: Platform.OS !== 'web' && !loading && !allGranted,
   };
 }
