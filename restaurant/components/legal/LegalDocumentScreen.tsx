@@ -83,14 +83,10 @@ export function LegalDocumentScreen({
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.hero}>
-          <Text style={styles.kicker}>{BRAND_NAME}</Text>
-          <Text style={styles.heroTitle}>{title}</Text>
-          <Text style={styles.summary}>{summary}</Text>
-          <View style={styles.datePill}>
-            <Text style={styles.updated}>{updated}</Text>
-          </View>
-        </View>
+        <Text style={styles.kicker}>{BRAND_NAME}</Text>
+        <Text style={styles.heroTitle}>{title}</Text>
+        <Text style={styles.summary}>{summary}</Text>
+        <Text style={styles.updated}>{updated}</Text>
 
         {email ? (
           <Pressable
@@ -101,25 +97,17 @@ export function LegalDocumentScreen({
             accessibilityRole="link"
             accessibilityLabel={`Email ${LEGAL_CONTACT_EMAIL}`}
           >
-            <View style={styles.mailIcon}>
-              <Mail color={authTheme.brand} size={20} />
-            </View>
+            <Mail color={authTheme.brand} size={16} />
             <View style={styles.mailCopy}>
-              <Text style={styles.mailLabel}>Email support</Text>
               <Text style={styles.mailAddress}>{LEGAL_CONTACT_EMAIL}</Text>
-              <Text style={styles.mailHint}>We aim to reply within 2 working days</Text>
+              <Text style={styles.mailHint}>Reply within 2 working days</Text>
             </View>
           </Pressable>
         ) : null}
 
-        {sections.map((section, index) => (
-          <View key={section.heading} style={styles.card}>
-            <View style={styles.cardHead}>
-              <View style={styles.index}>
-                <Text style={styles.indexText}>{index + 1}</Text>
-              </View>
-              <Text style={styles.heading}>{section.heading}</Text>
-            </View>
+        {sections.map((section) => (
+          <View key={section.heading} style={styles.section}>
+            <Text style={styles.heading}>{section.heading}</Text>
             {section.body.map((paragraph) => (
               <Text key={paragraph} style={styles.paragraph}>
                 {paragraph}
@@ -145,160 +133,106 @@ export function LegalDocumentScreen({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: authTheme.surface },
+  screen: { flex: 1, backgroundColor: '#FFFFFF' },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: authTheme.card,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: authTheme.cardBorder,
   },
   back: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 18,
-    backgroundColor: authTheme.brandSoft,
   },
   topTitle: {
     flex: 1,
-    marginLeft: 10,
-    fontFamily: fonts.bold,
-    fontSize: 17,
+    marginLeft: 4,
+    fontFamily: fonts.semiBold,
+    fontSize: 15,
     color: authTheme.text,
   },
-  content: { paddingHorizontal: 16, paddingTop: 16 },
-  hero: {
-    backgroundColor: authTheme.card,
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-  },
+  content: { paddingHorizontal: 20, paddingTop: 18 },
   kicker: {
-    fontFamily: fonts.bold,
-    fontSize: 12,
-    letterSpacing: 0.6,
+    fontFamily: fonts.semiBold,
+    fontSize: 11,
+    letterSpacing: 0.4,
     color: authTheme.brand,
   },
   heroTitle: {
-    marginTop: 6,
-    fontFamily: fonts.extraBold,
-    fontSize: 28,
-    letterSpacing: -0.4,
+    marginTop: 4,
+    fontFamily: fonts.bold,
+    fontSize: 20,
+    letterSpacing: -0.2,
     color: authTheme.text,
   },
   summary: {
-    marginTop: 8,
-    fontFamily: fonts.medium,
-    fontSize: 15,
-    lineHeight: 22,
+    marginTop: 6,
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 19,
     color: authTheme.textMuted,
-  },
-  datePill: {
-    alignSelf: 'flex-start',
-    marginTop: 14,
-    backgroundColor: authTheme.brandSoft,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
   },
   updated: {
-    fontFamily: fonts.semiBold,
-    fontSize: 12,
-    color: authTheme.brandDark,
+    marginTop: 8,
+    fontFamily: fonts.medium,
+    fontSize: 11,
+    color: authTheme.textDim,
   },
   mailCard: {
-    marginTop: 12,
+    marginTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: authTheme.card,
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#FDBA74',
-  },
-  mailIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: authTheme.brandSoft,
+    gap: 10,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: authTheme.surface,
   },
   mailCopy: { flex: 1 },
-  mailLabel: {
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    color: authTheme.textMuted,
-  },
   mailAddress: {
-    marginTop: 2,
-    fontFamily: fonts.bold,
-    fontSize: 15,
-    color: authTheme.brand,
+    fontFamily: fonts.semiBold,
+    fontSize: 13,
+    color: authTheme.text,
   },
   mailHint: {
     marginTop: 2,
     fontFamily: fonts.regular,
-    fontSize: 12,
-    color: authTheme.textDim,
+    fontSize: 11,
+    color: authTheme.textMuted,
   },
-  card: {
-    marginTop: 12,
-    backgroundColor: authTheme.card,
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-  },
-  cardHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 8,
-  },
-  index: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: authTheme.brand,
-  },
-  indexText: {
-    fontFamily: fonts.bold,
-    fontSize: 12,
-    color: '#FFFFFF',
+  section: {
+    marginTop: 18,
+    paddingTop: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: authTheme.cardBorder,
   },
   heading: {
-    flex: 1,
-    fontFamily: fonts.bold,
-    fontSize: 16,
+    fontFamily: fonts.semiBold,
+    fontSize: 14,
     color: authTheme.text,
   },
   paragraph: {
-    fontFamily: fonts.regular,
-    fontSize: 14,
-    lineHeight: 22,
-    color: authTheme.textMuted,
     marginTop: 6,
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 19,
+    color: authTheme.textMuted,
   },
-  linkBtn: { marginTop: 18, paddingVertical: 8 },
+  linkBtn: { marginTop: 22, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: authTheme.cardBorder },
   linkText: {
     fontFamily: fonts.semiBold,
-    fontSize: 14,
+    fontSize: 13,
     color: authTheme.brand,
   },
   url: {
-    marginTop: 4,
+    marginTop: 3,
     fontFamily: fonts.regular,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 16,
     color: authTheme.textDim,
   },
 });
