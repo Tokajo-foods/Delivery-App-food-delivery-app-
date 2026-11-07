@@ -131,7 +131,7 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
                 </Text>
                 <Text
                   style={{
-                    marginTop: 6,
+                    marginTop: 2,
                     color: '#64748B',
                     fontFamily: fonts.medium,
                     fontSize: 14,
