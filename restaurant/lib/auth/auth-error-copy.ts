@@ -23,11 +23,11 @@ export const AUTH_ERROR_COPY: Record<string, string> = {
     'Your phone verification is older than 10 minutes. Resend the OTP and verify again.',
   PHONE_OTP_CLIENT_NOT_CONFIGURED: 'Phone OTP is not configured in this build.',
   PHONE_ALREADY_REGISTERED:
-    'This number already has an account for this app. Sign in with OTP instead.',
+    'This number is already a restaurant account. Sign in with OTP instead.',
+  ROLE_NOT_ALLOWED:
+    'This number is a Tokajo account, but not a restaurant account yet. Create an account with the same number.',
   PHONE_MISMATCH:
     'The verified number does not match the number entered. Verify the number again.',
-  ROLE_NOT_ALLOWED:
-    'This number has a Tokajo account, but not for this app yet. Register it for this role first.',
   RESET_TOKEN_INVALID:
     'This reset session expired. Verify your phone again to set a new password.',
   RATE_LIMITED: 'Too many attempts. Wait a few minutes and try again.',

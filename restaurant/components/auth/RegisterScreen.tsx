@@ -9,6 +9,7 @@ import { AuthShell } from '@/components/auth/AuthShell';
 import { PhoneSignupFlow } from '@/components/auth/PhoneSignupFlow';
 import { RoleSelector } from '@/components/auth/RoleSelector';
 import { usePhoneSignup } from '@/components/auth/usePhoneSignup';
+import { lockedPartnerRole } from '@/lib/app-variant';
 import { formatAuthError } from '@/lib/auth/auth-error-copy';
 import { applyPhoneAuthSession } from '@/lib/auth/phone-session';
 import type { PartnerRole } from '@/lib/auth/types';
@@ -84,10 +85,13 @@ export function RegisterScreen() {
   const role = useAuthStore((s) => s.role);
   const setRole = useAuthStore((s) => s.setRole);
 
+  const lockedRole = lockedPartnerRole();
+
   useEffect(() => {
     if (inviteToken) setRole('delivery');
+    else if (lockedRole) setRole(lockedRole);
     else if (params.role === 'delivery' || params.role === 'restaurant') setRole(params.role);
-  }, [inviteToken, params.role, setRole]);
+  }, [inviteToken, lockedRole, params.role, setRole]);
 
   const isDelivery = role === 'delivery' || Boolean(inviteToken);
 
