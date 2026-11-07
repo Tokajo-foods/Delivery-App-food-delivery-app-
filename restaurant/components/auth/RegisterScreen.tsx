@@ -31,8 +31,6 @@ function PartnerPhoneSignup({
   const signup = usePhoneSignup({ role, initialPhone });
   const [handoff, setHandoff] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const next = role === 'delivery' ? 'rider setup' : 'restaurant setup';
-
   const create = async () => {
     setError(null);
     const result = await signup.submit();
@@ -41,12 +39,10 @@ function PartnerPhoneSignup({
       const linked = result.linkedExistingAccount;
       setHandoff(
         linked
-          ? `This number already had a Tokajo account. ${
-              role === 'delivery' ? 'Delivery' : 'Restaurant'
-            } access was added.${
+          ? `This number already has a TOKAJO account. Access was added.${
               result.passwordSet ? '' : ' Your existing password is unchanged.'
-            } Opening ${next}…`
-          : `Account created. Opening ${next}…`
+            } Taking you in…`
+          : 'Account created. Taking you in…'
       );
       await new Promise((resolve) => setTimeout(resolve, linked ? 2200 : 420));
       if (role === 'delivery') markFreshRiderSignup(inviteToken);
@@ -97,19 +93,23 @@ export function RegisterScreen() {
 
   return (
     <AuthShell
-      title={isDelivery ? 'Join as Delivery Partner' : 'Create account'}
+      title={isDelivery ? 'Join as a delivery partner' : 'Create your account'}
       subtitle={
         isDelivery
           ? 'Verify your mobile number to create your rider account. Address and vehicle come next.'
-          : 'Verify your mobile number to create your restaurant partner account.'
+          : 'Enter your mobile number. We’ll send a one-time code to confirm it’s you.'
       }
       showBack
       footer={
         <View>
           <View className="flex-row items-center justify-center">
-            <Text className="text-sm text-secondary-light">Already a partner? </Text>
-            <Pressable onPress={() => router.replace('/login')} hitSlop={8}>
-              <Text className="text-sm font-bold text-primary">Sign in</Text>
+            <Text className="text-sm text-secondary-light">Already have an account? </Text>
+            <Pressable
+              onPress={() => router.replace('/login')}
+              hitSlop={8}
+              accessibilityRole="link"
+            >
+              <Text className="text-sm font-bold text-primary underline">Sign in</Text>
             </Pressable>
           </View>
           <LegalFooter />

@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AuthSlideSheet } from '@/components/auth/AuthSlideSheet';
+import { fonts } from '@/constants/typography';
 import { cardShadow, theme } from '@/constants/theme';
 
 type AuthShellProps = {
@@ -63,10 +64,25 @@ export function AuthShell({
               </Pressable>
             ) : null}
 
-            <Text className="text-2xl font-extrabold text-secondary">
+            <Text
+              style={{
+                color: '#020617',
+                fontFamily: fonts.extraBold,
+                fontSize: 26,
+                letterSpacing: -0.4,
+              }}
+            >
               {title}
             </Text>
-            <Text className="mt-1 text-sm leading-5 text-secondary-light">
+            <Text
+              style={{
+                marginTop: 6,
+                color: '#64748B',
+                fontFamily: fonts.medium,
+                fontSize: 14,
+                lineHeight: 20,
+              }}
+            >
               {subtitle}
             </Text>
 

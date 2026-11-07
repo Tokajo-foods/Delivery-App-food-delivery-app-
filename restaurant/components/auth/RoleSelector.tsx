@@ -21,6 +21,8 @@ export function RoleSelector({ value, onChange, disabled }: RoleSelectorProps) {
     if (locked && value !== locked) onChange(locked);
   }, [locked, onChange, value]);
 
+  if (roles.length < 2) return null;
+
   return (
     <View className="mb-5 flex-row overflow-hidden rounded-2xl bg-[#F3F4F6] p-1">
       {roles.map((role) => {
