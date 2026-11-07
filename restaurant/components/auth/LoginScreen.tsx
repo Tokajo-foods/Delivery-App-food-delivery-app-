@@ -117,7 +117,7 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
           showsVerticalScrollIndicator={false}
           style={{ maxHeight: Math.round(screenH * 0.78) }}
         >
-            <View className="bg-white rounded-t-[40px] px-6 pt-6 pb-12">
+            <View className="bg-white rounded-t-[40px] px-6 pt-6 pb-4">
               <View className="mb-5">
                 <Text
                   style={{
@@ -220,7 +220,7 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
                   onPress={() => router.push({ pathname: '/register', params: { role } })}
                   accessibilityRole="button"
                   accessibilityLabel="Create an account"
-                  className="h-6 items-center justify-center"
+                  className="h-8 items-center justify-center"
                 >
                   <Text className="text-center text-[15px] text-[#64748B]">
                     Don't have an account?{' '}
