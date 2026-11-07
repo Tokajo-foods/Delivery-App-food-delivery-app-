@@ -72,6 +72,8 @@ const styles = StyleSheet.create({
   fill: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'flex-end',
+    zIndex: 20,
+    elevation: 24,
   },
   dismiss: {
     position: 'absolute',

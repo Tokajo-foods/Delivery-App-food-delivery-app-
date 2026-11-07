@@ -7,13 +7,15 @@ const HERO = require('../../assets/welcome/tokajo-get-started.jpg');
 
 type Props = {
   onGetStarted?: () => void;
+  /** Turn off while a sheet covers this screen so its bottom controls receive taps. */
+  interactive?: boolean;
 };
 
 /**
  * Logged-out start art. The painted Get Started pill is the only control;
  * a transparent hit target sits on top of it.
  */
-export function WelcomeScreen({ onGetStarted }: Props) {
+export function WelcomeScreen({ onGetStarted, interactive = true }: Props) {
   const router = useRouter();
   const { height: screenH, width: screenW } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -31,7 +33,7 @@ export function WelcomeScreen({ onGetStarted }: Props) {
   const hitSide = Math.max(18, screenW * 0.07);
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} pointerEvents={interactive ? 'auto' : 'none'}>
       <Image
         source={HERO}
         style={StyleSheet.absoluteFillObject}
@@ -39,21 +41,23 @@ export function WelcomeScreen({ onGetStarted }: Props) {
         contentPosition="bottom"
         accessibilityIgnoresInvertColors
       />
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Get Started"
-        onPress={handleGetStarted}
-        hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
-        style={[
-          styles.getStartedHit,
-          {
-            height: hitHeight,
-            bottom: hitBottom,
-            left: hitSide,
-            right: hitSide,
-          },
-        ]}
-      />
+      {interactive ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Get Started"
+          onPress={handleGetStarted}
+          hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+          style={[
+            styles.getStartedHit,
+            {
+              height: hitHeight,
+              bottom: hitBottom,
+              left: hitSide,
+              right: hitSide,
+            },
+          ]}
+        />
+      ) : null}
     </View>
   );
 }

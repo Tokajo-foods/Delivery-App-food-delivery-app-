@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { Lock, Mail, MessageSquareCode } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
@@ -216,18 +216,25 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
                   </Text>
                 </Pressable>
 
-                <Pressable
-                  onPress={() => router.push({ pathname: '/register', params: { role } })}
-                  accessibilityRole="button"
-                  accessibilityLabel="Create an account"
-                  hitSlop={{ top: 14, bottom: 14, left: 20, right: 20 }}
-                  className="h-10 w-full items-center justify-center"
-                >
+                <View className="flex-row flex-wrap items-center justify-center">
                   <Text className="text-center text-[15px] text-[#64748B]">
                     Don't have an account?{' '}
-                    <Text className="font-bold text-[#EA4B14]">Create an account</Text>
                   </Text>
-                </Pressable>
+                  <Link
+                    href={{ pathname: '/register', params: { role } }}
+                    asChild
+                  >
+                    <Pressable
+                      accessibilityRole="link"
+                      accessibilityLabel="Create an account"
+                      hitSlop={{ top: 16, bottom: 16, left: 12, right: 12 }}
+                    >
+                      <Text className="text-[15px] font-bold text-[#EA4B14] underline">
+                        Create an account
+                      </Text>
+                    </Pressable>
+                  </Link>
+                </View>
               </View>
 
               <LegalFooter />

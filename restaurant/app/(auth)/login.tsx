@@ -14,7 +14,7 @@ export default function LoginRoute() {
 
   return (
     <View style={styles.root}>
-      <WelcomeScreen onGetStarted={() => setStarted(true)} />
+      <WelcomeScreen interactive={!started} onGetStarted={() => setStarted(true)} />
       {started ? (
         <LoginScreen onDismiss={() => setStarted(false)} />
       ) : null}
