@@ -11,6 +11,7 @@
         "buildType": "apk"
       },
       "env": {
+        "EXPO_PUBLIC_APP_VARIANT": "restaurant",
         "EXPO_PUBLIC_API_URL": "https://api.tokajofoods.com",
         "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyCGNMiXziFT1lB2AUOPFM12W96g7eYjLsM",
         "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "tokajofoods.firebaseapp.com",

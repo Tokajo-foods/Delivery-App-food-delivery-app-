@@ -1,0 +1,37 @@
+# Same rules as .gitignore, except google-services.json is uploaded to EAS.
+# .easignore replaces .gitignore for the cloud archive.
+
+node_modules/
+
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+.metro-health-check*
+
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+.DS_Store
+*.pem
+
+.env
+.env*.local
+
+*.tsbuildinfo
+
+*.apk
+*.aab
+
+/ios
+/android
