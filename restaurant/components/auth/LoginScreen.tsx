@@ -6,7 +6,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
   useWindowDimensions,
@@ -114,9 +113,9 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
     >
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps="always"
           showsVerticalScrollIndicator={false}
-          style={{ maxHeight: Math.round(screenH * 0.62) }}
+          style={{ maxHeight: Math.round(screenH * 0.78) }}
         >
             <View className="bg-white rounded-t-[40px] px-6 pt-6 pb-12">
               <View className="mb-5">
@@ -217,43 +216,23 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
                   </Text>
                 </Pressable>
 
+                <Pressable
+                  onPress={() => router.push({ pathname: '/register', params: { role } })}
+                  accessibilityRole="button"
+                  accessibilityLabel="Create an account"
+                  className="h-12 items-center justify-center rounded-full bg-[#FFF7ED]"
+                >
+                  <Text className="text-center text-[15px] text-[#64748B]">
+                    Don't have an account?{' '}
+                    <Text className="font-bold text-[#EA4B14]">Create an account</Text>
+                  </Text>
+                </Pressable>
               </View>
 
               <LegalFooter />
             </View>
         </ScrollView>
-        <Pressable
-          onPressIn={() => router.push({ pathname: '/register', params: { role } })}
-          accessibilityRole="button"
-          accessibilityLabel="Create an account"
-          style={styles.createAccount}
-        >
-          <Text style={styles.createAccountText}>
-            Don't have an account?{' '}
-            <Text style={styles.createAccountLink}>Create an account</Text>
-          </Text>
-        </Pressable>
       </KeyboardAvoidingView>
     </AuthSlideSheet>
   );
 }
-
-const styles = StyleSheet.create({
-  createAccount: {
-    minHeight: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
-  },
-  createAccountText: {
-    color: '#64748B',
-    fontSize: 15,
-    textAlign: 'center',
-  },
-  createAccountLink: {
-    color: '#EA4B14',
-    fontWeight: '700',
-  },
-});
