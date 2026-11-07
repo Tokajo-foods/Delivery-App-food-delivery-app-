@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     fontSize: 10,
     letterSpacing: 0.6,
-    color: '#CBD5E1',
+    color: '#64748B',
   },
   heroTitle: {
     marginTop: 4,
@@ -176,13 +176,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     fontSize: 11,
     lineHeight: 16,
-    color: '#94A3B8',
+    color: '#4B5563',
   },
   updated: {
     marginTop: 4,
     fontFamily: fonts.regular,
     fontSize: 10,
-    color: '#CBD5E1',
+    color: '#64748B',
   },
   mailCard: {
     marginTop: 12,
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
     fontFamily: fonts.regular,
     fontSize: 10,
-    color: '#CBD5E1',
+    color: '#64748B',
   },
   section: {
     marginTop: 12,
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     fontSize: 11,
     lineHeight: 16,
-    color: '#94A3B8',
+    color: '#4B5563',
   },
   linkBtn: {
     marginTop: 14,
@@ -243,6 +243,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     fontSize: 10,
     lineHeight: 14,
-    color: '#CBD5E1',
+    color: '#64748B',
   },
 });
