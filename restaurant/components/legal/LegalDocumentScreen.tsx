@@ -5,7 +5,6 @@ import { useCallback } from 'react';
 import {
   Alert,
   Linking,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,14 +15,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { authTheme } from '@/constants/auth-theme';
 import { BRAND_NAME } from '@/constants/theme';
+import { fonts } from '@/constants/typography';
 import type { LegalSection } from '@/lib/legal/urls';
 import { LEGAL_CONTACT_EMAIL } from '@/lib/legal/urls';
-
-const legalFont = Platform.select({
-  ios: 'Georgia',
-  android: 'serif',
-  default: 'Georgia',
-});
 
 type Props = {
   title: string;
@@ -160,33 +154,33 @@ const styles = StyleSheet.create({
   topTitle: {
     flex: 1,
     marginLeft: 4,
-    fontFamily: legalFont,
+    fontFamily: fonts.bold,
     fontSize: 14,
     color: '#111827',
   },
   content: { paddingHorizontal: 22, paddingTop: 20 },
   kicker: {
-    fontFamily: legalFont,
+    fontFamily: fonts.medium,
     fontSize: 10,
     letterSpacing: 0.8,
     color: '#6B7280',
   },
   heroTitle: {
     marginTop: 6,
-    fontFamily: legalFont,
+    fontFamily: fonts.bold,
     fontSize: 18,
     color: '#111827',
   },
   summary: {
     marginTop: 8,
-    fontFamily: legalFont,
-    fontSize: 12,
-    lineHeight: 18,
-    color: '#374151',
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#1F2937',
   },
   updated: {
     marginTop: 8,
-    fontFamily: legalFont,
+    fontFamily: fonts.medium,
     fontSize: 11,
     color: '#6B7280',
   },
@@ -202,14 +196,13 @@ const styles = StyleSheet.create({
   },
   mailCopy: { flex: 1 },
   mailAddress: {
-    fontFamily: legalFont,
-    fontSize: 12,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
+    fontSize: 13,
     color: '#111827',
   },
   mailHint: {
     marginTop: 2,
-    fontFamily: legalFont,
+    fontFamily: fonts.medium,
     fontSize: 11,
     color: '#6B7280',
   },
@@ -217,23 +210,21 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   heading: {
-    fontFamily: legalFont,
+    fontFamily: fonts.bold,
     fontSize: 13,
-    fontWeight: '700',
     color: '#111827',
   },
   lead: {
-    fontFamily: legalFont,
-    fontSize: 12,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
+    fontSize: 13,
     color: '#111827',
   },
   paragraph: {
     marginTop: 6,
-    fontFamily: legalFont,
-    fontSize: 12,
-    lineHeight: 18,
-    color: '#374151',
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#1F2937',
   },
   linkBtn: {
     marginTop: 20,
@@ -242,14 +233,14 @@ const styles = StyleSheet.create({
     borderTopColor: '#E5E7EB',
   },
   linkText: {
-    fontFamily: legalFont,
-    fontSize: 12,
+    fontFamily: fonts.bold,
+    fontSize: 13,
     color: '#111827',
     textDecorationLine: 'underline',
   },
   url: {
     marginTop: 3,
-    fontFamily: legalFont,
+    fontFamily: fonts.medium,
     fontSize: 11,
     lineHeight: 16,
     color: '#6B7280',
