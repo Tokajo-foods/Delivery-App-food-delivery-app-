@@ -220,7 +220,7 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
                   onPress={() => router.push({ pathname: '/register', params: { role } })}
                   accessibilityRole="button"
                   accessibilityLabel="Create an account"
-                  className="h-12 items-center justify-center"
+                  className="h-9 items-center justify-center"
                 >
                   <Text className="text-center text-[15px] text-[#64748B]">
                     Don't have an account?{' '}
