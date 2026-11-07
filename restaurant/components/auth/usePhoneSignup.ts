@@ -88,8 +88,13 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
       setError(AUTH_ERROR_COPY.PHONE_ALREADY_REGISTERED);
       return;
     }
-    if (code === 'EMAIL_ALREADY_EXISTS') {
-      setFieldErrors({ email: AUTH_ERROR_COPY.EMAIL_ALREADY_EXISTS });
+    if (code === 'EMAIL_ALREADY_EXISTS' || code === 'EMAIL_MISMATCH') {
+      setFieldErrors({
+        email:
+          code === 'EMAIL_MISMATCH'
+            ? AUTH_ERROR_COPY.EMAIL_MISMATCH
+            : AUTH_ERROR_COPY.EMAIL_ALREADY_EXISTS,
+      });
       return;
     }
     if (isAuthApiError(err) && err.fieldErrors) {
