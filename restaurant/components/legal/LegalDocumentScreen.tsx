@@ -70,7 +70,7 @@ export function LegalDocumentScreen({
           accessibilityLabel="Back"
           style={styles.back}
         >
-          <ChevronLeft color={authTheme.text} size={22} />
+          <ChevronLeft color="#94A3B8" size={18} />
         </Pressable>
         <Text style={styles.topTitle} numberOfLines={1}>
           {title}
@@ -97,7 +97,7 @@ export function LegalDocumentScreen({
             accessibilityRole="link"
             accessibilityLabel={`Email ${LEGAL_CONTACT_EMAIL}`}
           >
-            <Mail color={authTheme.brand} size={16} />
+            <Mail color="#94A3B8" size={14} />
             <View style={styles.mailCopy}>
               <Text style={styles.mailAddress}>{LEGAL_CONTACT_EMAIL}</Text>
               <Text style={styles.mailHint}>Reply within 2 working days</Text>
@@ -154,95 +154,95 @@ const styles = StyleSheet.create({
   topTitle: {
     flex: 1,
     marginLeft: 4,
-    fontFamily: fonts.bold,
-    fontSize: 14,
-    color: '#111827',
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: '#94A3B8',
   },
-  content: { paddingHorizontal: 22, paddingTop: 20 },
+  content: { paddingHorizontal: 20, paddingTop: 14 },
   kicker: {
     fontFamily: fonts.medium,
     fontSize: 10,
-    letterSpacing: 0.8,
-    color: '#6B7280',
+    letterSpacing: 0.6,
+    color: '#CBD5E1',
   },
   heroTitle: {
-    marginTop: 6,
-    fontFamily: fonts.bold,
-    fontSize: 18,
-    color: '#111827',
+    marginTop: 4,
+    fontFamily: fonts.semiBold,
+    fontSize: 15,
+    color: '#94A3B8',
   },
   summary: {
-    marginTop: 8,
-    fontFamily: fonts.medium,
-    fontSize: 13,
-    lineHeight: 19,
-    color: '#1F2937',
+    marginTop: 4,
+    fontFamily: fonts.regular,
+    fontSize: 11,
+    lineHeight: 16,
+    color: '#94A3B8',
   },
   updated: {
-    marginTop: 8,
-    fontFamily: fonts.medium,
-    fontSize: 11,
-    color: '#6B7280',
+    marginTop: 4,
+    fontFamily: fonts.regular,
+    fontSize: 10,
+    color: '#CBD5E1',
   },
   mailCard: {
-    marginTop: 16,
+    marginTop: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    gap: 8,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     backgroundColor: authTheme.surface,
   },
   mailCopy: { flex: 1 },
   mailAddress: {
-    fontFamily: fonts.bold,
-    fontSize: 13,
-    color: '#111827',
+    fontFamily: fonts.semiBold,
+    fontSize: 11,
+    color: '#94A3B8',
   },
   mailHint: {
-    marginTop: 2,
-    fontFamily: fonts.medium,
-    fontSize: 11,
-    color: '#6B7280',
+    marginTop: 1,
+    fontFamily: fonts.regular,
+    fontSize: 10,
+    color: '#CBD5E1',
   },
   section: {
-    marginTop: 16,
+    marginTop: 12,
   },
   heading: {
-    fontFamily: fonts.bold,
-    fontSize: 13,
-    color: '#111827',
+    fontFamily: fonts.semiBold,
+    fontSize: 12,
+    color: '#94A3B8',
   },
   lead: {
-    fontFamily: fonts.bold,
-    fontSize: 13,
-    color: '#111827',
+    fontFamily: fonts.semiBold,
+    fontSize: 11,
+    color: '#94A3B8',
   },
   paragraph: {
-    marginTop: 6,
-    fontFamily: fonts.medium,
-    fontSize: 13,
-    lineHeight: 19,
-    color: '#1F2937',
+    marginTop: 3,
+    fontFamily: fonts.regular,
+    fontSize: 11,
+    lineHeight: 16,
+    color: '#94A3B8',
   },
   linkBtn: {
-    marginTop: 20,
-    paddingTop: 12,
+    marginTop: 14,
+    paddingTop: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#E5E7EB',
   },
   linkText: {
-    fontFamily: fonts.bold,
-    fontSize: 13,
-    color: '#111827',
+    fontFamily: fonts.medium,
+    fontSize: 11,
+    color: '#94A3B8',
     textDecorationLine: 'underline',
   },
   url: {
-    marginTop: 3,
-    fontFamily: fonts.medium,
-    fontSize: 11,
-    lineHeight: 16,
-    color: '#6B7280',
+    marginTop: 2,
+    fontFamily: fonts.regular,
+    fontSize: 10,
+    lineHeight: 14,
+    color: '#CBD5E1',
   },
 });
