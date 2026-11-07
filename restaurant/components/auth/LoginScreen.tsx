@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   View,
   useWindowDimensions,
@@ -216,24 +217,43 @@ export function LoginScreen({ onDismiss }: LoginScreenProps) {
                   </Text>
                 </Pressable>
 
-                <Pressable
-                  onPress={() => router.push({ pathname: '/register', params: { role } })}
-                  hitSlop={12}
-                  accessibilityRole="link"
-                  accessibilityLabel="Create an account"
-                  className="items-center py-2"
-                >
-                  <Text className="text-center text-[15px] text-secondary">
-                    Don't have an account?{' '}
-                    <Text className="font-bold text-[#EA4B14]">Create an account</Text>
-                  </Text>
-                </Pressable>
               </View>
 
               <LegalFooter />
             </View>
         </ScrollView>
+        <Pressable
+          onPress={() => router.push({ pathname: '/register', params: { role } })}
+          accessibilityRole="button"
+          accessibilityLabel="Create an account"
+          style={styles.createAccount}
+        >
+          <Text style={styles.createAccountText}>
+            Don't have an account?{' '}
+            <Text style={styles.createAccountLink}>Create an account</Text>
+          </Text>
+        </Pressable>
       </KeyboardAvoidingView>
     </AuthSlideSheet>
   );
 }
+
+const styles = StyleSheet.create({
+  createAccount: {
+    minHeight: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    backgroundColor: '#FFFFFF',
+  },
+  createAccountText: {
+    color: '#64748B',
+    fontSize: 15,
+    textAlign: 'center',
+  },
+  createAccountLink: {
+    color: '#EA4B14',
+    fontWeight: '700',
+  },
+});

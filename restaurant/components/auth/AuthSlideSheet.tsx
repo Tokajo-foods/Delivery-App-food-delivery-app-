@@ -44,26 +44,30 @@ export function AuthSlideSheet({ children, onDismissed }: Props) {
   };
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+    <View style={styles.fill}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Back to Get Started"
         onPress={dismiss}
-        style={StyleSheet.absoluteFill}
+        style={styles.dismiss}
       />
       <Animated.View
-        pointerEvents="auto"
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 2,
-          transform: [{ translateY }],
-        }}
+        style={[styles.sheet, { transform: [{ translateY }] }]}
       >
         {children}
       </Animated.View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  fill: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  dismiss: {
+    flex: 1,
+  },
+  sheet: {
+    elevation: 12,
+  },
+});
