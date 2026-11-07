@@ -76,14 +76,16 @@ export function useAppPermissions() {
   }, [includeRiderBackground, refresh]);
 
   /** System Allow dialogs only. Already-granted permissions are skipped. */
-  const promptMissing = useCallback(async () => {
+  const promptMissing = useCallback(async (only?: PermissionId[]) => {
     if (Platform.OS === 'web' || running.current) return;
     running.current = true;
     setRequesting(true);
     try {
       const next = await snapshotAppPermissions({ includeRiderBackground });
       setRows(next);
+      const limit = only?.length ? new Set(only) : null;
       for (const row of next) {
+        if (limit && !limit.has(row.id)) continue;
         if (row.status === 'granted' || prompted.current.has(row.id)) continue;
         prompted.current.add(row.id);
         await requestAppPermission(row.id);

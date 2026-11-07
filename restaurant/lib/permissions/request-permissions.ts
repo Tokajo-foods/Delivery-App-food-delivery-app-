@@ -63,6 +63,24 @@ async function requestBackgroundLocation(): Promise<PermissionStatus> {
   return next.status === 'granted' ? 'granted' : next.status === 'denied' ? 'denied' : 'undetermined';
 }
 
+/** System location dialog only when access is still off, or device location is switched off. */
+export async function requestLocationIfOff(): Promise<PermissionStatus> {
+  if (Platform.OS === 'web') return 'granted';
+  const current = await Location.getForegroundPermissionsAsync();
+  if (current.status !== 'granted') {
+    return requestForegroundLocation();
+  }
+  const servicesOn = await Location.hasServicesEnabledAsync();
+  if (!servicesOn && Platform.OS === 'android') {
+    try {
+      await Location.enableNetworkProviderAsync();
+    } catch {
+      // The system dialog was dismissed.
+    }
+  }
+  return 'granted';
+}
+
 export async function requestAppPermission(id: PermissionId): Promise<PermissionStatus> {
   switch (id) {
     case 'notifications':

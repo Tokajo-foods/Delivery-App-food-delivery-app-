@@ -10,6 +10,7 @@ import {
   searchAddresses,
 } from '@/lib/address/search';
 import { getApiErrorMessage } from '@/lib/errors';
+import { requestLocationIfOff } from '@/lib/permissions/request-permissions';
 import { assertGoogleMapsApiKey, GOOGLE_MAPS_API_KEY } from '@/lib/google-maps';
 import {
   isCoordinateFallbackAddress,
@@ -162,7 +163,7 @@ export function useLocationMapPicker({
     setSearchError(null);
     setSuggestions([]);
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
+      const status = await requestLocationIfOff();
       if (status !== 'granted') {
         setError('Allow location access to use your current position.');
         return;

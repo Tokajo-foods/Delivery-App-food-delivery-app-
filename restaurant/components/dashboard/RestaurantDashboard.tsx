@@ -12,6 +12,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 
 import { DashboardTabBar } from '@/components/dashboard/DashboardTabBar';
+import { AppPermissionsGate } from '@/components/permissions/AppPermissionsGate';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { KitchenDutyCard } from '@/components/dashboard/KitchenDutyCard';
 import { KitchenKycBanner } from '@/components/dashboard/KitchenKycBanner';
@@ -33,7 +34,11 @@ import {
 import { isListingLive } from '@/lib/restaurant/listing-status';
 import { getRestaurantVerificationBadge } from '@/lib/restaurant/verification';
 import type { KitchenDutySnapshot } from '@/lib/restaurant/types';
+import type { PermissionId } from '@/lib/permissions/types';
 import { useAuthStore } from '@/store/auth-store';
+
+/** Asked on the kitchen home. Location is asked on the outlet setup map instead. */
+const HOME_PERMISSIONS: PermissionId[] = ['notifications', 'microphone'];
 
 function dutyHeadline(duty?: KitchenDutySnapshot) {
   if (!duty) return undefined;
@@ -164,6 +169,7 @@ export function RestaurantDashboard() {
   return (
     <View style={styles.screen}>
       <StatusBar style="dark" />
+      <AppPermissionsGate ids={HOME_PERMISSIONS} />
 
       <ScrollView
         style={styles.scroll}

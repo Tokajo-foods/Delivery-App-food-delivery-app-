@@ -18,7 +18,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { AppPermissionsGate } from '@/components/permissions/AppPermissionsGate';
 import { AppSplashScreen } from '@/components/splash/AppSplashScreen';
 import { setUnauthorizedHandler } from '@/lib/auth/unauthorized';
 import { setupLiveQueryFocus } from '@/lib/live-query';
@@ -119,7 +118,6 @@ export default function RootLayout() {
           {brandSplashVisible ? (
             <AppSplashScreen onFinished={onBrandSplashFinished} />
           ) : null}
-          <AppPermissionsGate enabled={uiReady && !brandSplashVisible} />
         </PersistQueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

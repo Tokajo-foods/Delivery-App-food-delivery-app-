@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { useEffect } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { AuthBanner } from '@/components/auth/AuthBanner';
@@ -10,6 +11,7 @@ import { SetupBasicStep } from '@/components/restaurant/SetupBasicStep';
 import { SetupCuisineStep } from '@/components/restaurant/SetupCuisineStep';
 import { SetupProgress } from '@/components/restaurant/SetupProgress';
 import { theme } from '@/constants/theme';
+import { requestLocationIfOff } from '@/lib/permissions/request-permissions';
 import { useCuisineCatalog, useRestaurantServiceHealth } from '@/lib/restaurant/hooks';
 import {
   type SetupStep,
@@ -20,6 +22,11 @@ export default function RestaurantSetupScreen() {
   const cuisinesQuery = useCuisineCatalog(true);
   const serviceHealth = useRestaurantServiceHealth(true);
   const setup = useRestaurantSetup();
+
+  useEffect(() => {
+    if (setup.step !== 1) return;
+    void requestLocationIfOff();
+  }, [setup.step]);
 
   return (
     <>
