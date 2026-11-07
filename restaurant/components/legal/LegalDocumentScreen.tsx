@@ -70,7 +70,7 @@ export function LegalDocumentScreen({
           accessibilityLabel="Back"
           style={styles.back}
         >
-          <ChevronLeft color="#94A3B8" size={18} />
+          <ChevronLeft color="#111827" size={18} />
         </Pressable>
         <Text style={styles.topTitle} numberOfLines={1}>
           {title}
@@ -97,7 +97,7 @@ export function LegalDocumentScreen({
             accessibilityRole="link"
             accessibilityLabel={`Email ${LEGAL_CONTACT_EMAIL}`}
           >
-            <Mail color="#94A3B8" size={14} />
+            <Mail color="#111827" size={14} />
             <View style={styles.mailCopy}>
               <Text style={styles.mailAddress}>{LEGAL_CONTACT_EMAIL}</Text>
               <Text style={styles.mailHint}>Reply within 2 working days</Text>
@@ -154,9 +154,9 @@ const styles = StyleSheet.create({
   topTitle: {
     flex: 1,
     marginLeft: 4,
-    fontFamily: fonts.medium,
+    fontFamily: fonts.semiBold,
     fontSize: 13,
-    color: '#94A3B8',
+    color: '#111827',
   },
   content: { paddingHorizontal: 20, paddingTop: 14 },
   kicker: {
@@ -167,9 +167,9 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     marginTop: 4,
-    fontFamily: fonts.semiBold,
+    fontFamily: fonts.bold,
     fontSize: 15,
-    color: '#94A3B8',
+    color: '#111827',
   },
   summary: {
     marginTop: 4,
@@ -196,9 +196,9 @@ const styles = StyleSheet.create({
   },
   mailCopy: { flex: 1 },
   mailAddress: {
-    fontFamily: fonts.semiBold,
-    fontSize: 11,
-    color: '#94A3B8',
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    color: '#111827',
   },
   mailHint: {
     marginTop: 1,
@@ -210,14 +210,14 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   heading: {
-    fontFamily: fonts.semiBold,
+    fontFamily: fonts.bold,
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#111827',
   },
   lead: {
-    fontFamily: fonts.semiBold,
+    fontFamily: fonts.bold,
     fontSize: 11,
-    color: '#94A3B8',
+    color: '#111827',
   },
   paragraph: {
     marginTop: 3,
@@ -233,9 +233,9 @@ const styles = StyleSheet.create({
     borderTopColor: '#E5E7EB',
   },
   linkText: {
-    fontFamily: fonts.medium,
+    fontFamily: fonts.semiBold,
     fontSize: 11,
-    color: '#94A3B8',
+    color: '#111827',
     textDecorationLine: 'underline',
   },
   url: {
