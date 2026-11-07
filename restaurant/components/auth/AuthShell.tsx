@@ -58,7 +58,7 @@ export function AuthShell({
               <Pressable
                 onPress={onBackPress ?? (() => router.back())}
                 hitSlop={10}
-                className="mb-4 h-9 w-9 items-center justify-center rounded-full bg-surface"
+                className="mb-2 h-9 w-9 items-center justify-center rounded-full bg-surface"
               >
                 <ArrowLeft color={theme.secondary} size={18} />
               </Pressable>
