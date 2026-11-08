@@ -159,7 +159,7 @@ export function kitchenPushPlatform(): 'ios' | 'android' | 'web' {
   return 'web';
 }
 
-export async function resolveKitchenPushToken(): Promise<string | null> {
+export async function resolveKitchenPushToken(options?: { request?: boolean }): Promise<string | null> {
   if (Platform.OS === 'web') return null;
   // Android Expo Go (SDK 53+) cannot receive remote push — need a dev/prod build.
   if (isExpoGoRuntime() && Platform.OS === 'android') return null;
@@ -168,7 +168,7 @@ export async function resolveKitchenPushToken(): Promise<string | null> {
     const Notifications = await import('expo-notifications');
     const current = await Notifications.getPermissionsAsync();
     let status = current.status;
-    if (status !== 'granted') {
+    if (status !== 'granted' && options?.request) {
       const requested = await Notifications.requestPermissionsAsync();
       status = requested.status;
     }

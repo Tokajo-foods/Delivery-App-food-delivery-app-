@@ -44,7 +44,7 @@ export function KitchenPushCard({ restaurantId }: { restaurantId: string }) {
   const enable = async () => {
     setBusy(true);
     try {
-      const token = await resolveKitchenPushToken();
+      const token = await resolveKitchenPushToken({ request: true });
       if (!token) {
         Alert.alert(
           'Alerts unavailable',

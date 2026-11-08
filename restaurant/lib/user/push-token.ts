@@ -74,12 +74,7 @@ export async function resolvePlatformPushToken(): Promise<string | null> {
   try {
     const Notifications = await import('expo-notifications');
     const current = await Notifications.getPermissionsAsync();
-    let status = current.status;
-    if (status !== 'granted') {
-      const requested = await Notifications.requestPermissionsAsync();
-      status = requested.status;
-    }
-    if (status !== 'granted') return null;
+    if (current.status !== 'granted') return null;
 
     const extra = Constants.expoConfig?.extra as
       | { eas?: { projectId?: string } }

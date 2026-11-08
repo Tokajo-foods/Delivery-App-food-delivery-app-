@@ -110,12 +110,7 @@ export async function ensureDeviceNotificationReady(): Promise<boolean> {
     }
 
     const current = await Notifications.getPermissionsAsync();
-    let status = current.status;
-    if (status !== 'granted') {
-      const requested = await Notifications.requestPermissionsAsync();
-      status = requested.status;
-    }
-    return status === 'granted';
+    return current.status === 'granted';
   } catch {
     return false;
   }

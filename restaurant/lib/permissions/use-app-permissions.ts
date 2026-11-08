@@ -11,6 +11,9 @@ import { requestAllAppPermissions, requestAppPermission } from '@/lib/permission
 import type { PermissionId, PermissionSnapshot } from '@/lib/permissions/types';
 import { useAuthStore } from '@/store/auth-store';
 
+/** Survives leaving and reopening Home in the same app session. */
+const promptedThisSession = new Set<PermissionId>();
+
 export function useAppPermissions() {
   const role = useAuthStore((s) => s.role);
   const variant = String(Constants.expoConfig?.extra?.appVariant ?? '').toLowerCase();
@@ -18,7 +21,6 @@ export function useAppPermissions() {
   const [rows, setRows] = useState<PermissionSnapshot[]>([]);
   const [loading, setLoading] = useState(Platform.OS !== 'web');
   const [requesting, setRequesting] = useState(false);
-  const prompted = useRef(new Set<PermissionId>());
   const running = useRef(false);
 
   const refresh = useCallback(async () => {
@@ -86,8 +88,8 @@ export function useAppPermissions() {
       const limit = only?.length ? new Set(only) : null;
       for (const row of next) {
         if (limit && !limit.has(row.id)) continue;
-        if (row.status === 'granted' || prompted.current.has(row.id)) continue;
-        prompted.current.add(row.id);
+        if (row.status === 'granted' || promptedThisSession.has(row.id)) continue;
+        promptedThisSession.add(row.id);
         await requestAppPermission(row.id);
       }
       const after = await snapshotAppPermissions({ includeRiderBackground });
