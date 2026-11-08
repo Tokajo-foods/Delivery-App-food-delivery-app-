@@ -51,8 +51,6 @@ type Props = {
   errors: SignupDetailErrors;
   onChange: (patch: Partial<SignupDetails>) => void;
   disabled?: boolean;
-  /** The number already has an email, so restaurant signup cannot replace it. */
-  keepExistingEmail?: boolean;
 };
 
 export function PhoneSignupDetailsForm({
@@ -60,7 +58,6 @@ export function PhoneSignupDetailsForm({
   errors,
   onChange,
   disabled,
-  keepExistingEmail = false,
 }: Props) {
   return (
     <View>
@@ -89,22 +86,19 @@ export function PhoneSignupDetailsForm({
           />
         </View>
       </View>
-      {keepExistingEmail ? (
-        <Text className="-mt-1 mb-4 text-xs text-secondary-light">
-          This number already has an email. That email stays on the account. A different email cannot be added.
-        </Text>
-      ) : (
-        <AuthField
-          label="Email (optional)"
-          icon={Mail}
-          placeholder="you@email.com"
-          autofill="email"
-          value={values.email}
-          editable={!disabled}
-          onChangeText={(email) => onChange({ email })}
-          errorText={errors.email}
-        />
-      )}
+      <AuthField
+        label="Email (optional)"
+        icon={Mail}
+        placeholder="you@email.com"
+        autofill="email"
+        value={values.email}
+        editable={!disabled}
+        onChangeText={(email) => onChange({ email })}
+        errorText={errors.email}
+      />
+      <Text className="-mt-2 mb-4 text-xs text-secondary-light">
+        Use the email already on this number, or enter a different one. Leave it blank to keep the current email.
+      </Text>
       <AuthField
         label="Password *"
         icon={Lock}

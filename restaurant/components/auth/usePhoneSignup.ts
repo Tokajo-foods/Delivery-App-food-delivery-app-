@@ -38,23 +38,17 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
   const availability = usePhoneAuthStatus();
   const [error, setError] = useState<string | null>(null);
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
-  const [keepExistingEmail, setKeepExistingEmail] = useState(false);
   const otp = useFirebasePhoneOtp({
     initialPhone,
     cooldownSeconds: availability.status?.resendCooldownSeconds,
     precheck: async (phone) => {
       setAlreadyRegistered(false);
-      setKeepExistingEmail(false);
       try {
-        const result = await phoneAuthApi.check(phone, role, 'register');
-        setKeepExistingEmail(result.linkExistingAccount && result.hasEmail);
+        await phoneAuthApi.check(phone, role, 'register');
         return null;
       } catch (err) {
         const code = getApiErrorCode(err) ?? undefined;
-        if (code === 'ROLE_NOT_ALLOWED') {
-          setKeepExistingEmail(true);
-          return null;
-        }
+        if (code === 'ROLE_NOT_ALLOWED') return null;
         setAlreadyRegistered(code === 'PHONE_ALREADY_REGISTERED');
         return formatAuthError(err, 'Could not check this number. Try again.');
       }
@@ -82,7 +76,6 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
   const changeNumber = () => {
     otp.changeNumber();
     setAlreadyRegistered(false);
-    setKeepExistingEmail(false);
     setError(null);
     setStep('phone');
   };
@@ -124,7 +117,7 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
     if (submitting) return null;
     setError(null);
     setAlreadyRegistered(false);
-    const errs = validateSignupDetails(keepExistingEmail ? { ...details, email: '' } : details);
+    const errs = validateSignupDetails(details);
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) return null;
 
@@ -142,7 +135,7 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
         phone: verified.phone,
         firstName: details.firstName.trim(),
         lastName: details.lastName.trim() || undefined,
-        email: keepExistingEmail ? undefined : details.email.trim().toLowerCase() || undefined,
+        email: details.email.trim().toLowerCase() || undefined,
         password: details.password,
       });
     } catch (err) {
@@ -163,7 +156,6 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
     error,
     setError,
     alreadyRegistered,
-    keepExistingEmail,
     submitting,
     verifyPhone,
     changeNumber,

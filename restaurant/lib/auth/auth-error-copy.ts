@@ -48,7 +48,7 @@ export const AUTH_ERROR_COPY: Record<string, string> = {
   EMAIL_ALREADY_EXISTS:
     'An account already exists with this email. Use another email or sign in.',
   EMAIL_MISMATCH:
-    'This number already has an email. A different email cannot be added.',
+    'This number is already on an account with a different email. Use that email, or enter another one that is not already registered.',
   PHONE_ALREADY_EXISTS:
     'This phone number is already registered to another account. Use a different phone number.',
   ACCOUNT_EXISTS:
