@@ -11,7 +11,6 @@ import { usePhoneAuthStatus } from '@/components/auth/usePhoneAuthStatus';
 import { AUTH_ERROR_COPY, formatAuthError } from '@/lib/auth/auth-error-copy';
 import { isAuthApiError } from '@/lib/auth/http';
 import { phoneAuthApi } from '@/lib/auth/phone-auth-api';
-import { precheckPhone } from '@/lib/auth/phone-precheck';
 import type { PartnerRole, PhoneAuthResult } from '@/lib/auth/types';
 import { getApiErrorCode } from '@/lib/errors';
 
@@ -39,16 +38,26 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
   const availability = usePhoneAuthStatus();
   const [error, setError] = useState<string | null>(null);
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
+  const [keepExistingEmail, setKeepExistingEmail] = useState(false);
   const otp = useFirebasePhoneOtp({
     initialPhone,
     cooldownSeconds: availability.status?.resendCooldownSeconds,
     precheck: async (phone) => {
       setAlreadyRegistered(false);
-      const miss = await precheckPhone(phone, role, 'register');
-      // A Tokajo account that is not a restaurant yet is linked after the OTP.
-      if (!miss || miss.code === 'ROLE_NOT_ALLOWED') return null;
-      setAlreadyRegistered(miss.code === 'PHONE_ALREADY_REGISTERED');
-      return miss.message;
+      setKeepExistingEmail(false);
+      try {
+        const result = await phoneAuthApi.check(phone, role, 'register');
+        setKeepExistingEmail(result.linkExistingAccount && result.hasEmail);
+        return null;
+      } catch (err) {
+        const code = getApiErrorCode(err) ?? undefined;
+        if (code === 'ROLE_NOT_ALLOWED') {
+          setKeepExistingEmail(true);
+          return null;
+        }
+        setAlreadyRegistered(code === 'PHONE_ALREADY_REGISTERED');
+        return formatAuthError(err, 'Could not check this number. Try again.');
+      }
     },
   });
   const [step, setStep] = useState<'phone' | 'details'>(
@@ -73,6 +82,7 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
   const changeNumber = () => {
     otp.changeNumber();
     setAlreadyRegistered(false);
+    setKeepExistingEmail(false);
     setError(null);
     setStep('phone');
   };
@@ -114,7 +124,7 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
     if (submitting) return null;
     setError(null);
     setAlreadyRegistered(false);
-    const errs = validateSignupDetails(details);
+    const errs = validateSignupDetails(keepExistingEmail ? { ...details, email: '' } : details);
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) return null;
 
@@ -132,7 +142,7 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
         phone: verified.phone,
         firstName: details.firstName.trim(),
         lastName: details.lastName.trim() || undefined,
-        email: details.email.trim().toLowerCase() || undefined,
+        email: keepExistingEmail ? undefined : details.email.trim().toLowerCase() || undefined,
         password: details.password,
       });
     } catch (err) {
@@ -153,6 +163,7 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
     error,
     setError,
     alreadyRegistered,
+    keepExistingEmail,
     submitting,
     verifyPhone,
     changeNumber,

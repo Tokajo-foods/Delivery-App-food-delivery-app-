@@ -108,7 +108,7 @@ export function RegisterScreen() {
         isDelivery
           ? 'Verify your mobile number to create your rider account. Address and vehicle come next.'
           : linkingExisting
-            ? 'This number already has a TOKAJO account. Confirm the code and restaurant access is added to it. Use the same Gmail if you add an email.'
+            ? 'This number already has a TOKAJO account. Confirm the code and restaurant access is added to it. The email already on this number stays.'
             : 'Enter your mobile number. We’ll send a one-time code to confirm it’s you.'
       }
       showBack

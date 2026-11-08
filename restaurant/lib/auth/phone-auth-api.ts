@@ -51,7 +51,7 @@ export const phoneAuthApi = {
     phone: string,
     role: PartnerRole,
     purpose: PhoneCheckPurpose
-  ): Promise<{ exists: boolean; linkExistingAccount: boolean }> => {
+  ): Promise<{ exists: boolean; linkExistingAccount: boolean; hasEmail: boolean }> => {
     const data = unwrapData(
       await authRequest<unknown>(`${PHONE_BASE}/check`, {
         method: 'POST',
@@ -61,6 +61,7 @@ export const phoneAuthApi = {
     return {
       exists: Boolean(data.exists),
       linkExistingAccount: Boolean(data.linkExistingAccount),
+      hasEmail: Boolean(data.hasEmail),
     };
   },
 
