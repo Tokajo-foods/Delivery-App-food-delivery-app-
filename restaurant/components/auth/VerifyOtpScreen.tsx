@@ -53,9 +53,9 @@ export function VerifyOtpScreen() {
       return true;
     }
     if (code === 'ROLE_NOT_ALLOWED') {
-      setSignupOffer({
-        phone,
-        message: `This number is a Tokajo account, but not a ${roleLabel(role).toLowerCase()} account yet. Create an account with the same number.`,
+      router.replace({
+        pathname: '/register',
+        params: { phone, role, link: '1' },
       });
       return true;
     }

@@ -75,7 +75,12 @@ function PartnerPhoneSignup({
 
 export function RegisterScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ token?: string; phone?: string; role?: string }>();
+  const params = useLocalSearchParams<{
+    token?: string;
+    phone?: string;
+    role?: string;
+    link?: string;
+  }>();
   const inviteToken = useMemo(() => {
     const raw = params.token;
     return typeof raw === 'string' ? raw.trim() : '';
@@ -94,6 +99,7 @@ export function RegisterScreen() {
   }, [inviteToken, lockedRole, params.role, setRole]);
 
   const isDelivery = role === 'delivery' || Boolean(inviteToken);
+  const linkingExisting = params.link === '1' && !isDelivery;
 
   return (
     <AuthShell
@@ -101,7 +107,9 @@ export function RegisterScreen() {
       subtitle={
         isDelivery
           ? 'Verify your mobile number to create your rider account. Address and vehicle come next.'
-          : 'Enter your mobile number. We’ll send a one-time code to confirm it’s you.'
+          : linkingExisting
+            ? 'This number already has a TOKAJO account. Confirm the code and restaurant access is added to it. Use the same Gmail if you add an email.'
+            : 'Enter your mobile number. We’ll send a one-time code to confirm it’s you.'
       }
       showBack
       footer={

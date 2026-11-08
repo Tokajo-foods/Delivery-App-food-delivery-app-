@@ -45,7 +45,8 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
     precheck: async (phone) => {
       setAlreadyRegistered(false);
       const miss = await precheckPhone(phone, role, 'register');
-      if (!miss) return null;
+      // A Tokajo account that is not a restaurant yet is linked after the OTP.
+      if (!miss || miss.code === 'ROLE_NOT_ALLOWED') return null;
       setAlreadyRegistered(miss.code === 'PHONE_ALREADY_REGISTERED');
       return miss.message;
     },
