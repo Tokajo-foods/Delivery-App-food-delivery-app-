@@ -3,9 +3,10 @@ import {
   ChevronRight,
   Percent,
   Receipt,
+  Wallet,
   X,
 } from 'lucide-react-native';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -16,6 +17,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RestaurantPageHeader } from '@/components/dashboard/RestaurantPageHeader';
 import { SettlementSummaryStrip } from '@/components/finance/SettlementSummaryStrip';
@@ -42,18 +44,19 @@ import { useRestaurantBank } from '@/lib/restaurant/onboarding-hooks';
 
 type TabKey = 'wallet' | 'payouts' | 'invoices' | 'fees';
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: 'wallet', label: 'Wallet' },
-  { key: 'payouts', label: 'Settlements' },
-  { key: 'invoices', label: 'Invoices' },
-  { key: 'fees', label: 'Fees' },
+const TABS: { key: TabKey; label: string; Icon: typeof Wallet }[] = [
+  { key: 'wallet', label: 'Wallet', Icon: Wallet },
+  { key: 'payouts', label: 'Payouts', Icon: Banknote },
+  { key: 'invoices', label: 'Invoices', Icon: Receipt },
+  { key: 'fees', label: 'Fees', Icon: Percent },
 ];
 
 const STATUS_TONE: Record<string, { bg: string; fg: string; label: string }> = {
-  paid: { bg: '#ECFDF5', fg: '#047857', label: 'Paid' },
-  pending: { bg: '#FFFBEB', fg: '#B45309', label: 'Upcoming' },
-  processing: { bg: '#EFF6FF', fg: '#1D4ED8', label: 'Processing' },
-  failed: { bg: '#FEF2F2', fg: '#B91C1C', label: 'Failed' },
+  paid: { bg: '#ECFDF3', fg: '#067647', label: 'Paid' },
+  issued: { bg: '#EFF8FF', fg: '#175CD3', label: 'Issued' },
+  pending: { bg: '#FFFAEB', fg: '#B54708', label: 'Upcoming' },
+  processing: { bg: '#EFF8FF', fg: '#175CD3', label: 'Processing' },
+  failed: { bg: '#FEF3F2', fg: '#B42318', label: 'Failed' },
   on_hold: { bg: '#F8FAFC', fg: '#475569', label: 'On hold' },
 };
 
@@ -68,14 +71,21 @@ function formatDate(iso?: string | null) {
   });
 }
 
+function statusTone(status: string) {
+  return (
+    STATUS_TONE[status] ?? {
+      bg: '#F1F5F9',
+      fg: '#475569',
+      label: status.replace(/_/g, ' '),
+    }
+  );
+}
+
 function StatusChip({ status }: { status: string }) {
-  const tone = STATUS_TONE[status] ?? {
-    bg: authTheme.surface,
-    fg: authTheme.textMuted,
-    label: status.replace(/_/g, ' '),
-  };
+  const tone = statusTone(status);
   return (
     <View style={[styles.chip, { backgroundColor: tone.bg }]}>
+      <View style={[styles.chipDot, { backgroundColor: tone.fg }]} />
       <Text style={[styles.chipText, { color: tone.fg }]}>{tone.label}</Text>
     </View>
   );
@@ -90,6 +100,46 @@ function Line({ label, value }: { label: string; value: string }) {
   );
 }
 
+function MetricStrip({
+  items,
+}: {
+  items: { label: string; value: string }[];
+}) {
+  return (
+    <View style={styles.metrics}>
+      {items.map((item, index) => (
+        <View
+          key={item.label}
+          style={[styles.metric, index > 0 && styles.metricDivider]}
+        >
+          <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit>
+            {item.value}
+          </Text>
+          <Text style={styles.metricLabel}>{item.label}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function EmptyState({
+  icon,
+  title,
+  body,
+}: {
+  icon: ReactNode;
+  title: string;
+  body: string;
+}) {
+  return (
+    <View style={styles.emptyCard}>
+      <View style={styles.emptyIcon}>{icon}</View>
+      <Text style={styles.emptyTitle}>{title}</Text>
+      <Text style={styles.muted}>{body}</Text>
+    </View>
+  );
+}
+
 function SettlementCard({
   settlement,
   onPress,
@@ -100,47 +150,100 @@ function SettlementCard({
   const period =
     settlement.periodStart && settlement.periodEnd
       ? `${formatDate(settlement.periodStart)} – ${formatDate(settlement.periodEnd)}`
-      : 'Settlement';
+      : 'Settlement cycle';
+  const tone = statusTone(settlement.status);
   return (
-    <Pressable onPress={onPress} style={styles.card}>
-      <View style={styles.cardTop}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.period}>{settlement.settlementNumber}</Text>
-          <Text style={styles.meta}>
-            {period} · {settlement.totalOrders} order
-            {settlement.totalOrders === 1 ? '' : 's'}
-          </Text>
+    <Pressable onPress={onPress} style={styles.docCard}>
+      <View style={[styles.docRail, { backgroundColor: tone.fg }]} />
+      <View style={styles.docBody}>
+        <View style={styles.docTop}>
+          <View style={styles.docCopy}>
+            <Text style={styles.kicker}>Settlement</Text>
+            <Text style={styles.docId} numberOfLines={1}>
+              {settlement.settlementNumber}
+            </Text>
+            <Text style={styles.meta}>
+              {period} · {settlement.totalOrders} order
+              {settlement.totalOrders === 1 ? '' : 's'}
+            </Text>
+          </View>
+          <StatusChip status={settlement.status} />
         </View>
-        <StatusChip status={settlement.status} />
-      </View>
-      <View style={styles.cardBottom}>
-        <Text style={styles.net}>{formatCurrency(settlement.finalPayable)}</Text>
-        <ChevronRight color={authTheme.textDim} size={18} />
+        <View style={styles.docFoot}>
+          <View>
+            <Text style={styles.footLabel}>Payable</Text>
+            <Text style={styles.amount}>{formatCurrency(settlement.finalPayable)}</Text>
+          </View>
+          <View style={styles.openRow}>
+            <Text style={styles.openText}>Statement</Text>
+            <ChevronRight color={authTheme.textMuted} size={16} />
+          </View>
+        </View>
       </View>
     </Pressable>
   );
 }
 
-function InvoiceCard({ invoice }: { invoice: RestaurantInvoice }) {
+function InvoiceCard({
+  invoice,
+  onPress,
+}: {
+  invoice: RestaurantInvoice;
+  onPress: () => void;
+}) {
+  const tone = statusTone(invoice.status);
   return (
-    <View style={styles.card}>
-      <View style={styles.cardTop}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.period}>{invoice.invoiceId}</Text>
-          <Text style={styles.meta}>
-            {invoice.period} · GST {formatCurrency(invoice.gstOnCommission)}
-          </Text>
+    <Pressable onPress={onPress} style={styles.docCard}>
+      <View style={[styles.docRail, { backgroundColor: tone.fg }]} />
+      <View style={styles.docBody}>
+        <View style={styles.docTop}>
+          <View style={styles.docCopy}>
+            <Text style={styles.kicker}>
+              {invoice.invoiceType?.replace(/_/g, ' ') || 'GST invoice'}
+            </Text>
+            <Text style={styles.docId} numberOfLines={1}>
+              {invoice.invoiceId}
+            </Text>
+            <Text style={styles.meta}>
+              {invoice.period || 'Billing period'} · Issued {formatDate(invoice.issuedAt)}
+            </Text>
+          </View>
+          <StatusChip status={invoice.status} />
         </View>
-        <StatusChip status={invoice.status} />
+        <View style={styles.grid}>
+          <View style={styles.gridRow}>
+            <View style={styles.gridCell}>
+              <Text style={styles.gridLabel}>Gross</Text>
+              <Text style={styles.gridValue}>{formatCurrency(invoice.grossAmount)}</Text>
+            </View>
+            <View style={styles.gridCell}>
+              <Text style={styles.gridLabel}>Commission</Text>
+              <Text style={styles.gridValue}>{formatCurrency(invoice.commissionAmount)}</Text>
+            </View>
+          </View>
+          <View style={styles.gridRow}>
+            <View style={styles.gridCell}>
+              <Text style={styles.gridLabel}>GST</Text>
+              <Text style={styles.gridValue}>{formatCurrency(invoice.gstOnCommission)}</Text>
+            </View>
+            <View style={styles.gridCell}>
+              <Text style={styles.gridLabel}>TDS</Text>
+              <Text style={styles.gridValue}>{formatCurrency(invoice.tdsAmount)}</Text>
+            </View>
+          </View>
+        </View>
+        <View style={styles.docFoot}>
+          <View>
+            <Text style={styles.footLabel}>Net payout</Text>
+            <Text style={styles.amount}>{formatCurrency(invoice.netAmount)}</Text>
+          </View>
+          <View style={styles.openRow}>
+            <Text style={styles.openText}>Details</Text>
+            <ChevronRight color={authTheme.textMuted} size={16} />
+          </View>
+        </View>
       </View>
-      <View style={styles.breakdown}>
-        <Line label="Gross" value={formatCurrency(invoice.grossAmount)} />
-        <Line label="Commission" value={formatCurrency(invoice.commissionAmount)} />
-        <Line label="TDS" value={formatCurrency(invoice.tdsAmount)} />
-        <Line label="Net payout" value={formatCurrency(invoice.netAmount)} />
-        <Line label="Issued" value={formatDate(invoice.issuedAt)} />
-      </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -151,7 +254,9 @@ export function FinanceManager() {
     'all' | 'order_credit' | 'payout_debit' | 'adjustment'
   >('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<RestaurantInvoice | null>(null);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const wallet = useRestaurantWallet();
   const bank = useRestaurantBank(wallet.restaurantId || undefined);
@@ -192,6 +297,10 @@ export function FinanceManager() {
   const settlementList = payoutList;
   const invoiceList = invoices.data?.items ?? [];
   const txnList = walletTxns.data?.items ?? [];
+  const settlementPayable = settlementList.reduce((sum, row) => sum + row.finalPayable, 0);
+  const settlementPaid = settlementList.filter((row) => row.status === 'paid').length;
+  const invoiceNet = invoiceList.reduce((sum, row) => sum + row.netAmount, 0);
+  const invoiceGst = invoiceList.reduce((sum, row) => sum + row.gstOnCommission, 0);
 
   const switchTab = (next: TabKey) => {
     setTab(next);
@@ -214,12 +323,8 @@ export function FinanceManager() {
   return (
     <View style={styles.screen}>
       <RestaurantPageHeader
-        title="Finance"
-        subtitle={
-          restaurantName
-            ? `${restaurantName} · withdraw completed earnings anytime`
-            : 'Wallet, withdrawals, settlements, and fees'
-        }
+        title="Payouts & invoices"
+        subtitle={restaurantName || 'Settlements, GST invoices, and fees'}
         showBack
         hideProfile
       />
@@ -242,34 +347,18 @@ export function FinanceManager() {
         <View style={styles.tabGroup}>
           {TABS.map((item) => {
             const on = item.key === tab;
+            const Icon = item.Icon;
             return (
               <Pressable
                 key={item.key}
                 onPress={() => switchTab(item.key)}
                 style={[styles.tab, on && styles.tabActive]}
               >
-                {item.key === 'wallet' ? (
-                  <Banknote
-                    color={on ? '#FFFFFF' : authTheme.textMuted}
-                    size={14}
-                  />
-                ) : item.key === 'payouts' ? (
-                  <Banknote
-                    color={on ? '#FFFFFF' : authTheme.textMuted}
-                    size={14}
-                  />
-                ) : item.key === 'invoices' ? (
-                  <Receipt
-                    color={on ? '#FFFFFF' : authTheme.textMuted}
-                    size={14}
-                  />
-                ) : (
-                  <Percent
-                    color={on ? '#FFFFFF' : authTheme.textMuted}
-                    size={14}
-                  />
-                )}
-                <Text style={[styles.tabText, on && styles.tabTextActive]}>
+                <Icon color={on ? authTheme.brand : authTheme.textMuted} size={15} strokeWidth={2.2} />
+                <Text
+                  style={[styles.tabText, on && styles.tabTextActive]}
+                  numberOfLines={1}
+                >
                   {item.label}
                 </Text>
               </Pressable>
@@ -317,6 +406,7 @@ export function FinanceManager() {
               onPress={() => setWithdrawOpen(true)}
               style={[
                 styles.retry,
+                styles.withdrawBtn,
                 (wallet.data?.available ?? wallet.data?.balance ?? 0) < 1
                   && styles.disabled,
               ]}
@@ -347,6 +437,16 @@ export function FinanceManager() {
         {!loading && !listQuery.isError && tab === 'payouts' ? (
           settlementList.length ? (
             <View style={styles.list}>
+              <MetricStrip
+                items={[
+                  { label: 'Payable', value: formatCurrency(settlementPayable) },
+                  { label: 'Cycles', value: String(settlementList.length) },
+                  { label: 'Paid', value: String(settlementPaid) },
+                ]}
+              />
+              <Text style={styles.sectionHint}>
+                Closed settlement cycles. Instant withdrawals stay on Wallet.
+              </Text>
               {settlementList.map((row) => (
                 <SettlementCard
                   key={row.id}
@@ -356,61 +456,65 @@ export function FinanceManager() {
               ))}
             </View>
           ) : (
-            <View style={styles.empty}>
-              <Banknote color={authTheme.textDim} size={36} />
-              <Text style={styles.emptyTitle}>No settlements yet</Text>
-              <Text style={styles.muted}>
-                Cycle settlements are a history of closed periods. Request
-                earnings anytime from the Wallet tab.
-              </Text>
-            </View>
+            <EmptyState
+              icon={<Banknote color={authTheme.brand} size={22} />}
+              title="No payouts yet"
+              body="Settlement cycles appear here after a period closes. Instant withdrawals stay on Wallet."
+            />
           )
         ) : null}
 
         {!loading && !listQuery.isError && tab === 'invoices' ? (
           invoiceList.length ? (
             <View style={styles.list}>
+              <MetricStrip
+                items={[
+                  { label: 'Net payout', value: formatCurrency(invoiceNet) },
+                  { label: 'GST', value: formatCurrency(invoiceGst) },
+                  { label: 'Invoices', value: String(invoiceList.length) },
+                ]}
+              />
+              <Text style={styles.sectionHint}>
+                GST invoices for each settlement cycle.
+              </Text>
               {invoiceList.map((row) => (
                 <InvoiceCard
                   key={`${row.invoiceId}-${row.payoutId}`}
                   invoice={row}
+                  onPress={() => setSelectedInvoice(row)}
                 />
               ))}
             </View>
           ) : (
-            <View style={styles.empty}>
-              <Receipt color={authTheme.textDim} size={36} />
-              <Text style={styles.emptyTitle}>No invoices yet</Text>
-              <Text style={styles.muted}>
-                GST invoices are generated from each settlement cycle.
-              </Text>
-            </View>
+            <EmptyState
+              icon={<Receipt color={authTheme.brand} size={22} />}
+              title="No invoices yet"
+              body="A GST invoice is created with each settlement cycle."
+            />
           )
         ) : null}
 
         {!loading && !listQuery.isError && tab === 'fees' && commission.data ? (
-          <View style={styles.card}>
-            <View style={styles.cardTop}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.period}>
-                  {commission.data.commissionPercent}% platform fee
-                </Text>
-                <Text style={styles.meta}>
-                  {commission.data.source === 'restaurant_override'
-                    ? 'Custom outlet rate'
-                    : 'Platform default'}
-                  {commission.data.effectiveFrom
-                    ? ` · from ${formatDate(commission.data.effectiveFrom)}`
-                    : ''}
-                </Text>
+          <View style={styles.plainCard}>
+            <Text style={styles.kicker}>Platform fee</Text>
+            <Text style={styles.docId}>{commission.data.commissionPercent}%</Text>
+            <Text style={styles.meta}>
+              {commission.data.source === 'restaurant_override'
+                ? 'Custom outlet rate'
+                : 'Platform default'}
+              {commission.data.effectiveFrom
+                ? ` · from ${formatDate(commission.data.effectiveFrom)}`
+                : ''}
+            </Text>
+            <View style={styles.docFoot}>
+              <View>
+                <Text style={styles.footLabel}>TDS</Text>
+                <Text style={styles.amount}>{commission.data.tdsPercent}%</Text>
               </View>
             </View>
-            <Text style={styles.net}>
-              {commission.data.tdsPercent}% TDS
-            </Text>
             <View style={styles.breakdown}>
               {commission.data.feeSchedule.map((row) => (
-                <View key={row.id || row.label} style={{ gap: 2 }}>
+                <View key={row.id || row.label} style={styles.feeRow}>
                   <Line
                     label={row.label}
                     value={
@@ -420,7 +524,7 @@ export function FinanceManager() {
                     }
                   />
                   {row.description ? (
-                    <Text style={styles.meta}>{row.description}</Text>
+                    <Text style={styles.feeHint}>{row.description}</Text>
                   ) : null}
                 </View>
               ))}
@@ -437,6 +541,7 @@ export function FinanceManager() {
             >
               <Text style={styles.pageBtnText}>Previous</Text>
             </Pressable>
+            <Text style={styles.pageLabel}>Page {page}</Text>
             <Pressable
               disabled={!hasNext || listQuery.isFetching}
               onPress={() => setPage((p) => p + 1)}
@@ -455,11 +560,12 @@ export function FinanceManager() {
         onRequestClose={() => setSelectedId(null)}
       >
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+            <View style={styles.grabber} />
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Settlement</Text>
-              <Pressable onPress={() => setSelectedId(null)}>
-                <X color={authTheme.textMuted} size={20} />
+              <Text style={styles.modalTitle}>Settlement statement</Text>
+              <Pressable onPress={() => setSelectedId(null)} hitSlop={8} style={styles.closeBtn}>
+                <X color={authTheme.text} size={18} />
               </Pressable>
             </View>
             {detail.isLoading && !settlement ? (
@@ -471,13 +577,24 @@ export function FinanceManager() {
                   : 'Could not load this settlement.'}
               </Text>
             ) : settlement ? (
-              <>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.sheetBody}>
                 <View style={styles.modalHero}>
-                  <Text style={styles.modalPeriod}>{settlement.settlementNumber}</Text>
+                  <View style={styles.docCopy}>
+                    <Text style={styles.kicker}>Payable</Text>
+                    <Text style={styles.sheetAmount}>{formatCurrency(settlement.finalPayable)}</Text>
+                    <Text style={styles.meta}>{settlement.settlementNumber}</Text>
+                  </View>
                   <StatusChip status={settlement.status} />
                 </View>
-                <Text style={styles.net}>{formatCurrency(settlement.finalPayable)}</Text>
                 <View style={styles.breakdown}>
+                  <Line
+                    label="Period"
+                    value={
+                      settlement.periodStart && settlement.periodEnd
+                        ? `${formatDate(settlement.periodStart)} – ${formatDate(settlement.periodEnd)}`
+                        : '—'
+                    }
+                  />
                   <Line label="Gross sales" value={formatCurrency(settlement.grossSales)} />
                   <Line
                     label="Commission"
@@ -486,7 +603,7 @@ export function FinanceManager() {
                   <Line label="Refund impact" value={formatCurrency(settlement.refundImpact)} />
                   <Line label="Orders" value={String(settlement.totalOrders)} />
                   {settlement.payoutStatus ? (
-                    <Line label="Payout status" value={settlement.payoutStatus} />
+                    <Line label="Payout status" value={settlement.payoutStatus.replace(/_/g, ' ')} />
                   ) : null}
                   {settlement.payoutReference ? (
                     <Line label="Reference" value={settlement.payoutReference} />
@@ -494,8 +611,8 @@ export function FinanceManager() {
                   <Line label="Paid on" value={formatDate(settlement.paidAt)} />
                 </View>
                 {settlement.orders?.length ? (
-                  <View style={{ gap: 6 }}>
-                    <Text style={styles.period}>Included orders</Text>
+                  <View style={styles.orderBlock}>
+                    <Text style={styles.kicker}>Included orders</Text>
                     {settlement.orders.slice(0, 8).map((order) => (
                       <Line
                         key={order.orderId}
@@ -508,7 +625,47 @@ export function FinanceManager() {
                 {settlement.failureReason ? (
                   <Text style={styles.fail}>{settlement.failureReason}</Text>
                 ) : null}
-              </>
+              </ScrollView>
+            ) : null}
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={Boolean(selectedInvoice)}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedInvoice(null)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalCard, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+            <View style={styles.grabber} />
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Invoice</Text>
+              <Pressable onPress={() => setSelectedInvoice(null)} hitSlop={8} style={styles.closeBtn}>
+                <X color={authTheme.text} size={18} />
+              </Pressable>
+            </View>
+            {selectedInvoice ? (
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.sheetBody}>
+                <View style={styles.modalHero}>
+                  <View style={styles.docCopy}>
+                    <Text style={styles.kicker}>Net payout</Text>
+                    <Text style={styles.sheetAmount}>{formatCurrency(selectedInvoice.netAmount)}</Text>
+                    <Text style={styles.meta}>{selectedInvoice.invoiceId}</Text>
+                  </View>
+                  <StatusChip status={selectedInvoice.status} />
+                </View>
+                <View style={styles.breakdown}>
+                  <Line label="Type" value={selectedInvoice.invoiceType?.replace(/_/g, ' ') || 'GST invoice'} />
+                  <Line label="Period" value={selectedInvoice.period || '—'} />
+                  <Line label="Issued" value={formatDate(selectedInvoice.issuedAt)} />
+                  <Line label="Paid on" value={formatDate(selectedInvoice.paidAt)} />
+                  <Line label="Gross" value={formatCurrency(selectedInvoice.grossAmount)} />
+                  <Line label="Commission" value={formatCurrency(selectedInvoice.commissionAmount)} />
+                  <Line label="GST on commission" value={formatCurrency(selectedInvoice.gstOnCommission)} />
+                  <Line label="TDS" value={formatCurrency(selectedInvoice.tdsAmount)} />
+                </View>
+              </ScrollView>
             ) : null}
           </View>
         </View>
@@ -523,86 +680,154 @@ export function FinanceManager() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FFFFFF' },
+  screen: { flex: 1, backgroundColor: '#F6F6F7' },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: 16, gap: 14, paddingTop: 12 },
+  content: { paddingHorizontal: 16, gap: 14, paddingTop: 14 },
   tabGroup: {
     flexDirection: 'row',
-    alignSelf: 'flex-start',
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(122, 14, 34, 0.08)',
+    borderColor: authTheme.cardBorder,
     padding: 4,
     gap: 4,
   },
   tab: {
-    flexDirection: 'row',
+    flex: 1,
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
+    justifyContent: 'center',
+    gap: 4,
     paddingVertical: 8,
-    borderRadius: 9,
+    borderRadius: 10,
   },
-  tabActive: { backgroundColor: authTheme.brand },
+  tabActive: {
+    backgroundColor: '#FFF4EE',
+  },
   tabText: {
     color: authTheme.textMuted,
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: fonts.semiBold,
   },
-  tabTextActive: { color: '#FFFFFF' },
+  tabTextActive: { color: authTheme.brand },
   list: { gap: 10 },
-  walletCard: {
-    backgroundColor: '#FFF7F8',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(122, 14, 34, 0.1)',
-    padding: 16,
-    gap: 8,
-  },
-  walletLabel: {
-    fontSize: 13,
-    fontFamily: fonts.semiBold,
+  sectionHint: {
     color: authTheme.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+    fontFamily: fonts.medium,
+    marginTop: -2,
   },
-  walletBalance: {
-    fontSize: 28,
-    fontFamily: fonts.bold,
-    color: authTheme.brand,
-  },
-  walletMeta: { marginTop: 4 },
-  card: {
+  metrics: {
+    flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(122, 14, 34, 0.07)',
-    padding: 14,
-    gap: 10,
+    borderColor: authTheme.cardBorder,
+    paddingVertical: 14,
   },
-  cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  cardBottom: {
+  metric: { flex: 1, alignItems: 'center', paddingHorizontal: 6, gap: 3 },
+  metricDivider: {
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: '#E2E8F0',
+  },
+  metricValue: {
+    color: authTheme.text,
+    fontSize: 15,
+    fontFamily: fonts.bold,
+  },
+  metricLabel: {
+    color: authTheme.textMuted,
+    fontSize: 11,
+    fontFamily: fonts.medium,
+  },
+  docCard: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  period: { color: authTheme.text, fontSize: 15, fontFamily: fonts.bold },
-  meta: { color: authTheme.textMuted, fontSize: 12, fontFamily: fonts.medium, marginTop: 2 },
-  net: { color: authTheme.text, fontSize: 22, fontFamily: fonts.extraBold },
-  chip: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  chipText: { fontSize: 11, fontFamily: fonts.bold },
-  breakdown: { gap: 8 },
-  line: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
-  lineLabel: { color: authTheme.textMuted, fontSize: 13, fontFamily: fonts.medium },
-  lineValue: { color: authTheme.text, fontSize: 13, fontFamily: fonts.semiBold },
-  center: { paddingVertical: 48, alignItems: 'center' },
-  empty: { alignItems: 'center', paddingVertical: 40, gap: 8 },
-  emptyCard: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(122, 14, 34, 0.07)',
-    padding: 24,
+    borderColor: authTheme.cardBorder,
+    overflow: 'hidden',
+  },
+  docRail: { width: 4 },
+  docBody: { flex: 1, padding: 14, gap: 12 },
+  docTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  docCopy: { flex: 1, gap: 2 },
+  kicker: {
+    color: authTheme.textMuted,
+    fontSize: 11,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    fontFamily: fonts.semiBold,
+  },
+  docId: { color: authTheme.text, fontSize: 16, fontFamily: fonts.bold },
+  meta: { color: authTheme.textMuted, fontSize: 12, fontFamily: fonts.medium, lineHeight: 17 },
+  docFoot: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#E8ECF1',
+    paddingTop: 12,
+  },
+  footLabel: { color: authTheme.textMuted, fontSize: 11, fontFamily: fonts.medium },
+  amount: { color: authTheme.text, fontSize: 20, fontFamily: fonts.extraBold, marginTop: 2 },
+  openRow: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingBottom: 2 },
+  openText: { color: authTheme.textMuted, fontSize: 12, fontFamily: fonts.semiBold },
+  grid: { gap: 8 },
+  gridRow: { flexDirection: 'row', gap: 8 },
+  gridCell: {
+    flex: 1,
+    backgroundColor: '#F8F9FB',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 2,
+  },
+  gridLabel: { color: authTheme.textMuted, fontSize: 11, fontFamily: fonts.medium },
+  gridValue: { color: authTheme.text, fontSize: 13, fontFamily: fonts.semiBold },
+  plainCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: authTheme.cardBorder,
+    padding: 16,
+    gap: 6,
+  },
+  feeRow: { gap: 2 },
+  feeHint: { color: authTheme.textMuted, fontSize: 12, fontFamily: fonts.medium },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  chipDot: { width: 6, height: 6, borderRadius: 3 },
+  chipText: { fontSize: 11, fontFamily: fonts.bold, textTransform: 'capitalize' },
+  breakdown: { gap: 10 },
+  line: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
+  lineLabel: { flex: 1, color: authTheme.textMuted, fontSize: 13, fontFamily: fonts.medium },
+  lineValue: { color: authTheme.text, fontSize: 13, fontFamily: fonts.semiBold, textAlign: 'right' },
+  center: { paddingVertical: 48, alignItems: 'center' },
+  emptyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: authTheme.cardBorder,
+    paddingHorizontal: 24,
+    paddingVertical: 32,
     alignItems: 'center',
     gap: 8,
+  },
+  emptyIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFF4EE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
   emptyTitle: { color: authTheme.text, fontSize: 16, fontFamily: fonts.bold },
   muted: {
@@ -613,45 +838,81 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   retry: {
-    marginTop: 8,
+    alignSelf: 'center',
     backgroundColor: authTheme.brand,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
-  retryText: { color: '#FFFFFF', fontSize: 13, fontFamily: fonts.bold },
-  pager: { flexDirection: 'row', gap: 10, justifyContent: 'center' },
+  withdrawBtn: { alignSelf: 'stretch', alignItems: 'center' },
+  retryText: { color: '#FFFFFF', fontSize: 14, fontFamily: fonts.bold },
+  pager: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: authTheme.cardBorder,
+    padding: 6,
+  },
   pageBtn: {
-    backgroundColor: authTheme.surface,
     borderRadius: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 10,
   },
   pageBtnText: { color: authTheme.text, fontFamily: fonts.semiBold, fontSize: 13 },
-  disabled: { opacity: 0.45 },
+  pageLabel: { color: authTheme.textMuted, fontFamily: fonts.semiBold, fontSize: 12 },
+  disabled: { opacity: 0.4 },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15,23,42,0.45)',
+    backgroundColor: 'rgba(15, 23, 42, 0.48)',
     justifyContent: 'flex-end',
   },
   modalCard: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 18,
-    gap: 12,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 18,
+    paddingTop: 8,
+    maxHeight: '88%',
+    gap: 8,
+  },
+  grabber: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E2E8F0',
+    marginBottom: 4,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  modalTitle: { color: authTheme.text, fontSize: 18, fontFamily: fonts.bold },
+  modalTitle: { color: authTheme.text, fontSize: 17, fontFamily: fonts.bold },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetBody: { gap: 16, paddingBottom: 8 },
   modalHero: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    gap: 12,
   },
-  modalPeriod: { color: authTheme.text, fontSize: 16, fontFamily: fonts.bold },
+  sheetAmount: {
+    color: authTheme.text,
+    fontSize: 28,
+    fontFamily: fonts.extraBold,
+    marginTop: 2,
+  },
+  orderBlock: { gap: 10 },
   fail: { color: authTheme.error, fontSize: 13, fontFamily: fonts.medium },
 });
