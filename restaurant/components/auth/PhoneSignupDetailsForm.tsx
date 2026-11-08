@@ -1,5 +1,5 @@
 import { Lock, Mail, User } from 'lucide-react-native';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { AuthField } from '@/components/auth/AuthField';
 import {
