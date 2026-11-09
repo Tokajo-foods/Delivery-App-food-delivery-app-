@@ -12,6 +12,7 @@ import { KitchenNewOrderAlerts } from '@/components/dashboard/KitchenNewOrderAle
 import { KitchenOrderRinger } from '@/components/dashboard/KitchenOrderRinger';
 import { KitchenPushRouter } from '@/components/dashboard/KitchenPushRouter';
 import { PartnerLaunchHome } from '@/components/dashboard/PartnerLaunchHome';
+import { RestaurantPartnerTermsGuard } from '@/components/auth/RestaurantPartnerTermsGuard';
 import { CallHost } from '@/components/call/CallHost';
 import { RiderLiveSync } from '@/components/delivery/RiderLiveSync';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
@@ -261,8 +262,14 @@ export default function AppLayout() {
   const showBlockingLoader =
     !isHydrated || !token || gate === 'loading';
 
+  const showRestaurantTermsGate =
+  Boolean(token)
+    && effectiveRole === 'restaurant'
+    && (gate === 'ready' || gate === 'restaurant-setup');
+
   return (
     <View style={{ flex: 1, backgroundColor: '#FFF7F2' }}>
+      <RestaurantPartnerTermsGuard active={showRestaurantTermsGate} />
       {gate === 'ready' && effectiveRole === 'restaurant' ? (
         <>
           <RestaurantLiveSync />

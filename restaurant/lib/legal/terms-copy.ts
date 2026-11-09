@@ -10,7 +10,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
       },
       {
         lead: 'Acceptance.',
-        text: 'Creating an account, or continuing to use the app, means you agree to these terms and the privacy policy. You must be 18 or older and use your own name and mobile number.',
+        text: 'You must accept these terms in the app before using TOKAJO Restaurant; we store the version and time on your account. You must be 18 or older and use your own name and mobile number.',
       },
     ],
   },
