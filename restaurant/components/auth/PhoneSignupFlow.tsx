@@ -93,6 +93,7 @@ export function PhoneSignupFlow({ signup, role, submitLabel, onSubmit, busy }: P
         errors={signup.fieldErrors}
         onChange={signup.patchDetails}
         disabled={working}
+        emailOtp={signup.emailOtp}
       />
 
       <PrimaryButton

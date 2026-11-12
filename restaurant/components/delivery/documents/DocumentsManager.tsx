@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
+import { launchLibraryImage } from '@/lib/media/pick-image';
 import {
   AlertCircle,
   CheckCircle2,
@@ -238,19 +238,7 @@ export function PartnerDocumentsManager() {
       return;
     }
 
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert(
-        'Permission needed',
-        'Allow photo access to upload documents.'
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.85,
-    });
+    const result = await launchLibraryImage({ allowsEditing: false, quality: 0.85 });
     if (result.canceled || !result.assets[0]?.uri) return;
 
     const asset = result.assets[0];

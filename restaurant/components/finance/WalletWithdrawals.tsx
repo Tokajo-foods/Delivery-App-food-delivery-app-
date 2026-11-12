@@ -29,7 +29,7 @@ export function WalletWithdrawals({ items }: { items: RestaurantPayout[] }) {
   if (!items.length) {
     return (
       <Text style={styles.empty}>
-        No withdrawals yet. Request earnings above to send money to UPI.
+        No withdrawals yet. Use Request earnings on your wallet to transfer to bank / UPI.
       </Text>
     );
   }

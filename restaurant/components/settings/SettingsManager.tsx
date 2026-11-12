@@ -5,13 +5,9 @@ import {
   Clock3,
   ImageIcon,
   Lock,
-  Settings2,
-  Store,
-  Trash2,
   UserRound,
-  Users,
 } from 'lucide-react-native';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -19,20 +15,15 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 
 import { PrimaryButton } from '@/components/auth/PrimaryButton';
-import { KitchenDutyCard } from '@/components/dashboard/KitchenDutyCard';
 import { RestaurantPageHeader } from '@/components/dashboard/RestaurantPageHeader';
 import { KitchenHoursEditor } from '@/components/settings/KitchenHoursEditor';
-import { KitchenPushCard } from '@/components/settings/KitchenPushCard';
 import { ProfileSettingsTab } from '@/components/settings/ProfileSettingsTab';
 import { RestaurantPhotosManager } from '@/components/settings/RestaurantPhotosManager';
-import { StaffManager } from '@/components/staff/StaffManager';
 import { authTheme, PARTNER_BOTTOM_NAV_INSET } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
 import {
@@ -40,61 +31,16 @@ import {
   useRestaurantSettingsMutations,
 } from '@/lib/restaurant/settings-hooks';
 import { restaurantOutletKeys } from '@/lib/restaurant/hooks';
-import {
-  type RestaurantDetail,
-  type RestaurantSettings,
-} from '@/lib/restaurant/settings-types';
-type TabKey =
-  | 'profile'
-  | 'images'
-  | 'hours'
-  | 'operations'
-  | 'staff'
-  | 'security';
+import { type RestaurantDetail } from '@/lib/restaurant/settings-types';
+
+type TabKey = 'profile' | 'images' | 'hours' | 'security';
 
 const TABS: { key: TabKey; label: string; Icon: typeof Building2 }[] = [
   { key: 'profile', label: 'Profile', Icon: Building2 },
   { key: 'images', label: 'Photos', Icon: ImageIcon },
   { key: 'hours', label: 'Hours', Icon: Clock3 },
-  { key: 'operations', label: 'Operations', Icon: Settings2 },
-  { key: 'staff', label: 'Staff', Icon: Users },
   { key: 'security', label: 'Security', Icon: Lock },
 ];
-
-function Field({
-  label,
-  value,
-  onChangeText,
-  placeholder,
-  multiline,
-  keyboardType,
-  secureTextEntry,
-}: {
-  label: string;
-  value: string;
-  onChangeText: (text: string) => void;
-  placeholder?: string;
-  multiline?: boolean;
-  keyboardType?: 'default' | 'numeric' | 'email-address' | 'phone-pad';
-  secureTextEntry?: boolean;
-}) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={authTheme.textDim}
-        multiline={multiline}
-        keyboardType={keyboardType}
-        secureTextEntry={secureTextEntry}
-        autoCapitalize={secureTextEntry ? 'none' : undefined}
-        style={[styles.input, multiline && styles.inputMultiline]}
-      />
-    </View>
-  );
-}
 
 function Section({
   title,
@@ -112,197 +58,6 @@ function Section({
       {children}
     </View>
   );
-}
-
-function OperationsTab({
-  restaurantId,
-  detail,
-  busy,
-  onSave,
-}: {
-  restaurantId: string;
-  detail: RestaurantDetail;
-  busy: boolean;
-  onSave: (settings: RestaurantSettings) => void;
-}) {
-  const router = useRouter();
-  const settings = detail.settings ?? {};
-
-  const [taxRate, setTaxRate] = useState(String(settings.taxRate ?? ''));
-  const [packagingCharge, setPackagingCharge] = useState(
-    String(settings.packagingCharge ?? '')
-  );
-  const [minOrderValue, setMinOrderValue] = useState(
-    String(settings.minOrderValue ?? '')
-  );
-  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState(
-    String(settings.freeDeliveryThreshold ?? '')
-  );
-  const [maxDeliveryRadius, setMaxDeliveryRadius] = useState(
-    String(settings.maxDeliveryRadius ?? '')
-  );
-  const [avgPreparationTime, setAvgPreparationTime] = useState(
-    String(settings.avgPreparationTime ?? '')
-  );
-  const [autoAcceptOrders, setAutoAcceptOrders] = useState(
-    Boolean(settings.autoAcceptOrders)
-  );
-  const [acceptScheduledOrders, setAcceptScheduledOrders] = useState(
-    Boolean(settings.acceptScheduledOrders)
-  );
-  const [pureVegetarian, setPureVegetarian] = useState(
-    Boolean(settings.pureVegetarian)
-  );
-  const [cashOnDelivery, setCashOnDelivery] = useState(
-    settings.cashOnDelivery !== false
-  );
-  const [onlinePayments, setOnlinePayments] = useState(
-    settings.onlinePayments !== false
-  );
-  const [sellsAlcohol, setSellsAlcohol] = useState(
-    Boolean(settings.sellsAlcohol)
-  );
-  const [acceptPreOrders, setAcceptPreOrders] = useState(
-    Boolean(settings.acceptPreOrders)
-  );
-
-  useEffect(() => {
-    const next = detail.settings ?? {};
-    setTaxRate(String(next.taxRate ?? ''));
-    setPackagingCharge(String(next.packagingCharge ?? ''));
-    setMinOrderValue(String(next.minOrderValue ?? ''));
-    setFreeDeliveryThreshold(String(next.freeDeliveryThreshold ?? ''));
-    setMaxDeliveryRadius(String(next.maxDeliveryRadius ?? ''));
-    setAvgPreparationTime(String(next.avgPreparationTime ?? ''));
-    setAutoAcceptOrders(Boolean(next.autoAcceptOrders));
-    setAcceptScheduledOrders(Boolean(next.acceptScheduledOrders));
-    setPureVegetarian(Boolean(next.pureVegetarian));
-    setCashOnDelivery(next.cashOnDelivery !== false);
-    setOnlinePayments(next.onlinePayments !== false);
-    setSellsAlcohol(Boolean(next.sellsAlcohol));
-    setAcceptPreOrders(Boolean(next.acceptPreOrders));
-  }, [detail]);
-
-  const num = (value: string) => {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : undefined;
-  };
-
-  return (
-    <View style={{ gap: 14 }}>
-      <KitchenDutyCard restaurantId={restaurantId} />
-      <KitchenPushCard restaurantId={restaurantId} />
-
-      <Pressable
-        onPress={() => router.push('/chain')}
-        style={styles.chainRow}
-      >
-        <Store color={authTheme.brand} size={18} />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.toggleLabel}>Other outlets</Text>
-          <Text style={styles.meta}>
-            Copy menu, prices, sold-out and operations to sibling restaurants.
-          </Text>
-        </View>
-      </Pressable>
-
-      <Section title="Financial Settings">
-        <Field
-          label="Tax Rate (%)"
-          value={taxRate}
-          onChangeText={setTaxRate}
-          keyboardType="numeric"
-        />
-        <Field
-          label="Packaging Charge (₹)"
-          value={packagingCharge}
-          onChangeText={setPackagingCharge}
-          keyboardType="numeric"
-        />
-        <Field
-          label="Minimum Order Value (₹)"
-          value={minOrderValue}
-          onChangeText={setMinOrderValue}
-          keyboardType="numeric"
-        />
-        <Field
-          label="Free Delivery Threshold (₹)"
-          value={freeDeliveryThreshold}
-          onChangeText={setFreeDeliveryThreshold}
-          keyboardType="numeric"
-        />
-      </Section>
-
-      <Section title="Delivery Settings">
-        <Field
-          label="Max Delivery Radius (km)"
-          value={maxDeliveryRadius}
-          onChangeText={setMaxDeliveryRadius}
-          keyboardType="numeric"
-        />
-        <Field
-          label="Avg. Preparation Time (min)"
-          value={avgPreparationTime}
-          onChangeText={setAvgPreparationTime}
-          keyboardType="numeric"
-        />
-      </Section>
-
-      <Section title="Order Preferences">
-        {(
-          [
-            ['Auto-accept orders', autoAcceptOrders, setAutoAcceptOrders],
-            ['Accept scheduled orders', acceptScheduledOrders, setAcceptScheduledOrders],
-            ['Pure vegetarian restaurant', pureVegetarian, setPureVegetarian],
-            ['Cash on delivery', cashOnDelivery, setCashOnDelivery],
-            ['Online payments', onlinePayments, setOnlinePayments],
-            ['Accept pre-orders', acceptPreOrders, setAcceptPreOrders],
-            ['Serve alcohol', sellsAlcohol, setSellsAlcohol],
-          ] as const
-        ).map(([label, value, setter]) => (
-          <View key={label} style={styles.toggleRow}>
-            <Text style={styles.toggleLabel}>{label}</Text>
-            <Switch
-              value={value}
-              onValueChange={setter}
-              trackColor={{ false: '#E2E8F0', true: 'rgba(122,14,34,0.35)' }}
-              thumbColor={value ? authTheme.brand : '#F8FAFC'}
-            />
-          </View>
-        ))}
-        <Text style={styles.meta}>
-          Alcohol can only be turned on where city law allows delivery. Dry
-          cities stay off — the save will explain why.
-        </Text>
-      </Section>
-
-      <PrimaryButton
-        label="Save Operations"
-        loading={busy}
-        onPress={() =>
-          onSave({
-            taxRate: num(taxRate),
-            packagingCharge: num(packagingCharge),
-            minOrderValue: num(minOrderValue),
-            freeDeliveryThreshold: num(freeDeliveryThreshold),
-            maxDeliveryRadius: num(maxDeliveryRadius),
-            avgPreparationTime: num(avgPreparationTime),
-            autoAcceptOrders,
-            acceptScheduledOrders,
-            pureVegetarian,
-            cashOnDelivery,
-            onlinePayments,
-            acceptPreOrders,
-            sellsAlcohol,
-          })
-        }
-      />
-    </View>
-  );
-}
-
-function StaffTab() {
-  return <StaffManager />;
 }
 
 function SecurityTab() {
@@ -350,7 +105,6 @@ export function SettingsManager() {
     mutations.updateProfile.isPending ||
     mutations.updateStatus.isPending ||
     mutations.updateTimings.isPending ||
-    mutations.updateSettings.isPending ||
     mutations.uploadLogo.isPending ||
     mutations.uploadCover.isPending ||
     mutations.uploadGallery.isPending ||
@@ -381,8 +135,8 @@ export function SettingsManager() {
         title="Settings"
         subtitle={
           detail?.name
-            ? `${detail.name} · profile & operations`
-            : 'Profile, images, hours & operations'
+            ? `${detail.name} · profile, photos & hours`
+            : 'Profile, photos, hours & security'
         }
       />
       <ScrollView
@@ -489,20 +243,6 @@ export function SettingsManager() {
                 }
               />
             ) : null}
-            {tab === 'operations' ? (
-              <OperationsTab
-                restaurantId={restaurantId}
-                detail={detail}
-                busy={busy}
-                onSave={(settings) =>
-                  void run(
-                    () => mutations.updateSettings.mutateAsync(settings),
-                    'Operations saved.'
-                  )
-                }
-              />
-            ) : null}
-            {tab === 'staff' ? <StaffTab /> : null}
             {tab === 'security' ? <SecurityTab /> : null}
           </>
         ) : null}
@@ -758,87 +498,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(122,14,34,0.08)',
     paddingHorizontal: 14,
     paddingVertical: 12,
-  },
-  staffHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  addStaffBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: authTheme.brand,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    minHeight: 44,
-  },
-  addStaffBtnText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontFamily: fonts.bold,
-  },
-  inviteCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(122,14,34,0.08)',
-    padding: 14,
-    gap: 10,
-  },
-  inviteTitle: {
-    color: authTheme.text,
-    fontSize: 15,
-    fontFamily: fonts.bold,
-  },
-  inputWithIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderWidth: 1,
-    borderColor: authTheme.inputBorder,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    backgroundColor: '#FAFAFA',
-    minHeight: 48,
-  },
-  inputFlex: {
-    flex: 1,
-    color: authTheme.text,
-    fontFamily: fonts.medium,
-    fontSize: 14,
-    paddingVertical: 12,
-  },
-  roleRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  inviteActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 4,
-  },
-  cancelPill: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-    backgroundColor: authTheme.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  staffCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(122,14,34,0.08)',
-    padding: 14,
-  },
-  staffName: {
-    color: authTheme.text,
-    fontSize: 14,
-    fontFamily: fonts.bold,
   },
   empty: {
     alignItems: 'center',

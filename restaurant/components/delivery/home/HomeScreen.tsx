@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/store/auth-store';
 import { HomeDeliveryHistory } from '@/components/delivery/home/HomeDeliveryHistory';
 import { TripDetailSheet } from '@/components/delivery/orders/TripDetailSheet';
+import { HomeComplianceBanner } from '@/components/delivery/home/HomeComplianceBanner';
 import { DutyControlCard } from '@/components/delivery/home/DutyControlCard';
 import { HomeEarningsCard } from '@/components/delivery/home/HomeEarningsCard';
 import { HomePerformanceCard } from '@/components/delivery/home/HomePerformanceCard';
@@ -73,6 +74,8 @@ import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
 import { selectPartnerTodayStats } from '@/lib/delivery-partner/today-stats';
 import type { PartnerDelivery } from '@/lib/delivery-partner/types';
 import { askToEnableLocation } from '@/lib/delivery-partner/live-place';
+import { ensureAppPermission } from '@/lib/permissions/ensure-permission';
+import { ensureDeviceNotificationReady } from '@/lib/notification/device-alerts';
 import {
   BACKGROUND_LOCATION_DENIED_MESSAGE,
   ensureBackgroundLocationPermission,
@@ -194,15 +197,19 @@ export function DeliveryHomeScreen() {
 
   const onToggleOnline = () => {
     if (!isOnline) {
-      void askToEnableLocation().then(async (ready) => {
+      void (async () => {
+        const locationOk = await ensureAppPermission('location');
+        if (!locationOk) return;
+        const ready = await askToEnableLocation();
         if (!ready) return;
         const allowed = await ensureBackgroundLocationPermission('online');
         if (!allowed) {
           Alert.alert('Location all the time', BACKGROUND_LOCATION_DENIED_MESSAGE);
           return;
         }
+        void ensureDeviceNotificationReady();
         continueToggleOnline();
-      });
+      })();
       return;
     }
     continueToggleOnline();
@@ -239,7 +246,10 @@ export function DeliveryHomeScreen() {
       onError: (err) => {
         const code = getApiErrorCode(err);
         if (code === 'POLICY_NOT_ACCEPTED') {
-          router.replace(DELIVERY_ROUTES.policy as never);
+          Alert.alert(
+            'Policy required',
+            'Accept the rider onboarding policy on your home screen to go online.'
+          );
           return;
         }
         const isKyc =
@@ -587,16 +597,7 @@ export function DeliveryHomeScreen() {
           }}
         />
 
-        {goOnlineBlocker?.title === 'Account suspended' ? (
-          <View style={styles.section}>
-            <View style={styles.demandCta}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.demandCtaTitle}>{goOnlineBlocker.title}</Text>
-                <Text style={styles.demandCtaHint}>{goOnlineBlocker.message}</Text>
-              </View>
-            </View>
-          </View>
-        ) : null}
+        <HomeComplianceBanner profile={me.data} />
         <DutyControlCard
             snapshot={duty.data}
             fallbackStatus={dutyStatus}

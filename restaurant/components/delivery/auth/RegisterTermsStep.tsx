@@ -1,39 +1,29 @@
-import { Check } from 'lucide-react-native';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { AuthField } from '@/components/auth/AuthField';
+import { authTheme } from '@/constants/auth-theme';
+import { fonts } from '@/constants/typography';
 
 type Props = {
   aadharNumber: string;
-  acceptedTerms: boolean;
-  onChange: (patch: { aadharNumber?: string; acceptedTerms?: boolean }) => void;
+  onChange: (patch: { aadharNumber?: string }) => void;
 };
 
-export function RegisterTermsStep({ aadharNumber, acceptedTerms, onChange }: Props) {
+/** Optional KYC at signup — full rider policy is accepted on the home screen modal. */
+export function RegisterTermsStep({ aadharNumber, onChange }: Props) {
   return (
-    <View>
+    <View style={{ gap: 12 }}>
+      <Text style={{ fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: authTheme.textMuted }}>
+        Partner terms appear on your home screen after signup. You can add Aadhaar now or later in
+        Documents.
+      </Text>
       <AuthField
-        label="Aadhaar number"
-        placeholder="1234 5678 9012"
+        label="Aadhaar number (optional)"
+        placeholder="12-digit number"
         keyboardType="number-pad"
         value={aadharNumber}
         onChangeText={(value) => onChange({ aadharNumber: value })}
       />
-      <Pressable
-        onPress={() => onChange({ acceptedTerms: !acceptedTerms })}
-        className="mt-1 flex-row items-start gap-3"
-      >
-        <View
-          className={`mt-0.5 h-5 w-5 items-center justify-center rounded border ${
-            acceptedTerms ? 'border-primary bg-primary' : 'border-gray-300 bg-white'
-          }`}
-        >
-          {acceptedTerms ? <Check color="#FFFFFF" size={12} /> : null}
-        </View>
-        <Text className="flex-1 text-sm leading-5 text-secondary-light">
-          I agree to the Terms & Conditions and Privacy Policy
-        </Text>
-      </Pressable>
     </View>
   );
 }

@@ -45,7 +45,7 @@ export function RevenueTrendChart({
 
   return (
     <Svg width={width} height={height}>
-      <Path d={`M ${area}`} fill="rgba(122, 14, 34, 0.08)" />
+      <Path d={`M ${area}`} fill="rgba(234, 75, 20, 0.1)" />
       <Polyline
         points={line}
         fill="none"
@@ -186,8 +186,8 @@ export function HourDemandChart({ hours }: { hours: OrdersHourPoint[] }) {
                   backgroundColor: isPeak
                     ? authTheme.brand
                     : row.count > 0
-                      ? 'rgba(122, 14, 34, 0.28)'
-                      : 'rgba(122, 14, 34, 0.08)',
+                      ? 'rgba(234, 75, 20, 0.35)'
+                      : 'rgba(234, 75, 20, 0.1)',
                 },
               ]}
             />

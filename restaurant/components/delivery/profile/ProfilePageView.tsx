@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { RiderAccountLegalCard } from '@/components/delivery/profile/RiderAccountLegalCard';
 import { PlatformAccountSection } from '@/components/delivery/profile/PlatformAccountSection';
 import { DeliveryHeaderActions } from '@/components/delivery/shared/HeaderActions';
 import { profilePageStyles as styles } from '@/components/delivery/profile/profile-page-styles';
@@ -212,6 +213,9 @@ export function ProfilePageView(props: Props) {
             </View>
             <Text style={styles.vehicleLine}>{s.vehicleMeta}</Text>
           </View>
+
+          <Text style={styles.groupLabel}>Legal</Text>
+          <RiderAccountLegalCard />
 
           <Text style={styles.groupLabel}>Alerts</Text>
           <PlatformAccountSection />

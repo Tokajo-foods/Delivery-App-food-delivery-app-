@@ -16,7 +16,6 @@ import {
   ShieldOff,
   Store,
   UserRound,
-  Users,
   Wallet,
   type LucideIcon,
 } from 'lucide-react-native';
@@ -126,21 +125,25 @@ export default function AdminScreen() {
   const { data } = useDashboardStats();
   const restaurant = useMyRestaurantId();
 
+  const signOut = async (all: boolean) => {
+    await (all ? logoutAll() : logout());
+    router.replace('/login');
+  };
+
   const confirmLogout = (all: boolean) => {
+    if (!all) {
+      void signOut(false);
+      return;
+    }
     Alert.alert(
-      all ? 'Log out everywhere?' : 'Log out?',
-      all
-        ? 'This will end your session on all devices.'
-        : 'You will need to sign in again.',
+      'Log out everywhere?',
+      'This will end your session on all devices.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Log out',
           style: 'destructive',
-          onPress: async () => {
-            await (all ? logoutAll() : logout());
-            router.replace('/login');
-          },
+          onPress: () => void signOut(true),
         },
       ]
     );
@@ -157,19 +160,11 @@ export default function AdminScreen() {
     },
     {
       label: 'Restaurant settings',
-      hint: 'Profile, images, hours, staff',
+      hint: 'Profile, images, hours',
       icon: Store,
       accent: '#0F172A',
       soft: '#F8F9FA',
       onPress: () => router.push('/settings'),
-    },
-    {
-      label: 'Team & access',
-      hint: 'Invite kitchen, managers, cashiers',
-      icon: Users,
-      accent: '#0F172A',
-      soft: '#F8F9FA',
-      onPress: () => router.push('/staff'),
     },
     {
       label: 'Reviews & ratings',

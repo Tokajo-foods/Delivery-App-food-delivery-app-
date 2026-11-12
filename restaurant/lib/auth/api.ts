@@ -202,6 +202,39 @@ export const authApi = {
     return normalizeMessageResponse(data);
   },
 
+  getRegisterPolicy: async () => {
+    const data = unwrapData(await authRequest<unknown>(`${AUTH_BASE}/register-policy`));
+    return {
+      requireEmailOtp: Boolean(data.requireEmailOtp),
+      requirePhoneOtp: Boolean(data.requirePhoneOtp),
+      phoneProvider: String(data.phoneProvider ?? 'firebase') as 'firebase' | 'sms',
+      resendCooldownSeconds: Number(data.resendCooldownSeconds ?? 30),
+      resendMax: Number(data.resendMax ?? 5),
+    };
+  },
+
+  confirmRegisterOtp: async (payload: {
+    emailOrPhone: string;
+    otp: string;
+    role?: import('@/lib/auth/types').PartnerRole;
+  }): Promise<ConfirmRegisterOtpResult> => {
+    const data = await authRequest<unknown>(`${AUTH_BASE}/otp/confirm-register`, {
+      method: 'POST',
+      body: {
+        identifier: payload.emailOrPhone,
+        otp: payload.otp,
+        ...(payload.role ? { role: toApiRole(payload.role) } : {}),
+      },
+    });
+    const nested = unwrapData(data);
+    return {
+      channel: nested.channel === 'phone' ? 'phone' : 'email',
+      identifier: String(nested.identifier ?? payload.emailOrPhone),
+      verified: true,
+      message: normalizeMessageResponse(data).message,
+    };
+  },
+
   /** GET /api/v1/user-service/health — user-service liveness. */
   health: async () => {
     const data = await authRequest<unknown>('/api/v1/user-service/health');

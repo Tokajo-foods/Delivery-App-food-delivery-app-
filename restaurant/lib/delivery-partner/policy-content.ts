@@ -127,3 +127,31 @@ export const RIDER_POLICY_SECTIONS: RiderPolicySection[] = [
 
 export const RIDER_POLICY_DECLARATION =
   'I have read, understood and unconditionally accepted the terms and conditions of my letter of appointment and have agreed to keep its essence strictly private and confidential. I understand that providing this confidential information to anyone, including but not limited to any employee of the Company, would be a breach of my terms of engagement with the Company, and I shall be liable to termination without notice or remuneration. I hereby declare that the information I provide to the Company is complete, accurate and true in all respects.';
+
+export const RIDER_POLICY_TERRITORY = 'India';
+
+export const RIDER_POLICY_WELCOME =
+  'Welcome to TOKAJO FOODS. By accepting this policy, you agree to the terms governing your participation as a Delivery Partner on the platform.';
+
+export const RIDER_ELECTRONIC_ACCEPTANCE_HEADING = 'Electronic acceptance';
+
+export const RIDER_ELECTRONIC_ACCEPTANCE_INTRO =
+  'By selecting the acceptance checkbox and tapping Accept & Continue, you confirm that:';
+
+export const RIDER_ELECTRONIC_ACCEPTANCE_POINTS = [
+  'You have read and understood this Rider Onboarding Policy.',
+  'You agree to the code of conduct, delivery procedure, and platform rules below.',
+  'The information and documents you provide during registration are accurate.',
+  'You have reviewed the Terms of Use and Privacy Policy.',
+  'You consent to TOKAJO recording your electronic acceptance, including policy version and acceptance date and time on your partner profile.',
+] as const;
+
+export const RIDER_POLICY_CHECKBOX_LABEL =
+  'I have read and agree to the Rider Onboarding Policy, Terms of Use, and Privacy Policy. TOKAJO records this acceptance on my delivery partner account.';
+
+export const RIDER_POLICY_FOOTNOTE =
+  'Your acceptance is stored on the delivery-service partner profile (version, timestamp, and device metadata).';
+
+export function riderPolicyVersionLabel(version: string = RIDER_POLICY_VERSION): string {
+  return `Version ${version} · ${RIDER_POLICY_TERRITORY}`;
+}

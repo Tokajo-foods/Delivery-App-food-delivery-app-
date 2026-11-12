@@ -56,26 +56,6 @@ export function useRestaurantSetup() {
     return Number.isFinite(n) && n > 0 ? n : undefined;
   }, [costForTwo]);
 
-  const pickImage = async (kind: 'logo' | 'cover') => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permission required', 'Photo library permission is required.');
-      return;
-    }
-    try {
-      const result = await launchLibraryImage({
-        aspect: kind === 'logo' ? [1, 1] : [16, 9],
-        quality: 0.85,
-        allowsEditing: true,
-      });
-      if (result.canceled || !result.assets[0]) return;
-      if (kind === 'logo') setLogo(result.assets[0]);
-      else setCover(result.assets[0]);
-    } catch {
-      Alert.alert('Could not open photo', 'Try again, or pick a different image.');
-    }
-  };
-
   const stepError = (s: SetupStep): string | null => {
     if (s === 0) {
       if (!logo?.uri) return 'Restaurant logo is required.';
@@ -97,6 +77,37 @@ export function useRestaurantSetup() {
       return null;
     }
     return null;
+  };
+
+  const stepBlockReason = useMemo(() => stepError(step), [step, logo, name, fssai, gstin, street, city, stateName, pincode, coords]);
+
+  const canAdvance = stepBlockReason === null;
+
+  const registerBlockReason = useMemo(
+    () => stepError(0) ?? stepError(1),
+    [logo, name, fssai, gstin, street, city, stateName, pincode, coords],
+  );
+
+  const canRegister = registerBlockReason === null;
+
+  const pickImage = async (kind: 'logo' | 'cover') => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission required', 'Photo library permission is required.');
+      return;
+    }
+    try {
+      const result = await launchLibraryImage({
+        aspect: kind === 'logo' ? [1, 1] : [16, 9],
+        quality: 0.85,
+        allowsEditing: true,
+      });
+      if (result.canceled || !result.assets[0]) return;
+      if (kind === 'logo') setLogo(result.assets[0]);
+      else setCover(result.assets[0]);
+    } catch {
+      Alert.alert('Could not open photo', 'Try again, or pick a different image.');
+    }
   };
 
   const goNext = () => {
@@ -308,5 +319,9 @@ export function useRestaurantSetup() {
     goBack,
     submit,
     confirmMap,
+    canAdvance,
+    canRegister,
+    stepBlockReason,
+    registerBlockReason,
   };
 }

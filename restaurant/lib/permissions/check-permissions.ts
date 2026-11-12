@@ -1,3 +1,4 @@
+import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { PermissionsAndroid, Platform } from 'react-native';
 
@@ -54,6 +55,24 @@ async function readBackgroundLocation(): Promise<PermissionStatus> {
   return mapExpoStatus(current.status);
 }
 
+async function readCamera(): Promise<PermissionStatus> {
+  if (Platform.OS === 'web') return 'granted';
+  const current = await ImagePicker.getCameraPermissionsAsync();
+  return mapExpoStatus(current.status);
+}
+
+async function readPhotos(): Promise<PermissionStatus> {
+  if (Platform.OS === 'web') return 'granted';
+  const current = await ImagePicker.getMediaLibraryPermissionsAsync();
+  return mapExpoStatus(current.status);
+}
+
+export async function getAppPermissionStatus(
+  id: PermissionId
+): Promise<PermissionStatus> {
+  return readOne(id);
+}
+
 async function readOne(id: PermissionId): Promise<PermissionStatus> {
   switch (id) {
     case 'notifications':
@@ -64,6 +83,10 @@ async function readOne(id: PermissionId): Promise<PermissionStatus> {
       return readForegroundLocation();
     case 'locationBackground':
       return readBackgroundLocation();
+    case 'camera':
+      return readCamera();
+    case 'photos':
+      return readPhotos();
     default:
       return 'denied';
   }

@@ -1,5 +1,7 @@
 import { Star } from 'lucide-react-native';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { BundledImage } from '@/components/media/BundledImage';
 
 import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
@@ -10,10 +12,17 @@ import { useOutletHygiene, useOutletRatings } from '@/lib/restaurant/hooks';
 type Props = {
   restaurantId?: string;
   metrics: DashboardMetrics;
+  /** Dashboard still refreshing and today's net is not resolved yet. */
+  earningsLoading?: boolean;
   onRatingPress?: () => void;
 };
 
-export function TodayStatsCard({ restaurantId, metrics, onRatingPress }: Props) {
+export function TodayStatsCard({
+  restaurantId,
+  metrics,
+  earningsLoading = false,
+  onRatingPress,
+}: Props) {
   const hygiene = useOutletHygiene(restaurantId, Boolean(restaurantId));
   const ratings = useOutletRatings(restaurantId, Boolean(restaurantId));
   const hygieneData = hygiene.data;
@@ -34,9 +43,11 @@ export function TodayStatsCard({ restaurantId, metrics, onRatingPress }: Props) 
       ? metrics.totalRatings
       : null);
 
-  const sales = hasRevenue
-    ? formatCurrency(metrics.grossRevenue as number)
-    : '—';
+  const sales = earningsLoading && !hasRevenue
+    ? '…'
+    : hasRevenue
+      ? formatCurrency(metrics.grossRevenue as number)
+      : '—';
   const orders = hasOrders ? String(Math.round(metrics.totalOrders as number)) : '—';
   const ratingLabel =
     rating != null && rating > 0 ? rating.toFixed(1) : '—';
@@ -44,7 +55,9 @@ export function TodayStatsCard({ restaurantId, metrics, onRatingPress }: Props) 
     ? hygieneData.hygieneScore.toFixed(1)
     : hygiene.isLoading
       ? '…'
-      : '—';
+      : hygieneData && !hygieneData.available
+        ? 'Pending'
+        : '—';
   const ratingHint = ratingCount
     ? `${ratingCount} review${ratingCount === 1 ? '' : 's'}`
     : 'No reviews yet';
@@ -53,15 +66,15 @@ export function TodayStatsCard({ restaurantId, metrics, onRatingPress }: Props) 
     <View style={styles.card}>
       <View style={styles.hero}>
         <View style={styles.heroText}>
-          <Text style={styles.kicker}>Today's sales</Text>
+          <Text style={styles.kicker}>Today's net earnings</Text>
           <Text style={styles.sales} numberOfLines={1} adjustsFontSizeToFit>
             {sales}
           </Text>
         </View>
-        <Image
+        <BundledImage
           source={require('../../assets/today-sales-art.png')}
           style={styles.art}
-          resizeMode="contain"
+          contentFit="contain"
           accessibilityIgnoresInvertColors
         />
       </View>

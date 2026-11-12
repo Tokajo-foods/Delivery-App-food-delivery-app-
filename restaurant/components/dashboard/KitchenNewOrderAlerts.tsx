@@ -36,7 +36,7 @@ function formatSlot(iso: unknown): string | null {
 /**
  * In-app banner for `kitchen:order-new` while the outlet is online (scheduled orders becoming
  * due show regardless). `kitchen:order-scheduled` shows a heads-up for a future booking.
- * The bell itself loops from KitchenOrderRinger; a killed app rings from the push.
+ * The bell bursts 2–3 times from KitchenOrderRinger; a killed app rings from the push.
  * Taps are routed by KitchenPushRouter.
  */
 export function KitchenNewOrderAlerts() {
@@ -107,7 +107,7 @@ export function KitchenNewOrderAlerts() {
             screen: 'order',
           },
         },
-        // Sound comes from KitchenOrderRinger's loop, so this banner stays silent.
+        // Sound comes from KitchenOrderRinger's short burst, so this banner stays silent.
         { channelId: KITCHEN_ORDER_QUIET_CHANNEL_ID, sound: false }
       );
     });

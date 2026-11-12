@@ -3,6 +3,9 @@ export type PlatformUser = {
   email: string;
   firstName?: string;
   lastName?: string;
+  /** Name entered at restaurant partner signup (not the shared customer profile). */
+  partnerSignupNameRestaurant?: string;
+  partnerSignupNameDelivery?: string;
   phone?: string;
   photoUrl?: string;
   emailVerified: boolean;
@@ -93,6 +96,8 @@ export function languageLabel(code: string): string {
 }
 
 export function displayPlatformName(user?: PlatformUser | null): string {
+  const partner = user?.partnerSignupNameRestaurant?.trim();
+  if (partner) return partner;
   const name = [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim();
   return name;
 }

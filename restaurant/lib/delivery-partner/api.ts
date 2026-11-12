@@ -1034,6 +1034,11 @@ function mapPartner(raw: unknown): DeliveryPartnerProfile {
       completionRate,
       acceptanceRate,
     },
+    profileRegistrationComplete: (() => {
+      const raw = pickBool(source, ['profileRegistrationComplete']);
+      if (raw != null) return raw;
+      return source.profileRegistrationComplete !== false;
+    })(),
     status: pickString(source, ['status']),
     suspendReason: pickString(source, ['suspendReason', 'suspensionReason']),
     suspendUntil: pickString(source, ['suspendUntil', 'suspendedUntil']),
@@ -1261,12 +1266,16 @@ function toRegisterBody(payload: DeliveryPartnerRegisterPayload) {
     body.latitude = payload.latitude;
     body.longitude = payload.longitude;
   }
-  if (payload.vehicleNumber?.trim()) {
-    body.vehicleNumber = payload.vehicleNumber.trim().toUpperCase();
-  }
+  body.vehicleNumber = payload.vehicleNumber!.trim().toUpperCase();
   if (payload.vehicleModel?.trim()) body.vehicleModel = payload.vehicleModel.trim();
   if (payload.vehicleColor?.trim()) body.vehicleColor = payload.vehicleColor.trim();
   if (payload.inviteToken?.trim()) body.token = payload.inviteToken.trim();
+  if (payload.dateOfBirth?.trim()) body.dateOfBirth = payload.dateOfBirth.trim();
+  if (payload.referralCode?.trim()) {
+    body.referralCode = payload.referralCode.trim().toUpperCase();
+  }
+  if (payload.pincode?.trim()) body.pincode = payload.pincode.trim();
+  if (payload.landmark?.trim()) body.landmark = payload.landmark.trim();
 
   return body;
 }
@@ -1698,9 +1707,9 @@ export const deliveryPartnerApi = {
     if (!payload.firstName?.trim()) throw new Error('First name is required.');
     if (!payload.phone?.trim()) throw new Error('Phone number is required.');
     if (!payload.vehicleType) throw new Error('Vehicle type is required.');
-    if (!payload.acceptedTerms) {
-      throw new Error('You must agree to the Terms & Conditions.');
-    }
+    const reg = payload.vehicleNumber?.trim().toUpperCase() ?? '';
+    if (reg.length < 4) throw new Error('Vehicle registration number is required.');
+    if (reg.length > 20) throw new Error('Registration number is too long (max 20 characters).');
 
     const hasInvite = Boolean(payload.inviteToken?.trim());
     const path = hasInvite
@@ -1710,6 +1719,27 @@ export const deliveryPartnerApi = {
     const res = await request<Record<string, unknown>>(path, {
       method: 'POST',
       body: toRegisterBody(payload),
+    });
+    return mapPartner(res.data ?? res);
+  },
+
+  /**
+   * POST /partners/me/provision — create pending partner row (admin CRM) when setup starts.
+   */
+  provisionProfile: async (payload: {
+    firstName: string;
+    lastName?: string;
+    phone: string;
+    email?: string;
+  }): Promise<DeliveryPartnerProfile> => {
+    const res = await request<Record<string, unknown>>(`${ME_BASE}/provision`, {
+      method: 'POST',
+      body: {
+        firstName: payload.firstName.trim(),
+        phone: payload.phone.trim(),
+        ...(payload.lastName?.trim() ? { lastName: payload.lastName.trim() } : {}),
+        ...(payload.email?.trim() ? { email: payload.email.trim().toLowerCase() } : {}),
+      },
     });
     return mapPartner(res.data ?? res);
   },

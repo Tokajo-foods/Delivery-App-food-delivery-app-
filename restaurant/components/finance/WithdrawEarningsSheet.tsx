@@ -76,10 +76,11 @@ export function WithdrawEarningsSheet({ visible, available, onClose }: Props) {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
-          <Text style={styles.title}>Request earnings</Text>
+          <Text style={styles.title}>Withdraw to UPI</Text>
           <Text style={styles.copy}>
-            Available now {formatCurrency(available)} from completed orders
-            (not pay-at-counter). Enter the amount and UPI id. Razorpay sends it.
+            You can withdraw anytime when you have balance (min ₹1). Up to{' '}
+            {formatCurrency(available)} is available now. Enter amount and UPI id — transfer is
+            sent via RazorpayX (usually within minutes).
           </Text>
           <Text style={styles.label}>Amount (₹)</Text>
           <TextInput
@@ -111,7 +112,7 @@ export function WithdrawEarningsSheet({ visible, available, onClose }: Props) {
             {withdraw.isPending ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.goText}>Proceed payment</Text>
+              <Text style={styles.goText}>Send to UPI</Text>
             )}
           </Pressable>
           <Pressable disabled={withdraw.isPending} onPress={onClose}>

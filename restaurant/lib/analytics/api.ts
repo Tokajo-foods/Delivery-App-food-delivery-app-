@@ -304,6 +304,8 @@ function mapOrders(raw: unknown): OrdersAnalytics {
     totals: {
       orders: pickNumber(totals, ['orders']) ?? 0,
       revenue: pickNumber(totals, ['revenue']) ?? 0,
+      netEarnings: pickNumber(totals, ['netEarnings']) ?? 0,
+      earnedOrders: pickNumber(totals, ['earnedOrders']) ?? 0,
     },
   };
 }
@@ -409,12 +411,19 @@ export const restaurantAnalyticsApi = {
 
   getTopItems: async (
     restaurantId: string,
-    limit = 10
+    limit = 10,
+    range?: Pick<AnalyticsRange, 'from' | 'to'>
   ): Promise<TopSellingItem[]> => {
     try {
       const res = await api.get<Envelope<unknown>>(
         `${RESTAURANT_BASE}/${restaurantId}/analytics/top-items`,
-        { params: { limit: Math.min(50, Math.max(1, limit)) } }
+        {
+          params: {
+            limit: Math.min(50, Math.max(1, limit)),
+            ...(range?.from ? { from: range.from } : {}),
+            ...(range?.to ? { to: range.to } : {}),
+          },
+        }
       );
       return mapTopItems(res.data);
     } catch (error) {

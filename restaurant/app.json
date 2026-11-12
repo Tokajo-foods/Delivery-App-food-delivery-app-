@@ -9,7 +9,7 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-brand.jpg",
+      "image": "./assets/splash-brand.png",
       "resizeMode": "cover",
       "backgroundColor": "#F7EFE4"
     },
@@ -45,7 +45,8 @@
         {
           "android": {
             "newArchEnabled": true,
-            "usesCleartextTraffic": false
+            "usesCleartextTraffic": false,
+            "enableShrinkResourcesInReleaseBuilds": false
           },
           "ios": {
             "newArchEnabled": true

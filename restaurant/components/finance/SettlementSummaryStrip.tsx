@@ -1,129 +1,210 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { ChevronRight, Wallet } from 'lucide-react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
 import { formatCurrency } from '@/lib/dashboard/format';
 import type { RestaurantWallet } from '@/lib/restaurant/finance-types';
 
-type BankSnap = {
-  accountMasked?: string;
-  ifsc?: string;
-  holderName?: string;
-  verificationStatus?: string;
-} | null;
-
 type Props = {
   wallet?: RestaurantWallet | null;
-  bank?: BankSnap;
+  onRequestWithdraw?: () => void;
+  withdrawDisabled?: boolean;
 };
 
-/** Earned / settled / remaining — same numbers as the wallet API. */
+/** Wallet hero + settlement overview — primary numbers from the wallet API. */
 export function SettlementSummaryStrip({
   wallet,
-  bank,
+  onRequestWithdraw,
+  withdrawDisabled,
 }: Props) {
   if (!wallet) return null;
-  const settled = wallet.settled ?? wallet.lifetimeDebited ?? 0;
-  const remaining = wallet.available ?? wallet.remaining ?? wallet.balance ?? 0;
+
+  const available = wallet.available ?? wallet.remaining ?? wallet.balance ?? 0;
+  const earned = wallet.lifetimeCredited ?? 0;
+  const paidOut = wallet.settled ?? wallet.lifetimeDebited ?? 0;
+  const atStore = wallet.collectedAtStore ?? 0;
+  const canWithdraw = !withdrawDisabled && available >= 1;
 
   return (
-    <View style={styles.wrap}>
-      <Text style={styles.title}>Earnings overview</Text>
-      <Text style={styles.hint}>
-        Withdraw completed earnings anytime. Delivery COD, online delivery, and
-        online takeaway add to remaining. Pay-at-counter / dine-in cash is
-        earned only — it is not withdrawable.
-      </Text>
-      <View style={styles.grid}>
-        <Cell
-          label="Earned (completed)"
-          value={formatCurrency(wallet.lifetimeCredited)}
-        />
-        <Cell
-          label="Collected at store"
-          value={formatCurrency(wallet.collectedAtStore ?? 0)}
-        />
-        <Cell
-          label="Taken / settled"
-          value={formatCurrency(settled)}
-        />
-        <Cell
-          label="Remaining"
-          value={formatCurrency(remaining)}
-        />
+    <View style={styles.card}>
+      <View style={styles.hero}>
+        <View style={styles.heroIcon}>
+          <Wallet color={authTheme.brand} size={18} strokeWidth={2.2} />
+        </View>
+        <View style={styles.heroCopy}>
+          <Text style={styles.kicker}>Available to withdraw</Text>
+          <Text style={styles.balance} numberOfLines={1} adjustsFontSizeToFit>
+            {formatCurrency(available)}
+          </Text>
+          <Text style={styles.sub}>
+            Withdraw to any UPI id anytime — you enter UPI in the next step. Pay-at-counter
+            earnings stay in “At store” and are not withdrawable here.
+          </Text>
+        </View>
       </View>
-      <Text style={styles.meta}>
-        Remaining updates as soon as you request a withdrawal or a completed
-        order is credited.
-      </Text>
-      {bank ? (
-        <Text style={styles.meta}>
-          Bank:{' '}
-          {bank.holderName || 'Account'} · {bank.accountMasked || '••••'} ·{' '}
-          {bank.ifsc || 'IFSC'} · {bank.verificationStatus || 'unverified'}
-        </Text>
-      ) : (
-        <Text style={styles.meta}>Bank: add payout account in Settings</Text>
-      )}
+
+      <View style={styles.rule} />
+
+      <View style={styles.stats}>
+        <Stat label="Earned" value={formatCurrency(earned)} />
+        <View style={styles.divider} />
+        <Stat label="Paid out" value={formatCurrency(paidOut)} />
+        <View style={styles.divider} />
+        <Stat label="At store" value={formatCurrency(atStore)} hint="Not withdrawable" />
+      </View>
+
+      {onRequestWithdraw ? (
+        <Pressable
+          disabled={!canWithdraw}
+          onPress={onRequestWithdraw}
+          style={[styles.withdrawBtn, !canWithdraw && styles.withdrawBtnDisabled]}
+        >
+          <Text
+            style={[
+              styles.withdrawBtnText,
+              !canWithdraw && styles.withdrawBtnTextDisabled,
+            ]}
+          >
+            {canWithdraw ? 'Withdraw to UPI' : 'Nothing to withdraw yet'}
+          </Text>
+          {canWithdraw ? <ChevronRight color="#FFFFFF" size={18} strokeWidth={2.4} /> : null}
+        </Pressable>
+      ) : null}
     </View>
   );
 }
 
-function Cell({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+}) {
   return (
-    <View style={styles.cell}>
-      <Text style={styles.cellLabel}>{label}</Text>
-      <Text style={styles.cellValue}>{value}</Text>
+    <View style={styles.stat}>
+      <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
+        {value}
+      </Text>
+      <Text style={styles.statLabel}>{label}</Text>
+      {hint ? <Text style={styles.statHint}>{hint}</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    borderRadius: 16,
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-    backgroundColor: authTheme.surface,
-    padding: 14,
-    gap: 8,
+    borderColor: '#F1EAE3',
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 14,
+    shadowColor: '#1F1300',
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+    gap: 12,
   },
-  title: {
-    fontFamily: fonts.semibold,
-    fontSize: 15,
-    color: authTheme.text,
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
   },
-  hint: {
-    fontFamily: fonts.regular,
+  heroIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: authTheme.brandSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  kicker: {
+    fontFamily: fonts.semiBold,
+    fontSize: 13,
+    color: '#1C1917',
+  },
+  balance: {
+    fontFamily: fonts.extraBold,
+    fontSize: 32,
+    color: authTheme.brand,
+    letterSpacing: -0.8,
+    marginTop: 2,
+  },
+  sub: {
+    marginTop: 4,
+    fontFamily: fonts.medium,
     fontSize: 12,
     color: authTheme.textMuted,
     lineHeight: 17,
   },
-  grid: {
+  rule: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#E8ECF1',
+  },
+  stats: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    alignItems: 'flex-start',
   },
-  cell: {
-    width: '47%',
-    borderRadius: 12,
-    backgroundColor: authTheme.bg,
-    padding: 10,
+  stat: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: 4,
   },
-  cellLabel: {
+  divider: {
+    width: StyleSheet.hairlineWidth,
+    alignSelf: 'stretch',
+    backgroundColor: '#E2E8F0',
+    marginVertical: 2,
+  },
+  statValue: {
+    fontFamily: fonts.extraBold,
+    fontSize: 15,
+    color: authTheme.text,
+    letterSpacing: -0.3,
+  },
+  statLabel: {
     fontFamily: fonts.medium,
     fontSize: 11,
     color: authTheme.textMuted,
-    textTransform: 'uppercase',
+    textAlign: 'center',
   },
-  cellValue: {
-    marginTop: 4,
-    fontFamily: fonts.semibold,
+  statHint: {
+    fontFamily: fonts.medium,
+    fontSize: 9,
+    color: authTheme.textDim,
+    textAlign: 'center',
+  },
+  withdrawBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: authTheme.brand,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  withdrawBtnDisabled: {
+    backgroundColor: '#E2E8F0',
+  },
+  withdrawBtnText: {
+    fontFamily: fonts.bold,
     fontSize: 15,
-    color: authTheme.text,
+    color: '#FFFFFF',
   },
-  meta: {
-    fontFamily: fonts.regular,
-    fontSize: 12,
+  withdrawBtnTextDisabled: {
     color: authTheme.textMuted,
   },
 });

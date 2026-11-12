@@ -40,7 +40,6 @@ import type {
   RestaurantInvoice,
   RestaurantSettlement,
 } from '@/lib/restaurant/finance-types';
-import { useRestaurantBank } from '@/lib/restaurant/onboarding-hooks';
 
 type TabKey = 'wallet' | 'payouts' | 'invoices' | 'fees';
 
@@ -107,17 +106,20 @@ function MetricStrip({
 }) {
   return (
     <View style={styles.metrics}>
-      {items.map((item, index) => (
-        <View
-          key={item.label}
-          style={[styles.metric, index > 0 && styles.metricDivider]}
-        >
-          <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit>
-            {item.value}
-          </Text>
-          <Text style={styles.metricLabel}>{item.label}</Text>
-        </View>
-      ))}
+      <Text style={styles.metricsKicker}>Summary</Text>
+      <View style={styles.metricsRow}>
+        {items.map((item, index) => (
+          <View
+            key={item.label}
+            style={[styles.metric, index > 0 && styles.metricDivider]}
+          >
+            <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit>
+              {item.value}
+            </Text>
+            <Text style={styles.metricLabel}>{item.label}</Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -259,7 +261,6 @@ export function FinanceManager() {
   const insets = useSafeAreaInsets();
 
   const wallet = useRestaurantWallet();
-  const bank = useRestaurantBank(wallet.restaurantId || undefined);
   const walletTxns = useRestaurantWalletTransactions(
     tab === 'wallet' ? page : 1,
     ledgerFilter
@@ -390,29 +391,11 @@ export function FinanceManager() {
           <View style={styles.list}>
             <SettlementSummaryStrip
               wallet={wallet.data}
-              bank={
-                bank.data
-                  ? {
-                      accountMasked: bank.data.accountMasked ?? undefined,
-                      ifsc: bank.data.ifsc ?? undefined,
-                      holderName: bank.data.holderName ?? undefined,
-                      verificationStatus: bank.data.verificationStatus ?? undefined,
-                    }
-                  : null
-              }
-            />
-            <Pressable
-              disabled={(wallet.data?.available ?? wallet.data?.balance ?? 0) < 1}
-              onPress={() => setWithdrawOpen(true)}
-              style={[
-                styles.retry,
-                styles.withdrawBtn,
+              withdrawDisabled={
                 (wallet.data?.available ?? wallet.data?.balance ?? 0) < 1
-                  && styles.disabled,
-              ]}
-            >
-              <Text style={styles.retryText}>Request earnings</Text>
-            </Pressable>
+              }
+              onRequestWithdraw={() => setWithdrawOpen(true)}
+            />
             <WalletWithdrawals items={withdrawals.data?.items ?? []} />
             <WalletPassbook
               restaurantId={wallet.restaurantId}
@@ -718,12 +701,29 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
   metrics: {
-    flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-    paddingVertical: 14,
+    borderColor: '#F1EAE3',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 14,
+    gap: 10,
+    shadowColor: '#1F1300',
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
+  },
+  metricsKicker: {
+    fontFamily: fonts.semiBold,
+    fontSize: 12,
+    color: authTheme.textMuted,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+  metricsRow: {
+    flexDirection: 'row',
   },
   metric: { flex: 1, alignItems: 'center', paddingHorizontal: 6, gap: 3 },
   metricDivider: {
@@ -844,7 +844,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  withdrawBtn: { alignSelf: 'stretch', alignItems: 'center' },
   retryText: { color: '#FFFFFF', fontSize: 14, fontFamily: fonts.bold },
   pager: {
     flexDirection: 'row',

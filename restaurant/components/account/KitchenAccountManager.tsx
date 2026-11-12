@@ -16,6 +16,7 @@ import {
 import { KitchenAccountContactCard } from '@/components/account/KitchenAccountContactCard';
 import { KitchenAccountPrefsCard } from '@/components/account/KitchenAccountPrefsCard';
 import { KitchenAccountProfileCard } from '@/components/account/KitchenAccountProfileCard';
+import { KitchenAccountLegalCard } from '@/components/account/KitchenAccountLegalCard';
 import { KitchenAccountSessionsCard } from '@/components/account/KitchenAccountSessionsCard';
 import { kitchenAccountStyles as styles } from '@/components/account/kitchen-account-styles';
 import { PrimaryButton } from '@/components/auth/PrimaryButton';
@@ -184,6 +185,7 @@ export function KitchenAccountManager() {
             />
             <KitchenAccountPrefsCard />
             <KitchenAccountSessionsCard />
+            <KitchenAccountLegalCard />
             <Pressable
               onPress={() =>
                 Alert.alert(

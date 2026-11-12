@@ -43,6 +43,10 @@ function toAuthPatch(user: PlatformUser): Partial<AuthUser> {
   if (user.email) patch.email = user.email;
   if (user.firstName !== undefined) patch.firstName = user.firstName;
   if (user.lastName !== undefined) patch.lastName = user.lastName;
+  if (user.partnerSignupNameRestaurant !== undefined) {
+    (patch as AuthUser & { partnerSignupNameRestaurant?: string }).partnerSignupNameRestaurant =
+      user.partnerSignupNameRestaurant;
+  }
   if (user.phone !== undefined) patch.phone = user.phone;
   if (user.emailVerified !== undefined) patch.emailVerified = user.emailVerified;
   if (user.photoUrl !== undefined) patch.photoUrl = user.photoUrl;

@@ -73,6 +73,12 @@ export const policyStyles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     color: authTheme.textMuted,
+    marginBottom: 12,
+  },
+  introCompact: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 10,
   },
   section: {
     backgroundColor: authTheme.card,

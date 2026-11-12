@@ -152,46 +152,25 @@ export function WalletPassbook({
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.walletCard}>
-        <Text style={styles.walletLabel}>Available balance</Text>
-        <Text style={styles.walletBalance}>
-          {formatCurrency(wallet?.balance ?? 0)}
-        </Text>
-        <Text style={styles.muted}>
-          {wallet
-            ? `Net earnings after ${wallet.commissionPercent}% platform fee. `
-            : 'Net earnings after platform fee. '}
-          Admin bank release deducts from this balance.
-        </Text>
-        <View style={styles.walletMetaRow}>
-          <View style={styles.metaBox}>
-            <Text style={styles.metaLabel}>Lifetime in</Text>
-            <Text style={styles.metaValue}>
-              {formatCurrency(wallet?.lifetimeCredited ?? 0)}
-            </Text>
-          </View>
-          <View style={styles.metaBox}>
-            <Text style={styles.metaLabel}>Paid to bank</Text>
-            <Text style={styles.metaValue}>
-              {formatCurrency(wallet?.lifetimeDebited ?? 0)}
-            </Text>
-          </View>
+      <View style={styles.sectionHead}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={styles.sectionTitle}>Passbook</Text>
+          <Text style={styles.sectionMeta}>
+            Last credit {formatDateTime(wallet?.lastCreditedAt)} · Last payout{' '}
+            {formatDateTime(wallet?.lastDebitedAt)}
+          </Text>
         </View>
-        <Text style={styles.mutedSmall}>
-          Last credit {formatDateTime(wallet?.lastCreditedAt)} · Last payout{' '}
-          {formatDateTime(wallet?.lastDebitedAt)}
-        </Text>
         <Pressable
           style={styles.exportBtn}
           disabled={exporting || !restaurantId}
           onPress={() => void onExport()}
         >
           {exporting ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
+            <ActivityIndicator color={authTheme.brand} size="small" />
           ) : (
-            <Download color="#FFFFFF" size={16} />
+            <Download color={authTheme.brand} size={16} strokeWidth={2.2} />
           )}
-          <Text style={styles.exportText}>Export passbook (CSV)</Text>
+          <Text style={styles.exportText}>Export CSV</Text>
         </Pressable>
       </View>
 
@@ -291,29 +270,22 @@ export function WalletPassbook({
 
 const styles = StyleSheet.create({
   wrap: { gap: 12 },
-  walletCard: {
-    backgroundColor: '#7A0E22',
-    borderRadius: 18,
-    padding: 16,
-    gap: 8,
+  sectionHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
   },
-  walletLabel: {
-    fontFamily: fonts.semiBold,
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.75)',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  walletBalance: {
+  sectionTitle: {
     fontFamily: fonts.bold,
-    fontSize: 32,
-    color: '#FFFFFF',
+    fontSize: 16,
+    color: authTheme.text,
   },
-  muted: {
+  sectionMeta: {
     fontFamily: fonts.medium,
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.78)',
-    lineHeight: 17,
+    fontSize: 11,
+    color: authTheme.textMuted,
+    lineHeight: 15,
   },
   mutedDark: {
     fontFamily: fonts.medium,
@@ -322,44 +294,21 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     textAlign: 'center',
   },
-  mutedSmall: {
-    fontFamily: fonts.medium,
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.65)',
-  },
-  walletMetaRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
-  metaBox: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 12,
-    padding: 10,
-    gap: 2,
-  },
-  metaLabel: {
-    fontFamily: fonts.medium,
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.7)',
-  },
-  metaValue: {
-    fontFamily: fonts.bold,
-    fontSize: 15,
-    color: '#FFFFFF',
-  },
   exportBtn: {
-    marginTop: 6,
-    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    gap: 6,
+    backgroundColor: '#FFFFFF',
     borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: authTheme.cardBorder,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   exportText: {
     fontFamily: fonts.semiBold,
-    fontSize: 13,
-    color: '#FFFFFF',
+    fontSize: 12,
+    color: authTheme.brand,
   },
   filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   filterChip: {

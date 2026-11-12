@@ -64,7 +64,7 @@ export default function AuthLayout() {
   return (
     <View style={{ flex: 1, backgroundColor: '#F7F0E8' }}>
       <Image
-        source={require('../../assets/welcome/tokajo-get-started.jpg')}
+        source={require('../../assets/welcome/tokajo-get-started.png')}
         style={StyleSheet.absoluteFillObject}
         contentFit="cover"
         contentPosition="bottom"

@@ -13,6 +13,7 @@ import { KitchenOrderRinger } from '@/components/dashboard/KitchenOrderRinger';
 import { KitchenPushRouter } from '@/components/dashboard/KitchenPushRouter';
 import { PartnerLaunchHome } from '@/components/dashboard/PartnerLaunchHome';
 import { RestaurantPartnerTermsGuard } from '@/components/auth/RestaurantPartnerTermsGuard';
+import { RiderPartnerPolicyGuard } from '@/components/delivery/policy/RiderPartnerPolicyGuard';
 import { CallHost } from '@/components/call/CallHost';
 import { RiderLiveSync } from '@/components/delivery/RiderLiveSync';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
@@ -20,6 +21,7 @@ import {
   portalMismatchRedirect,
   resolvePostAuthRoute,
 } from '@/lib/navigation/post-auth';
+import { useRestaurantPartnerNameSync } from '@/lib/user/use-partner-greeting-name';
 import { useAuthStore } from '@/store/auth-store';
 
 type Gate = 'loading' | 'restaurant-setup' | 'delivery-setup' | 'ready';
@@ -45,6 +47,8 @@ export default function AppLayout() {
   const redirectingRef = useRef(false);
 
   const effectiveRole = user?.role ?? role;
+
+  useRestaurantPartnerNameSync();
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -262,14 +266,32 @@ export default function AppLayout() {
   const showBlockingLoader =
     !isHydrated || !token || gate === 'loading';
 
+  const onRestaurantSetup = segments.includes('restaurant-setup');
+  const onStaffInvite =
+    segments.includes('staff') && segments.includes('invite');
+  const onDeliverySetup =
+    segments.includes('delivery-setup')
+    || (segments.includes('delivery') && segments.includes('setup'));
+
+  /** Partner agreement — after account + outlet registration, when opening the kitchen home (not during setup). */
   const showRestaurantTermsGate =
-  Boolean(token)
+    Boolean(token)
     && effectiveRole === 'restaurant'
-    && (gate === 'ready' || gate === 'restaurant-setup');
+    && gate === 'ready'
+    && !onRestaurantSetup
+    && !onStaffInvite;
+
+  /** Rider onboarding policy — after profile signup, on home (blurred modal like restaurant). */
+  const showRiderPolicyGate =
+    Boolean(token)
+    && effectiveRole === 'delivery'
+    && gate === 'ready'
+    && !onDeliverySetup;
 
   return (
     <View style={{ flex: 1, backgroundColor: '#FFF7F2' }}>
       <RestaurantPartnerTermsGuard active={showRestaurantTermsGate} />
+      <RiderPartnerPolicyGuard active={showRiderPolicyGate} />
       {gate === 'ready' && effectiveRole === 'restaurant' ? (
         <>
           <RestaurantLiveSync />
@@ -295,7 +317,7 @@ export default function AppLayout() {
         screenOptions={{
           headerShown: false,
           animation: 'fade',
-          contentStyle: { backgroundColor: '#FFF7F2' },
+          contentStyle: { flex: 1, backgroundColor: '#FFF7F2' },
         }}
       />
       {showBlockingLoader ? (

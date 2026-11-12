@@ -1,3 +1,4 @@
+import { CUISINE_CATALOG_NAMES } from '@/lib/restaurant/cuisine-catalog';
 import type {
   RestaurantAddress,
   RestaurantLocation,
@@ -239,29 +240,8 @@ export const PRICE_RANGE_OPTIONS: { id: PriceRange; label: string }[] = [
   { id: 'fine_dining', label: 'Fine Dining' },
 ];
 
-export const CUISINE_OPTIONS = [
-  'North Indian',
-  'South Indian',
-  'Chinese',
-  'Italian',
-  'Mexican',
-  'Thai',
-  'Japanese',
-  'Continental',
-  'Mughlai',
-  'Punjabi',
-  'Biryani',
-  'Fast Food',
-  'Street Food',
-  'Pizza',
-  'Burger',
-  'Desserts',
-  'Beverages',
-  'Seafood',
-  'Mediterranean',
-  'Lebanese',
-  'Korean',
-] as const;
+/** Offline fallback — same list as `CUISINE_CATALOG_NAMES` / server seed. */
+export const CUISINE_OPTIONS = CUISINE_CATALOG_NAMES;
 
 export function emptyTimings(): RestaurantTimings {
   return WEEK_DAYS.reduce((acc, day) => {

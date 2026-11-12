@@ -13,6 +13,25 @@
       "env": {
         "EXPO_PUBLIC_APP_VARIANT": "restaurant",
         "EXPO_PUBLIC_API_URL": "https://api.tokajofoods.com",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyAZJHdq_NclJHp565sD60PSRrICLmUz0Gw",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyCGNMiXziFT1lB2AUOPFM12W96g7eYjLsM",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "tokajofoods.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "tokajofoods",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:548207254197:web:a3a928bc1db70959b87cfc",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "548207254197",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "tokajofoods.firebasestorage.app"
+      }
+    },
+    "development-delivery": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_APP_VARIANT": "delivery",
+        "EXPO_PUBLIC_API_URL": "https://api.tokajofoods.com",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyAZJHdq_NclJHp565sD60PSRrICLmUz0Gw",
         "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyCGNMiXziFT1lB2AUOPFM12W96g7eYjLsM",
         "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "tokajofoods.firebaseapp.com",
         "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "tokajofoods",

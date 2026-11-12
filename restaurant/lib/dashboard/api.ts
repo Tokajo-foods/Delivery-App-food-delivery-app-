@@ -1,9 +1,12 @@
 import { api } from '@/lib/api';
 import { restaurantAnalyticsApi } from '@/lib/analytics/api';
-import { trendInsight } from '@/lib/dashboard/format';
+import type { AnalyticsOverview, RevenueAnalytics } from '@/lib/analytics/types';
+import { computeTrendPercent, trendInsight } from '@/lib/dashboard/format';
 import type { DashboardData, OwnerOrder } from '@/lib/dashboard/types';
 import { restaurantOrderApi, getCachedRestaurantOrders } from '@/lib/order/owner-api';
 import { restaurantOwnerApi } from '@/lib/restaurant/api';
+import { restaurantEarningsApi } from '@/lib/restaurant/earnings-api';
+import type { RestaurantOwnerRestaurant } from '@/lib/restaurant/types';
 
 const RESTAURANT_BASE = '/api/v1/restaurant-service/restaurants';
 
@@ -57,6 +60,65 @@ async function getActivePromoCount(restaurantId: string): Promise<number> {
   }
 }
 
+/** Safe UI shell while stats load or analytics is temporarily unavailable. */
+export function dashboardShellFromRestaurant(
+  restaurant: Pick<RestaurantOwnerRestaurant, 'id' | 'name' | 'logoUrl' | 'address' | 'city'>,
+): DashboardData {
+  const insight = trendInsight(0);
+  const address = restaurant.address;
+  const city =
+    String(address?.city ?? restaurant.city ?? '').trim() || undefined;
+  return {
+    restaurantId: restaurant.id,
+    restaurantName: restaurant.name,
+    city,
+    logoUrl: restaurant.logoUrl,
+    insight: {
+      title: insight.title,
+      subtitle: insight.subtitle,
+      trendPercent: 0,
+    },
+    metrics: {
+      grossRevenue: null,
+      revenueTrendPercent: null,
+      yesterdayRevenue: null,
+      revenueBars: [],
+      revenueSeries: [],
+      totalOrders: null,
+      rating: null,
+      ratingMax: 5,
+      totalRatings: null,
+      avgDeliveryMinutes: null,
+      isOnline: false,
+    },
+    quickActions: {
+      activeOrders: 0,
+      menuItems: 0,
+      activePromos: 0,
+      totalReviews: 0,
+    },
+    pendingOrders: [],
+  };
+}
+
+async function loadAnalyticsOverview(
+  restaurantId: string,
+): Promise<AnalyticsOverview | null> {
+  try {
+    return await restaurantAnalyticsApi.getOverview(restaurantId);
+  } catch {
+    return null;
+  }
+}
+
+function todayNetFromWeekRevenue(revenue: RevenueAnalytics | null): number | null {
+  const points = revenue?.points ?? [];
+  if (!points.length) return null;
+  const last = points[points.length - 1];
+  const value = last?.revenue;
+  return value != null && Number.isFinite(value) ? value : null;
+}
+
 export const dashboardApi = {
   getDashboard: async (): Promise<DashboardData | null> => {
     const restaurant = await restaurantOwnerApi.getMyRestaurant();
@@ -69,15 +131,13 @@ export const dashboardApi = {
     const [
       analytics,
       revenue,
+      earningsSummary,
       menuItems,
       activePromos,
     ] = await Promise.all([
-      restaurantAnalyticsApi
-        .getOverview(restaurant.id)
-        .catch(() => null),
-      restaurantAnalyticsApi
-        .getRevenue(restaurant.id, 'week')
-        .catch(() => null),
+      loadAnalyticsOverview(restaurant.id),
+      restaurantAnalyticsApi.getRevenue(restaurant.id, 'week').catch(() => null),
+      restaurantEarningsApi.getSummary(restaurant.id).catch(() => null),
       getMenuItemCount(restaurant.id),
       getActivePromoCount(restaurant.id),
     ]);
@@ -97,10 +157,30 @@ export const dashboardApi = {
       'liveOrders',
     ]);
 
-    // Business snapshot: today's delivered sales + completed order count only.
-    const grossRevenue = analytics?.revenueToday ?? null;
+    // Today's net earnings: order analytics overview, else wallet (IST), else week chart today bar.
+    const grossRevenue =
+      (analytics != null && Number.isFinite(analytics.revenueToday)
+        ? analytics.revenueToday
+        : null) ??
+      (earningsSummary != null &&
+      Number.isFinite(earningsSummary.periods.today?.netEarnings)
+        ? earningsSummary.periods.today.netEarnings
+        : null) ??
+      todayNetFromWeekRevenue(revenue);
+
     const avgDeliveryMinutes = null;
-    const totalOrders = analytics?.ordersToday ?? null;
+
+    const totalOrders =
+      (analytics != null && Number.isFinite(analytics.ordersToday)
+        ? analytics.ordersToday
+        : null) ??
+      (earningsSummary != null &&
+      Number.isFinite(earningsSummary.periods.today?.deliveredOrders)
+        ? earningsSummary.periods.today.deliveredOrders
+        : earningsSummary != null &&
+            Number.isFinite(earningsSummary.periods.today?.orders)
+          ? earningsSummary.periods.today.orders
+          : null);
     const rating =
       analytics?.avgRating && analytics.avgRating > 0
         ? analytics.avgRating
@@ -119,7 +199,10 @@ export const dashboardApi = {
       }));
 
     const revenueBars = series.map((point) => point.value);
-    const insightCopy = trendInsight(0);
+    const lastBar = revenueBars[revenueBars.length - 1] ?? 0;
+    const prevBar = revenueBars[revenueBars.length - 2] ?? 0;
+    const trendPercent = computeTrendPercent(lastBar, prevBar);
+    const insightCopy = trendInsight(trendPercent);
     const activeOrders = Math.max(currentOrderCount, pendingOrders.length);
 
     const address = asRecord(record.address);
@@ -134,11 +217,11 @@ export const dashboardApi = {
       insight: {
         title: insightCopy.title,
         subtitle: insightCopy.subtitle,
-        trendPercent: 0,
+        trendPercent,
       },
       metrics: {
         grossRevenue,
-        revenueTrendPercent: null,
+        revenueTrendPercent: revenueBars.length >= 2 ? trendPercent : null,
         yesterdayRevenue: null,
         revenueBars,
         revenueSeries: series,

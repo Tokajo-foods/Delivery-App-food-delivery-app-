@@ -20,8 +20,8 @@ export const analyticsKeys = {
     [...analyticsKeys.restaurant(restaurantId), 'overview'] as const,
   revenue: (restaurantId: string, period: AnalyticsPeriod) =>
     [...analyticsKeys.restaurant(restaurantId), 'revenue', period] as const,
-  topItems: (restaurantId: string, limit: number) =>
-    [...analyticsKeys.restaurant(restaurantId), 'top-items', limit] as const,
+  topItems: (restaurantId: string, limit: number, from: string, to: string) =>
+    [...analyticsKeys.restaurant(restaurantId), 'top-items', limit, from, to] as const,
   orders: (restaurantId: string, from: string, to: string) =>
     [...analyticsKeys.restaurant(restaurantId), 'orders', from, to] as const,
   cancellations: (restaurantId: string, from: string, to: string) =>
@@ -73,6 +73,7 @@ export function useAnalyticsOverview() {
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     placeholderData: (previous) => previous,
+    retry: 1,
   });
 
   return {
@@ -100,15 +101,20 @@ export function useAnalyticsRevenue(period: AnalyticsPeriod) {
   });
 }
 
-export function useAnalyticsTopItems(limit: number) {
+export function useAnalyticsTopItems(limit: number, period: AnalyticsPeriod) {
   const restaurantQuery = useMyRestaurantId();
   const restaurantId = restaurantQuery.data?.id ?? '';
   const isActive = useAppIsActive();
+  const range = resolveAnalyticsRange(period);
 
   return useQuery({
-    queryKey: analyticsKeys.topItems(restaurantId, limit),
+    queryKey: analyticsKeys.topItems(restaurantId, limit, range.from, range.to),
     enabled: Boolean(restaurantId),
-    queryFn: () => restaurantAnalyticsApi.getTopItems(restaurantId, limit),
+    queryFn: () =>
+      restaurantAnalyticsApi.getTopItems(restaurantId, limit, {
+        from: range.from,
+        to: range.to,
+      }),
     staleTime: 45_000,
     refetchInterval: liveRefetchInterval(LIVE_INTERVALS.analytics, isActive),
     refetchIntervalInBackground: false,

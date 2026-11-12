@@ -1,7 +1,11 @@
-import { Lock, Mail, User } from 'lucide-react-native';
-import { Text, View } from 'react-native';
+import { CheckCircle2, Lock, Mail, User } from 'lucide-react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { AuthField } from '@/components/auth/AuthField';
+import { OtpCodeInput } from '@/components/auth/OtpCodeInput';
+import { PrimaryButton } from '@/components/auth/PrimaryButton';
+import type { SignupEmailOtp } from '@/components/auth/useSignupEmailOtp';
+import { theme } from '@/constants/theme';
 import {
   PASSWORD_RULE_COPY,
   isStrongSignupPassword,
@@ -51,6 +55,7 @@ type Props = {
   errors: SignupDetailErrors;
   onChange: (patch: Partial<SignupDetails>) => void;
   disabled?: boolean;
+  emailOtp?: SignupEmailOtp;
 };
 
 export function PhoneSignupDetailsForm({
@@ -58,7 +63,11 @@ export function PhoneSignupDetailsForm({
   errors,
   onChange,
   disabled,
+  emailOtp,
 }: Props) {
+  const email = values.email.trim();
+  const showEmailVerify = Boolean(emailOtp?.shouldShowVerify(values.email));
+
   return (
     <View>
       <View className="flex-row gap-3">
@@ -93,12 +102,72 @@ export function PhoneSignupDetailsForm({
         autofill="email"
         value={values.email}
         editable={!disabled}
-        onChangeText={(email) => onChange({ email })}
+        onChangeText={(nextEmail) => {
+          emailOtp?.onEmailEdited(nextEmail);
+          onChange({ email: nextEmail });
+        }}
         errorText={errors.email}
       />
-      <Text className="-mt-2 mb-4 text-xs text-secondary-light">
-        Use the email already on this number, or enter a different one. Leave it blank to keep the current email.
+      <Text className="-mt-2 mb-3 text-xs text-secondary">
+        Use the email already on your phone number, or enter a different one. Leave blank to keep the current email.
       </Text>
+      {emailOtp?.isVerifiedEmail(values.email) ? (
+        <View className="mb-4 flex-row items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-2">
+          <CheckCircle2 color={theme.success} size={14} />
+          <Text className="text-xs font-semibold text-green-700">Email verified</Text>
+        </View>
+      ) : null}
+      {showEmailVerify ? (
+        <View className="mb-4">
+          <Text className="mb-2 text-xs text-secondary">
+            Verify this email — we’ll send a 6-digit code before you create your account.
+          </Text>
+          <PrimaryButton
+            label={
+              emailOtp!.cooldownActive
+                ? `Resend code in ${emailOtp!.cooldownSeconds}s`
+                : emailOtp!.sentTo === email.trim().toLowerCase()
+                  ? 'Resend email code'
+                  : 'Send email verification code'
+            }
+            icon={Mail}
+            variant="outline"
+            onPress={() => void emailOtp!.sendCode(email)}
+            loading={emailOtp!.sending}
+            disabled={disabled || emailOtp!.cooldownActive || emailOtp!.sending}
+          />
+          {emailOtp!.sendError ? (
+            <Text className="mt-2 text-xs text-red-600">{emailOtp!.sendError}</Text>
+          ) : null}
+          {emailOtp!.sentTo === email.trim().toLowerCase() ? (
+            <View className="mt-3">
+              <OtpCodeInput
+                value={emailOtp!.emailOtp}
+                onChange={emailOtp!.setEmailOtp}
+                onComplete={(code) => void emailOtp!.confirmCode(email, code)}
+                editable={!disabled && !emailOtp!.confirming}
+                label="Email verification code"
+                errorText={emailOtp!.verifyError ?? undefined}
+              />
+              <Pressable
+                onPress={() => void emailOtp!.confirmCode(email)}
+                disabled={disabled || emailOtp!.confirming || emailOtp!.emailOtp.length !== 6}
+                className="mt-2"
+              >
+                <Text
+                  className={`text-center text-xs font-bold ${
+                    disabled || emailOtp!.emailOtp.length !== 6
+                      ? 'text-secondary-light'
+                      : 'text-primary'
+                  }`}
+                >
+                  {emailOtp!.confirming ? 'Verifying…' : 'Confirm email code'}
+                </Text>
+              </Pressable>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
       <AuthField
         label="Password *"
         icon={Lock}

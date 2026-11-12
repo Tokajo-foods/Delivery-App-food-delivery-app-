@@ -27,6 +27,8 @@ import type {
 import { lockedPartnerRole, wrongAppMessage } from '@/lib/app-variant';
 import { clearRestaurantSetupFlag, clearDeliveryPartnerSetupFlag } from '@/lib/navigation/post-auth';
 import { getApiErrorCode, PartnerApiError } from '@/lib/errors';
+import { clearPartnerSignupNameForUser } from '@/lib/auth/partner-signup-name-storage';
+import { asyncStoragePersister, queryClient } from '@/lib/query-client';
 import { getStoredSessionCookies } from '@/lib/session-cookies';
 
 /** Logout is an explicit stop. Swiping the app away must not call this. */
@@ -39,6 +41,11 @@ async function stopBackgroundGps(): Promise<void> {
   } catch {
     // Expo Go has no background task.
   }
+}
+
+function purgeInMemoryPartnerCaches() {
+  queryClient.cancelQueries();
+  queryClient.clear();
 }
 
 /** Must run before the session is revoked; lazy import avoids an auth-store ↔ push-api cycle. */
@@ -375,39 +382,50 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
-    set({ isLoading: true });
-    await unregisterPushBeforeLogout();
-    try {
-      await authApi.logout();
-    } catch {
-      // Clear local session even if server logout fails
-    } finally {
+    await get().clearSession();
+    void (async () => {
+      await unregisterPushBeforeLogout();
+      try {
+        await authApi.logout();
+      } catch {
+        // Local session already cleared.
+      }
       await stopBackgroundGps();
-      await get().clearSession();
-      set({ isLoading: false });
-    }
+    })();
   },
 
   logoutAll: async () => {
-    set({ isLoading: true });
-    await unregisterPushBeforeLogout();
-    try {
-      await authApi.logoutAll();
-    } catch {
-      // Clear local session even if server logout fails
-    } finally {
+    await get().clearSession();
+    void (async () => {
+      await unregisterPushBeforeLogout();
+      try {
+        await authApi.logoutAll();
+      } catch {
+        // Local session already cleared.
+      }
       await stopBackgroundGps();
-      await get().clearSession();
-      set({ isLoading: false });
-    }
+    })();
   },
 
   clearSession: async () => {
-    await clearAuthStorage();
-    await clearApiSession();
-    await clearRestaurantSetupFlag();
-    await clearDeliveryPartnerSetupFlag();
-    set({ user: null, token: null });
+    const userId = get().user?.id;
+    const portalRole = get().role;
+
+    purgeInMemoryPartnerCaches();
+    set({ user: null, token: null, isLoading: false });
+
+    await Promise.allSettled([
+      clearAuthStorage(),
+      clearApiSession(),
+      clearRestaurantSetupFlag(),
+      clearDeliveryPartnerSetupFlag(),
+      asyncStoragePersister.removeClient(),
+      userId ? clearPartnerSignupNameForUser(userId) : Promise.resolve(),
+    ]);
+
+    const locked = lockedPartnerRole();
+    const storedRole = await getStoredRole();
+    set({ role: locked ?? storedRole ?? portalRole ?? 'restaurant' });
   },
 
   patchUser: async (partial) => {

@@ -1,7 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Bell, MapPin } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
+
+import { BundledImage } from '@/components/media/BundledImage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { styles } from '@/components/delivery/home/home-screen-styles';
@@ -84,10 +86,10 @@ export function HomeHeader({
       style={[styles.header, { paddingTop: insets.top + 8 }]}
     >
       <View style={styles.logoRow}>
-        <Image
-          source={require('../../../assets/tokajo-wordmark.webp')}
+        <BundledImage
+          source={require('../../../assets/tokajo-wordmark.png')}
           style={styles.logo}
-          resizeMode="contain"
+          contentFit="contain"
         />
       </View>
       <View style={styles.headerRow}>

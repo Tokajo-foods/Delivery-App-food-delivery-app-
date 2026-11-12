@@ -122,7 +122,7 @@ module.exports = ({ config }) => {
       : config.icon;
   // Launcher masks keep only the centre 66%; these copies hold the logo inside that safe zone.
   const adaptiveIcon = deliveryApp
-    ? { foregroundImage: './assets/tokajo-delivery-adaptive.png', backgroundColor: '#FDD803' }
+    ? { foregroundImage: './assets/tokajo-delivery-adaptive.png', backgroundColor: '#FBBB02' }
     : restaurantApp
       ? { foregroundImage: './assets/tokajo-restaurant-adaptive.png', backgroundColor: '#FDD501' }
       : { foregroundImage: appIcon, backgroundColor: '#FFD100' };

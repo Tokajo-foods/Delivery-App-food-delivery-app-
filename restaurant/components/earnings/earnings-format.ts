@@ -1,4 +1,9 @@
-import type { EarningsPeriod, EarningsSummary, PassbookEntry } from '@/lib/restaurant/earnings-types';
+import type {
+  EarningsDay,
+  EarningsPeriod,
+  EarningsSummary,
+  PassbookEntry,
+} from '@/lib/restaurant/earnings-types';
 
 const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -19,6 +24,78 @@ function istWall(iso: string | Date): Date | null {
 
 export function istDateKey(iso: string | Date): string {
   return istWall(iso)?.toISOString().slice(0, 10) ?? '';
+}
+
+/** API may send YYYY-MM-DD (daily rows) or ISO instants (period bounds). */
+export function apiIstDateKey(value: string): string {
+  const trimmed = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  return istDateKey(trimmed);
+}
+
+export function istDateKeysInclusive(fromKey: string, toKey: string): string[] {
+  if (!fromKey || !toKey || fromKey > toKey) return [];
+  const keys: string[] = [];
+  let cursor = Date.parse(`${fromKey}T00:00:00Z`);
+  const end = Date.parse(`${toKey}T00:00:00Z`);
+  if (Number.isNaN(cursor) || Number.isNaN(end)) return [];
+  for (let i = 0; i < 62; i += 1) {
+    const key = new Date(cursor).toISOString().slice(0, 10);
+    keys.push(key);
+    if (key >= toKey) break;
+    cursor += 86_400_000;
+  }
+  return keys;
+}
+
+/** One bar per IST calendar day in range; missing API days → ₹0. */
+export function buildDailySeries(
+  daily: EarningsDay[],
+  fromKey: string,
+  toKey: string
+): EarningsDay[] {
+  const byDate = new Map(daily.map((row) => [row.date, row]));
+  return istDateKeysInclusive(fromKey, toKey).map((date) => {
+    const row = byDate.get(date);
+    return {
+      date,
+      orders: row?.orders ?? 0,
+      netEarnings: row?.netEarnings ?? 0,
+    };
+  });
+}
+
+/** IST Monday → today (same rules as payment-service `istPeriodRange('week')`). */
+export function istWeekRangeKeys(now = new Date()): { from: string; to: string } {
+  const to = istDateKey(now);
+  const wall = istWall(now);
+  if (!wall) return { from: to, to };
+  const y = wall.getUTCFullYear();
+  const m = wall.getUTCMonth();
+  const d = wall.getUTCDate();
+  const sinceMonday = (wall.getUTCDay() + 6) % 7;
+  const from = new Date(Date.UTC(y, m, d - sinceMonday)).toISOString().slice(0, 10);
+  return { from, to };
+}
+
+/** IST 1st → today. */
+export function istMonthRangeKeys(now = new Date()): { from: string; to: string } {
+  const to = istDateKey(now);
+  const wall = istWall(now);
+  if (!wall) return { from: to, to };
+  const from = new Date(Date.UTC(wall.getUTCFullYear(), wall.getUTCMonth(), 1))
+    .toISOString()
+    .slice(0, 10);
+  return { from, to };
+}
+
+export function buildScopedDailySeries(
+  daily: EarningsDay[],
+  scope: 'week' | 'month',
+  now = new Date()
+): EarningsDay[] {
+  const range = scope === 'month' ? istMonthRangeKeys(now) : istWeekRangeKeys(now);
+  return buildDailySeries(daily, range.from, range.to);
 }
 
 export function formatIstTime(iso: string | null): string {
@@ -52,10 +129,13 @@ export function periodRangeLabel(period: EarningsPeriod, fromIso: string): strin
   return `${shortDate(w)} – today · IST`;
 }
 
-export function dayBarLabel(dateKey: string, period: EarningsPeriod): string {
-  const w = new Date(`${dateKey}T00:00:00Z`);
-  if (Number.isNaN(w.getTime())) return '';
-  return period === 'month' ? String(w.getUTCDate()) : WEEKDAYS[w.getUTCDay()].slice(0, 1);
+export function dayBarLabel(dateKey: string, chartScope: 'week' | 'month'): string {
+  const parts = dateKey.split('-').map(Number);
+  if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return '';
+  const [, m, d] = parts;
+  if (chartScope === 'month') return String(d);
+  const weekday = new Date(Date.UTC(parts[0], m - 1, d)).getUTCDay();
+  return WEEKDAYS[weekday].slice(0, 3);
 }
 
 export const DELTA_LABELS: Record<EarningsPeriod, string> = {
@@ -73,7 +153,7 @@ function shiftDay(dateKey: string, days: number): string {
  * Null when the daily series does not reach back far enough or the prior window is ₹0.
  */
 export function periodDeltaPercent(summary: EarningsSummary, period: EarningsPeriod): number | null {
-  const from = istDateKey(summary.periods[period].from);
+  const from = apiIstDateKey(summary.periods[period].from);
   const today = istDateKey(new Date());
   if (!from || !summary.daily.length) return null;
   const length = Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000) + 1;

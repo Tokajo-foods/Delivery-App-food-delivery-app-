@@ -34,6 +34,8 @@ type AuthFieldProps = TextInputProps & {
   icon?: LucideIcon;
   secure?: boolean;
   errorText?: string;
+  /** Drop default bottom margin (e.g. fields in a horizontal row). */
+  noMargin?: boolean;
   /** Right-aligned element on the label row (e.g. a "Forgot?" link). */
   labelAccessory?: ReactNode;
   /** Password-manager / autofill hint for restaurant + delivery auth. */
@@ -138,6 +140,7 @@ export function AuthField({
   icon: Icon,
   secure,
   errorText,
+  noMargin,
   labelAccessory,
   autofill,
   onFocus,
@@ -151,7 +154,7 @@ export function AuthField({
   const managerProps = useMemo(() => autofillProps(autofill), [autofill]);
 
   return (
-    <View className="mb-[16.3px]">
+    <View className={noMargin ? '' : 'mb-[16.3px]'}>
       <View className="mb-[5.7px] flex-row items-center justify-between">
         <Text className="text-sm font-semibold text-secondary">{label}</Text>
         {labelAccessory}

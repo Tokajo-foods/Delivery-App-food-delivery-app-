@@ -43,6 +43,7 @@ import {
 } from '@/lib/analytics/hooks';
 import type { AnalyticsPeriod, OrdersStatusPoint } from '@/lib/analytics/types';
 import { formatCurrency } from '@/lib/dashboard/format';
+import { useEarningsSummary } from '@/lib/restaurant/earnings-hooks';
 
 const PERIODS: { key: AnalyticsPeriod; label: string }[] = [
   { key: 'day', label: 'Today' },
@@ -168,8 +169,9 @@ export function AnalyticsManager() {
   const [exporting, setExporting] = useState(false);
 
   const overview = useAnalyticsOverview();
+  const earningsSummary = useEarningsSummary();
   const revenue = useAnalyticsRevenue(period);
-  const topItems = useAnalyticsTopItems(topLimit);
+  const topItems = useAnalyticsTopItems(topLimit, period);
   const orders = useAnalyticsOrders(period);
   const cancellations = useAnalyticsCancellations(period);
   const range = resolveAnalyticsRange(period);
@@ -190,19 +192,38 @@ export function AnalyticsManager() {
     (revenue.isLoading && !revenue.data) ||
     (orders.isLoading && !orders.data);
 
+  const todayOrders =
+    overview.data != null && Number.isFinite(overview.data.ordersToday)
+      ? overview.data.ordersToday
+      : earningsSummary.data != null &&
+          Number.isFinite(earningsSummary.data.periods.today?.deliveredOrders)
+        ? earningsSummary.data.periods.today.deliveredOrders
+        : earningsSummary.data != null &&
+            Number.isFinite(earningsSummary.data.periods.today?.orders)
+          ? earningsSummary.data.periods.today.orders
+          : null;
+
+  const todayNet =
+    overview.data != null && Number.isFinite(overview.data.revenueToday)
+      ? overview.data.revenueToday
+      : earningsSummary.data != null &&
+          Number.isFinite(earningsSummary.data.periods.today?.netEarnings)
+        ? earningsSummary.data.periods.today.netEarnings
+        : null;
+
   const metricCards = [
     {
       key: 'today-orders',
       label: "Today's orders",
-      value: overview.data?.ordersToday ?? null,
+      value: todayOrders,
       format: 'number' as const,
       icon: ShoppingCart,
       tint: '#FFF1F2',
     },
     {
       key: 'today-revenue',
-      label: "Today's sales",
-      value: overview.data?.revenueToday ?? null,
+      label: "Today's net earnings",
+      value: todayNet,
       format: 'money' as const,
       icon: Wallet,
       tint: '#FFF7ED',
@@ -217,7 +238,7 @@ export function AnalyticsManager() {
     },
     {
       key: 'revenue',
-      label: 'All-time sales',
+      label: 'All-time net earnings',
       value: overview.data?.totalRevenue ?? null,
       format: 'money' as const,
       icon: Wallet,
@@ -242,6 +263,12 @@ export function AnalyticsManager() {
   ];
 
   const revenuePoints = revenue.data?.points ?? [];
+  const periodNetTotal =
+    revenue.data?.totalRevenue ??
+    (revenuePoints.length > 0
+      ? revenuePoints.reduce((sum, point) => sum + point.revenue, 0)
+      : null);
+  const periodNetFromOrders = orders.data?.totals.netEarnings;
   const hasRevenueTrend = revenuePoints.some(
     (point) => point.revenue > 0 || point.orders > 0
   );
@@ -384,6 +411,12 @@ export function AnalyticsManager() {
           <Text style={styles.rangeHint}>{rangeLabel}</Text>
         </View>
 
+        <Text style={styles.dataNote}>
+          Money figures are your net food earnings after platform commission (same rules as
+          Earnings). Order charts below count orders by placement time; payout balance lives
+          under Earnings → Wallet.
+        </Text>
+
         {bootLoading ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color={authTheme.brand} size="large" />
@@ -456,13 +489,16 @@ export function AnalyticsManager() {
 
         {!bootLoading ? (
           <View style={styles.panel}>
-            <Text style={styles.panelTitle}>Revenue & orders</Text>
+            <Text style={styles.panelTitle}>Net earnings trend</Text>
             <Text style={styles.panelCaption}>
               {period === 'day'
-                ? 'Last 24 hours, by hour'
+                ? 'Today (IST), by hour earned'
                 : period === 'week'
-                  ? 'Last 7 days'
-                  : 'Last 30 days'}
+                  ? 'Last 7 calendar days (IST)'
+                  : 'Last 30 calendar days (IST)'}
+              {periodNetTotal != null && Number.isFinite(periodNetTotal)
+                ? ` · Total ${formatCurrency(periodNetTotal)}`
+                : ''}
             </Text>
             <View style={styles.chartBox} onLayout={onChartLayout}>
               {revenue.isError ? (
@@ -492,8 +528,11 @@ export function AnalyticsManager() {
                 <Text style={styles.panelTitle}>Orders by hour</Text>
                 <Text style={styles.panelCaption}>
                   {peakHour.count > 0
-                    ? `Peak ${peakHour.hour % 12 === 0 ? 12 : peakHour.hour % 12}${peakHour.hour >= 12 ? 'pm' : 'am'} · ${peakHour.count} orders`
+                    ? `Peak ${peakHour.hour % 12 === 0 ? 12 : peakHour.hour % 12}${peakHour.hour >= 12 ? 'pm' : 'am'} · ${peakHour.count} orders placed`
                     : 'When customers place orders'}
+                  {periodNetFromOrders != null && periodNetFromOrders > 0
+                    ? ` · Net earned ${formatCurrency(periodNetFromOrders)}`
+                    : ''}
                 </Text>
               </View>
             </View>
@@ -645,7 +684,7 @@ export function AnalyticsManager() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.panelTitle}>Best sellers</Text>
                 <Text style={styles.panelCaption}>
-                  All-time from your menu (not filtered by date)
+                  Sold in selected period ({range.from} – {range.to})
                 </Text>
               </View>
               <View style={styles.limitGroup}>
@@ -766,6 +805,18 @@ const styles = StyleSheet.create({
   periodRow: {
     marginTop: 16,
     gap: 8,
+  },
+  dataNote: {
+    color: authTheme.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+    fontFamily: fonts.medium,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: authTheme.cardBorder,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   periodGroup: {
     flexDirection: 'row',

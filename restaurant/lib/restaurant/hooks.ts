@@ -8,7 +8,7 @@ import {
   useAppIsActive,
 } from '@/lib/live-query';
 import { restaurantOwnerApi } from '@/lib/restaurant/api';
-import { CUISINE_OPTIONS } from '@/lib/restaurant/settings-types';
+import { CUISINE_CATALOG_NAMES } from '@/lib/restaurant/cuisine-catalog';
 import type { HolidayRow, PauseReasonCode, SpecialHoursDay } from '@/lib/restaurant/types';
 
 export const restaurantOutletKeys = {
@@ -66,7 +66,7 @@ export function useCuisineCatalog(enabled = true) {
   const names =
     query.data && query.data.length
       ? query.data.map((row) => row.name)
-      : [...CUISINE_OPTIONS];
+      : [...CUISINE_CATALOG_NAMES];
 
   return {
     ...query,

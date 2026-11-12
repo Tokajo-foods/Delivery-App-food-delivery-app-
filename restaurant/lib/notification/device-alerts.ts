@@ -110,7 +110,10 @@ export async function ensureDeviceNotificationReady(): Promise<boolean> {
     }
 
     const current = await Notifications.getPermissionsAsync();
-    return current.status === 'granted';
+    if (current.status === 'granted') return true;
+    if (current.canAskAgain === false) return false;
+    const next = await Notifications.requestPermissionsAsync();
+    return next.status === 'granted';
   } catch {
     return false;
   }

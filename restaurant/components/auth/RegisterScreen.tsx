@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { AuthBanner } from '@/components/auth/AuthBanner';
+import { AuthBriefToast } from '@/components/auth/AuthBriefToast';
 import { LegalFooter } from '@/components/auth/AuthExtras';
 import { AuthLoadingScreen } from '@/components/auth/AuthLoadingScreen';
 import { AuthShell } from '@/components/auth/AuthShell';
@@ -14,8 +15,55 @@ import { formatAuthError } from '@/lib/auth/auth-error-copy';
 import { applyPhoneAuthSession } from '@/lib/auth/phone-session';
 import type { PartnerRole } from '@/lib/auth/types';
 import { markFreshRiderSignup } from '@/lib/delivery-partner/fresh-signup';
+import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
 import { resolvePostAuthRoute } from '@/lib/navigation/post-auth';
+import { bindPartnerSignupNameToUser } from '@/lib/auth/partner-signup-name-storage';
+import {
+  needsRestaurantPartnerNameSync,
+  syncRestaurantPartnerNameFromRecord,
+} from '@/lib/user/partner-signup-sync';
+import { userAccountApi } from '@/lib/user/account-api';
 import { useAuthStore } from '@/store/auth-store';
+
+async function alignPartnerSignupName(details: {
+  firstName: string;
+  lastName: string;
+}): Promise<void> {
+  const firstName = details.firstName.trim();
+  const lastName = details.lastName.trim();
+  if (firstName.length < 2) return;
+
+  const sessionUser = useAuthStore.getState().user;
+  if (!sessionUser?.id) return;
+
+  await bindPartnerSignupNameToUser(sessionUser.id, sessionUser.phone, {
+    firstName,
+    lastName,
+  });
+
+  try {
+    const me = await userAccountApi.getMe();
+    if (needsRestaurantPartnerNameSync({ firstName, lastName }, me)) {
+      await syncRestaurantPartnerNameFromRecord(
+        { firstName, lastName },
+        sessionUser.id,
+        sessionUser.phone,
+      );
+      return;
+    }
+    await useAuthStore.getState().patchUser({
+      firstName: me.firstName,
+      lastName: me.lastName,
+      partnerSignupNameRestaurant: me.partnerSignupNameRestaurant,
+    });
+  } catch {
+    await syncRestaurantPartnerNameFromRecord(
+      { firstName, lastName },
+      sessionUser.id,
+      sessionUser.phone,
+    );
+  }
+}
 
 function PartnerPhoneSignup({
   role,
@@ -31,13 +79,37 @@ function PartnerPhoneSignup({
   const router = useRouter();
   const signup = usePhoneSignup({ role, initialPhone });
   const [handoff, setHandoff] = useState<string | null>(null);
+  const [successToast, setSuccessToast] = useState<{
+    title: string;
+    subtitle?: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const DELIVERY_TOAST_MS = 2600;
+
   const create = async () => {
     setError(null);
     const result = await signup.submit();
     if (!result) return;
     try {
       const linked = result.linkedExistingAccount;
+
+      if (role === 'delivery') {
+        setSuccessToast({
+          title: linked ? 'Delivery access added' : 'Your account has been created',
+          subtitle: linked
+            ? 'Continue with your rider profile.'
+            : 'Next, complete your rider profile.',
+        });
+        markFreshRiderSignup(inviteToken);
+        await applyPhoneAuthSession(result, role);
+        await alignPartnerSignupName(signup.details);
+        await new Promise((resolve) => setTimeout(resolve, DELIVERY_TOAST_MS));
+        setSuccessToast(null);
+        router.replace(DELIVERY_ROUTES.setup);
+        return;
+      }
+
       setHandoff(
         linked
           ? `This number already has a TOKAJO account. Access was added.${
@@ -46,11 +118,12 @@ function PartnerPhoneSignup({
           : 'Account created. Taking you in…'
       );
       await new Promise((resolve) => setTimeout(resolve, linked ? 2200 : 420));
-      if (role === 'delivery') markFreshRiderSignup(inviteToken);
       await applyPhoneAuthSession(result, role);
+      await alignPartnerSignupName(signup.details);
       router.replace(await resolvePostAuthRoute(role));
     } catch (err) {
       setHandoff(null);
+      setSuccessToast(null);
       setError(formatAuthError(err, 'Could not open your new account. Sign in to continue.'));
     }
   };
@@ -59,6 +132,11 @@ function PartnerPhoneSignup({
 
   return (
     <>
+      <AuthBriefToast
+        visible={Boolean(successToast)}
+        title={successToast?.title ?? ''}
+        subtitle={successToast?.subtitle}
+      />
       {!inviteToken ? (
         <RoleSelector value={role} onChange={setRole} disabled={signup.submitting} />
       ) : null}

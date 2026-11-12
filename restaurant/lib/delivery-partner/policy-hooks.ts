@@ -12,9 +12,11 @@ export function useRiderPolicyStatus(enabled = true) {
     queryKey: riderPolicyKeys.status(),
     queryFn: () => riderPolicyApi.getStatus(),
     enabled,
-    staleTime: 5 * 60_000,
+    staleTime: 30_000,
     gcTime: 30 * 60_000,
     retry: 1,
+    refetchOnMount: 'always',
+    refetchOnReconnect: true,
     placeholderData: (previous) => previous,
   });
 }
@@ -27,4 +29,9 @@ export function useAcceptRiderPolicy() {
       queryClient.setQueryData(riderPolicyKeys.status(), status);
     },
   });
+}
+
+export function useInvalidateRiderPolicy() {
+  const client = useQueryClient();
+  return () => client.invalidateQueries({ queryKey: riderPolicyKeys.status() });
 }

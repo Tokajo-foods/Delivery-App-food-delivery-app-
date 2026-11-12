@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const HERO = require('../../assets/welcome/tokajo-get-started.jpg');
+const HERO = require('../../assets/welcome/tokajo-get-started.png');
 
 type Props = {
   onGetStarted?: () => void;

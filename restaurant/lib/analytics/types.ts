@@ -60,7 +60,13 @@ export type OrdersAnalytics = {
   timezone: string;
   byHour: OrdersHourPoint[];
   byStatus: OrdersStatusPoint[];
-  totals: { orders: number; revenue: number };
+  totals: {
+    orders: number;
+    /** Customer order total (GMV) for orders placed in range. */
+    revenue: number;
+    netEarnings: number;
+    earnedOrders: number;
+  };
 };
 
 export type CancellationTotals = {

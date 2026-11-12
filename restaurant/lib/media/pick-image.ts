@@ -1,6 +1,8 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Platform } from 'react-native';
 
+import { ensureAppPermission } from '@/lib/permissions/ensure-permission';
+
 /**
  * Android's CropImageContract crashes the whole app when the crop URI is null
  * (cancel / OEM quirks). Keep in-picker crop on iOS only.
@@ -21,6 +23,12 @@ type LibraryOpts = {
 export async function launchLibraryImage(
   opts: LibraryOpts = {}
 ): Promise<ImagePicker.ImagePickerResult> {
+  if (Platform.OS !== 'web') {
+    const ok = await ensureAppPermission('photos');
+    if (!ok) {
+      return { canceled: true, assets: [] };
+    }
+  }
   const {
     aspect,
     quality = 0.85,
@@ -43,6 +51,12 @@ export async function launchLibraryImage(
 export async function launchCameraImage(
   opts: LibraryOpts = {}
 ): Promise<ImagePicker.ImagePickerResult> {
+  if (Platform.OS !== 'web') {
+    const ok = await ensureAppPermission('camera');
+    if (!ok) {
+      return { canceled: true, assets: [] };
+    }
+  }
   const { aspect, quality = 0.85, allowsEditing = true } = opts;
 
   return ImagePicker.launchCameraAsync({

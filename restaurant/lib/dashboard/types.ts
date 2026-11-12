@@ -78,7 +78,7 @@ export type DashboardRevenueBar = {
 };
 
 export type DashboardMetrics = {
-  /** From analytics overview: totalRevenue */
+  /** From analytics overview: revenueToday (net after commission). */
   grossRevenue: number | null;
   revenueTrendPercent: number | null;
   yesterdayRevenue: number | null;

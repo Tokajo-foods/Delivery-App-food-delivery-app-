@@ -2,7 +2,9 @@ export type PermissionId =
   | 'notifications'
   | 'microphone'
   | 'location'
-  | 'locationBackground';
+  | 'locationBackground'
+  | 'camera'
+  | 'photos';
 
 export type PermissionStatus = 'granted' | 'denied' | 'undetermined';
 

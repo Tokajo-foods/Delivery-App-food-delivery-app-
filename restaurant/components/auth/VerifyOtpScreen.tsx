@@ -16,9 +16,15 @@ import { formatAuthError } from '@/lib/auth/auth-error-copy';
 import { phoneAuthApi } from '@/lib/auth/phone-auth-api';
 import { precheckPhone } from '@/lib/auth/phone-precheck';
 import { applyPhoneAuthSession } from '@/lib/auth/phone-session';
+import { loadPartnerSignupName } from '@/lib/auth/partner-signup-name-storage';
 import { PARTNER_ROLES, type PartnerRole } from '@/lib/auth/types';
 import { getApiErrorCode } from '@/lib/errors';
 import { resolvePostAuthRoute } from '@/lib/navigation/post-auth';
+import {
+  needsRestaurantPartnerNameSync,
+  syncRestaurantPartnerNameFromRecord,
+} from '@/lib/user/partner-signup-sync';
+import { userAccountApi } from '@/lib/user/account-api';
 import { useAuthStore } from '@/store/auth-store';
 
 const RESTART_CODES = new Set([
@@ -91,6 +97,23 @@ export function VerifyOtpScreen() {
         phone: verified.phone,
       });
       await applyPhoneAuthSession(result, role);
+      if (role === 'restaurant') {
+        const sessionUser = useAuthStore.getState().user;
+        const local = await loadPartnerSignupName(
+          sessionUser?.id,
+          verified.phone ?? sessionUser?.phone,
+        );
+        if (local && sessionUser?.id) {
+          const me = await userAccountApi.getMe().catch(() => null);
+          if (!me || needsRestaurantPartnerNameSync(local, me)) {
+            await syncRestaurantPartnerNameFromRecord(
+              local,
+              sessionUser.id,
+              verified.phone ?? sessionUser.phone,
+            );
+          }
+        }
+      }
       setRedirecting(true);
       const target = await resolvePostAuthRoute(role);
       router.replace(target);

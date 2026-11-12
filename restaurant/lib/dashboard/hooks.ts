@@ -24,7 +24,7 @@ export function useDashboardStats(enabled = true) {
     refetchInterval: liveRefetchInterval(LIVE_INTERVALS.dashboard, isActive),
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
-    retry: false,
+    retry: 1,
     placeholderData: (previous) => previous,
   });
 }

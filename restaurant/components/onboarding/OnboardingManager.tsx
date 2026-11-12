@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { PrimaryButton } from '@/components/auth/PrimaryButton';
 import { RestaurantPageHeader } from '@/components/dashboard/RestaurantPageHeader';
 import { KycDocumentsAccordion } from '@/components/onboarding/KycDocumentsAccordion';
 import { type KycExpandKey } from '@/components/onboarding/KycExpandPanels';
@@ -21,7 +20,6 @@ import { onboardingStyles as styles } from '@/components/onboarding/onboarding-s
 import { authTheme } from '@/constants/auth-theme';
 import { getApiErrorMessage } from '@/lib/errors';
 import { useMyRestaurantId } from '@/lib/order/hooks';
-import { isListingLive } from '@/lib/restaurant/listing-status';
 import {
   useIfscLookup,
   useOnboardingDocuments,
@@ -57,8 +55,6 @@ export function OnboardingManager() {
   const status = statusQuery.data;
   const docs = docsQuery.data;
   const bank = bankQuery.data;
-  const listingLive = isListingLive(status?.listingStatus);
-
   const setPicked = (file: UploadFile | null) => {
     pendingFile.current = file;
     setFileTick((n) => n + 1);
@@ -246,45 +242,6 @@ export function OnboardingManager() {
                 void runUpload({ outletPhotos: [pendingFile.current] });
               }}
             />
-
-            {!listingLive ? (
-              <PrimaryButton
-                label="Submit for review"
-                loading={mutations.submitKyc.isPending}
-                disabled={!status.canSubmit}
-                onPress={() => {
-                  Alert.alert(
-                    'Submit for review?',
-                    'Ops verifies each document. When all are verified, your listing goes live.',
-                    [
-                      { text: 'Not now', style: 'cancel' },
-                      {
-                        text: 'Submit',
-                        onPress: () => {
-                          void mutations.submitKyc
-                            .mutateAsync()
-                            .then(() =>
-                              Alert.alert(
-                                'Submitted',
-                                'You’ll get push + inbox alerts if a document is rejected or when you’re set to go live.'
-                              )
-                            )
-                            .catch((error) =>
-                              Alert.alert(
-                                'Cannot submit',
-                                getApiErrorMessage(
-                                  error,
-                                  'Finish required documents first.'
-                                )
-                              )
-                            );
-                        },
-                      },
-                    ]
-                  );
-                }}
-              />
-            ) : null}
           </>
         ) : null}
       </ScrollView>

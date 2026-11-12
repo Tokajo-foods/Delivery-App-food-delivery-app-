@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+import { savePartnerSignupNameDraft } from '@/lib/auth/partner-signup-name-storage';
 
 import {
   EMPTY_SIGNUP_DETAILS,
@@ -7,6 +9,7 @@ import {
   validateSignupDetails,
 } from '@/components/auth/PhoneSignupDetailsForm';
 import { useFirebasePhoneOtp } from '@/components/auth/useFirebasePhoneOtp';
+import { useSignupEmailOtp } from '@/components/auth/useSignupEmailOtp';
 import { usePhoneAuthStatus } from '@/components/auth/usePhoneAuthStatus';
 import { AUTH_ERROR_COPY, formatAuthError } from '@/lib/auth/auth-error-copy';
 import { isAuthApiError } from '@/lib/auth/http';
@@ -36,6 +39,7 @@ type Options = {
 /** Phone OTP → details → POST /auth/phone/register (fresh ID token at submit). */
 export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) {
   const availability = usePhoneAuthStatus();
+  const emailOtp = useSignupEmailOtp(role);
   const [error, setError] = useState<string | null>(null);
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const otp = useFirebasePhoneOtp({
@@ -64,6 +68,12 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
   const [fieldErrors, setFieldErrors] = useState<SignupDetailErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (step !== 'details') return;
+    const phone = otp.phone ?? otp.phoneInput;
+    void savePartnerSignupNameDraft(phone, details);
+  }, [details, otp.phone, otp.phoneInput, step]);
+
   const patchDetails = (patch: Partial<SignupDetails>) =>
     setDetails((prev) => ({ ...prev, ...patch }));
 
@@ -90,6 +100,12 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
     if (code === 'PHONE_ALREADY_REGISTERED') {
       setAlreadyRegistered(true);
       setError(AUTH_ERROR_COPY.PHONE_ALREADY_REGISTERED);
+      return;
+    }
+    if (code === 'CONTACT_CONFLICT') {
+      setError(
+        'That email or phone is already on another restaurant account. Use a different contact or sign in.'
+      );
       return;
     }
     if (code === 'EMAIL_ALREADY_EXISTS' || code === 'EMAIL_MISMATCH') {
@@ -121,11 +137,22 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) return null;
 
+    const email = details.email.trim().toLowerCase();
+    if (emailOtp.needsVerify(email)) {
+      setFieldErrors({
+        email: AUTH_ERROR_COPY.EMAIL_NOT_VERIFIED,
+      });
+      setError('Verify your email with the code we send before creating your account.');
+      return null;
+    }
+
     const verified = await otp.obtainIdToken();
     if (!verified) {
       setStep('phone');
       return null;
     }
+
+    await savePartnerSignupNameDraft(verified.phone, details);
 
     setSubmitting(true);
     try {
@@ -160,6 +187,7 @@ export function usePhoneSignup({ role, initialPhone, initialDetails }: Options) 
     verifyPhone,
     changeNumber,
     submit,
+    emailOtp,
   };
 }
 

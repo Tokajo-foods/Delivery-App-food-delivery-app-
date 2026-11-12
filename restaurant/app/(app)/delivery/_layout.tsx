@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import { DeliveryLiveSync } from '@/components/delivery/DeliveryLiveSync';
 import { RiderPlaceSync } from '@/components/delivery/RiderPlaceSync';
 import { PlatformPushSync } from '@/components/delivery/profile/PlatformPushSync';
-import { RiderPolicyGate } from '@/components/delivery/policy/RiderPolicyGate';
 import { useDeliveryNotificationSync } from '@/lib/notification/use-notification-sync';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -32,7 +31,6 @@ export default function DeliveryLayout() {
       <DeliveryLiveSync enabled={isDelivery} />
       <RiderPlaceSync enabled={isDelivery} />
       <PlatformPushSync enabled={isDelivery} />
-      <RiderPolicyGate enabled={isDelivery} />
       <Stack
         screenOptions={{
           headerShown: false,

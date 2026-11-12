@@ -1,6 +1,8 @@
+import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { PermissionsAndroid, Platform } from 'react-native';
 
+import { ensureBackgroundLocationPermission } from '@/lib/delivery-partner/background-location-consent';
 import type { PermissionId, PermissionStatus } from '@/lib/permissions/types';
 
 async function requestNotifications(): Promise<PermissionStatus> {
@@ -50,17 +52,32 @@ async function requestForegroundLocation(): Promise<PermissionStatus> {
 
 async function requestBackgroundLocation(): Promise<PermissionStatus> {
   if (Platform.OS === 'web') return 'granted';
-  const foreground = await Location.getForegroundPermissionsAsync();
-  if (foreground.status !== 'granted') {
-    const ask = await Location.requestForegroundPermissionsAsync();
-    if (ask.status !== 'granted') {
-      return ask.status === 'denied' ? 'denied' : 'undetermined';
-    }
-  }
+  const ok = await ensureBackgroundLocationPermission('online');
+  if (ok) return 'granted';
   const current = await Location.getBackgroundPermissionsAsync();
+  return mapBgStatus(current.status);
+}
+
+function mapBgStatus(status: string | undefined): PermissionStatus {
+  if (status === 'granted') return 'granted';
+  if (status === 'denied') return 'denied';
+  return 'undetermined';
+}
+
+async function requestCamera(): Promise<PermissionStatus> {
+  if (Platform.OS === 'web') return 'granted';
+  const current = await ImagePicker.getCameraPermissionsAsync();
   if (current.status === 'granted') return 'granted';
-  const next = await Location.requestBackgroundPermissionsAsync();
-  return next.status === 'granted' ? 'granted' : next.status === 'denied' ? 'denied' : 'undetermined';
+  const next = await ImagePicker.requestCameraPermissionsAsync();
+  return mapBgStatus(next.status);
+}
+
+async function requestPhotos(): Promise<PermissionStatus> {
+  if (Platform.OS === 'web') return 'granted';
+  const current = await ImagePicker.getMediaLibraryPermissionsAsync();
+  if (current.status === 'granted') return 'granted';
+  const next = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  return mapBgStatus(next.status);
 }
 
 /** System location dialog only when access is still off, or device location is switched off. */
@@ -91,6 +108,10 @@ export async function requestAppPermission(id: PermissionId): Promise<Permission
       return requestForegroundLocation();
     case 'locationBackground':
       return requestBackgroundLocation();
+    case 'camera':
+      return requestCamera();
+    case 'photos':
+      return requestPhotos();
     default:
       return 'denied';
   }

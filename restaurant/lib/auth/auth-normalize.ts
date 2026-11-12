@@ -25,15 +25,26 @@ export function unwrapData(value: unknown): Record<string, unknown> {
     : payload;
 }
 
+function readPartnerSignupRestaurant(data: Record<string, unknown>): string | undefined {
+  const nested = data.partnerSignupNames;
+  if (nested && typeof nested === 'object') {
+    const label = String((nested as Record<string, unknown>).restaurant_owner ?? '').trim();
+    if (label) return label;
+  }
+  return undefined;
+}
+
 function mapApiUser(
   data: Record<string, unknown>,
   fallbackRole: PartnerRole
 ): AuthUser {
+  const partnerSignupNameRestaurant = readPartnerSignupRestaurant(data);
   return {
     id: String(data._id ?? data.id ?? ''),
     email: String(data.email ?? ''),
     firstName: (data.firstName as string) || undefined,
     lastName: (data.lastName as string) || undefined,
+    partnerSignupNameRestaurant,
     phone: (data.phone as string) || undefined,
     role: fromApiRole(data.role ?? data.userType ?? data.type, fallbackRole),
     emailVerified: Boolean(data.isEmailVerified ?? data.emailVerified ?? false),

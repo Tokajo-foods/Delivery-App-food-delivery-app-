@@ -1,9 +1,10 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Check, ExternalLink, ShieldCheck } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Linking,
+  Dimensions,
   Modal,
   Pressable,
   ScrollView,
@@ -14,12 +15,15 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/components/auth/PrimaryButton';
+import { PartnerAgreementDocument } from '@/components/legal/PartnerAgreementDocument';
 import { authTheme } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
 import {
-  RESTAURANT_PARTNER_TERMS_POINTS,
+  PARTNER_AGREEMENT_CHECKBOX_LABEL,
+  PARTNER_AGREEMENT_FOOTNOTE,
+  RESTAURANT_PARTNER_ALL_SECTIONS,
+  partnerAgreementVersionLabel,
 } from '@/lib/legal/restaurant-partner-terms';
-import { LEGAL_URLS } from '@/lib/legal/urls';
 import { partnerTermsApi } from '@/lib/user/partner-terms-api';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -30,6 +34,31 @@ type Props = {
   onRetry?: () => void;
   onAccepted: () => void;
 };
+
+const SECTION_COUNT = RESTAURANT_PARTNER_ALL_SECTIONS.length;
+/** ~6% taller than the prior compact sheet (was 0.76 / 548). */
+const SHEET_MAX_H = Math.min(Dimensions.get('window').height * 0.81, 580);
+
+function shortAgreementDate(): string {
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date());
+}
+
+function AgreementBackdrop() {
+  return (
+    <>
+      <LinearGradient
+        colors={['rgba(15, 23, 42, 0.72)', 'rgba(15, 23, 42, 0.88)']}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={[StyleSheet.absoluteFill, styles.backdropVeil]} pointerEvents="none" />
+    </>
+  );
+}
 
 export function RestaurantPartnerTermsGate({
   visible,
@@ -62,102 +91,132 @@ export function RestaurantPartnerTermsGate({
 
   if (!visible) return null;
 
+  const sheetMaxHeight = Math.min(
+    SHEET_MAX_H,
+    Dimensions.get('window').height - insets.top - insets.bottom - 22,
+  );
+
   return (
-    <Modal visible animationType="slide" statusBarTranslucent presentationStyle="fullScreen">
-      <View style={[styles.screen, { paddingTop: insets.top + 8 }]}>
-        <View style={styles.hero}>
-          <View style={styles.iconWrap}>
-            <ShieldCheck color={authTheme.brand} size={28} strokeWidth={2.2} />
-          </View>
-          <Text style={styles.title}>Restaurant Partner Agreement</Text>
-          <Text style={styles.subtitle}>
-            Read these terms before you use TOKAJO Restaurant. You need to accept them to open the
-            app and take orders.
-          </Text>
-        </View>
+    <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={() => {}}>
+      <View style={styles.root}>
+        <AgreementBackdrop />
 
-        {loading ? (
-          <View style={styles.centerLoad}>
-            <ActivityIndicator color={authTheme.brand} size="large" />
-            <Text style={styles.loadHint}>Loading partner terms…</Text>
-          </View>
-        ) : (
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={[
-            styles.scrollBody,
-            { paddingBottom: insets.bottom + 120 },
+        <View
+          style={[
+            styles.center,
+            {
+              paddingTop: insets.top + 6,
+              paddingBottom: insets.bottom + 6,
+              paddingHorizontal: 20,
+            },
           ]}
-          showsVerticalScrollIndicator={false}
         >
-          {loadError ? (
-            <View style={styles.errorCard}>
-              <Text style={styles.error}>{loadError}</Text>
-              {onRetry ? (
-                <Pressable onPress={onRetry} style={styles.retryBtn}>
-                  <Text style={styles.retryText}>Retry</Text>
-                </Pressable>
-              ) : null}
-            </View>
-          ) : null}
-          {RESTAURANT_PARTNER_TERMS_POINTS.map((point, index) => (
-            <View key={point.id} style={styles.card}>
-              <View style={styles.cardHead}>
-                <Text style={styles.index}>{index + 1}</Text>
-                <Text style={styles.cardTitle}>{point.title}</Text>
+          <View style={[styles.sheet, { maxHeight: sheetMaxHeight }]}>
+            <View style={styles.accentBar} />
+
+            <View style={styles.sheetHeader}>
+              <View style={styles.titleRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.brand}>TOKAJO FOODS</Text>
+                  <Text style={styles.title}>Partner Agreement</Text>
+                </View>
+                <View style={styles.countBadge}>
+                  <Text style={styles.countBadgeText}>{SECTION_COUNT} sections</Text>
+                </View>
               </View>
-              <Text style={styles.cardBody}>{point.body}</Text>
+              <Text style={styles.metaLine}>
+                {partnerAgreementVersionLabel()} · {shortAgreementDate()}
+              </Text>
+              <Text style={styles.intro}>
+                Review the agreement, then accept at the bottom to continue.
+              </Text>
             </View>
-          ))}
 
-          <View style={styles.linksRow}>
-            <Pressable
-              style={styles.linkBtn}
-              onPress={() => router.push('/legal/terms')}
-            >
-              <Text style={styles.linkText}>Full terms in app</Text>
-              <ExternalLink color={authTheme.brand} size={14} />
-            </Pressable>
-            <Pressable
-              style={styles.linkBtn}
-              onPress={() => void Linking.openURL(LEGAL_URLS.privacy)}
-            >
-              <Text style={styles.linkText}>Privacy policy</Text>
-              <ExternalLink color={authTheme.brand} size={14} />
-            </Pressable>
+            {loading ? (
+              <View style={styles.centerLoad}>
+                <ActivityIndicator color={authTheme.brand} size="large" />
+                <Text style={styles.loadHint}>Loading…</Text>
+              </View>
+            ) : (
+              <ScrollView
+                style={styles.scroll}
+                contentContainerStyle={[
+                  styles.scrollBody,
+                  { paddingBottom: Math.max(insets.bottom, 12) },
+                ]}
+                showsVerticalScrollIndicator
+                keyboardShouldPersistTaps="handled"
+              >
+                {loadError ? (
+                  <View style={styles.errorCard}>
+                    <Text style={styles.error}>{loadError}</Text>
+                    {onRetry ? (
+                      <Pressable onPress={onRetry} style={styles.retryBtn}>
+                        <Text style={styles.retryText}>Retry</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                ) : null}
+
+                <PartnerAgreementDocument
+                  compact
+                  showPrivacyLinks={false}
+                  onOpenTerms={() => router.push('/legal/terms')}
+                  onOpenPrivacy={() => router.push('/legal/privacy')}
+                />
+
+                <View style={styles.legalLinks}>
+                  <Pressable onPress={() => router.push('/legal/partner-agreement')}>
+                    <Text style={styles.link}>Full document</Text>
+                  </Pressable>
+                  <Text style={styles.linkDot}> · </Text>
+                  <Pressable onPress={() => router.push('/legal/privacy')}>
+                    <Text style={styles.link}>Privacy</Text>
+                  </Pressable>
+                </View>
+
+                <Pressable
+                  style={styles.checkRow}
+                  onPress={() => setChecked((v) => !v)}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked }}
+                >
+                  <View style={[styles.checkbox, checked && styles.checkboxOn]}>
+                    {checked ? (
+                      <Check color="#FFFFFF" size={14} strokeWidth={3} />
+                    ) : null}
+                  </View>
+                  <Text style={styles.checkCopy}>{PARTNER_AGREEMENT_CHECKBOX_LABEL}</Text>
+                </Pressable>
+
+                {error ? <Text style={styles.inlineError}>{error}</Text> : null}
+
+                <View style={styles.acceptBlock}>
+                  <PrimaryButton
+                    label={busy ? 'Saving…' : 'Accept & Continue'}
+                    onPress={() => void accept()}
+                    disabled={!checked || busy || loading || Boolean(loadError)}
+                  />
+                  <Text style={styles.footnote}>{PARTNER_AGREEMENT_FOOTNOTE}</Text>
+                  {busy ? (
+                    <ActivityIndicator color={authTheme.brand} style={{ marginTop: 10 }} />
+                  ) : null}
+                </View>
+
+                <Pressable
+                  onPress={() => {
+                    void (async () => {
+                      await logout();
+                      router.replace('/login');
+                    })();
+                  }}
+                  style={styles.logout}
+                >
+                  <Text style={styles.logoutText}>Sign out</Text>
+                </Pressable>
+              </ScrollView>
+            )}
           </View>
-
-          <Pressable
-            style={styles.checkRow}
-            onPress={() => setChecked((v) => !v)}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked }}
-          >
-            <View style={[styles.checkbox, checked && styles.checkboxOn]}>
-              {checked ? <Check color="#FFFFFF" size={14} strokeWidth={3} /> : null}
-            </View>
-            <Text style={styles.checkCopy}>
-              I am 18 or older and I accept all Restaurant Partner terms above, including the
-              Privacy Policy. I understand Tokajo records this acceptance on my account.
-            </Text>
-          </Pressable>
-
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-        </ScrollView>
-        )}
-
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-          <PrimaryButton
-            label={busy ? 'Saving…' : 'Accept and continue'}
-            onPress={() => void accept()}
-            disabled={!checked || busy || loading || Boolean(loadError)}
-          />
-          {busy ? (
-            <ActivityIndicator color={authTheme.brand} style={{ marginTop: 10 }} />
-          ) : null}
-          <Pressable onPress={() => void logout()} style={styles.logout}>
-            <Text style={styles.logoutText}>Sign out</Text>
-          </Pressable>
         </View>
       </View>
     </Modal>
@@ -165,104 +224,114 @@ export function RestaurantPartnerTermsGate({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F6F6F7' },
-  hero: {
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-    gap: 6,
+  root: { flex: 1 },
+  backdropVeil: { backgroundColor: 'rgba(0, 0, 0, 0.12)' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  sheet: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.14,
+    shadowRadius: 20,
+    elevation: 16,
   },
-  iconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: authTheme.brandSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
+  accentBar: { height: 2, backgroundColor: authTheme.brand, width: '100%' },
+  sheetHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E8ECF0',
+  },
+  brand: {
+    fontFamily: fonts.semiBold,
+    fontSize: 10,
+    letterSpacing: 0.8,
+    color: authTheme.textDim,
+    textTransform: 'uppercase',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginTop: 4,
+    gap: 10,
   },
   title: {
     fontFamily: fonts.extraBold,
-    fontSize: 22,
+    fontSize: 18,
+    lineHeight: 22,
     color: authTheme.text,
+    marginTop: 2,
   },
-  subtitle: {
-    fontFamily: fonts.medium,
-    fontSize: 14,
-    lineHeight: 20,
-    color: authTheme.textMuted,
-  },
-  scroll: { flex: 1 },
-  scrollBody: { paddingHorizontal: 16, gap: 10, paddingTop: 4 },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: authTheme.cardBorder,
-    padding: 14,
-    gap: 6,
-  },
-  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  index: {
-    fontFamily: fonts.bold,
-    fontSize: 12,
-    color: authTheme.brand,
-    backgroundColor: authTheme.brandSoft,
+  countBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    overflow: 'hidden',
+    paddingVertical: 3,
+    borderRadius: 6,
+    backgroundColor: '#F1F5F9',
   },
-  cardTitle: {
-    flex: 1,
-    fontFamily: fonts.bold,
-    fontSize: 15,
-    color: authTheme.text,
-  },
-  cardBody: {
-    fontFamily: fonts.medium,
-    fontSize: 13,
-    lineHeight: 19,
+  countBadgeText: {
+    fontFamily: fonts.semiBold,
+    fontSize: 10,
     color: authTheme.textMuted,
   },
-  linksRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
-  linkBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: authTheme.cardBorder,
+  metaLine: {
+    marginTop: 8,
+    fontFamily: fonts.medium,
+    fontSize: 11,
+    color: authTheme.textMuted,
   },
-  linkText: {
-    fontFamily: fonts.semiBold,
+  intro: {
+    marginTop: 6,
+    fontFamily: fonts.medium,
     fontSize: 12,
-    color: authTheme.brand,
+    lineHeight: 17,
+    color: authTheme.textDim,
   },
+  scroll: { flexGrow: 0, flexShrink: 1, backgroundColor: '#FFFFFF' },
+  scrollBody: { paddingHorizontal: 16, paddingTop: 12 },
+  legalLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  link: {
+    fontFamily: fonts.semiBold,
+    fontSize: 11,
+    color: authTheme.brand,
+    textDecorationLine: 'underline',
+  },
+  linkDot: { fontFamily: fonts.medium, fontSize: 11, color: authTheme.textDim },
   checkRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
-    marginTop: 8,
-    padding: 14,
-    borderRadius: 14,
-    backgroundColor: '#FFF4EE',
+    gap: 10,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: 'rgba(234, 75, 20, 0.15)',
+    borderColor: '#E2E8F0',
+    marginBottom: 12,
   },
   checkbox: {
     width: 22,
     height: 22,
     borderRadius: 6,
-    borderWidth: 2,
-    borderColor: authTheme.inputBorder,
+    borderWidth: 1.5,
+    borderColor: '#94A3B8',
     backgroundColor: '#FFFFFF',
+    marginTop: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 2,
   },
   checkboxOn: {
     backgroundColor: authTheme.brand,
@@ -271,57 +340,52 @@ const styles = StyleSheet.create({
   checkCopy: {
     flex: 1,
     fontFamily: fonts.medium,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 12,
+    lineHeight: 17,
     color: authTheme.text,
   },
-  centerLoad: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+  acceptBlock: {
+    marginBottom: 4,
+    paddingTop: 2,
   },
-  loadHint: {
+  footnote: {
+    marginTop: 8,
     fontFamily: fonts.medium,
-    fontSize: 14,
-    color: authTheme.textMuted,
+    fontSize: 10,
+    lineHeight: 14,
+    color: authTheme.textDim,
+    textAlign: 'center',
   },
-  errorCard: {
+  centerLoad: {
+    paddingVertical: 56,
+    alignItems: 'center',
+    gap: 10,
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 16,
+  },
+  loadHint: { fontFamily: fonts.medium, fontSize: 14, color: authTheme.textMuted },
+  errorCard: {
+    padding: 12,
+    marginBottom: 12,
+    borderRadius: 10,
+    backgroundColor: authTheme.surface,
     alignItems: 'center',
     gap: 10,
   },
   retryBtn: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 8,
     backgroundColor: authTheme.brandSoft,
   },
-  retryText: {
-    fontFamily: fonts.bold,
-    fontSize: 13,
-    color: authTheme.brand,
-  },
-  error: {
+  retryText: { fontFamily: fonts.bold, fontSize: 13, color: authTheme.brand },
+  error: { fontFamily: fonts.medium, fontSize: 13, color: authTheme.error, textAlign: 'center' },
+  inlineError: {
     fontFamily: fonts.medium,
-    fontSize: 13,
+    fontSize: 12,
     color: authTheme.error,
     textAlign: 'center',
+    marginBottom: 12,
   },
-  footer: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    backgroundColor: '#F6F6F7',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: authTheme.cardBorder,
-    gap: 4,
-  },
-  logout: { alignItems: 'center', paddingVertical: 12 },
-  logoutText: {
-    fontFamily: fonts.semiBold,
-    fontSize: 14,
-    color: authTheme.textMuted,
-  },
+  logout: { alignItems: 'center', paddingVertical: 10 },
+  logoutText: { fontFamily: fonts.semiBold, fontSize: 13, color: authTheme.textMuted },
 });

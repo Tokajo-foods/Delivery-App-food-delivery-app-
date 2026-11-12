@@ -11,7 +11,7 @@ type Props = {
 };
 
 /**
- * Blocks the restaurant portal until partner terms are accepted and stored on the user account.
+ * Blocks the kitchen home until partner terms are accepted (after signup + restaurant registration).
  */
 export function RestaurantPartnerTermsGuard({ active }: Props) {
   const status = useRestaurantPartnerTermsStatus(active);

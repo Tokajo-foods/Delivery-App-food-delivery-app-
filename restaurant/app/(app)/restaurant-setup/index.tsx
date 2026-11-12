@@ -1,6 +1,6 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Lock } from 'lucide-react-native';
 import { useEffect } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
 
 import { AuthBanner } from '@/components/auth/AuthBanner';
 import { AuthShell } from '@/components/auth/AuthShell';
@@ -18,6 +18,99 @@ import {
   useRestaurantSetup,
 } from '@/lib/restaurant/use-restaurant-setup';
 
+function SetupStepActions({
+  setup,
+  serviceHealth,
+}: {
+  setup: ReturnType<typeof useRestaurantSetup>;
+  serviceHealth: ReturnType<typeof useRestaurantServiceHealth>;
+}) {
+  const serviceBlocked = serviceHealth.data?.ok === false || serviceHealth.data?.ready === false;
+  const continueLocked = setup.step < 2 && !setup.canAdvance;
+  const registerLocked = setup.step === 2 && (!setup.canRegister || serviceBlocked);
+
+  const continueLabel =
+    setup.step === 0 ? 'Continue to address' : setup.step === 1 ? 'Continue to review' : 'Continue';
+
+  const lockHeadline =
+    registerLocked && serviceBlocked
+      ? 'Restaurant service must be online before you can register.'
+      : setup.step < 2
+        ? 'Complete all mandatory fields before proceeding to the next step.'
+        : 'Complete all mandatory fields before registering your restaurant.';
+
+  const lockDetail =
+    setup.step < 2
+      ? setup.stepBlockReason
+      : registerLocked && !serviceBlocked
+        ? setup.registerBlockReason
+        : null;
+
+  const explainLocked = () => {
+    const detail =
+      registerLocked && serviceBlocked
+        ? lockHeadline
+        : lockDetail ?? 'Fill every required field (*) on this step.';
+    setup.setBanner({ type: 'error', message: detail });
+    Alert.alert('Cannot continue yet', detail);
+  };
+
+  return (
+    <View className="gap-3">
+      <View className="flex-row gap-3">
+        {setup.step > 0 ? (
+          <Pressable
+            onPress={setup.goBack}
+            disabled={setup.busy}
+            className="h-[52px] flex-1 flex-row items-center justify-center gap-1 rounded-xl border-2 border-gray-200 bg-white"
+          >
+            <ChevronLeft color={theme.secondary} size={18} />
+            <Text className="text-[15px] font-bold text-secondary">Back</Text>
+          </Pressable>
+        ) : null}
+        <View style={{ flex: setup.step > 0 ? 2 : 1, minWidth: 0 }}>
+          {setup.step < 2 ? (
+            <PrimaryButton
+              label={continueLabel}
+              trailingIcon={continueLocked ? Lock : ChevronRight}
+              onPress={setup.goNext}
+              disabled={setup.busy}
+              softDisabled={continueLocked}
+              onSoftDisabledPress={explainLocked}
+            />
+          ) : (
+            <PrimaryButton
+              label="Register Restaurant"
+              trailingIcon={registerLocked ? Lock : undefined}
+              onPress={() =>
+                void setup.submit(
+                  serviceHealth.data?.ok !== false,
+                  serviceHealth.data?.message
+                )
+              }
+              loading={setup.busy}
+              disabled={setup.busy}
+              softDisabled={registerLocked}
+              onSoftDisabledPress={explainLocked}
+            />
+          )}
+        </View>
+      </View>
+      {setup.step === 0 ? (
+        <Pressable
+          onPress={setup.goBack}
+          disabled={setup.busy}
+          className="items-center py-1"
+        >
+          <Text className="text-sm font-semibold text-secondary-light">
+            Log out instead
+          </Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
 export default function RestaurantSetupScreen() {
   const cuisinesQuery = useCuisineCatalog(true);
   const serviceHealth = useRestaurantServiceHealth(true);
@@ -28,62 +121,17 @@ export default function RestaurantSetupScreen() {
     void requestLocationIfOff();
   }, [setup.step]);
 
+  const stepActions = <SetupStepActions setup={setup} serviceHealth={serviceHealth} />;
+
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <AuthShell
+        layout="fullscreen"
         title="Complete restaurant profile"
         subtitle="A few details so customers can find your kitchen and place orders."
         showBack
         onBackPress={setup.goBack}
-        footer={
-          <View className="gap-3">
-            <View className="flex-row gap-3">
-              {setup.step > 0 ? (
-                <Pressable
-                  onPress={setup.goBack}
-                  disabled={setup.busy}
-                  className="h-[52px] flex-1 flex-row items-center justify-center gap-1 rounded-xl border-2 border-gray-200 bg-white"
-                >
-                  <ChevronLeft color={theme.secondary} size={18} />
-                  <Text className="text-[15px] font-bold text-secondary">Back</Text>
-                </Pressable>
-              ) : null}
-              <View className={setup.step > 0 ? 'flex-[2]' : 'flex-1'}>
-                {setup.step < 2 ? (
-                  <PrimaryButton
-                    label="Continue"
-                    trailingIcon={ChevronRight}
-                    onPress={setup.goNext}
-                    disabled={setup.busy}
-                  />
-                ) : (
-                  <PrimaryButton
-                    label="Register Restaurant"
-                    onPress={() =>
-                      void setup.submit(
-                        serviceHealth.data?.ok !== false,
-                        serviceHealth.data?.message
-                      )
-                    }
-                    loading={setup.busy}
-                    disabled={setup.busy}
-                  />
-                )}
-              </View>
-            </View>
-            {setup.step === 0 ? (
-              <Pressable
-                onPress={setup.goBack}
-                disabled={setup.busy}
-                className="items-center py-1"
-              >
-                <Text className="text-sm font-semibold text-secondary-light">
-                  Log out instead
-                </Text>
-              </Pressable>
-            ) : null}
-          </View>
-        }
+        footer={stepActions}
       >
         <SetupProgress
           step={setup.step}
@@ -189,6 +237,6 @@ export default function RestaurantSetupScreen() {
         onClose={() => setup.setMapOpen(false)}
         onConfirm={setup.confirmMap}
       />
-    </>
+    </View>
   );
 }

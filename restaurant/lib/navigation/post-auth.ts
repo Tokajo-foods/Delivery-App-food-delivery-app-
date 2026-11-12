@@ -1,6 +1,7 @@
 import type { PartnerRole } from '@/lib/auth/types';
 import { deliveryPartnerApi } from '@/lib/delivery-partner/api';
 import { DELIVERY_ROUTES } from '@/lib/delivery-partner/navigation';
+import { isDeliveryPartnerProfileRegistered } from '@/lib/delivery-partner/setup-complete';
 import { restaurantOwnerApi } from '@/lib/restaurant/api';
 import { peekPendingStaffInvite } from '@/lib/restaurant/staff-invite-storage';
 import type { RestaurantOwnerRestaurant } from '@/lib/restaurant/types';
@@ -158,6 +159,10 @@ export async function resolvePostAuthRoute(
     try {
       const me = await withTimeout(deliveryPartnerApi.getMe(), 8000);
       if (me?.id) {
+        if (!isDeliveryPartnerProfileRegistered(me)) {
+          await clearDeliveryPartnerSetupFlag();
+          return DELIVERY_ROUTES.setup;
+        }
         await markDeliveryPartnerSetupComplete(me.id);
         return DELIVERY_ROUTES.home;
       }
@@ -165,8 +170,10 @@ export async function resolvePostAuthRoute(
       await clearDeliveryPartnerSetupFlag();
       return DELIVERY_ROUTES.setup;
     } catch {
-      // Timeout / gateway blip — stay on home; duty will surface a real error if needed.
-      return DELIVERY_ROUTES.home;
+      const localDone = await storageGetItem(DELIVERY_SETUP_DONE_KEY);
+      if (localDone) return DELIVERY_ROUTES.home;
+      // No confirmed profile — keep user on setup so local draft can resume.
+      return DELIVERY_ROUTES.setup;
     }
   }
 

@@ -72,8 +72,3 @@ export function trendInsight(trendPercent: number): DashboardInsightCopy {
   };
 }
 
-export function buildRevenueBars(totalRevenue: number, totalOrders: number): number[] {
-  const base = Math.max(totalRevenue, totalOrders * 120, 1);
-  const weights = [0.18, 0.32, 0.48, 0.68, 1];
-  return weights.map((weight) => Math.max(12, Math.round(base * weight * 0.0025)));
-}

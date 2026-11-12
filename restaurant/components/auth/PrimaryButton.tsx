@@ -18,6 +18,9 @@ type PrimaryButtonProps = {
   onPress: () => void;
   loading?: boolean;
   disabled?: boolean;
+  /** Looks disabled but still accepts taps (e.g. explain validation). */
+  softDisabled?: boolean;
+  onSoftDisabledPress?: () => void;
   icon?: LucideIcon;
   trailingIcon?: LucideIcon;
   variant?: 'solid' | 'outline';
@@ -28,13 +31,25 @@ export function PrimaryButton({
   onPress,
   loading,
   disabled,
+  softDisabled,
+  onSoftDisabledPress,
   icon: Icon,
   trailingIcon: TrailingIcon,
   variant = 'solid',
 }: PrimaryButtonProps) {
-  const isDisabled = disabled || loading;
+  const hardDisabled = disabled || loading;
+  const muted = hardDisabled || softDisabled;
   const outline = variant === 'outline';
   const tint = outline ? theme.primary : '#FFFFFF';
+
+  const handlePress = () => {
+    if (hardDisabled) return;
+    if (softDisabled) {
+      onSoftDisabledPress?.();
+      return;
+    }
+    onPress();
+  };
 
   const content = loading ? (
     <ActivityIndicator color={tint} />
@@ -49,13 +64,13 @@ export function PrimaryButton({
   if (outline) {
     return (
       <Pressable
-        onPress={onPress}
-        disabled={isDisabled}
+        onPress={handlePress}
+        disabled={hardDisabled}
         style={({ pressed }) => [
           styles.buttonBase,
           styles.outline,
-          isDisabled && styles.disabled,
-          pressed && !isDisabled && styles.outlinePressed,
+          muted && styles.disabled,
+          pressed && !muted && styles.outlinePressed,
         ]}
       >
         {content}
@@ -65,13 +80,13 @@ export function PrimaryButton({
 
   return (
     <Pressable
-      onPress={onPress}
-      disabled={isDisabled}
+      onPress={handlePress}
+      disabled={hardDisabled}
       style={({ pressed }) => [
         styles.buttonBase,
         styles.solidShadow,
-        isDisabled && styles.disabled,
-        pressed && !isDisabled && styles.solidPressed,
+        muted && styles.disabled,
+        pressed && !muted && styles.solidPressed,
       ]}
     >
       <LinearGradient

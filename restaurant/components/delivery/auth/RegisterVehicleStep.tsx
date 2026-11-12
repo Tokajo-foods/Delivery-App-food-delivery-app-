@@ -1,7 +1,8 @@
-import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { AuthField } from '@/components/auth/AuthField';
+import { authTheme } from '@/constants/auth-theme';
+import { fonts } from '@/constants/typography';
 import { VEHICLE_TYPE_OPTIONS, type VehicleType } from '@/lib/delivery-partner/types';
 
 type Props = {
@@ -11,48 +12,48 @@ type Props = {
 };
 
 export function RegisterVehicleStep({ vehicleType, vehicleNumber, onChange }: Props) {
-  const [open, setOpen] = useState(false);
-
   return (
-    <View>
-      <Text className="mb-1.5 text-sm font-semibold text-secondary">Vehicle type *</Text>
-      <Pressable
-        onPress={() => setOpen((v) => !v)}
-        className="mb-3 h-12 justify-center rounded-xl border border-gray-200 bg-white px-3.5"
-      >
-        <Text className={`text-[15px] ${vehicleType ? 'text-secondary' : 'text-secondary-light'}`}>
-          {VEHICLE_TYPE_OPTIONS.find((o) => o.value === vehicleType)?.label ?? 'Select vehicle type'}
-        </Text>
-      </Pressable>
-      {open ? (
-        <View className="mb-4 overflow-hidden rounded-xl border border-gray-200">
-          {VEHICLE_TYPE_OPTIONS.map((option) => {
-            const active = option.value === vehicleType;
-            return (
-              <Pressable
-                key={option.value}
-                onPress={() => {
-                  onChange({ vehicleType: option.value });
-                  setOpen(false);
+    <View style={{ gap: 16 }}>
+      <Text style={{ fontFamily: fonts.medium, fontSize: 13, color: authTheme.textMuted }}>
+        Primary vehicle
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {VEHICLE_TYPE_OPTIONS.map((option) => {
+          const active = option.value === vehicleType;
+          return (
+            <Pressable
+              key={option.value}
+              onPress={() => onChange({ vehicleType: option.value })}
+              style={{
+                paddingVertical: 12,
+                paddingHorizontal: 14,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: active ? authTheme.text : authTheme.cardBorder,
+                backgroundColor: active ? authTheme.text : authTheme.card,
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: active ? fonts.semiBold : fonts.medium,
+                  fontSize: 13,
+                  color: active ? '#FFFFFF' : authTheme.text,
                 }}
-                className={`px-3.5 py-3 ${active ? 'bg-primary/10' : 'bg-white'}`}
               >
-                <Text
-                  className={`text-sm ${active ? 'font-bold text-primary' : 'font-medium text-secondary'}`}
-                >
-                  {option.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
       <AuthField
-        label="Vehicle number"
+        label="Registration number"
         placeholder="DL-01-AB-1234"
         autoCapitalize="characters"
         value={vehicleNumber}
-        onChangeText={(value) => onChange({ vehicleNumber: value })}
+        onChangeText={(value) =>
+          onChange({ vehicleNumber: value.replace(/\s+/g, ' ').toUpperCase() })
+        }
       />
     </View>
   );

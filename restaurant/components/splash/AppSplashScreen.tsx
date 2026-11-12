@@ -1,17 +1,13 @@
 import { useEffect, useRef } from 'react';
-import {
-  Animated,
-  Easing,
-  Image,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Animated, Easing, StyleSheet, View } from 'react-native';
+
+import { BundledImage } from '@/components/media/BundledImage';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SPLASH_DURATION_MS } from '@/lib/splash/cold-start';
 
-const splashArt = require('../../assets/splash-brand.jpg');
+const splashArt = require('../../assets/splash-brand.png');
 
 type AppSplashScreenProps = {
   onFinished: () => void;
@@ -48,7 +44,7 @@ export function AppSplashScreen({ onFinished }: AppSplashScreenProps) {
   return (
     <View style={styles.root} accessibilityLabel="TOKAJO FOODS loading">
       <StatusBar style="dark" />
-      <Image source={splashArt} style={styles.art} resizeMode="cover" />
+      <BundledImage source={splashArt} style={styles.art} contentFit="cover" />
 
       <View style={[styles.loaderDock, { paddingBottom: Math.max(insets.bottom, 28) }]}>
         <View style={styles.track}>

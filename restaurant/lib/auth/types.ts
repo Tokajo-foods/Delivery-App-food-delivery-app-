@@ -51,6 +51,7 @@ export type AuthUser = {
   email: string;
   firstName?: string;
   lastName?: string;
+  partnerSignupNameRestaurant?: string;
   phone?: string;
   role: PartnerRole;
   emailVerified?: boolean;

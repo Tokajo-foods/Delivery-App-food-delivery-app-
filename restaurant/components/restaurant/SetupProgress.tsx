@@ -1,5 +1,8 @@
 import { Check } from 'lucide-react-native';
+import { Fragment } from 'react';
 import { Pressable, Text, View } from 'react-native';
+
+const STEP_CIRCLE_SIZE = 36;
 
 const STEPS = ['Basics', 'Address', 'Review'] as const;
 
@@ -12,14 +15,15 @@ type SetupProgressProps = {
 export function SetupProgress({ step, maxStep, onStep }: SetupProgressProps) {
   return (
     <View className="mb-5">
-      <View className="flex-row items-center">
+      <View className="flex-row items-start">
         {STEPS.map((label, index) => {
           const done = index < step;
           const active = index === step;
           const reachable = index <= maxStep;
+          const connectorDone = index < step;
           return (
-            <View key={label} className="flex-1 flex-row items-center">
-              <View className="flex-1 items-center">
+            <Fragment key={label}>
+              <View className="min-w-0 flex-1 items-center">
                 <Pressable
                   disabled={!reachable || !onStep}
                   onPress={() => onStep?.(index)}
@@ -50,12 +54,13 @@ export function SetupProgress({ step, maxStep, onStep }: SetupProgressProps) {
               </View>
               {index < STEPS.length - 1 ? (
                 <View
-                  className={`mb-5 h-[2px] flex-1 rounded-full ${
-                    index < step ? 'bg-success' : 'bg-gray-200'
+                  className={`h-[2px] min-w-[8px] flex-1 rounded-full ${
+                    connectorDone ? 'bg-success' : 'bg-gray-200'
                   }`}
+                  style={{ marginTop: STEP_CIRCLE_SIZE / 2 - 1 }}
                 />
               ) : null}
-            </View>
+            </Fragment>
           );
         })}
       </View>

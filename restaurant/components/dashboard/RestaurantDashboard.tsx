@@ -21,6 +21,7 @@ import { PendingOrdersSection } from '@/components/dashboard/PendingOrdersSectio
 import { QuickActionsGrid } from '@/components/dashboard/QuickActionsGrid';
 import { authTheme, PARTNER_BOTTOM_NAV_INSET } from '@/constants/auth-theme';
 import { fonts } from '@/constants/typography';
+import { dashboardShellFromRestaurant } from '@/lib/dashboard/api';
 import { useDashboardStats } from '@/lib/dashboard/hooks';
 import { isRestaurantProfileComplete } from '@/lib/navigation/post-auth';
 import { useUnreadNotificationCount } from '@/lib/notification/hooks';
@@ -35,6 +36,7 @@ import { isListingLive } from '@/lib/restaurant/listing-status';
 import { getRestaurantVerificationBadge } from '@/lib/restaurant/verification';
 import type { KitchenDutySnapshot } from '@/lib/restaurant/types';
 import type { PermissionId } from '@/lib/permissions/types';
+import { usePartnerGreetingName } from '@/lib/user/use-partner-greeting-name';
 import { useAuthStore } from '@/store/auth-store';
 
 /** Asked on the kitchen home. Location is asked on the outlet setup map instead. */
@@ -67,9 +69,9 @@ function dutyHeadline(duty?: KitchenDutySnapshot) {
 export function RestaurantDashboard() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const user = useAuthStore((s) => s.user);
-
+  const isSignedIn = useAuthStore((s) => Boolean(s.user?.id));
   const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
+  const displayName = usePartnerGreetingName(isSignedIn);
   const { data, isLoading, isRefetching, refetch, error } = useDashboardStats(
     profileComplete === true
   );
@@ -97,28 +99,24 @@ export function RestaurantDashboard() {
     dutyOnline,
   };
 
-  const displayName =
-    [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
-    user?.email?.split('@')[0] ||
-    'Partner';
-
   useEffect(() => {
     let active = true;
-    const timer = setTimeout(() => {
-      if (active) setProfileComplete(true);
-    }, 8000);
 
-    restaurantOwnerApi
-      .getMyRestaurant()
-      .then((my) => {
+    void (async () => {
+      try {
+        const my = await restaurantOwnerApi.getMyRestaurant();
         if (!active) return;
         setProfileComplete(isRestaurantProfileComplete(my));
-      })
-      .catch(() => {
+      } catch {
         if (!active) return;
-        setProfileComplete(true);
-      })
-      .finally(() => clearTimeout(timer));
+        setProfileComplete(false);
+      }
+    })();
+
+    const timer = setTimeout(() => {
+      if (!active) return;
+      setProfileComplete((prev) => (prev === null ? false : prev));
+    }, 8000);
 
     return () => {
       active = false;
@@ -132,7 +130,15 @@ export function RestaurantDashboard() {
     }
   }, [profileComplete, router]);
 
-  if (profileComplete === null || profileComplete === false || (isLoading && !data)) {
+  const dashboard =
+    data ??
+    (restaurant.data?.id ? dashboardShellFromRestaurant(restaurant.data) : null);
+
+  if (
+    profileComplete === null ||
+    profileComplete === false ||
+    ((isLoading || isRefetching) && !dashboard)
+  ) {
     return (
       <View style={[styles.screen, styles.center]}>
         <StatusBar style="dark" />
@@ -141,30 +147,17 @@ export function RestaurantDashboard() {
     );
   }
 
-  if (error && !data) {
+  if (!dashboard) {
     return (
-      <View style={styles.screen}>
+      <View style={[styles.screen, styles.center]}>
         <StatusBar style="dark" />
-        <DashboardHeader
-          name={displayName}
-          unreadNotifications={unreadQuery.data ?? 0}
-          verificationLabel={verification.label}
-          verificationColor={verification.color}
-          verificationSoft={verification.soft}
-          dutyLabel={headerDuty.dutyLabel}
-          dutyOnline={headerDuty.dutyOnline}
-          onProfilePress={() => router.replace('/admin')}
-          onNotificationsPress={() => router.push('/notifications')}
-        />
-        <View style={[styles.center, { flex: 1 }]}>
-          <ActivityIndicator color={authTheme.brand} />
-        </View>
-        <DashboardTabBar active="stats" onNavigate={(href) => router.replace(href)} />
+        <Text style={styles.healthWarn}>
+          Could not load your kitchen home. Pull to refresh or finish restaurant setup.
+        </Text>
+        <ActivityIndicator color={authTheme.brand} style={{ marginTop: 16 }} />
       </View>
     );
   }
-
-  const dashboard = data!;
 
   return (
     <View style={styles.screen}>
@@ -230,6 +223,9 @@ export function RestaurantDashboard() {
           <TodayStatsCard
             restaurantId={restaurant.data?.id}
             metrics={dashboard.metrics}
+            earningsLoading={
+              isRefetching && dashboard.metrics.grossRevenue == null
+            }
             onRatingPress={() => router.push('/reviews')}
           />
           <QuickActionsGrid

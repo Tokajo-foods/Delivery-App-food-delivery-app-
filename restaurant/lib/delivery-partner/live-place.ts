@@ -12,12 +12,108 @@ export type GpsRead =
   | { ok: true; latitude: number; longitude: number; accuracy: number | null }
   | { ok: false; reason: 'permission' | 'services' | 'fix' };
 
-export async function readAccurateGps(): Promise<GpsRead> {
-  const { status } = await Location.requestForegroundPermissionsAsync();
-  if (status !== 'granted') return { ok: false, reason: 'permission' };
+const DISPLAY_GPS_TIMEOUT_MS = 9_000;
+const GEOCODE_TIMEOUT_MS = 4_000;
+const LAST_KNOWN_MAX_AGE_MS = 60_000;
+const LAST_KNOWN_MAX_ACCURACY_M = 150;
 
-  const enabled = await Location.hasServicesEnabledAsync();
-  if (!enabled) return { ok: false, reason: 'services' };
+function isValidCoord(latitude: number, longitude: number) {
+  return (
+    Number.isFinite(latitude)
+    && Number.isFinite(longitude)
+    && !(latitude === 0 && longitude === 0)
+  );
+}
+
+function fromPosition(pos: Location.LocationObject): GpsRead {
+  const { latitude, longitude, accuracy } = pos.coords;
+  if (!isValidCoord(latitude, longitude)) return { ok: false, reason: 'fix' };
+  return {
+    ok: true,
+    latitude,
+    longitude,
+    accuracy: accuracy ?? null,
+  };
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      resolve(fallback);
+    }, ms);
+    promise
+      .then((value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch(() => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(fallback);
+      });
+  });
+}
+
+async function ensureForegroundLocation(): Promise<boolean> {
+  const current = await Location.getForegroundPermissionsAsync();
+  if (current.status === 'granted') return true;
+  const next = await Location.requestForegroundPermissionsAsync();
+  return next.status === 'granted';
+}
+
+/** Header / map chip — fast fix, not trip geofence precision. */
+export async function readGpsForDisplay(): Promise<GpsRead> {
+  if (!(await ensureForegroundLocation())) return { ok: false, reason: 'permission' };
+  if (!(await Location.hasServicesEnabledAsync())) return { ok: false, reason: 'services' };
+
+  let lastKnown: Location.LocationObject | null = null;
+  try {
+    lastKnown = await Location.getLastKnownPositionAsync();
+  } catch {
+    lastKnown = null;
+  }
+
+  if (lastKnown) {
+    const age = Date.now() - lastKnown.timestamp;
+    const acc = lastKnown.coords.accuracy ?? 9999;
+    if (age <= LAST_KNOWN_MAX_AGE_MS && acc <= LAST_KNOWN_MAX_ACCURACY_M) {
+      const quick = fromPosition(lastKnown);
+      if (quick.ok) return quick;
+    }
+  }
+
+  const fresh = await withTimeout(
+    Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+      mayShowUserSettingsDialog: true,
+    }),
+    DISPLAY_GPS_TIMEOUT_MS,
+    null as Location.LocationObject | null
+  );
+
+  if (fresh) {
+    const next = fromPosition(fresh);
+    if (next.ok) return next;
+  }
+
+  if (lastKnown) {
+    const stale = fromPosition(lastKnown);
+    if (stale.ok) return stale;
+  }
+
+  return { ok: false, reason: 'fix' };
+}
+
+/** Trip / duty — precise fix (slower). */
+export async function readAccurateGps(): Promise<GpsRead> {
+  if (!(await ensureForegroundLocation())) return { ok: false, reason: 'permission' };
+  if (!(await Location.hasServicesEnabledAsync())) return { ok: false, reason: 'services' };
 
   let best: Location.LocationObject | null = null;
   for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -31,19 +127,15 @@ export async function readAccurateGps(): Promise<GpsRead> {
   }
 
   if (!best) return { ok: false, reason: 'fix' };
-  const { latitude, longitude, accuracy } = best.coords;
-  if (
-    !Number.isFinite(latitude) ||
-    !Number.isFinite(longitude) ||
-    (latitude === 0 && longitude === 0)
-  ) {
-    return { ok: false, reason: 'fix' };
-  }
-  return { ok: true, latitude, longitude, accuracy: accuracy ?? null };
+  return fromPosition(best);
 }
 
 export async function labelForCoords(latitude: number, longitude: number) {
-  const geo = await reverseGeocodeAddress({ lat: latitude, lng: longitude });
+  const geo = await withTimeout(
+    reverseGeocodeAddress({ lat: latitude, lng: longitude }),
+    GEOCODE_TIMEOUT_MS,
+    null
+  );
   const formatted = stripPlusCodes(geo?.formattedAddress?.trim() ?? '');
   if (!formatted) return 'Current location';
   return formatted;
@@ -56,14 +148,14 @@ export function metersBetween(
   lng2?: number | null
 ) {
   if (
-    lat1 == null ||
-    lng1 == null ||
-    lat2 == null ||
-    lng2 == null ||
-    !Number.isFinite(lat1) ||
-    !Number.isFinite(lng1) ||
-    !Number.isFinite(lat2) ||
-    !Number.isFinite(lng2)
+    lat1 == null
+    || lng1 == null
+    || lat2 == null
+    || lng2 == null
+    || !Number.isFinite(lat1)
+    || !Number.isFinite(lng1)
+    || !Number.isFinite(lat2)
+    || !Number.isFinite(lng2)
   ) {
     return Number.POSITIVE_INFINITY;
   }
@@ -71,8 +163,8 @@ export function metersBetween(
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
   const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
   return 6_371_000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
@@ -82,7 +174,7 @@ export async function refreshLivePlaceNow(): Promise<
   | { ok: false; reason: 'permission' | 'services' | 'fix' }
 > {
   patchLivePlace({ locating: true });
-  const read = await readAccurateGps();
+  const read = await readGpsForDisplay();
   if (!read.ok) {
     patchLivePlace({
       locating: false,
@@ -90,7 +182,15 @@ export async function refreshLivePlaceNow(): Promise<
     });
     return read;
   }
+
   const prev = getLivePlaceSnapshot();
+  patchLivePlace({
+    latitude: read.latitude,
+    longitude: read.longitude,
+    locating: true,
+    servicesOn: true,
+  });
+
   const label = await labelForCoords(read.latitude, read.longitude);
   patchLivePlace({
     label: label || prev.label,

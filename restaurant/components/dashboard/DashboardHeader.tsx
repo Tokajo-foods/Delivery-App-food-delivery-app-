@@ -1,6 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { BadgeCheck, Bell, Store } from 'lucide-react-native';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
+
+import { BundledImage } from '@/components/media/BundledImage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { authTheme } from '@/constants/auth-theme';
@@ -62,10 +65,10 @@ export function DashboardHeader({
       style={[styles.wrap, { paddingTop: insets.top + 8 }]}
     >
       <View style={styles.logoRow}>
-        <Image
-          source={require('../../assets/tokajo-wordmark.webp')}
+        <BundledImage
+          source={require('../../assets/tokajo-wordmark.png')}
           style={styles.logo}
-          resizeMode="contain"
+          contentFit="contain"
         />
       </View>
 

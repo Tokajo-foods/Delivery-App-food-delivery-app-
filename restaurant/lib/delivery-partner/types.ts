@@ -49,12 +49,15 @@ export type DeliveryPartnerRegisterPayload = {
   /** Exact home pin from signup map (required for production signup). */
   latitude?: number;
   longitude?: number;
+  pincode?: string;
+  landmark?: string;
+  dateOfBirth?: string;
+  referralCode?: string;
   vehicleType: VehicleType;
-  vehicleNumber?: string;
+  vehicleNumber: string;
   vehicleModel?: string;
   vehicleColor?: string;
   aadharNumber?: string;
-  acceptedTerms: boolean;
   inviteToken?: string;
 };
 
@@ -115,6 +118,8 @@ export type DeliveryPartnerProfile = {
   vehicle?: PartnerVehicleDetails;
   payout?: PartnerPayoutDetails;
   stats?: PartnerProfileStats;
+  /** False while the app setup wizard is not submitted (pending admin row). */
+  profileRegistrationComplete?: boolean;
   status?: string;
   suspendReason?: string;
   suspendUntil?: string;

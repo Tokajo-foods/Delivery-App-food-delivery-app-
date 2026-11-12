@@ -46,7 +46,7 @@ export const AUTH_ERROR_COPY: Record<string, string> = {
   ACCOUNT_NOT_FOUND:
     'This account does not exist in our system. Check the email or phone and try again.',
   EMAIL_ALREADY_EXISTS:
-    'An account already exists with this email. Use another email or sign in.',
+    'This email is already linked to another restaurant account. Use a different email or leave it blank.',
   EMAIL_MISMATCH:
     'This number is already on an account with a different email. Use that email, or enter another one that is not already registered.',
   PHONE_ALREADY_EXISTS:
@@ -58,7 +58,7 @@ export const AUTH_ERROR_COPY: Record<string, string> = {
   FORGOT_OTP_USE_CONFIRM:
     'Confirm the reset OTP first, then set your new password.',
   CONTACT_CONFLICT:
-    'This email and phone belong to two different accounts. Use one account’s email or phone.',
+    'That email or phone is already on another restaurant account. Use different contacts or sign in.',
   ROLE_NOT_ON_ACCOUNT:
     'This login does not have restaurant/rider access yet. Complete signup for that role first.',
   TOKEN_EXPIRED: 'This link expired. Request a new one.',

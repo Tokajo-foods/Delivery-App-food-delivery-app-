@@ -248,11 +248,18 @@ export function mapPlatformUser(raw: unknown): PlatformUser {
   const nested = asRecord(record.user);
   const source = Object.keys(nested).length ? { ...record, ...nested } : record;
   const id = pickString(source, ['_id', 'id', 'userId']) ?? '';
+  const partnerNames = asRecord(source.partnerSignupNames);
   return {
     id,
     email: pickString(source, ['email']) ?? '',
     firstName: pickString(source, ['firstName', 'givenName']),
     lastName: pickString(source, ['lastName', 'familyName']),
+    partnerSignupNameRestaurant:
+      pickString(partnerNames, ['restaurant_owner']) ??
+      pickString(source, ['partnerSignupNameRestaurant']),
+    partnerSignupNameDelivery:
+      pickString(partnerNames, ['delivery_partner']) ??
+      pickString(source, ['partnerSignupNameDelivery']),
     phone: pickString(source, ['phone', 'mobile', 'phoneNumber']),
     photoUrl: pickString(source, [
       'photoUrl',
