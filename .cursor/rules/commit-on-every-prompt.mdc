@@ -1,17 +1,19 @@
 ---
-description: After every prompt that changes files, create a git commit. Do not wait to be asked.
+description: Commit after every prompt in this repo; never push unless the user explicitly asks.
 alwaysApply: true
 ---
 
-# Commit after every prompt
+# Commit after every prompt — never auto-push
 
 This project **requires a git commit at the end of every user prompt** that produces file changes. Do not ask first. This overrides the default "only commit when asked" behavior **for this repo**.
+
+- **Commit** in this repo when you changed files.
+- **Never push** unless the user **explicitly asks to push** in that conversation.
 
 ## When to commit
 
 - **Do** commit after finishing the work for the current prompt if `git status` shows staged/unstaged/untracked changes you made.
 - **Skip** if there are no changes, the prompt was question-only, or the user said not to commit this time.
-- **Never push** unless the user explicitly asks.
 
 ## How
 
